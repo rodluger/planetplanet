@@ -11,7 +11,6 @@ brightness dayside and a constant brightness nightside.
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 import numpy as np
-np.seterr(divide = 'ignore', invalid = 'ignore')
 import matplotlib.pyplot as pl
 
 __all__ = ['dFlux']
