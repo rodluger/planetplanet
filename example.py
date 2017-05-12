@@ -4,6 +4,8 @@
 example.py
 ----------
 
+TODO: LABELS BACKWARDS
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
@@ -13,13 +15,13 @@ import numpy as np
 np.seterr(divide = 'ignore', invalid = 'ignore')
 
 # Defaults
-ro = 1
+ro = 0.75
 xo = 0
 yo = 0
 rp = 1.25
 xp = np.linspace(-3,3,1000)
 xp0 = 0.
-yp = -1.5
+yp = 0.
 theta = -np.pi / 2
 fday = 1
 fnight = 0.25

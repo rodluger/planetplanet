@@ -1,36 +1,21 @@
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider
+import re
 import numpy as np
-color = pl.get_cmap('plasma_r')
+np.seterr(invalid = 'ignore')
+color = pl.get_cmap('plasma')
 
-def EllipseUpper(x, x0, y0, a, b):
+def Roots(planet, ellipse):
   '''
-  The function describing the upper half of an ellipse
-  
-  '''
-  
-  A = b ** 2 - (x - x0) ** 2
-  if np.abs(A) < 1e-15:
-    A = 0
-  return y0 + a / b * np.sqrt(A)
 
-def EllipseLower(x, x0, y0, a, b):
-  '''
-  The function describing the lower half of an ellipse
-  
   '''
   
-  A = b ** 2 - (x - x0) ** 2
-  if np.abs(A) < 1e-15:
-    A = 0
-  return y0 - a / b * np.sqrt(A)
-
-def Roots(r, xE, yE, a, b):
-  '''
-  Returns the points of intersection of an ellipse centered at (`xE`, `yE`) 
-  with radii `b` and `a` and a circle of radius `r` centered at the origin
-  
-  '''
+  # Get the params
+  a = ellipse.a
+  b = ellipse.b
+  xE = ellipse.x0
+  yE = ellipse.y0
+  r = planet.r
   
   # Get the coefficients
   A = a ** 2 / b ** 2 - 1
@@ -54,157 +39,485 @@ def Roots(r, xE, yE, a, b):
       
   return good_roots
 
-def Ellipse(l, rp = 1, xp = 0, yp = 0, theta = np.pi / 8, ro = 1, n = 1000):
+class Planet(object):
   '''
   
   '''
   
-  # Ellipse parameters
-  a = rp * np.abs(np.sin(l))
-  b = a * np.abs(np.sin(theta))
-  x0 = xp - rp * np.cos(l) * np.cos(theta)
-  y0 = yp
-  
-  # Identify and remove points behind the limb
-  d = rp * np.cos(l) * np.sin(theta) * np.tan(theta)
-  x = np.linspace(x0 - b, x0 + b, n)
-  if theta > 0:
-    x[x < x0 - d] = np.nan
-  else:
-    x[x > x0 - d] = np.nan
+  def __init__(self, x0, y0, r):
+    '''
     
-  # The ellipse equation
-  B = b ** 2 - (x - x0) ** 2
-  B[B<0] = 0
-  ybot = y0 - a / b * np.sqrt(B)
-  ytop = y0 + a / b * np.sqrt(B)
-  
-  # Compute important vertices
-  vertices = []
-  
-  # Ellipse-circle intersections
-  if b ** 2 >= d ** 2:
-    vertices.append((x0 - d, y0 - a / b * np.sqrt(b ** 2 - d ** 2)))
-    vertices.append((x0 - d, y0 + a / b * np.sqrt(b ** 2 - d ** 2)))
-  
-  # Ellipse x minimum
-  if (theta > 0) and (x0 - b > x0 - d):
-    vertices.append((x0 - b, y0))
-  elif (theta <= 0) and (x0 - b < x0 - d):
-    vertices.append((x0 - b, y0))
-  
-  # Ellipse x maximum
-  if (theta > 0) and (x0 + b > x0 - d):
-    vertices.append((x0 + b, y0))
-  elif (theta <= 0) and (x0 + b < x0 - d):
-    vertices.append((x0 + b, y0))
-  
-  # Compute the ellipse-occultor intersection points
-  roots = Roots(ro, x0, y0, a, b)
-  for root in roots:
+    '''
     
-    if ((theta > 0) and (root > x0 - d)) or ((theta <= 0) and (root < x0 - d)):
+    self.x0 = x0
+    self.y0 = y0
+    self.r = r
+    v1 = (self.x0 - self.r, self.y0)
+    v2 = (self.x0 + self.r, self.y0)
+    self.vertices = [v1, v2]
+    self.xmin = self.x0 - self.r
+    self.xmax = self.x0 + self.r
+  
+  def get_latitude(self, x, y, theta):
+    '''
+  
+    '''
+  
+    alpha = (x - self.x0) / (self.r * np.sin(theta))
+    beta = 1 / np.tan(theta)
+    gamma = (y - self.y0) / self.r
+    c1 = 4 * alpha ** 2 * beta ** 2
+    c2 = 1 + beta ** 2
+    c3 = alpha ** 2 + gamma ** 2 + beta ** 2
+    b = (c1 - 2 * c2 * c3) / c2 ** 2
+    c = (c3 ** 2 - c1) / c2 ** 2
+    z0 = (-b + np.sqrt(b ** 2 - 4 * c)) / 2
+    z1 = (-b - np.sqrt(b ** 2 - 4 * c)) / 2
+    if (z0 >= 0) and (z0 <= 1):
+      lat = np.arcsin(z0)
+    elif (z1 >= 0) and (z1 <= 1):
+      lat = np.arcsin(z1)
+    else:
+      lat = np.nan
+      
+    return lat
+  
+  def val_upper(self, x):
+    '''
+    
+    '''
+    
+    A = self.r ** 2 - (x - self.x0) ** 2
+    if hasattr(x, '__len__'):
+      A[np.abs(A) < 1e-15] = 0
+      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
+    else:
+      if np.abs(A) < 1e-15:
+        A = 0
+      if (x > self.xmax) or (x < self.xmin):
+        return np.nan
+    return self.y0 + np.sqrt(A)
 
-      eup = EllipseUpper(root, x0, y0, a, b)
-      elo = EllipseLower(root, x0, y0, a, b)
-      oup = EllipseUpper(root, 0, 0, ro, ro)
-      olo = EllipseLower(root, 0, 0, ro, ro)
+  def val_lower(self, x):
+    '''
     
-      if (np.abs(eup - oup) < 1e-7) or (np.abs(eup - olo) < 1e-7):
-        vertices.append((root, eup))
-      elif (np.abs(elo - oup) < 1e-7) or (np.abs(elo - olo) < 1e-7):
-        vertices.append((root, elo))
+    '''
     
-  return (x, ybot, ytop, vertices)
+    A = self.r ** 2 - (x - self.x0) ** 2
+    if hasattr(x, '__len__'):
+      A[np.abs(A) < 1e-15] = 0
+      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
+    else:
+      if np.abs(A) < 1e-15:
+        A = 0
+      if (x > self.xmax) or (x < self.xmin):
+        return np.nan
+    return self.y0 - np.sqrt(A)
+  
+  def int_upper(self, x0, x1):
+    '''
+    
+    '''
+    
+    # Check if out of bounds
+    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
+      return np.nan
+    
+    F = [0, 0]
+    for i, x in enumerate((x0, x1)):
+      y = x - self.x0
+      z = np.sqrt((self.r - y) * (self.r + y))
+      F[i] = (1 / 2.) * (y * z + self.r ** 2 * np.arctan(y / z)) + self.y0 * x
+    return F[1] - F[0]
+
+  def int_lower(self, x0, x1):
+    '''
+    
+    '''
+    
+    # Check if out of bounds
+    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
+      return np.nan
+    
+    F = [0, 0]
+    for i, x in enumerate((x0, x1)):
+      y = x - self.x0
+      z = np.sqrt((self.r - y) * (self.r + y))
+      F[i] = -(1 / 2.) * (y * z + self.r ** 2 * np.arctan(y / z)) + self.y0 * x
+    return F[1] - F[0]
+  
+  @property
+  def curves(self):
+    '''
+    
+    '''
+    
+    return [self.val_lower, self.val_upper]
+  
+  @property
+  def integrals(self):
+    '''
+    
+    '''
+    
+    return [self.int_lower, self.int_upper]
+    
+class Ellipse(object):
+  '''
+  
+  '''
+  
+  def __init__(self, planet, occultor, latitude, theta):
+    '''
+    
+    '''
+    
+    # The surface brightness in this region
+    self.F = np.cos(latitude)
+    
+    # Generate the ellipse
+    self.a = planet.r * np.abs(np.sin(latitude))
+    self.b = self.a * np.abs(np.sin(theta))
+    self.x0 = planet.x0 - planet.r * np.cos(latitude) * np.cos(theta)
+    self.y0 = planet.y0
+    
+    # The x position of the limb
+    self.xlimb = planet.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
+    
+    # Compute the vertices
+    self.vertices = []
+    
+    # Ellipse-planet intersections
+    if self.b ** 2 >= self.xlimb ** 2:
+      x = self.x0 - self.xlimb
+      y = self.a / self.b * np.sqrt(self.b ** 2 - self.xlimb ** 2)
+      self.vertices.append((x, self.y0 - y))
+      self.vertices.append((x, self.y0 + y))
+  
+    # Ellipse x minimum
+    if ((theta > 0) and (self.b < self.xlimb)) or ((theta <= 0) and (self.b > self.xlimb)):
+      self.vertices.append((self.x0 - self.b, self.y0))
+      self.xmin = self.x0 - self.b
+    else:
+      self.xmin = self.x0 - self.xlimb
+      
+    # Ellipse x maximum
+    if ((theta > 0) and (self.b > -self.xlimb)) or ((theta <= 0) and (self.b < -self.xlimb)):
+      self.vertices.append((self.x0 + self.b, self.y0))
+      self.xmax = self.x0 + self.b
+    else:
+      self.xmax = self.x0 - self.xlimb
+      
+    # Ellipse-occultor intersections
+    for root in Roots(occultor, self):
+      if ((theta > 0) and (root > self.x0 - self.xlimb)) or ((theta <= 0) and (root < self.x0 - self.xlimb)):
+        eup = self.val_upper(root)
+        elo = self.val_lower(root)
+        oup = occultor.val_upper(root)
+        olo = occultor.val_lower(root)
+        if (np.abs(eup - oup) < 1e-10):
+          self.vertices.append((root, eup))
+        elif (np.abs(eup - olo) < 1e-10):
+          self.vertices.append((root, eup))
+        elif (np.abs(elo - oup) < 1e-10):
+          self.vertices.append((root, elo))
+        elif (np.abs(elo - olo) < 1e-10):
+          self.vertices.append((root, elo))
+    
+  def val_upper(self, x):
+    '''
+    
+    '''
+    
+    A = self.b ** 2 - (x - self.x0) ** 2
+    if hasattr(x, '__len__'):
+      A[np.abs(A) < 1e-15] = 0
+      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
+    else:
+      if np.abs(A) < 1e-15:
+        A = 0
+      if (x > self.xmax) or (x < self.xmin):
+        return np.nan
+    return self.y0 + (self.a / self.b) * np.sqrt(A)
+
+  def val_lower(self, x):
+    '''
+    
+    '''
+    
+    A = self.b ** 2 - (x - self.x0) ** 2
+    if hasattr(x, '__len__'):
+      A[np.abs(A) < 1e-15] = 0
+      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
+    else:
+      if np.abs(A) < 1e-15:
+        A = 0
+      if (x > self.xmax) or (x < self.xmin):
+        return np.nan
+    return self.y0 - (self.a / self.b) * np.sqrt(A)
+  
+  def int_upper(self, x0, x1):
+    '''
+    
+    '''
+    
+    # Check if out of bounds
+    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
+      return np.nan
+    
+    F = [0, 0]
+    for i, x in enumerate((x0, x1)):
+      y = x - self.x0
+      z = np.sqrt((self.b - y) * (self.b + y))
+      F[i] = (self.a / (2 * self.b)) * (y * z + self.b ** 2 * np.arctan(y / z)) + self.y0 * x
+    return F[1] - F[0]
+
+  def int_lower(self, x0, x1):
+    '''
+    
+    '''
+    
+    # Check if out of bounds
+    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
+      return np.nan
+    
+    F = [0, 0]
+    for i, x in enumerate((x0, x1)):
+      y = x - self.x0
+      z = np.sqrt((self.b - y) * (self.b + y))
+      F[i] = -(self.a / (2 * self.b)) * (y * z + self.b ** 2 * np.arctan(y / z)) + self.y0 * x
+    return F[1] - F[0]
+
+  @property
+  def curves(self):
+    '''
+    
+    '''
+    
+    return [self.val_lower, self.val_upper]
+  
+  @property
+  def integrals(self):
+    '''
+    
+    '''
+    
+    return [self.int_lower, self.int_upper]
+
+class Occultor(Planet):
+  '''
+  
+  '''
+  
+  def __init__(self, r, planet):
+    '''
+    
+    '''
+    
+    # Initialize
+    super(Occultor, self).__init__(0, 0, r)
+    
+    # Compute vertices of intersection with the planet
+    # Adapted from http://mathworld.wolfram.com/Circle-CircleIntersection.html
+    d = np.sqrt(planet.x0 ** 2 + planet.y0 ** 2)
+    if d <= (self.r + planet.r):
+      y = np.sqrt((-d + planet.r - self.r) * (-d - planet.r + self.r) * (-d + planet.r + self.r) * (d + planet.r + self.r)) / (2 * d)
+      x = (d ** 2 - planet.r ** 2 + self.r ** 2) / (2 * d)
+      cost = -planet.x0 / d
+      sint = -planet.y0 / d
+      x1 = -x * cost + y * sint
+      y1 = -x * sint - y * cost
+      x2 = -x * cost - y * sint
+      y2 = -x * sint + y * cost
+      
+      '''
+      # Now figure out which integrals correspond to these vertices
+      if y1 < 0:
+        vo1 = self.val_lower
+        io1 = self.int_lower
+      else:
+        vo1 = self.val_upper
+        io1 = self.int_upper
+      if y2 < 0:
+        vo2 = self.val_lower
+        io2 = self.int_lower
+      else:
+        vo2 = self.val_upper
+        io2 = self.int_upper
+      if y1 < planet.y0:
+        vp1 = planet.val_lower
+        ip1 = planet.int_lower
+      else:
+        vp1 = planet.val_upper
+        ip1 = planet.int_upper
+      if y2 < planet.y0:
+        vp2 = planet.val_lower
+        ip2 = planet.int_lower
+      else:
+        vp2 = planet.val_upper
+        ip2 = planet.int_upper
+      '''
+      
+      # We're done!
+      self.vertices.append((x1, y1))
+      self.vertices.append((x2, y2))
+
+debug = True
 
 # Set up the figure
 fig, ax = pl.subplots(1, figsize = (7,7))
 ax.set_xlim(-3,3)
 ax.set_ylim(-3,3)
-axslider = pl.axes([0.15, 0.05, 0.7, 0.03])
-slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = 0)
+axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
+slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
 
 # The latitude grid
-latitude = np.linspace(0, np.pi / 2, 5)[1:]
-
-
-
-# Occultor
-xo = 0
-yo = 0
-ro = 1
-vo = [(xo - ro, yo), (xo + ro, yo)]
+latitude = [np.pi / 2] #debug np.linspace(0, np.pi / 2, 5)[1:]
 
 # Planet (occulted)
-xp = -1
-yp = -0.5
-rp = 1.25
-vp = [(xp - rp, yp), (xp + rp, yp)]
+planet = Planet(0.5, -1.25, 1.25)
+
+# Occultor (always at the origin)
+occultor = Occultor(1, planet)
 
 # Arrays for plotting
-xparr = np.linspace(xp - rp, xp + rp, 1000)
-yparrbot = yp - np.sqrt(rp ** 2 - (xparr - xp) ** 2)
-yparrtop = yp + np.sqrt(rp ** 2 - (xparr - xp) ** 2)
-xoarr = np.linspace(xo - ro, xo + ro, 1000)
-yoarrbot = yo - np.sqrt(ro ** 2 - (xoarr - xo) ** 2)
-yoarrtop = yo + np.sqrt(ro ** 2 - (xoarr - xo) ** 2)
+xp = np.linspace(planet.x0 - planet.r, planet.x0 + planet.r, 1000)
+yp0 = planet.val_lower(xp)
+yp1 = planet.val_upper(xp)
+xo = np.linspace(-occultor.r, occultor.r, 1000)
+yo0 = occultor.val_lower(xo)
+yo1 = occultor.val_upper(xo)
 
-def update(val):
+def compute(theta):
   '''
   
   '''
+  
+  tol = 1e-10
+  flux = []
+  
+  # Avoid the singular point
+  if theta == 0:
+    theta = tol
+  
+  # Compute the ellipses
+  ellipses = [Ellipse(planet, occultor, lat, theta) for lat in latitude]
+  shapes = [planet, occultor] + ellipses
+  
+  # Get the curves and their integrals
+  curves = []
+  integrals = []
+  for shape in shapes:
+    curves.extend(shape.curves)
+    integrals.extend(shape.integrals)
+  
+  # Compute the vertices inside both the occultor and the planet and sort them
+  vertices = []
+  for shape in shapes:
+    vertices.extend(shape.vertices)
+  vin = []
+  for v in vertices:
+    x, y = v
+    if (x ** 2 + y ** 2 <= occultor.r ** 2 + tol) and ((x - planet.x0) ** 2 + (y - planet.y0) ** 2 <= planet.r ** 2 + tol) :
+      vin.append((x, y))
+  vertices = sorted(list(set(vin)))
+  
+  # Get tuples of integration limits
+  limits = list(zip(vertices[:-1], vertices[1:]))
+
+  # Loop over all the sub-regions and compute their fluxes
+  for i, lim in enumerate(limits):
+    
+    # The integration limits
+    (xleft, _), (xright, _) = lim
+          
+    # Bisect the limits. Find the boundary functions that are
+    # finite valued at this point and sort their integrals 
+    # in order of increasing function value.
+    x = (xleft + xright) / 2
+    vals = []
+    ints = []
+    for curve, integral in zip(curves, integrals):
+      y = curve(x)
+      if np.isfinite(y) and (x ** 2 + y ** 2 <= occultor.r ** 2 + tol) and ((x - planet.x0) ** 2 + (y - planet.y0) ** 2 <= planet.r ** 2 + tol):
+        vals.append(y)
+        ints.append(integral)
+    order = np.argsort(np.array(vals))
+    ints = [ints[j] for j in order]
+    vals = [vals[j] for j in order]
+    
+    # The areas are just the difference of successive integrals
+    for int1, int0, y1, y0 in zip(ints[1:], ints[:-1], vals[1:], vals[:-1]):
+      area = int1(xleft, xright) - int0(xleft, xright)
+      
+      # Get the latitude of the midpoint
+      lat = planet.get_latitude(x, (y1 + y0) / 2, theta)
+      
+      print(x, y, lat * 180/np.pi)
+      
+      f = 1
+      
+      flux.append(f * area)
+
+    '''
+    # Print info?
+    if debug:
+      obj_upper, bound_upper = re.match('<bound method (.*?).int_(.*?) of', intupper.__str__()).groups()
+      obj_upper = obj_upper.lower()
+      obj_lower, bound_lower = re.match('<bound method (.*?).int_(.*?) of', intlower.__str__()).groups()
+      obj_lower = obj_lower.lower()
+      print('%.3f: Integral between the %s curve of the %s and the %s curve of the %s from x = %.3f to x = %.3f.' % (area, bound_lower, obj_lower, bound_upper, obj_upper, xleft, xright))
+    '''
+    
+  # Total flux
+  flux = np.sum(flux)
+    
+  return flux, ellipses, vertices
+
+def update(theta):
+  '''
+  
+  '''
+  
+  flux, ellipses, vertices = compute(theta)
   
   # Set up plot
   ax.clear()
-  ax.set_xlim(xp - 1.25 * rp, xp + 1.25 * rp)
-  ax.set_ylim(yp - 1.25 * rp, yp + 1.25 * rp)
+  ax.set_xlim(planet.x0 - 1.25 * planet.r, planet.x0 + 1.25 * planet.r)
+  ax.set_ylim(planet.y0 - 1.25 * planet.r, planet.y0 + 1.25 * planet.r)
   
-  # Plot the planet and its vertices
-  ax.plot(xparr, yparrbot, color = 'k')
-  ax.plot(xparr, yparrtop, color = 'k')
+  # Plot the planet
+  ax.plot(xp, yp0, color = 'k')
+  ax.plot(xp, yp1, color = 'k')
   
-  # Compute and plot lines of constant surface brightness
-  vertices = []
-  theta = slider.val
-  if theta == 0:
-    theta = 1e-7
-  for l in latitude:
-  
-    # Compute the ellipse
-    xearr, yearrbot, yearrtop, ve = Ellipse(l, rp = rp, xp = xp, yp = yp, theta = theta, ro = ro)
-    ax.plot(xearr, yearrbot, lw = 2, color = color(l / np.pi))
-    ax.plot(xearr, yearrtop, lw = 2, color = color(l / np.pi))
-    vertices.extend(ve)
-    
   # Plot the occultor
-  ax.plot(xoarr, yoarrbot, color = 'k')
-  ax.plot(xoarr, yoarrtop, color = 'k')
+  ax.plot(xo, yo0, color = 'k', zorder = 99)
+  ax.plot(xo, yo1, color = 'k', zorder = 99)
   
-  # Compute the planet-occultor intersection points, if they exist
-  d = np.sqrt((xo - xp) ** 2 + (yo - yp) ** 2)
-  if d <= (ro + rp):
-    y = np.sqrt((-d + rp - ro) * (-d - rp + ro) * (-d + rp + ro) * (d + rp + ro)) / (2 * d)
-    x = (d ** 2 - rp ** 2 + ro ** 2) / (2 * d)
-    cost = (xo - xp) / d
-    sint = (yo - yp) / d
-    x1 = -x * cost + y * sint
-    y1 = -x * sint - y * cost
-    x2 = -x * cost - y * sint
-    y2 = -x * sint + y * cost
-    vertices.append((x1, y1))
-    vertices.append((x2, y2))
+  # Plot the ellipses
+  for ellipse in ellipses:
 
+    # First identify and remove points behind the limb
+    x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
+    if theta > 0:
+      x[x < ellipse.x0 - ellipse.xlimb] = np.nan
+    else:
+      x[x > ellipse.x0 - ellipse.xlimb] = np.nan
 
+    ax.plot(x, ellipse.val_lower(x), lw = 2, color = color(ellipse.F))
+    ax.plot(x, ellipse.val_upper(x), lw = 2, color = color(ellipse.F))
 
-  # Combine, sort, and plot the vertices
-  vertices.extend(vp)
-  vertices.extend(vo)
-  vertices = np.array(sorted(list(set(vertices))))
-  for x, y in vertices:
-    ax.plot(x, y, 'ro', ms = 4)
-      
+  # Plot the vertices  
+  for v in vertices:
+    ax.plot(v[0], v[1], 'o', color = 'k', ms = 4)
+  
+  # Report the flux
+  ax.set_title('%.4f' % flux)
+  
+  # Re-draw!
   fig.canvas.draw_idle()
+  
 slider.on_changed(update)
-update(0)
+update(-np.pi / 8)
 
 pl.show()
