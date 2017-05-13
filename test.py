@@ -62,7 +62,20 @@ class Planet(object):
     '''
   
     '''
-  
+    
+    # Where is the terminator for this value of `y`?
+    if (theta <= 0):
+      xterm = self.x0 - (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
+    else:
+      xterm = self.x0 + (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
+    
+    # If we are beyond the terminator, return the latitude of the pole
+    # TODO: Allow nightside temperature gradients
+    if (x > xterm):
+      return np.pi / 2
+    
+    # Otherwise, compute the latitude. We will solve
+    # a quadratic equation for z = sin(lat) **  2  
     alpha = (x - self.x0) / (self.r * np.sin(theta))
     beta = 1 / np.tan(theta)
     gamma = (y - self.y0) / self.r
@@ -73,14 +86,30 @@ class Planet(object):
     c = (c3 ** 2 - c1) / c2 ** 2
     z0 = (-b + np.sqrt(b ** 2 - 4 * c)) / 2
     z1 = (-b - np.sqrt(b ** 2 - 4 * c)) / 2
-    if (z0 >= 0) and (z0 <= 1):
-      lat = np.arcsin(z0)
-    elif (z1 >= 0) and (z1 <= 1):
-      lat = np.arcsin(z1)
-    else:
-      lat = np.nan
-      
-    return lat
+    
+    # We have two possible solutions. But only one is on the
+    # observer's side of the planet. TODO: Speed this up?
+    for z in (z0, z1):
+      if (z >= 0) and (z <= 1):
+        a = self.r * np.abs(np.sqrt(z))
+        b = a * np.abs(np.sin(theta))
+        x0 = self.x0 - self.r * np.sqrt(1 - z) * np.cos(theta)
+        y0 = self.y0
+        dx = (b / a) * np.sqrt(a ** 2 - (y - y0) ** 2)
+        xlimb = self.r * np.sqrt(1 - z) * np.sin(theta) * np.tan(theta)
+        if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
+          xmin = x0 - b
+        else:
+          xmin = x0 - xlimb
+        if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
+          xmax = x0 + b
+        else:
+          xmax = x0 - xlimb
+        if (x >= xmin) and (x <= xmax): 
+          if ((np.abs(x - (x0 + dx)) < 1e-7) or (np.abs(x - (x0 - dx)) < 1e-7)):
+            return np.arcsin(np.sqrt(z))
+
+    return np.nan
   
   def val_upper(self, x):
     '''
@@ -171,15 +200,13 @@ class Ellipse(object):
     '''
     
     '''
-    
-    # The surface brightness in this region
-    self.F = np.cos(latitude)
-    
+
     # Generate the ellipse
     self.a = planet.r * np.abs(np.sin(latitude))
     self.b = self.a * np.abs(np.sin(theta))
     self.x0 = planet.x0 - planet.r * np.cos(latitude) * np.cos(theta)
     self.y0 = planet.y0
+    self.latitude = latitude
     
     # The x position of the limb
     self.xlimb = planet.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
@@ -329,35 +356,7 @@ class Occultor(Planet):
       y1 = -x * sint - y * cost
       x2 = -x * cost - y * sint
       y2 = -x * sint + y * cost
-      
-      '''
-      # Now figure out which integrals correspond to these vertices
-      if y1 < 0:
-        vo1 = self.val_lower
-        io1 = self.int_lower
-      else:
-        vo1 = self.val_upper
-        io1 = self.int_upper
-      if y2 < 0:
-        vo2 = self.val_lower
-        io2 = self.int_lower
-      else:
-        vo2 = self.val_upper
-        io2 = self.int_upper
-      if y1 < planet.y0:
-        vp1 = planet.val_lower
-        ip1 = planet.int_lower
-      else:
-        vp1 = planet.val_upper
-        ip1 = planet.int_upper
-      if y2 < planet.y0:
-        vp2 = planet.val_lower
-        ip2 = planet.int_lower
-      else:
-        vp2 = planet.val_upper
-        ip2 = planet.int_upper
-      '''
-      
+
       # We're done!
       self.vertices.append((x1, y1))
       self.vertices.append((x2, y2))
@@ -372,7 +371,23 @@ axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
 slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
 
 # The latitude grid
-latitude = [np.pi / 2] #debug np.linspace(0, np.pi / 2, 5)[1:]
+latitude = np.linspace(0, np.pi / 2, 5)[1:]
+def surf_brightness(lat):
+  '''
+  
+  '''
+  
+  grid = np.concatenate(([0], latitude, [np.pi]))
+  i = np.argmax(lat < grid) - 1
+  return np.cos(grid[i])
+
+# DEBUG
+#pl.close()
+#x = np.linspace(0, np.pi / 2 + 0.01, 100)
+#pl.plot(x, [surf_brightness(xi) for xi in x])
+#pl.show()
+#quit()
+
 
 # Planet (occulted)
 planet = Planet(0.5, -1.25, 1.25)
@@ -450,13 +465,11 @@ def compute(theta):
     for int1, int0, y1, y0 in zip(ints[1:], ints[:-1], vals[1:], vals[:-1]):
       area = int1(xleft, xright) - int0(xleft, xright)
       
-      # Get the latitude of the midpoint
-      lat = planet.get_latitude(x, (y1 + y0) / 2, theta)
-      
-      print(x, y, lat * 180/np.pi)
-      
-      f = 1
-      
+      # Get the latitude of the midpoint and
+      # the corresponding surface brightness
+      y = (y1 + y0) / 2
+      lat = planet.get_latitude(x, y, theta)
+      f = surf_brightness(lat)
       flux.append(f * area)
 
     '''
@@ -504,8 +517,8 @@ def update(theta):
     else:
       x[x > ellipse.x0 - ellipse.xlimb] = np.nan
 
-    ax.plot(x, ellipse.val_lower(x), lw = 2, color = color(ellipse.F))
-    ax.plot(x, ellipse.val_upper(x), lw = 2, color = color(ellipse.F))
+    ax.plot(x, ellipse.val_lower(x), lw = 2, color = color(np.cos(ellipse.latitude)))
+    ax.plot(x, ellipse.val_upper(x), lw = 2, color = color(np.cos(ellipse.latitude)))
 
   # Plot the vertices  
   for v in vertices:
@@ -513,7 +526,7 @@ def update(theta):
   
   # Report the flux
   ax.set_title('%.4f' % flux)
-  
+    
   # Re-draw!
   fig.canvas.draw_idle()
   
