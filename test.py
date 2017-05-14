@@ -165,7 +165,7 @@ class Planet(Circle):
   
   '''
   
-  def __init__(self, x0, y0, r, theta, occultor, n = 11, noon = 1, midnight = 0.25):
+  def __init__(self, x0, y0, r, theta, occultor, n = 1, noon = 0.3, midnight = 0.01):
     '''
     
     '''
@@ -402,9 +402,9 @@ class Planet(Circle):
           import pdb; pdb.set_trace()
       
     # Total flux
-    self.dflux = -np.sum(flux)
+    self.flux = -np.sum(flux)
   
-    return self.dflux
+    return self.flux
   
 class Ellipse(object):
   '''
@@ -573,8 +573,8 @@ class Interactive(object):
     self.planet = Planet(1.35, -0.75, 1., np.pi / 8, self.occultor, **kwargs)
     
     # Set up the figure
-    self.fig, self.ax = pl.subplots(1, figsize = (7,7))
-    self.fig.subplots_adjust(bottom = 0.2)
+    self.fig = pl.figure(figsize = (6,7))
+    self.ax = pl.axes([0.125, 0.2, 0.8, 0.625])
     self.ax.set_xlim(-3,3)
     self.ax.set_ylim(-3,3)
     
@@ -583,6 +583,17 @@ class Interactive(object):
     self.dummy = Circle(0, 0, 1)
     self.ylower = self.dummy.val_lower(self.x)
     self.yupper = self.dummy.val_upper(self.x)
+    
+    # The light curve
+    self.axlc = pl.axes([0.125, 0.85, 0.8, 0.1])
+    self.time = np.array(np.arange(100), dtype = float)
+    self.flux = np.ones_like(self.time)
+    self.lc, = self.axlc.plot(self.time, self.flux, 'k-', ms = 2, lw = 1, alpha = 0.75)
+    self.lcr, = self.axlc.plot(self.time[-1], self.flux[-1], 'ro', ms = 3)
+    self.lcl = self.axlc.annotate('%.3f' % self.flux[-1], xy = (101, self.flux[-1]), 
+                                   fontsize = 6, color = 'r', ha = 'left', va = 'center')
+    self.axlc.set_xlim(0, 110)
+    self.axlc.set_xticks([])  
     
     # The theta slider
     self.axtheta = pl.axes([0.125, 0.035, 0.725, 0.02])
@@ -656,7 +667,7 @@ class Interactive(object):
   
     '''
     
-    flux = self.planet.compute()
+    self.planet.compute()
     ellipses = self.planet.ellipses
     vertices = self.planet.vertices
   
@@ -689,14 +700,22 @@ class Interactive(object):
 
     # Plot the vertices  
     for v in vertices:
-      self.ax.plot(v[0] - self.planet.x0, v[1] - self.planet.y0, 'o', color = 'k', ms = 4)
-  
-    # Report the flux
-    self.ax.set_title('%.4f' % flux)
+      self.ax.plot(v[0] - self.planet.x0, v[1] - self.planet.y0, 'o', color = 'k', ms = 3)
+    
+    # Update the light curve
+    self.flux = np.roll(self.flux, -1)
+    self.flux[-1] = 1 + self.planet.flux
+    self.lc.set_ydata(self.flux)
+    self.lcr.set_ydata(self.flux[-1])
+    ymin = self.flux.min()
+    ymax = self.flux.max()
+    ypad = max(0.1, (ymax - ymin) * 0.1)
+    self.axlc.set_ylim(ymin - ypad, ymax + ypad)
+    self.lcl.set_text('%.3f' % self.flux[-1])
+    self.lcl.set_y(self.flux[-1])
     
     # Re-draw!
     self.fig.canvas.draw_idle()
-
 
 # Interactive plot
 Interactive()
