@@ -4,6 +4,7 @@ import re
 import numpy as np
 np.seterr(invalid = 'ignore')
 color = pl.get_cmap('plasma')
+TOL = 1e-10
 
 def Roots(planet, ellipse):
   '''
@@ -361,7 +362,6 @@ class Occultor(Planet):
       self.vertices.append((x1, y1))
       self.vertices.append((x2, y2))
 
-debug = True
 
 # Set up the figure
 fig, ax = pl.subplots(1, figsize = (7,7))
@@ -371,7 +371,7 @@ axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
 slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
 
 # The latitude grid
-latitude = np.linspace(0, np.pi / 2, 5)[1:]
+latitude = np.linspace(0, np.pi / 2, 25)[1:]
 def surf_brightness(lat):
   '''
   
@@ -393,7 +393,7 @@ def surf_brightness(lat):
 planet = Planet(0.5, -1.25, 1.25)
 
 # Occultor (always at the origin)
-occultor = Occultor(1, planet)
+occultor = Occultor(1., planet)
 
 # Arrays for plotting
 xp = np.linspace(planet.x0 - planet.r, planet.x0 + planet.r, 1000)
@@ -408,12 +408,11 @@ def compute(theta):
   
   '''
   
-  tol = 1e-10
   flux = []
   
   # Avoid the singular point
   if theta == 0:
-    theta = tol
+    theta = TOL
   
   # Compute the ellipses
   ellipses = [Ellipse(planet, occultor, lat, theta) for lat in latitude]
@@ -433,7 +432,7 @@ def compute(theta):
   vin = []
   for v in vertices:
     x, y = v
-    if (x ** 2 + y ** 2 <= occultor.r ** 2 + tol) and ((x - planet.x0) ** 2 + (y - planet.y0) ** 2 <= planet.r ** 2 + tol) :
+    if (x ** 2 + y ** 2 <= occultor.r ** 2 + TOL) and ((x - planet.x0) ** 2 + (y - planet.y0) ** 2 <= planet.r ** 2 + TOL) :
       vin.append((x, y))
   vertices = sorted(list(set(vin)))
   
@@ -445,7 +444,17 @@ def compute(theta):
     
     # The integration limits
     (xleft, _), (xright, _) = lim
-          
+    
+    # Check if they are identical
+    if xright - TOL <= xleft + TOL:
+      continue
+      
+    # Perturb them for numerical stability, as we
+    # need to ensure the functions are finite valued
+    # at the limits.
+    xleft += TOL
+    xright -= TOL
+    
     # Bisect the limits. Find the boundary functions that are
     # finite valued at this point and sort their integrals 
     # in order of increasing function value.
@@ -454,7 +463,7 @@ def compute(theta):
     ints = []
     for curve, integral in zip(curves, integrals):
       y = curve(x)
-      if np.isfinite(y) and (x ** 2 + y ** 2 <= occultor.r ** 2 + tol) and ((x - planet.x0) ** 2 + (y - planet.y0) ** 2 <= planet.r ** 2 + tol):
+      if np.isfinite(y) and (x ** 2 + y ** 2 <= occultor.r ** 2 + TOL) and ((x - planet.x0) ** 2 + (y - planet.y0) ** 2 <= planet.r ** 2 + TOL):
         vals.append(y)
         ints.append(integral)
     order = np.argsort(np.array(vals))
@@ -472,16 +481,6 @@ def compute(theta):
       f = surf_brightness(lat)
       flux.append(f * area)
 
-    '''
-    # Print info?
-    if debug:
-      obj_upper, bound_upper = re.match('<bound method (.*?).int_(.*?) of', intupper.__str__()).groups()
-      obj_upper = obj_upper.lower()
-      obj_lower, bound_lower = re.match('<bound method (.*?).int_(.*?) of', intlower.__str__()).groups()
-      obj_lower = obj_lower.lower()
-      print('%.3f: Integral between the %s curve of the %s and the %s curve of the %s from x = %.3f to x = %.3f.' % (area, bound_lower, obj_lower, bound_upper, obj_upper, xleft, xright))
-    '''
-    
   # Total flux
   flux = np.sum(flux)
     
