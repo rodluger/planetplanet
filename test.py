@@ -3,7 +3,8 @@ from matplotlib.widgets import Slider
 import re
 import numpy as np
 np.seterr(invalid = 'ignore')
-color = pl.get_cmap('plasma')
+cmap = pl.get_cmap('RdBu_r')
+color = lambda x: cmap(0.5 * (x + 1))
 TOL = 1e-10
 
 def Roots(planet, ellipse):
@@ -64,18 +65,7 @@ class Planet(object):
   
     '''
     
-    # Where is the terminator for this value of `y`?
-    if (theta <= 0):
-      xterm = self.x0 - (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
-    else:
-      xterm = self.x0 + (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
-    
-    # If we are beyond the terminator, return the latitude of the pole
-    # TODO: Allow nightside temperature gradients
-    if (x > xterm):
-      return np.pi / 2
-    
-    # Otherwise, compute the latitude. We will solve
+    # Compute the latitude. We will solve
     # a quadratic equation for z = sin(lat) **  2  
     alpha = (x - self.x0) / (self.r * np.sin(theta))
     beta = 1 / np.tan(theta)
@@ -88,28 +78,72 @@ class Planet(object):
     z0 = (-b + np.sqrt(b ** 2 - 4 * c)) / 2
     z1 = (-b - np.sqrt(b ** 2 - 4 * c)) / 2
     
-    # We have two possible solutions. But only one is on the
-    # observer's side of the planet. TODO: Speed this up?
-    for z in (z0, z1):
-      if (z >= 0) and (z <= 1):
-        a = self.r * np.abs(np.sqrt(z))
-        b = a * np.abs(np.sin(theta))
-        x0 = self.x0 - self.r * np.sqrt(1 - z) * np.cos(theta)
-        y0 = self.y0
-        dx = (b / a) * np.sqrt(a ** 2 - (y - y0) ** 2)
-        xlimb = self.r * np.sqrt(1 - z) * np.sin(theta) * np.tan(theta)
-        if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
-          xmin = x0 - b
-        else:
-          xmin = x0 - xlimb
-        if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
-          xmax = x0 + b
-        else:
-          xmax = x0 - xlimb
-        if (x >= xmin) and (x <= xmax): 
-          if ((np.abs(x - (x0 + dx)) < 1e-7) or (np.abs(x - (x0 - dx)) < 1e-7)):
-            return np.arcsin(np.sqrt(z))
-
+    # Where is the terminator for this value of `y`?
+    if (theta <= 0):
+      xterm = self.x0 - (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
+    else:
+      xterm = self.x0 + (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
+    
+    
+    # DEBUG
+    #if x <= xterm:
+    #  return 0
+    #else:
+    #  return np.pi
+    
+    
+    # Are we on the dayside?
+    if x <= xterm:
+    
+      # We have two possible solutions. But only one is on the
+      # observer's side of the planet. TODO: Speed this up?
+      for z in (z0, z1):
+        if (z >= 0) and (z <= 1):
+          a = self.r * np.abs(np.sqrt(z))
+          b = a * np.abs(np.sin(theta))
+          x0 = self.x0 - self.r * np.sqrt(1 - z) * np.cos(theta)
+          y0 = self.y0
+          dx = (b / a) * np.sqrt(a ** 2 - (y - y0) ** 2)
+          xlimb = self.r * np.sqrt(1 - z) * np.sin(theta) * np.tan(theta)
+          if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
+            xmin = x0 - b
+          else:
+            xmin = x0 - xlimb
+          if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
+            xmax = x0 + b
+          else:
+            xmax = x0 - xlimb
+          if (x >= xmin) and (x <= xmax): 
+            if ((np.abs(x - (x0 + dx)) < TOL) or (np.abs(x - (x0 - dx)) < TOL)):
+              return np.arcsin(np.sqrt(z))
+    
+    # Or the nightside?
+    else:
+      
+      return np.pi - TOL
+      
+      # We have two possible solutions. But only one is on the
+      # observer's side of the planet. TODO: Speed this up?
+      for z in (z0, z1):
+        if (z >= 0) and (z <= 1):
+          a = self.r * np.abs(np.sqrt(z))
+          b = a * np.abs(np.sin(theta))
+          x0 = self.x0 + self.r * np.sqrt(1 - z) * np.cos(theta)
+          y0 = self.y0
+          dx = (b / a) * np.sqrt(a ** 2 - (y - y0) ** 2)
+          xlimb = -self.r * np.sqrt(1 - z) * np.sin(theta) * np.tan(theta)
+          if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
+            xmin = x0 - b
+          else:
+            xmin = x0 - xlimb
+          if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
+            xmax = x0 + b
+          else:
+            xmax = x0 - xlimb
+          if (x >= xmin) and (x <= xmax): 
+            if ((np.abs(x - (x0 + dx)) < TOL) or (np.abs(x - (x0 - dx)) < TOL)):
+              return np.pi - np.arcsin(np.sqrt(z))
+    
     return np.nan
   
   def val_upper(self, x):
@@ -371,29 +405,34 @@ axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
 slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
 
 # The latitude grid
-latitude = np.linspace(0, np.pi / 2, 25)[1:]
+latitude = np.linspace(0, np.pi, 9)[1:-1]
 def surf_brightness(lat):
   '''
   
   '''
   
-  grid = np.concatenate(([0], latitude, [np.pi]))
-  i = np.argmax(lat < grid) - 1
+  grid = np.concatenate(([0], latitude, [np.pi + TOL]))
+  if lat < np.pi / 2:
+    i = np.argmax(lat < grid) - 1
+  else:
+    i = np.argmax(lat < grid)
   return np.cos(grid[i])
 
+'''
 # DEBUG
-#pl.close()
-#x = np.linspace(0, np.pi / 2 + 0.01, 100)
-#pl.plot(x, [surf_brightness(xi) for xi in x])
-#pl.show()
-#quit()
-
+pl.close()
+x = np.linspace(0, np.pi, 1000)
+pl.plot(x, [surf_brightness(xi) for xi in x])
+pl.plot(x, np.cos(x))
+pl.show()
+quit()
+'''
 
 # Planet (occulted)
 planet = Planet(0.5, -1.25, 1.25)
 
 # Occultor (always at the origin)
-occultor = Occultor(1., planet)
+occultor = Occultor(3., planet)
 
 # Arrays for plotting
 xp = np.linspace(planet.x0 - planet.r, planet.x0 + planet.r, 1000)
@@ -525,7 +564,18 @@ def update(theta):
   
   # Report the flux
   ax.set_title('%.4f' % flux)
-    
+  
+  '''
+  # DEBUG
+  for i in range(100):
+    r = np.random.rand() * 1.25
+    t = np.random.rand() * 2 * np.pi
+    x = 0.5 + r * np.cos(t)
+    y = -1.25 + r * np.sin(t)
+    l = planet.get_latitude(x, y, theta)
+    ax.plot(x, y, 'o', color = color(surf_brightness(l)))
+  '''
+  
   # Re-draw!
   fig.canvas.draw_idle()
   
