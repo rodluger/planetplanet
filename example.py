@@ -27,9 +27,9 @@ def style(lat):
     return dict(color = cmap(0.5 * (coslat + 1)), ls = '-', lw = 1)
 
 # Set up
-theta = np.pi / 8
-occultor = Occultor(0.5)
-planet = Planet(0., -0.25, 1., theta, occultor, n = 31, noon = 0.3, midnight = 0.3)
+theta = -np.pi / 8
+occultor = Occultor(0.7)
+planet = Planet(0., -0.25, 1., theta, occultor, n = 11, noon = 0.3, midnight = 0.3)
 x0 = -2
 v = 4
 
@@ -90,4 +90,3 @@ for i in [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]:
 
 ax.legend(loc = 'lower left', title = 'Night/Day')
 pl.show()
-

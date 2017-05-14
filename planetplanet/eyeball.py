@@ -374,10 +374,11 @@ class Planet(Circle):
       vertices.extend(ellipse.vertices)
     
     # Keep only the vertices that are inside both the occultor and the planet and sort them
+    # TODO: I'm being very generous with the tolerance here! Check this.
     vin = []
     for v in vertices:
       x, y = v
-      if (x ** 2 + y ** 2 <= self.occultor.r ** 2 + TOL) and ((x - self.x0) ** 2 + (y - self.y0) ** 2 <= self.r ** 2 + TOL) :
+      if (x ** 2 + y ** 2 <= self.occultor.r ** 2 + 1e-1) and ((x - self.x0) ** 2 + (y - self.y0) ** 2 <= self.r ** 2 + 1e-1):
         vin.append((x, y))
     vertices = sorted(list(set(vin)))
     
@@ -559,9 +560,32 @@ class Planet(Circle):
         f = self.surf_brightness(lat)
         flux.append(f * area)
       
-        # TODO: Exception handler here
+        # DEBUG: Let's catch these NaNs
         if np.isnan(area):
-          raise Exception("The integration returned NaN!")
+          print("The integration returned NaN!")
+          pl.close()
+          fig = pl.figure(figsize = (6,6))
+          x = np.linspace(self.x0 - self.r, self.x0 + self.r, 1000)
+          pl.plot(x, self.y0 + np.sqrt(self.r ** 2 - (x - self.x0) ** 2), 'k-')
+          pl.plot(x, self.y0 - np.sqrt(self.r ** 2 - (x - self.x0) ** 2), 'k-')
+          x = np.linspace(-self.occultor.r, self.occultor.r, 1000)
+          pl.plot(x, np.sqrt(self.occultor.r ** 2 - x ** 2), 'r-')
+          pl.plot(x, -np.sqrt(self.occultor.r ** 2 - x ** 2), 'r-')
+          for ellipse in self.ellipses:
+            x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
+            if self.theta > 0:
+              x[x < ellipse.x0 - ellipse.xlimb] = np.nan
+            else:
+              x[x > ellipse.x0 - ellipse.xlimb] = np.nan
+            pl.plot(x, ellipse.val_lower(x), 'k-')
+            pl.plot(x, ellipse.val_upper(x), 'k-')          
+          for v in self.vertices:
+            pl.plot(v[0], v[1], 'o', color = 'k', ms = 3)
+          pl.xlim(self.x0 - 1.5 * self.r, self.x0 + 1.5 * self.r)
+          pl.ylim(self.y0 - 1.5 * self.r, self.y0 + 1.5 * self.r)
+          pl.axvline(xleft, color = 'r', alpha = 0.3)
+          pl.axvline(xright, color = 'r', alpha = 0.3)
+          pl.show()
           import pdb; pdb.set_trace()
       
     # Total flux
