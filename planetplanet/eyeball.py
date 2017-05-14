@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+example.py
+----------
+
+
+'''
+
+from __future__ import division, print_function, absolute_import, unicode_literals
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider
 import re
@@ -159,13 +169,166 @@ class Circle(object):
     '''
     
     return [self.int_lower, self.int_upper]
+      
+class Ellipse(object):
+  '''
+  
+  '''
+  
+  def __init__(self, planet, occultor, latitude, theta):
+    '''
     
+    '''
+
+    # Generate the ellipse
+    self.a = planet.r * np.abs(np.sin(latitude))
+    self.b = self.a * np.abs(np.sin(theta))
+    self.x0 = planet.x0 - planet.r * np.cos(latitude) * np.cos(theta)
+    self.y0 = planet.y0
+    self.latitude = latitude
+    
+    # The x position of the limb
+    self.xlimb = planet.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
+    
+    # Compute the vertices
+    self.vertices = []
+    
+    # Ellipse-planet intersections
+    if self.b ** 2 >= self.xlimb ** 2:
+      x = self.x0 - self.xlimb
+      y = self.a / self.b * np.sqrt(self.b ** 2 - self.xlimb ** 2)
+      self.vertices.append((x, self.y0 - y))
+      self.vertices.append((x, self.y0 + y))
+  
+    # Ellipse x minimum
+    if ((theta > 0) and (self.b < self.xlimb)) or ((theta <= 0) and (self.b > self.xlimb)):
+      self.vertices.append((self.x0 - self.b, self.y0))
+      self.xmin = self.x0 - self.b
+    else:
+      self.xmin = self.x0 - self.xlimb
+      
+    # Ellipse x maximum
+    if ((theta > 0) and (self.b > -self.xlimb)) or ((theta <= 0) and (self.b < -self.xlimb)):
+      self.vertices.append((self.x0 + self.b, self.y0))
+      self.xmax = self.x0 + self.b
+    else:
+      self.xmax = self.x0 - self.xlimb
+      
+    # Ellipse-occultor intersections
+    for root in Roots(occultor, self):
+      if ((theta > 0) and (root > self.x0 - self.xlimb)) or ((theta <= 0) and (root < self.x0 - self.xlimb)):
+        eup = self.val_upper(root)
+        elo = self.val_lower(root)
+        oup = occultor.val_upper(root)
+        olo = occultor.val_lower(root)
+        if (np.abs(eup - oup) < TOL):
+          self.vertices.append((root, eup))
+        elif (np.abs(eup - olo) < TOL):
+          self.vertices.append((root, eup))
+        elif (np.abs(elo - oup) < TOL):
+          self.vertices.append((root, elo))
+        elif (np.abs(elo - olo) < TOL):
+          self.vertices.append((root, elo))
+    
+  def val_upper(self, x):
+    '''
+    
+    '''
+    
+    A = self.b ** 2 - (x - self.x0) ** 2
+    if hasattr(x, '__len__'):
+      A[np.abs(A) < TOL] = 0
+      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
+    else:
+      if np.abs(A) < TOL:
+        A = 0
+      if (x > self.xmax) or (x < self.xmin):
+        return np.nan
+    return self.y0 + (self.a / self.b) * np.sqrt(A)
+
+  def val_lower(self, x):
+    '''
+    
+    '''
+    
+    A = self.b ** 2 - (x - self.x0) ** 2
+    if hasattr(x, '__len__'):
+      A[np.abs(A) < TOL] = 0
+      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
+    else:
+      if np.abs(A) < TOL:
+        A = 0
+      if (x > self.xmax) or (x < self.xmin):
+        return np.nan
+    return self.y0 - (self.a / self.b) * np.sqrt(A)
+  
+  def int_upper(self, x0, x1):
+    '''
+    
+    '''
+    
+    # Check if out of bounds
+    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
+      return np.nan
+    
+    F = [0, 0]
+    for i, x in enumerate((x0, x1)):
+      y = x - self.x0
+      z = np.sqrt((self.b - y) * (self.b + y))
+      F[i] = (self.a / (2 * self.b)) * (y * z + self.b ** 2 * np.arctan(y / z)) + self.y0 * x
+    return F[1] - F[0]
+
+  def int_lower(self, x0, x1):
+    '''
+    
+    '''
+    
+    # Check if out of bounds
+    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
+      return np.nan
+    
+    F = [0, 0]
+    for i, x in enumerate((x0, x1)):
+      y = x - self.x0
+      z = np.sqrt((self.b - y) * (self.b + y))
+      F[i] = -(self.a / (2 * self.b)) * (y * z + self.b ** 2 * np.arctan(y / z)) + self.y0 * x
+    return F[1] - F[0]
+
+  @property
+  def curves(self):
+    '''
+    
+    '''
+    
+    return [self.val_lower, self.val_upper]
+  
+  @property
+  def integrals(self):
+    '''
+    
+    '''
+    
+    return [self.int_lower, self.int_upper]
+
+class Occultor(Circle):
+  '''
+  The occultor is simply a Circle centered at the origin.
+  
+  '''
+  
+  def __init__(self, r):
+    '''
+    
+    '''
+    
+    super(Occultor, self).__init__(0, 0, r)
+
 class Planet(Circle):
   '''
   
   '''
   
-  def __init__(self, x0, y0, r, theta, occultor, n = 1, noon = 0.3, midnight = 0.01):
+  def __init__(self, x0, y0, r, theta, occultor, n = 11, noon = 0.3, midnight = 0.01):
     '''
     
     '''
@@ -339,8 +502,8 @@ class Planet(Circle):
     '''
   
     # Avoid the singular point
-    if self.theta == 0:
-      self.theta = TOL
+    if np.abs(self.theta) < 1e-3:
+      self.theta = 1e-3
     flux = []
     
     # Compute the ellipses
@@ -398,168 +561,15 @@ class Planet(Circle):
       
         # TODO: Exception handler here
         if np.isnan(area):
-          print("The integration returned NaN!")
+          raise Exception("The integration returned NaN!")
           import pdb; pdb.set_trace()
       
     # Total flux
-    self.flux = -np.sum(flux)
+    self.delta_flux = -np.sum(flux)
   
-    return self.flux
-  
-class Ellipse(object):
-  '''
-  
-  '''
-  
-  def __init__(self, planet, occultor, latitude, theta):
-    '''
-    
-    '''
+    return self.delta_flux
 
-    # Generate the ellipse
-    self.a = planet.r * np.abs(np.sin(latitude))
-    self.b = self.a * np.abs(np.sin(theta))
-    self.x0 = planet.x0 - planet.r * np.cos(latitude) * np.cos(theta)
-    self.y0 = planet.y0
-    self.latitude = latitude
-    
-    # The x position of the limb
-    self.xlimb = planet.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
-    
-    # Compute the vertices
-    self.vertices = []
-    
-    # Ellipse-planet intersections
-    if self.b ** 2 >= self.xlimb ** 2:
-      x = self.x0 - self.xlimb
-      y = self.a / self.b * np.sqrt(self.b ** 2 - self.xlimb ** 2)
-      self.vertices.append((x, self.y0 - y))
-      self.vertices.append((x, self.y0 + y))
-  
-    # Ellipse x minimum
-    if ((theta > 0) and (self.b < self.xlimb)) or ((theta <= 0) and (self.b > self.xlimb)):
-      self.vertices.append((self.x0 - self.b, self.y0))
-      self.xmin = self.x0 - self.b
-    else:
-      self.xmin = self.x0 - self.xlimb
-      
-    # Ellipse x maximum
-    if ((theta > 0) and (self.b > -self.xlimb)) or ((theta <= 0) and (self.b < -self.xlimb)):
-      self.vertices.append((self.x0 + self.b, self.y0))
-      self.xmax = self.x0 + self.b
-    else:
-      self.xmax = self.x0 - self.xlimb
-      
-    # Ellipse-occultor intersections
-    for root in Roots(occultor, self):
-      if ((theta > 0) and (root > self.x0 - self.xlimb)) or ((theta <= 0) and (root < self.x0 - self.xlimb)):
-        eup = self.val_upper(root)
-        elo = self.val_lower(root)
-        oup = occultor.val_upper(root)
-        olo = occultor.val_lower(root)
-        if (np.abs(eup - oup) < TOL):
-          self.vertices.append((root, eup))
-        elif (np.abs(eup - olo) < TOL):
-          self.vertices.append((root, eup))
-        elif (np.abs(elo - oup) < TOL):
-          self.vertices.append((root, elo))
-        elif (np.abs(elo - olo) < TOL):
-          self.vertices.append((root, elo))
-    
-  def val_upper(self, x):
-    '''
-    
-    '''
-    
-    A = self.b ** 2 - (x - self.x0) ** 2
-    if hasattr(x, '__len__'):
-      A[np.abs(A) < TOL] = 0
-      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
-    else:
-      if np.abs(A) < TOL:
-        A = 0
-      if (x > self.xmax) or (x < self.xmin):
-        return np.nan
-    return self.y0 + (self.a / self.b) * np.sqrt(A)
-
-  def val_lower(self, x):
-    '''
-    
-    '''
-    
-    A = self.b ** 2 - (x - self.x0) ** 2
-    if hasattr(x, '__len__'):
-      A[np.abs(A) < TOL] = 0
-      A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
-    else:
-      if np.abs(A) < TOL:
-        A = 0
-      if (x > self.xmax) or (x < self.xmin):
-        return np.nan
-    return self.y0 - (self.a / self.b) * np.sqrt(A)
-  
-  def int_upper(self, x0, x1):
-    '''
-    
-    '''
-    
-    # Check if out of bounds
-    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
-      return np.nan
-    
-    F = [0, 0]
-    for i, x in enumerate((x0, x1)):
-      y = x - self.x0
-      z = np.sqrt((self.b - y) * (self.b + y))
-      F[i] = (self.a / (2 * self.b)) * (y * z + self.b ** 2 * np.arctan(y / z)) + self.y0 * x
-    return F[1] - F[0]
-
-  def int_lower(self, x0, x1):
-    '''
-    
-    '''
-    
-    # Check if out of bounds
-    if (x0 > self.xmax) or (x0 < self.xmin) or (x1 > self.xmax) or (x1 < self.xmin):
-      return np.nan
-    
-    F = [0, 0]
-    for i, x in enumerate((x0, x1)):
-      y = x - self.x0
-      z = np.sqrt((self.b - y) * (self.b + y))
-      F[i] = -(self.a / (2 * self.b)) * (y * z + self.b ** 2 * np.arctan(y / z)) + self.y0 * x
-    return F[1] - F[0]
-
-  @property
-  def curves(self):
-    '''
-    
-    '''
-    
-    return [self.val_lower, self.val_upper]
-  
-  @property
-  def integrals(self):
-    '''
-    
-    '''
-    
-    return [self.int_lower, self.int_upper]
-
-class Occultor(Circle):
-  '''
-  The occultor is simply a Circle centered at the origin.
-  
-  '''
-  
-  def __init__(self, r):
-    '''
-    
-    '''
-    
-    super(Occultor, self).__init__(0, 0, r)
-  
-class Interactive(object):
+class Interact(object):
 
   def __init__(self, **kwargs):
     '''
@@ -704,7 +714,7 @@ class Interactive(object):
     
     # Update the light curve
     self.flux = np.roll(self.flux, -1)
-    self.flux[-1] = 1 + self.planet.flux
+    self.flux[-1] = 1 + self.planet.delta_flux
     self.lc.set_ydata(self.flux)
     self.lcr.set_ydata(self.flux[-1])
     ymin = self.flux.min()
@@ -716,6 +726,3 @@ class Interactive(object):
     
     # Re-draw!
     self.fig.canvas.draw_idle()
-
-# Interactive plot
-Interactive()

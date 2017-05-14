@@ -4,88 +4,90 @@
 example.py
 ----------
 
-TODO: LABELS BACKWARDS
 
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.simple import dFlux
+from planetplanet.eyeball import Planet, Occultor, Circle
 import matplotlib.pyplot as pl
+cmap = pl.get_cmap('RdBu_r')
 import numpy as np
 np.seterr(divide = 'ignore', invalid = 'ignore')
+TOL = 1e-10
 
-# Defaults
-ro = 0.75
-xo = 0
-yo = 0
-rp = 1.25
-xp = np.linspace(-3,3,1000)
-xp0 = 0.
-yp = 0.
-theta = -np.pi / 2
-fday = 1
-fnight = 0.25
-
-# Plot
-fig, ax = pl.subplots(1, figsize = (6, 6))
-fig.subplots_adjust(left = 0.15)
-angles = [-np.pi / 2, -np.pi / 4, 0, np.pi / 4, np.pi / 2]
-colors = ['r', 'g', 'b', 'y', 'k']
-
-for n, theta in enumerate(angles):
+def style(lat):
+  '''
   
-  # Plot the light curve
-  df = np.zeros(1000)
-  for i in range(1000):
-    df[i] = dFlux(xp[i], yp, rp, xo, yo, ro, theta = theta, fday = fday, fnight = fnight)
-  ax.plot(xp, df, color = colors[n], alpha = 0.75)
-
-  # Plot the image
-  axl = fig.add_axes([0.725, 0.65 - n * 0.125, 0.15, 0.1])
-  axl.xaxis.set_visible(False)
-  axl.yaxis.set_visible(False)
-  axl.axis('off')
-
-  # Draw the planet
-  x = np.linspace(xp0 - rp, xp0 + rp, 10000)
-  ytop = yp + np.sqrt(rp ** 2 - (x - xp0) ** 2)
-  ybot = yp - np.sqrt(rp ** 2 - (x - xp0) ** 2)
-  axl.plot(x, ytop, color = 'k', lw = 1)
-  axl.plot(x, ybot, color = 'k', lw = 1)
-  axl.fill_between(x, ybot, ytop, color = 'lightgray')
-
-  # Draw the night side
-  x = np.linspace(xp0, xp0 + rp, 10000)
-  ytop = yp + np.sqrt(rp ** 2 - (x - xp0) ** 2)
-  ybot = yp - np.sqrt(rp ** 2 - (x - xp0) ** 2)
-  axl.plot(x, ytop, color = 'k', lw = 1)
-  axl.plot(x, ybot, color = 'k', lw = 1)
-  axl.fill_between(x, ybot, ytop, color = 'gray')
-
-  # Draw the terminator
-  b = rp * np.sin(theta)
-  if b >= 0:
-    color = 'gray'
+  '''
+  
+  coslat = np.cos(lat)
+  if np.abs(coslat) < TOL:
+    return dict(color = 'k', ls = '--', lw = 1)
   else:
-    color = 'lightgray'
-  x = np.linspace(xp0 - rp * b, xp0, 10000)
-  ytop = yp + rp * np.sqrt(1 - (x - xp0) ** 2 / b ** 2)
-  ybot = yp - rp * np.sqrt(1 - (x - xp0) ** 2 / b ** 2)
-  axl.fill_between(x, ybot, ytop, color = color)
+    return dict(color = cmap(0.5 * (coslat + 1)), ls = '-', lw = 1)
 
-  # Draw the occultor
-  x = np.linspace(xo - ro, xo + ro, 10000)
-  ytop = yo + np.sqrt(ro ** 2 - (x - xo) ** 2)
-  ybot = yo - np.sqrt(ro ** 2 - (x - xo) ** 2)
-  axl.plot(x, ytop, color = 'k', lw = 1)
-  axl.plot(x, ybot, color = 'k', lw = 1)
-  axl.fill_between(x, ybot, ytop, color = 'k', alpha = 0.75)
-  
-  # Limits
-  axl.plot([-3.75, -2.5],[-1.25, -1.25], lw = 2, color = colors[n])
-  axl.set_xlim(-4.0, 2.0)
-  axl.set_ylim(-2.9, 1.1)
+# Set up
+theta = np.pi / 8
+occultor = Occultor(0.5)
+planet = Planet(0., -0.25, 1., theta, occultor, n = 31, noon = 0.3, midnight = 0.3)
+x0 = -2
+v = 4
 
-ax.set_ylabel('Relative Flux', fontsize = 16)
+# Plotting arrays
+time = np.linspace(0, 1, 100)
+flux = np.zeros_like(time)
+xarr = np.linspace(-1, 1, 1000)
+dummy = Circle(0, 0, 1)
+ylower = dummy.val_lower(xarr)
+yupper = dummy.val_upper(xarr)
+
+# Set up the plot
+fig = pl.figure(figsize = (12,6))
+ax = pl.axes([0.125, 0.1, 0.825, 0.7])
+ax.margins(0, None)
 ax.set_xlabel('Time', fontsize = 16)
+ax.set_ylabel('Flux', fontsize = 16)
+aximg = pl.axes([0.125, 0.825, 0.825, 0.07])
+aximg.set_xlim(0, 50)
+aximg.axis('off')
+
+# Plot light curves for different contrasts
+for contrast, ls in zip([0, 0.5, 1], ['-', '--', '-.']):
+  
+  planet.midnight = 0.3 * contrast
+  
+  # Compute the light curve
+  for i in range(100):
+  
+    # Get the flux
+    planet.x0 = x0 + v * time[i]
+    planet.compute()
+    flux[i] = 1 + planet.delta_flux
+
+  # Plot the light curve
+  ax.plot(time, flux, color = 'k', ls = ls, label = contrast)
+
+# Plot the planet images
+for i in [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]:
+  planet.x0 = x0 + v * time[i]
+  planet.compute()
+  dx = 0.5 * i
+  ellipses = planet.ellipses
+  vertices = planet.vertices
+  aximg.plot(dx + xarr, ylower, color = 'k', zorder = 98, lw = 1)
+  aximg.plot(dx + xarr, yupper, color = 'k', zorder = 98, lw = 1)
+  aximg.plot(dx + occultor.r * xarr - planet.x0, occultor.r * ylower - planet.y0, color = 'k', zorder = 99, lw = 1)
+  aximg.plot(dx + occultor.r * xarr - planet.x0, occultor.r * yupper - planet.y0, color = 'k', zorder = 99, lw = 1)
+  aximg.fill_between(dx + occultor.r * xarr - planet.x0, occultor.r * ylower - planet.y0, occultor.r * yupper - planet.y0, color = 'lightgray', zorder = 99)
+  for ellipse in ellipses:
+    x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
+    if planet.theta > 0:
+      x[x < ellipse.x0 - ellipse.xlimb] = np.nan
+    else:
+      x[x > ellipse.x0 - ellipse.xlimb] = np.nan
+    aximg.plot(dx + x - planet.x0, ellipse.val_lower(x) - planet.y0, **style(ellipse.latitude))
+    aximg.plot(dx + x - planet.x0, ellipse.val_upper(x) - planet.y0, **style(ellipse.latitude))
+
+ax.legend(loc = 'lower left', title = 'Night/Day')
 pl.show()
+
