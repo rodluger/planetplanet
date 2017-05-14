@@ -83,15 +83,7 @@ class Planet(object):
       xterm = self.x0 - (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
     else:
       xterm = self.x0 + (np.abs(np.sin(theta))) * np.sqrt(self.r ** 2 - (y - self.y0) ** 2)
-    
-    
-    # DEBUG
-    #if x <= xterm:
-    #  return 0
-    #else:
-    #  return np.pi
-    
-    
+
     # Are we on the dayside?
     if x <= xterm:
     
@@ -113,14 +105,12 @@ class Planet(object):
             xmax = x0 + b
           else:
             xmax = x0 - xlimb
-          if (x >= xmin) and (x <= xmax): 
+          if (x >= xmin - TOL) and (x <= xmax + TOL): 
             if ((np.abs(x - (x0 + dx)) < TOL) or (np.abs(x - (x0 - dx)) < TOL)):
               return np.arcsin(np.sqrt(z))
     
     # Or the nightside?
     else:
-      
-      return np.pi - TOL
       
       # We have two possible solutions. But only one is on the
       # observer's side of the planet. TODO: Speed this up?
@@ -140,7 +130,7 @@ class Planet(object):
             xmax = x0 + b
           else:
             xmax = x0 - xlimb
-          if (x >= xmin) and (x <= xmax): 
+          if (x >= xmin - TOL) and (x <= xmax + TOL): 
             if ((np.abs(x - (x0 + dx)) < TOL) or (np.abs(x - (x0 - dx)) < TOL)):
               return np.pi - np.arcsin(np.sqrt(z))
     
@@ -153,10 +143,10 @@ class Planet(object):
     
     A = self.r ** 2 - (x - self.x0) ** 2
     if hasattr(x, '__len__'):
-      A[np.abs(A) < 1e-15] = 0
+      A[np.abs(A) < TOL] = 0
       A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
     else:
-      if np.abs(A) < 1e-15:
+      if np.abs(A) < TOL:
         A = 0
       if (x > self.xmax) or (x < self.xmin):
         return np.nan
@@ -169,10 +159,10 @@ class Planet(object):
     
     A = self.r ** 2 - (x - self.x0) ** 2
     if hasattr(x, '__len__'):
-      A[np.abs(A) < 1e-15] = 0
+      A[np.abs(A) < TOL] = 0
       A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
     else:
-      if np.abs(A) < 1e-15:
+      if np.abs(A) < TOL:
         A = 0
       if (x > self.xmax) or (x < self.xmin):
         return np.nan
@@ -293,10 +283,10 @@ class Ellipse(object):
     
     A = self.b ** 2 - (x - self.x0) ** 2
     if hasattr(x, '__len__'):
-      A[np.abs(A) < 1e-15] = 0
+      A[np.abs(A) < TOL] = 0
       A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
     else:
-      if np.abs(A) < 1e-15:
+      if np.abs(A) < TOL:
         A = 0
       if (x > self.xmax) or (x < self.xmin):
         return np.nan
@@ -309,10 +299,10 @@ class Ellipse(object):
     
     A = self.b ** 2 - (x - self.x0) ** 2
     if hasattr(x, '__len__'):
-      A[np.abs(A) < 1e-15] = 0
+      A[np.abs(A) < TOL] = 0
       A[np.where((x > self.xmax) | (x < self.xmin))] = np.nan
     else:
-      if np.abs(A) < 1e-15:
+      if np.abs(A) < TOL:
         A = 0
       if (x > self.xmax) or (x < self.xmin):
         return np.nan
@@ -405,7 +395,7 @@ axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
 slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
 
 # The latitude grid
-latitude = np.linspace(0, np.pi, 9)[1:-1]
+latitude = np.linspace(0, np.pi, 8)[1:-1]
 def surf_brightness(lat):
   '''
   
@@ -432,7 +422,7 @@ quit()
 planet = Planet(0.5, -1.25, 1.25)
 
 # Occultor (always at the origin)
-occultor = Occultor(3., planet)
+occultor = Occultor(1., planet)
 
 # Arrays for plotting
 xp = np.linspace(planet.x0 - planet.r, planet.x0 + planet.r, 1000)
