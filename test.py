@@ -404,15 +404,20 @@ class Occultor(Planet):
 
 class Interactive(object):
 
-  def __init__(self, planet, occultor):
+  def __init__(self, **kwargs):
     '''
   
     '''
     
-    # The objects
-    self.planet = planet
-    self.occultor = occultor
-  
+    # Planet (occulted)
+    self.planet = Planet(0.5, -1.25, 1.25, **kwargs)
+
+    # Occultor (always at the origin)
+    self.occultor = Occultor(1., self.planet)
+    
+    # Initial state
+    self.theta = np.pi / 8
+    
     # Set up the figure
     self.fig, self.ax = pl.subplots(1, figsize = (7,7))
     self.ax.set_xlim(-3,3)
@@ -427,12 +432,17 @@ class Interactive(object):
     self.yo1 = self.occultor.val_upper(self.xo)
     
     # The theta slider
-    self.axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
-    self.slider = Slider(self.axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
-    self.slider.on_changed(self.update)
-    self.update(-np.pi / 8)
+    self.axtheta = pl.axes([0.125, 0.035, 0.725, 0.03])
+    self.sltheta = Slider(self.axtheta, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = self.theta)
+    self.sltheta.on_changed(self.theta_changed)
+    
+    # The theta slider
+    #self.axtheta = pl.axes([0.125, 0.035, 0.725, 0.03])
+    #self.sltheta = Slider(self.axtheta, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = self.theta)
+    #self.sltheta.on_changed(self.theta_changed)
     
     # Show!
+    self.update()
     pl.show()
 
   def style(self, lat):
@@ -445,13 +455,21 @@ class Interactive(object):
       return dict(color = 'k', ls = '--', alpha = 0.5)
     else:
       return dict(color = cmap(0.5 * (coslat + 1)), ls = '-')
-
-  def update(self, theta):
+  
+  def theta_changed(self, theta):
+    '''
+    
+    '''
+    
+    self.theta = theta
+    self.update()
+  
+  def update(self):
     '''
   
     '''
   
-    flux, ellipses, vertices = DeltaFlux(theta, self.planet, self.occultor, full_output = True)
+    flux, ellipses, vertices = DeltaFlux(self.theta, self.planet, self.occultor, full_output = True)
   
     # Set up plot
     self.ax.clear()
@@ -471,7 +489,7 @@ class Interactive(object):
 
       # First identify and remove points behind the limb
       x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
-      if theta > 0:
+      if self.theta > 0:
         x[x < ellipse.x0 - ellipse.xlimb] = np.nan
       else:
         x[x > ellipse.x0 - ellipse.xlimb] = np.nan
@@ -575,10 +593,7 @@ def DeltaFlux(theta, planet, occultor, full_output = False):
   else:
     return flux
 
-# Planet (occulted)
-planet = Planet(0.5, -1.25, 1.25, n = 11)
 
-# Occultor (always at the origin)
-occultor = Occultor(1., planet)
 
-Interactive(planet, occultor)
+# Interactive plot
+Interactive()
