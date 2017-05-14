@@ -378,7 +378,7 @@ class Planet(Circle):
     vin = []
     for v in vertices:
       x, y = v
-      if (x ** 2 + y ** 2 <= self.occultor.r ** 2 + 1e-1) and ((x - self.x0) ** 2 + (y - self.y0) ** 2 <= self.r ** 2 + 1e-1):
+      if (x ** 2 + y ** 2 <= self.occultor.r ** 2 + 1e-2) and ((x - self.x0) ** 2 + (y - self.y0) ** 2 <= self.r ** 2 + 1e-2):
         vin.append((x, y))
     vertices = sorted(list(set(vin)))
     
