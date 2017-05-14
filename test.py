@@ -4,7 +4,6 @@ import re
 import numpy as np
 np.seterr(invalid = 'ignore')
 cmap = pl.get_cmap('RdBu_r')
-color = lambda x: cmap(0.5 * (x + 1))
 TOL = 1e-10
 
 def Roots(planet, ellipse):
@@ -46,7 +45,7 @@ class Planet(object):
   
   '''
   
-  def __init__(self, x0, y0, r):
+  def __init__(self, x0, y0, r, n = 11, noon = 1, midnight = 0.25):
     '''
     
     '''
@@ -59,7 +58,24 @@ class Planet(object):
     self.vertices = [v1, v2]
     self.xmin = self.x0 - self.r
     self.xmax = self.x0 + self.r
-  
+    self.latitudes = np.linspace(0, np.pi, n + 2)[1:-1]
+    self.noon = noon
+    self.midnight = midnight
+    
+  def surf_brightness(self, lat):
+    '''
+    
+    '''
+    
+    grid = np.concatenate(([0], self.latitudes, [np.pi + TOL]))
+    if lat < np.pi / 2:
+      i = np.argmax(lat < grid) - 1
+    else:
+      i = np.argmax(lat < grid)
+    cos = np.cos(grid[i])
+    return (0.5 * (self.noon - self.midnight) * (cos + 1) + self.midnight)
+
+    
   def get_latitude(self, x, y, theta):
     '''
   
@@ -267,13 +283,13 @@ class Ellipse(object):
         elo = self.val_lower(root)
         oup = occultor.val_upper(root)
         olo = occultor.val_lower(root)
-        if (np.abs(eup - oup) < 1e-10):
+        if (np.abs(eup - oup) < TOL):
           self.vertices.append((root, eup))
-        elif (np.abs(eup - olo) < 1e-10):
+        elif (np.abs(eup - olo) < TOL):
           self.vertices.append((root, eup))
-        elif (np.abs(elo - oup) < 1e-10):
+        elif (np.abs(elo - oup) < TOL):
           self.vertices.append((root, elo))
-        elif (np.abs(elo - olo) < 1e-10):
+        elif (np.abs(elo - olo) < TOL):
           self.vertices.append((root, elo))
     
   def val_upper(self, x):
@@ -386,53 +402,94 @@ class Occultor(Planet):
       self.vertices.append((x1, y1))
       self.vertices.append((x2, y2))
 
+class Interactive(object):
 
-# Set up the figure
-fig, ax = pl.subplots(1, figsize = (7,7))
-ax.set_xlim(-3,3)
-ax.set_ylim(-3,3)
-axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
-slider = Slider(axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
-
-# The latitude grid
-latitude = np.linspace(0, np.pi, 8)[1:-1]
-def surf_brightness(lat):
-  '''
+  def __init__(self, planet, occultor):
+    '''
   
-  '''
+    '''
+    
+    # The objects
+    self.planet = planet
+    self.occultor = occultor
   
-  grid = np.concatenate(([0], latitude, [np.pi + TOL]))
-  if lat < np.pi / 2:
-    i = np.argmax(lat < grid) - 1
-  else:
-    i = np.argmax(lat < grid)
-  return np.cos(grid[i])
+    # Set up the figure
+    self.fig, self.ax = pl.subplots(1, figsize = (7,7))
+    self.ax.set_xlim(-3,3)
+    self.ax.set_ylim(-3,3)
+    
+    # Plotting arrays
+    self.xp = np.linspace(self.planet.x0 - self.planet.r, self.planet.x0 + self.planet.r, 1000)
+    self.yp0 = self.planet.val_lower(self.xp)
+    self.yp1 = self.planet.val_upper(self.xp)
+    self.xo = np.linspace(-self.occultor.r, self.occultor.r, 1000)
+    self.yo0 = self.occultor.val_lower(self.xo)
+    self.yo1 = self.occultor.val_upper(self.xo)
+    
+    # The theta slider
+    self.axslider = pl.axes([0.125, 0.035, 0.725, 0.03])
+    self.slider = Slider(self.axslider, r'$\theta$', -np.pi / 2, np.pi / 2, valinit = -np.pi / 8)
+    self.slider.on_changed(self.update)
+    self.update(-np.pi / 8)
+    
+    # Show!
+    pl.show()
 
-'''
-# DEBUG
-pl.close()
-x = np.linspace(0, np.pi, 1000)
-pl.plot(x, [surf_brightness(xi) for xi in x])
-pl.plot(x, np.cos(x))
-pl.show()
-quit()
-'''
+  def style(self, lat):
+    '''
+  
+    '''
+  
+    coslat = np.cos(lat)
+    if np.abs(coslat) < TOL:
+      return dict(color = 'k', ls = '--', alpha = 0.5)
+    else:
+      return dict(color = cmap(0.5 * (coslat + 1)), ls = '-')
 
-# Planet (occulted)
-planet = Planet(0.5, -1.25, 1.25)
+  def update(self, theta):
+    '''
+  
+    '''
+  
+    flux, ellipses, vertices = DeltaFlux(theta, self.planet, self.occultor, full_output = True)
+  
+    # Set up plot
+    self.ax.clear()
+    self.ax.set_xlim(self.planet.x0 - 1.25 * self.planet.r, self.planet.x0 + 1.25 * self.planet.r)
+    self.ax.set_ylim(self.planet.y0 - 1.25 * self.planet.r, self.planet.y0 + 1.25 * self.planet.r)
+  
+    # Plot the planet
+    self.ax.plot(self.xp, self.yp0, color = 'k')
+    self.ax.plot(self.xp, self.yp1, color = 'k')
+  
+    # Plot the occultor
+    self.ax.plot(self.xo, self.yo0, color = 'k', zorder = 99)
+    self.ax.plot(self.xo, self.yo1, color = 'k', zorder = 99)
+  
+    # Plot the ellipses
+    for ellipse in ellipses:
 
-# Occultor (always at the origin)
-occultor = Occultor(1., planet)
+      # First identify and remove points behind the limb
+      x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
+      if theta > 0:
+        x[x < ellipse.x0 - ellipse.xlimb] = np.nan
+      else:
+        x[x > ellipse.x0 - ellipse.xlimb] = np.nan
 
-# Arrays for plotting
-xp = np.linspace(planet.x0 - planet.r, planet.x0 + planet.r, 1000)
-yp0 = planet.val_lower(xp)
-yp1 = planet.val_upper(xp)
-xo = np.linspace(-occultor.r, occultor.r, 1000)
-yo0 = occultor.val_lower(xo)
-yo1 = occultor.val_upper(xo)
+      self.ax.plot(x, ellipse.val_lower(x), lw = 2, **self.style(ellipse.latitude))
+      self.ax.plot(x, ellipse.val_upper(x), lw = 2, **self.style(ellipse.latitude))
 
-def compute(theta):
+    # Plot the vertices  
+    for v in vertices:
+      self.ax.plot(v[0], v[1], 'o', color = 'k', ms = 4)
+  
+    # Report the flux
+    self.ax.set_title('%.4f' % flux)
+    
+    # Re-draw!
+    self.fig.canvas.draw_idle()
+
+def DeltaFlux(theta, planet, occultor, full_output = False):
   '''
   
   '''
@@ -444,7 +501,7 @@ def compute(theta):
     theta = TOL
   
   # Compute the ellipses
-  ellipses = [Ellipse(planet, occultor, lat, theta) for lat in latitude]
+  ellipses = [Ellipse(planet, occultor, lat, theta) for lat in planet.latitudes]
   shapes = [planet, occultor] + ellipses
   
   # Get the curves and their integrals
@@ -479,7 +536,7 @@ def compute(theta):
       continue
       
     # Perturb them for numerical stability, as we
-    # need to ensure the functions are finite valued
+    # need to ensure the functions are finite-valued
     # at the limits.
     xleft += TOL
     xright -= TOL
@@ -507,69 +564,21 @@ def compute(theta):
       # the corresponding surface brightness
       y = (y1 + y0) / 2
       lat = planet.get_latitude(x, y, theta)
-      f = surf_brightness(lat)
+      f = planet.surf_brightness(lat)
       flux.append(f * area)
 
   # Total flux
-  flux = np.sum(flux)
-    
-  return flux, ellipses, vertices
+  flux = -np.sum(flux)
+  
+  if full_output:
+    return flux, ellipses, vertices
+  else:
+    return flux
 
-def update(theta):
-  '''
-  
-  '''
-  
-  flux, ellipses, vertices = compute(theta)
-  
-  # Set up plot
-  ax.clear()
-  ax.set_xlim(planet.x0 - 1.25 * planet.r, planet.x0 + 1.25 * planet.r)
-  ax.set_ylim(planet.y0 - 1.25 * planet.r, planet.y0 + 1.25 * planet.r)
-  
-  # Plot the planet
-  ax.plot(xp, yp0, color = 'k')
-  ax.plot(xp, yp1, color = 'k')
-  
-  # Plot the occultor
-  ax.plot(xo, yo0, color = 'k', zorder = 99)
-  ax.plot(xo, yo1, color = 'k', zorder = 99)
-  
-  # Plot the ellipses
-  for ellipse in ellipses:
+# Planet (occulted)
+planet = Planet(0.5, -1.25, 1.25, n = 11)
 
-    # First identify and remove points behind the limb
-    x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
-    if theta > 0:
-      x[x < ellipse.x0 - ellipse.xlimb] = np.nan
-    else:
-      x[x > ellipse.x0 - ellipse.xlimb] = np.nan
+# Occultor (always at the origin)
+occultor = Occultor(1., planet)
 
-    ax.plot(x, ellipse.val_lower(x), lw = 2, color = color(np.cos(ellipse.latitude)))
-    ax.plot(x, ellipse.val_upper(x), lw = 2, color = color(np.cos(ellipse.latitude)))
-
-  # Plot the vertices  
-  for v in vertices:
-    ax.plot(v[0], v[1], 'o', color = 'k', ms = 4)
-  
-  # Report the flux
-  ax.set_title('%.4f' % flux)
-  
-  '''
-  # DEBUG
-  for i in range(100):
-    r = np.random.rand() * 1.25
-    t = np.random.rand() * 2 * np.pi
-    x = 0.5 + r * np.cos(t)
-    y = -1.25 + r * np.sin(t)
-    l = planet.get_latitude(x, y, theta)
-    ax.plot(x, y, 'o', color = color(surf_brightness(l)))
-  '''
-  
-  # Re-draw!
-  fig.canvas.draw_idle()
-  
-slider.on_changed(update)
-update(-np.pi / 8)
-
-pl.show()
+Interactive(planet, occultor)
