@@ -10,4 +10,4 @@ python example.py
 
 to produce light curves for the "eyeball" planet case:
 
-<p align='center'><img src="eyeball.png" width="500"/></p>
+<p align='center'><img src="eyeball.png" width="800"/></p>
