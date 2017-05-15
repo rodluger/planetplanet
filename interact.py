@@ -12,4 +12,4 @@ brightness dayside and a constant brightness nightside.
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.eyeball import Interact
 
-Interact()
+Interact(n = 31)

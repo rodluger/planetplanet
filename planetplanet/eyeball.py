@@ -190,16 +190,10 @@ class Ellipse(object):
     # The x position of the limb
     self.xlimb = planet.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
     
-    # Compute the vertices
+    # Compute the vertices / intersection points
     self.vertices = []
-    
-    # Ellipse-planet intersections
-    if self.b ** 2 >= self.xlimb ** 2:
-      x = self.x0 - self.xlimb
-      y = self.a / self.b * np.sqrt(self.b ** 2 - self.xlimb ** 2)
-      self.vertices.append((x, self.y0 - y))
-      self.vertices.append((x, self.y0 + y))
-  
+    self.intersections = []
+
     # Ellipse x minimum
     if ((theta > 0) and (self.b < self.xlimb)) or ((theta <= 0) and (self.b > self.xlimb)):
       self.vertices.append((self.x0 - self.b, self.y0))
@@ -213,22 +207,29 @@ class Ellipse(object):
       self.xmax = self.x0 + self.b
     else:
       self.xmax = self.x0 - self.xlimb
+    
+    # Ellipse-planet vertices
+    if self.b ** 2 >= self.xlimb ** 2:
+      x = self.x0 - self.xlimb
+      y = self.a / self.b * np.sqrt(self.b ** 2 - self.xlimb ** 2)
+      self.vertices.append((x, self.y0 - y))
+      self.vertices.append((x, self.y0 + y))
       
     # Ellipse-occultor intersections
     for root in Roots(occultor, self):
-      if ((theta > 0) and (root > self.x0 - self.xlimb)) or ((theta <= 0) and (root < self.x0 - self.xlimb)):
+      if ((theta > 0) and (root >= self.x0 - self.xlimb - TOL)) or ((theta <= 0) and (root <= self.x0 - self.xlimb + TOL)):
         eup = self.val_upper(root)
         elo = self.val_lower(root)
         oup = occultor.val_upper(root)
         olo = occultor.val_lower(root)
         if (np.abs(eup - oup) < TOL):
-          self.vertices.append((root, eup))
+          self.intersections.append((root, eup))
         elif (np.abs(eup - olo) < TOL):
-          self.vertices.append((root, eup))
+          self.intersections.append((root, eup))
         elif (np.abs(elo - oup) < TOL):
-          self.vertices.append((root, elo))
+          self.intersections.append((root, elo))
         elif (np.abs(elo - olo) < TOL):
-          self.vertices.append((root, elo))
+          self.intersections.append((root, elo))
     
   def val_upper(self, x):
     '''
@@ -333,15 +334,67 @@ class Planet(Circle):
     
     '''
     
+    self._r = r
+    self._theta = theta
+    self._n = n
+    self._latitudes = np.linspace(0, np.pi, self._n + 2)[1:-1]
+    self._noon = noon
+    self._midnight = midnight    
     self.x0 = x0
     self.y0 = y0
-    self.r = r
-    self.theta = theta
     self.occultor = occultor
-    self.latitudes = np.linspace(0, np.pi, n + 2)[1:-1]
-    self.noon = noon
-    self.midnight = midnight
-    self.compute()
+    self.compute_total()
+    self.compute_delta()
+  
+  @property
+  def r(self):
+    return self._r
+  
+  @r.setter
+  def r(self, val):
+    self._r = val
+    self.compute_total()
+
+  @property
+  def theta(self):
+    return self._theta
+  
+  @theta.setter
+  def theta(self, val):
+    self._theta = val
+    self.compute_total()
+
+  @property
+  def n(self):
+    return self._n
+  
+  @n.setter
+  def n(self, val):
+    self._n = val
+    self._latitudes = np.linspace(0, np.pi, self._n + 2)[1:-1]
+    self.compute_total()
+
+  @property
+  def latitudes(self):
+    return self._latitudes
+
+  @property
+  def noon(self):
+    return self._noon
+  
+  @noon.setter
+  def noon(self, val):
+    self._noon = val
+    self.compute_total()
+
+  @property
+  def midnight(self):
+    return self._midnight
+  
+  @midnight.setter
+  def midnight(self, val):
+    self._midnight = val
+    self.compute_total()
     
   @property
   def vertices(self):
@@ -351,37 +404,45 @@ class Planet(Circle):
     
     # The planet's own vertices
     vertices = [(self.x0 - self.r, self.y0), (self.x0 + self.r, self.y0)]
-  
-    # Compute vertices of intersection with the occultor
-    # Adapted from http://mathworld.wolfram.com/Circle-CircleIntersection.html
-    d = np.sqrt(self.x0 ** 2 + self.y0 ** 2)
-    if d <= (self.occultor.r + self.r):
-      y = np.sqrt((-d + self.r - self.occultor.r) * (-d - self.r + self.occultor.r) * (-d + self.r + self.occultor.r) * (d + self.r + self.occultor.r)) / (2 * d)
-      x = (d ** 2 - self.r ** 2 + self.occultor.r ** 2) / (2 * d)
-      cost = -self.x0 / d
-      sint = -self.y0 / d
-      x1 = -x * cost + y * sint
-      y1 = -x * sint - y * cost
-      x2 = -x * cost - y * sint
-      y2 = -x * sint + y * cost
-      vertices.extend([(x1, y1), (x2, y2)])
-    
-    # Add the occultor's own vertices
+      
+    # Add the occultor's vertices
     vertices.extend(self.occultor.vertices)
     
     # Add the ellipse vertices
     for ellipse in self.ellipses:
       vertices.extend(ellipse.vertices)
     
-    # Keep only the vertices that are inside both the occultor and the planet and sort them
-    # TODO: I'm being very generous with the tolerance here! Check this.
+    # Now discard the vertices that are outside either the occultor or the planet
     vin = []
     for v in vertices:
       x, y = v
-      if (x ** 2 + y ** 2 <= self.occultor.r ** 2 + 1e-2) and ((x - self.x0) ** 2 + (y - self.y0) ** 2 <= self.r ** 2 + 1e-2):
+      if (x ** 2 + y ** 2 <= self.occultor.r ** 2 + TOL) and ((x - self.x0) ** 2 + (y - self.y0) ** 2 <= self.r ** 2 + TOL):
         vin.append((x, y))
-    vertices = sorted(list(set(vin)))
+    vertices = list(vin)
     
+    # Compute vertices of intersection with the occultor
+    # Adapted from http://mathworld.wolfram.com/Circle-CircleIntersection.html
+    d = np.sqrt(self.x0 ** 2 + self.y0 ** 2)
+    if d <= (self.occultor.r + self.r):
+      A = (-d + self.r - self.occultor.r) * (-d - self.r + self.occultor.r) * (-d + self.r + self.occultor.r) * (d + self.r + self.occultor.r)
+      if A >= 0:
+        y = np.sqrt(A) / (2 * d)
+        x = (d ** 2 - self.r ** 2 + self.occultor.r ** 2) / (2 * d)
+        cost = -self.x0 / d
+        sint = -self.y0 / d
+        x1 = -x * cost + y * sint
+        y1 = -x * sint - y * cost
+        x2 = -x * cost - y * sint
+        y2 = -x * sint + y * cost
+        vertices.extend([(x1, y1), (x2, y2)])
+    
+    # Get the points of intersection between the ellipses and the planet
+    for ellipse in self.ellipses:
+      vertices.extend(ellipse.intersections)
+    
+    # Sort them
+    vertices = sorted(list(set(vertices)))
+
     return vertices
   
   @property
@@ -407,6 +468,22 @@ class Planet(Circle):
     for ellipse in self.ellipses:
       integrals.extend(ellipse.integrals)
     return integrals
+  
+  @property
+  def flux(self):
+    '''
+    
+    '''
+    
+    return self.total_flux + self.delta_flux
+  
+  @property
+  def norm_flux(self):
+    '''
+    
+    '''
+    
+    return self.flux / self.total_flux
   
   def surf_brightness(self, lat):
     '''
@@ -496,8 +573,34 @@ class Planet(Circle):
               return np.pi - np.arcsin(np.sqrt(z))
     
     return np.nan
+
+  def compute_total(self):
+    '''
     
-  def compute(self):
+    '''
+    
+    # Save current values
+    x0 = self.x0
+    y0 = self.y0
+    r = self.occultor.r
+    
+    # Compute missing flux when occultor completely
+    # blocks the planet: this is the total flux.
+    self.x0 = 0
+    self.y0 = 0
+    self.occultor.r = 1.5 * self.r
+    self.compute_delta()
+    self.total_flux = -self.delta_flux
+    
+    # Restore
+    self.x0 = x0
+    self.y0 = y0
+    self.occultor.r = r
+    
+    # Finally, compute the new delta flux
+    self.compute_delta()
+
+  def compute_delta(self):
     '''
   
     '''
@@ -590,8 +693,6 @@ class Planet(Circle):
       
     # Total flux
     self.delta_flux = -np.sum(flux)
-  
-    return self.delta_flux
 
 class Interact(object):
 
@@ -701,7 +802,7 @@ class Interact(object):
   
     '''
     
-    self.planet.compute()
+    self.planet.compute_delta()
     ellipses = self.planet.ellipses
     vertices = self.planet.vertices
   

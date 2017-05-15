@@ -8,6 +8,6 @@ Run
 python example.py
 ```
 
-to produce light curves for the simple case where the day and night sides have constant surface brightness:
+to produce light curves for the "eyeball" planet case:
 
-<p align='center'><img src="simple.png" width="500"/></p>
+<p align='center'><img src="eyeball.png" width="500"/></p>
