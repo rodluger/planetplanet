@@ -31,5 +31,5 @@ typedef struct {
 } FUNCTION;
 
 double SurfaceBrightness(double lat, double noon, double midnight, int n);
-double DeltaFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n);
-double Flux(double r, double theta, double noon, double midnight, int n);
+double OccultedFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n);
+double UnoccultedFlux(double r, double theta, double noon, double midnight, int n);

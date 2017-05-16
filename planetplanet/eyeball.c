@@ -432,7 +432,7 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
 }
 
-double DeltaFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n) {
+double OccultedFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n) {
   /*
   
   */
@@ -516,14 +516,14 @@ double DeltaFlux(double r, double x0, double y0, double ro, double theta, double
     free(functions[j].ellipse);
   }  
 
-  return -flux;
+  return flux;
    
 }
 
-double Flux(double r, double theta, double noon, double midnight, int n) {
+double UnoccultedFlux(double r, double theta, double noon, double midnight, int n) {
   /*
   
   */
   
-  return -DeltaFlux(r, 0, 0, 2 * r, theta, noon, midnight, n);
+  return OccultedFlux(r, 0, 0, 2 * r, theta, noon, midnight, n);
 }

@@ -96,92 +96,82 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
 	
 }
 
-int Compute(int npts, double *time, PLANET *planet, SETTINGS *settings, ARRAYS *arr){
+int OrbitXYZ(double time, PLANET *planet, SETTINGS *settings){
   /*
       Compute the orbital parameters
-  */    
-  double omega, per, a, inc, w, ecc, fi, tperi0, t0;
-  double dt, tmp;
-  int i;
-  int iErr = ERR_NONE;
-
-  arr->npts = npts;
-  arr->M = malloc(npts*sizeof(double)); 
-  arr->E = malloc(npts*sizeof(double)); 
-  arr->f = malloc(npts*sizeof(double)); 
-  arr->r = malloc(npts*sizeof(double)); 
-  arr->x = malloc(npts*sizeof(double)); 
-  arr->y = malloc(npts*sizeof(double)); 
-  arr->z = malloc(npts*sizeof(double));
-  arr->b = malloc(npts*sizeof(double));
-
-  per = planet->per;                                                                  // Orbital period
-  if (!(per > 0.)) return ERR_PER;
-
-  inc = planet->inc;                                                                  // Orbital inclination
-  if (!((inc >= 0.) && (inc <= PI / 2.))) return ERR_INC;
-  
-  a = planet->a;
-  t0 = planet->t0;
-  
-  if (isnan(planet->esw) || isnan(planet->ecw)) {                                     // Eccentricity and longitude of pericenter
-    if (isnan(planet->ecc)) return ERR_ECC_W;
-    if ((planet->ecc != 0) && isnan(planet->w)) 
-      return ERR_ECC_W;
-    else if (planet->ecc == 0)
-      planet->w = 0;
-    else if (isnan(planet->w))
-      return ERR_ECC_W;                           
-    if ((planet->ecc < 0) || (planet->ecc >= 1)) return ERR_ECC_W;
-    if ((planet->w < 0) || (planet->w >= 2 * PI)) return ERR_ECC_W;
-    w = planet->w;
-    ecc = planet->ecc;
-  } else {
-    w = atan2(planet->esw, planet->ecw);
-    ecc = sqrt(planet->esw * planet->esw + planet->ecw * planet->ecw);
-    if ((ecc < 0.) || (ecc >= 1.)) return ERR_BAD_ECC;
-    planet->ecc = ecc;
-    planet->w = w;
-  }
-  
-  // HACK: My definition of omega in the equations below is apparently
-  // off by 180 degrees from Laura Kreidberg's in BATMAN. This isn't elegant,
-  // but the two models agree now that I added the following line:
-  w = w - PI;
-  
-  fi = (3. * PI / 2.) - w;                                                            // True anomaly at planet center (Shields et al. 2015)
-  tperi0 = per * sqrt(1. - ecc * ecc) / (2. * PI) * (ecc * sin(fi) / 
-           (1. + ecc * cos(fi)) - 2. / sqrt(1. - ecc * ecc) * 
-           atan2(sqrt(1. - ecc * ecc) * tan(fi/2.), 1. + ecc));                       // Time of pericenter passage (Shields et al. 2015)
-
-  /*
-  --- ORBITAL SOLUTION ---
   */
   
-  for (i = 0; i < npts ; i++) {
-       
-    arr->M[i] = 2. * PI / per * modulus(time[i] - tperi0 - t0, per);                  // Mean anomaly
-    if (settings->kepsolver == MDFAST)
-      arr->E[i] = EccentricAnomalyFast(arr->M[i], ecc, settings->keptol, 
-                                       settings->maxkepiter);                         // Eccentric anomaly
-    else
-      arr->E[i] = EccentricAnomaly(arr->M[i], ecc, settings->keptol, 
-                                   settings->maxkepiter);
-    if (arr->E[i] == -1) return ERR_KEPLER;
-    arr->f[i] = TrueAnomaly(arr->E[i], ecc);                                          // True anomaly
-    arr->r[i] = a * (1. - ecc * ecc)/(1. + ecc * cos(arr->f[i]));                     // Star-planet separation
-    arr->b[i] = arr->r[i] * sqrt(1. - pow(sin(w + arr->f[i]) * sin(inc), 2.));        // Instantaneous impact parameter                                   
-    arr->x[i] = arr->r[i] * cos(w + arr->f[i]);                                       // Cartesian sky-projected coordinates
-    arr->z[i] = arr->r[i] * sin(w + arr->f[i]);
-    if (arr->b[i] * arr->b[i] - arr->x[i] * arr->x[i] < 1.e-15) 
-      arr->y[i] = 0.;                                                                 // Prevent numerical errors
-    else {
-      tmp = modulus(arr->f[i] + w, 2 * PI);                                           // TODO: Verify this modulus
-      arr->y[i] = sqrt(arr->b[i] * arr->b[i] - arr->x[i] * arr->x[i]);
-      if (!((0 < tmp) && (tmp < PI))) arr->y[i] *= -1;
-    }
+  double per, a, inc, w, ecc, fi, tperi0, t0;
+  double M, E, f, r, b;
+  double tmp;
+  int iErr = ERR_NONE;
 
+  // Orbital period
+  per = planet->per;                                                                  
+  if (!(per > 0.)) return ERR_INPUT;
+  
+  // Orbital inclination
+  inc = planet->inc;                                                                  
+  if (!((inc >= 0.) && (inc <= PI / 2.))) return ERR_INPUT;
+  
+  // Semi-major axis
+  a = planet->a;
+  if (!(a > 0.)) return ERR_INPUT;
+  
+  // Time of transit/inferior conjunction
+  t0 = planet->t0;
+  
+  // Longitude of pericenter
+  w = planet->w;
+  if (!((w >= 0.) && (w <= 2 * PI))) return ERR_INPUT;
+  
+  // NOTE: Adding a phase shift to be consistent with BATMAN
+  w = w - PI;
+  
+  // Eccentricity
+  ecc = planet->ecc;
+  if (!((ecc >= 0.) && (ecc < 1))) return ERR_INPUT;
+  
+  // True anomaly at planet center (Shields et al. 2015)
+  fi = (3. * PI / 2.) - w;                
+  
+  // Time of pericenter passage (Shields et al. 2015)                                            
+  tperi0 = per * sqrt(1. - ecc * ecc) / (2. * PI) * (ecc * sin(fi) / 
+           (1. + ecc * cos(fi)) - 2. / sqrt(1. - ecc * ecc) * 
+           atan2(sqrt(1. - ecc * ecc) * tan(fi/2.), 1. + ecc));                       
+
+  // Mean anomaly
+  M = 2. * PI / per * modulus(time - tperi0 - t0, per);                  
+  
+  // Eccentric anomaly
+  if (settings->kepsolver == MDFAST)
+    E = EccentricAnomalyFast(M, ecc, settings->keptol, settings->maxkepiter);
+  else
+    E = EccentricAnomaly(M, ecc, settings->keptol, settings->maxkepiter);
+  if (E == -1) return ERR_KEPLER;
+  
+  // True anomaly
+  f = TrueAnomaly(E, ecc);        
+  
+  // Star-planet separation                                  
+  r = a * (1. - ecc * ecc)/(1. + ecc * cos(f));                     
+  
+  // Instantaneous impact parameter  
+  b = r * sqrt(1. - pow(sin(w + f) * sin(inc), 2.));                                         
+  
+  // Cartesian sky-projected coordinates
+  planet->x = r * cos(w + f);                                       
+  planet->z = r * sin(w + f);
+  if (b * b - planet->x * planet->x < 1.e-15) 
+    // Prevent numerical errors
+    planet->y = 0.;                                                                 
+  else {
+    tmp = modulus(f + w, 2 * PI);
+    planet->y = sqrt(b * b - planet->x * planet->x);
+    if (!((0 < tmp) && (tmp < PI))) 
+      planet->y *= -1;
   }
 
 	return iErr;
+	
 }
