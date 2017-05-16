@@ -17,8 +17,11 @@ GCC = gcc
 
 all:
 	echo "[planetplanet] Compiling C source code..."
-	${GCC} ${GCC_FLAGS1} orbit.c
+	${GCC} ${GCC_FLAGS1} orbit.c complex.c roots.c eyeball.c
 	echo "[planetplanet] Generating shared library..."
-	gcc ${GCC_FLAGS2} -o orbitlib.so orbit.o -lc
+	gcc ${GCC_FLAGS2} -o orbitlib.so orbit.o complex.o roots.o eyeball.o -lc
 	rm orbit.o
+	rm complex.o
+	rm roots.o
+	rm eyeball.o
 	echo "[planetplanet] Install successful."
