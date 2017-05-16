@@ -100,7 +100,7 @@ int Compute(int npts, double *time, PLANET *planet, SETTINGS *settings, ARRAYS *
   /*
       Compute the orbital parameters
   */    
-  double omega, per, RpRs, aRs, inc, w, ecc, fi, tperi0, t;
+  double omega, per, a, inc, w, ecc, fi, tperi0, t0;
   double dt, tmp;
   int i;
   int iErr = ERR_NONE;
@@ -117,24 +117,12 @@ int Compute(int npts, double *time, PLANET *planet, SETTINGS *settings, ARRAYS *
 
   per = planet->per;                                                                  // Orbital period
   if (!(per > 0.)) return ERR_PER;
-  
-  RpRs = planet->RpRs;                                                                // Planet radius in units of stellar radius
-  if (!((RpRs > 0.) && (RpRs < 1.))) return ERR_RADIUS;
-  
-  if (isnan(planet->MpMs)) planet->MpMs = 0.;                                         // If NaN, we'll assume the planet is massless
-  
-  if (isnan(planet->rhos)) {                                                          // Stellar density
-    if (isnan(planet->aRs)) return ERR_RHOS_ARS;
-    else aRs = planet->aRs;
-  } else {
-    if (planet->rhos <= 0.) return ERR_RHOS;
-    aRs = pow(((G * planet->rhos * (1. + planet->MpMs) * 
-          pow(per * DAYSEC, 2)) / (3. * PI)), 1./3.);                                 // Semi-major axis in units of stellar radius
-    planet->aRs = aRs;
-  }
-  
+
   inc = planet->inc;                                                                  // Orbital inclination
   if (!((inc >= 0.) && (inc <= PI / 2.))) return ERR_INC;
+  
+  a = planet->a;
+  t0 = planet->t0;
   
   if (isnan(planet->esw) || isnan(planet->ecw)) {                                     // Eccentricity and longitude of pericenter
     if (isnan(planet->ecc)) return ERR_ECC_W;
@@ -172,7 +160,7 @@ int Compute(int npts, double *time, PLANET *planet, SETTINGS *settings, ARRAYS *
   
   for (i = 0; i < npts ; i++) {
        
-    arr->M[i] = 2. * PI / per * (time[i] - tperi0);                                   // Mean anomaly
+    arr->M[i] = 2. * PI / per * modulus(time[i] - tperi0 - t0, per);                  // Mean anomaly
     if (settings->kepsolver == MDFAST)
       arr->E[i] = EccentricAnomalyFast(arr->M[i], ecc, settings->keptol, 
                                        settings->maxkepiter);                         // Eccentric anomaly
@@ -181,12 +169,11 @@ int Compute(int npts, double *time, PLANET *planet, SETTINGS *settings, ARRAYS *
                                    settings->maxkepiter);
     if (arr->E[i] == -1) return ERR_KEPLER;
     arr->f[i] = TrueAnomaly(arr->E[i], ecc);                                          // True anomaly
-    arr->r[i] = aRs * (1. - ecc * ecc)/(1. + ecc * cos(arr->f[i]));                   // Star-planet separation in units of stellar radius
-    if (arr->r[i] - RpRs < 1.) return ERR_STAR_CROSS;                                 // Star-crossing orbit!
+    arr->r[i] = a * (1. - ecc * ecc)/(1. + ecc * cos(arr->f[i]));                     // Star-planet separation
     arr->b[i] = arr->r[i] * sqrt(1. - pow(sin(w + arr->f[i]) * sin(inc), 2.));        // Instantaneous impact parameter                                   
     arr->x[i] = arr->r[i] * cos(w + arr->f[i]);                                       // Cartesian sky-projected coordinates
     arr->z[i] = arr->r[i] * sin(w + arr->f[i]);
-    if (arr->b[i] * arr->b[i] - arr->x[i] * arr->x[i] < 1.e-10) 
+    if (arr->b[i] * arr->b[i] - arr->x[i] * arr->x[i] < 1.e-15) 
       arr->y[i] = 0.;                                                                 // Prevent numerical errors
     else {
       tmp = modulus(arr->f[i] + w, 2 * PI);                                           // TODO: Verify this modulus

@@ -26,10 +26,7 @@ _ERR_KEPLER           =   3                                                     
 _ERR_BAD_ECC          =   5                                                           # Bad value for eccentricity
 _ERR_RADIUS           =   9                                                           # Bad input radius
 _ERR_INC              =   10                                                          # Bad inclination
-_ERR_STAR_CROSS       =   12                                                          # Star-crossing orbit
 _ERR_PER              =   13                                                          # Bad period
-_ERR_RHOS_ARS         =   14                                                          # Must specify either rhos or aRs!
-_ERR_RHOS             =   15                                                          # Bad rhos
 _ERR_ECC_W            =   16                                                          # Bad eccentricity/omega
 
 # Define models
@@ -57,27 +54,19 @@ class PLANET(ctypes.Structure):
       '''
       
       _fields_ = [("inc", ctypes.c_double),
-                  ("rhos", ctypes.c_double),
-                  ("MpMs", ctypes.c_double),
                   ("esw", ctypes.c_double),
                   ("ecw", ctypes.c_double),
                   ("per", ctypes.c_double),
-                  ("RpRs", ctypes.c_double),
                   ("ecc", ctypes.c_double),
                   ("w", ctypes.c_double),
-                  ("aRs", ctypes.c_double)]
-      
-      def __init__(self, **kwargs):   
-        self.MpMs = kwargs.pop('MpMs', 0.)
+                  ("a", ctypes.c_double),
+                  ("t0", ctypes.c_double)]
+            
+      def __init__(self, **kwargs):
         self.per = kwargs.pop('per', 10.)
-        self.RpRs = kwargs.pop('RpRs', 0.1)
-        self.bcirc = kwargs.pop('bcirc', 0.)
         inc = kwargs.pop('inc', 90.)
         self.inc = inc * np.pi / 180.
-        self.rhos = kwargs.pop('rhos', 1.4)                                           # User may specify either ``rhos`` or ``aRs``
-        self.aRs = kwargs.pop('aRs', np.nan)
-        if not np.isnan(self.aRs):
-          self.rhos = np.nan
+        self.a = kwargs.pop('a', 1.)
         self.ecc = kwargs.pop('ecc', 0.)                                              # User may specify (``esw`` and ``ecw``) or (``ecc`` and ``w``)
         self.w = kwargs.pop('w', 0.)
         self.esw = kwargs.pop('esw', np.nan)
@@ -85,7 +74,8 @@ class PLANET(ctypes.Structure):
         if (not np.isnan(self.esw)) and (not np.isnan(self.ecw)):
           self.ecc = np.nan
           self.w = np.nan
-         
+        self.t0 = kwargs.pop('t0', 0.)
+        
 class ARRAYS(ctypes.Structure):
       '''
       The class that stores the output arrays
@@ -118,7 +108,7 @@ class ARRAYS(ctypes.Structure):
         return np.array([self._f[i] for i in range(self.npts)])
         
       @property
-      def r(self):
+      def R(self):
         return np.array([self._r[i] for i in range(self.npts)])
       
       @property
@@ -176,13 +166,9 @@ def RaiseError(err):
   elif (err == _ERR_RADIUS):
     raise Exception("Bad value for ``RpRs``.")
   elif (err == _ERR_INC):
-    raise Exception("Bad value for ``inc``.")
-  elif (err == _ERR_STAR_CROSS):
-    raise Exception("Star-crossing orbit.") 
-  elif (err == _ERR_RHOS_ARS):
-    raise Exception("Must specify one of ``rhos`` or ``aRs``.") 
-  elif (err == _ERR_RHOS):
-    raise Exception("Bad value for ``per``.") 
+    raise Exception("Bad value for ``inc``.") 
+  elif (err == _ERR_PER):
+    raise Exception("Bad value for ``per``.")
   elif (err == _ERR_ECC_W):
     raise Exception("Bad value for ``esw`` or ``ecw``.") 
   elif (err == _ERR_KEPLER):
@@ -197,27 +183,30 @@ class Orbit(object):
   :param time: The input time array.
   
   :param kwargs: The keyword arguments. These are:
-  
+    
+    - **time** - The input time array. Default `None`.
+    - **N** - If `time` is `None`, computes the orbit over one full \
+              period with this many points.
     - **inc** - The orbital inclination in degrees. Default `90.`
-    - **MpMs** - The planet-star mass ratio. Default `0.`
     - **per** - The planet orbital period in days. Default `10.`
-    - **RpRs** - The planet-star radius ratio. Default `0.1`
-    - **rhos** or **aRs** - The stellar density in `g/cm^3` or the semi-major axis-stellar radius ratio. \
-                            Default is `rhos = 1.4`, the density of the Sun
+    - **a** - The semi-major axis (arbitrary units). Default `1`
     - **ecc** and **w** or **esw** and **ecw** - The eccentricity and the longitude of pericenter in radians, \
                                                  or the two eccentricity vectors. Default is `ecc = 0.` and `w = 0.`  
-
+    - **r** - The planet radius in the same units as the semi-major axis. Default `0.01`
+    - **t0** - The time of transit (or inferior conjunction). Default `0`.
+    
     - **keptol** - The tolerance of the Kepler solver. Default `1.e-15`
     - **maxkepiter** - Maximum number of iterations in the Kepler solver. Default `100`
     - **kepsolver** - The Kepler solver to use. Default `ps.NEWTON` (recommended)
   
   '''
   
-  def __init__(self, time, **kwargs):
-    self.time = time
+  def __init__(self, **kwargs):
     self.planet = PLANET(**kwargs)
     self.settings = SETTINGS(**kwargs)
     self.arrays = ARRAYS() 
+    self.time = kwargs.get('time', np.linspace(0, self.planet.per, kwargs.get('N', 1000)))
+    self.r = kwargs.get('r', 0.01)
     err = _Compute(len(self.time), as_ctypes(self.time), self.planet, self.settings, self.arrays)
     if err != _ERR_NONE: 
       RaiseError(err)
@@ -235,8 +224,8 @@ class Orbit(object):
     return self.arrays.f
 
   @property
-  def r(self):
-    return self.arrays.r
+  def R(self):
+    return self.arrays.R
 
   @property
   def x(self):

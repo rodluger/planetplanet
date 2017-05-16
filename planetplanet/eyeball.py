@@ -175,20 +175,20 @@ class Ellipse(object):
   
   '''
   
-  def __init__(self, planet, occultor, latitude, theta):
+  def __init__(self, occulted, occultor, latitude, theta):
     '''
     
     '''
 
     # Generate the ellipse
-    self.a = planet.r * np.abs(np.sin(latitude))
+    self.a = occulted.r * np.abs(np.sin(latitude))
     self.b = self.a * np.abs(np.sin(theta))
-    self.x0 = planet.x0 - planet.r * np.cos(latitude) * np.cos(theta)
-    self.y0 = planet.y0
+    self.x0 = occulted.x0 - occulted.r * np.cos(latitude) * np.cos(theta)
+    self.y0 = occulted.y0
     self.latitude = latitude
     
     # The x position of the limb
-    self.xlimb = planet.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
+    self.xlimb = occulted.r * np.cos(latitude) * np.sin(theta) * np.tan(theta)
     
     # Compute the vertices / intersection points
     self.vertices = []
@@ -208,7 +208,7 @@ class Ellipse(object):
     else:
       self.xmax = self.x0 - self.xlimb
     
-    # Ellipse-planet vertices
+    # Ellipse-occulted vertices
     if self.b ** 2 >= self.xlimb ** 2:
       x = self.x0 - self.xlimb
       y = self.a / self.b * np.sqrt(self.b ** 2 - self.xlimb ** 2)
@@ -222,13 +222,13 @@ class Ellipse(object):
         elo = self.val_lower(root)
         oup = occultor.val_upper(root)
         olo = occultor.val_lower(root)
-        if (np.abs(eup - oup) < TOL):
+        if (np.abs(eup - oup) < np.sqrt(TOL)):
           self.intersections.append((root, eup))
-        elif (np.abs(eup - olo) < TOL):
+        elif (np.abs(eup - olo) < np.sqrt(TOL)):
           self.intersections.append((root, eup))
-        elif (np.abs(elo - oup) < TOL):
+        elif (np.abs(elo - oup) < np.sqrt(TOL)):
           self.intersections.append((root, elo))
-        elif (np.abs(elo - olo) < TOL):
+        elif (np.abs(elo - olo) < np.sqrt(TOL)):
           self.intersections.append((root, elo))
     
   def val_upper(self, x):
@@ -324,7 +324,7 @@ class Occultor(Circle):
     
     super(Occultor, self).__init__(0, 0, r)
 
-class Planet(Circle):
+class Occulted(Circle):
   '''
   
   '''
@@ -335,7 +335,10 @@ class Planet(Circle):
     '''
     
     self._r = r
-    self._theta = theta
+    if np.abs(theta) > 1e-2:
+      self._theta = theta
+    else:
+      self._theta = 1e-2
     self._n = n
     self._latitudes = np.linspace(0, np.pi, self._n + 2)[1:-1]
     self._noon = noon
@@ -361,7 +364,11 @@ class Planet(Circle):
   
   @theta.setter
   def theta(self, val):
-    self._theta = val
+    # Avoid the singular point
+    if np.abs(theta) > 1e-2:
+      self._theta = theta
+    else:
+      self._theta = 1e-2
     self.compute_total()
 
   @property
@@ -402,7 +409,7 @@ class Planet(Circle):
     
     '''
     
-    # The planet's own vertices
+    # The occulted's own vertices
     vertices = [(self.x0 - self.r, self.y0), (self.x0 + self.r, self.y0)]
       
     # Add the occultor's vertices
@@ -412,7 +419,7 @@ class Planet(Circle):
     for ellipse in self.ellipses:
       vertices.extend(ellipse.vertices)
     
-    # Now discard the vertices that are outside either the occultor or the planet
+    # Now discard the vertices that are outside either the occultor or the occulted
     vin = []
     for v in vertices:
       x, y = v
@@ -436,7 +443,7 @@ class Planet(Circle):
         y2 = -x * sint + y * cost
         vertices.extend([(x1, y1), (x2, y2)])
     
-    # Get the points of intersection between the ellipses and the planet
+    # Get the points of intersection between the ellipses and the occulted
     for ellipse in self.ellipses:
       vertices.extend(ellipse.intersections)
     
@@ -526,7 +533,7 @@ class Planet(Circle):
     if x <= xterm:
     
       # We have two possible solutions. But only one is on the
-      # observer's side of the planet. TODO: Speed this up?
+      # observer's side of the occulted. TODO: Speed this up?
       for z in (z0, z1):
         if (z >= 0) and (z <= 1):
           a = self.r * np.abs(np.sqrt(z))
@@ -551,7 +558,7 @@ class Planet(Circle):
     else:
       
       # We have two possible solutions. But only one is on the
-      # observer's side of the planet. TODO: Speed this up?
+      # observer's side of the occulted. TODO: Speed this up?
       for z in (z0, z1):
         if (z >= 0) and (z <= 1):
           a = self.r * np.abs(np.sqrt(z))
@@ -585,7 +592,7 @@ class Planet(Circle):
     r = self.occultor.r
     
     # Compute missing flux when occultor completely
-    # blocks the planet: this is the total flux.
+    # blocks the occulted: this is the total flux.
     self.x0 = 0
     self.y0 = 0
     self.occultor.r = 1.5 * self.r
@@ -605,9 +612,6 @@ class Planet(Circle):
   
     '''
   
-    # Avoid the singular point
-    if np.abs(self.theta) < 1e-3:
-      self.theta = 1e-3
     flux = []
     
     # Compute the ellipses
@@ -705,7 +709,7 @@ class Interact(object):
     self.occultor = Occultor(0.5)
     
     # Planet (occulted)
-    self.planet = Planet(1.35, -0.75, 1., np.pi / 8, self.occultor, **kwargs)
+    self.occulted = Occulted(1.35, -0.75, 1., np.pi / 8, self.occultor, **kwargs)
     
     # Set up the figure
     self.fig = pl.figure(figsize = (6,7))
@@ -732,7 +736,7 @@ class Interact(object):
     
     # The theta slider
     self.axtheta = pl.axes([0.125, 0.035, 0.725, 0.02])
-    self.sltheta = Slider(self.axtheta, r'$\theta$', -90, 90, valinit = self.planet.theta * 180 / np.pi)
+    self.sltheta = Slider(self.axtheta, r'$\theta$', -90, 90, valinit = self.occulted.theta * 180 / np.pi)
     self.sltheta.on_changed(self.theta_changed)
     
     # The occultor radius slider
@@ -742,12 +746,12 @@ class Interact(object):
     
     # The occultor y0 slider
     self.axy0 = pl.axes([0.125, 0.095, 0.725, 0.02])
-    self.sly0 = Slider(self.axy0, r'$y_o$', -3, 3, valinit = -self.planet.y0)
+    self.sly0 = Slider(self.axy0, r'$y_o$', -3, 3, valinit = -self.occulted.y0)
     self.sly0.on_changed(self.y0_changed)
     
     # The occultor x0 slider
     self.axx0 = pl.axes([0.125, 0.125, 0.725, 0.02])
-    self.slx0 = Slider(self.axx0, r'$x_o$', -3, 3, valinit = -self.planet.x0)
+    self.slx0 = Slider(self.axx0, r'$x_o$', -3, 3, valinit = -self.occulted.x0)
     self.slx0.on_changed(self.x0_changed)
     
     # Show!
@@ -770,7 +774,7 @@ class Interact(object):
     
     '''
     
-    self.planet.theta = theta * np.pi / 180
+    self.occulted.theta = theta * np.pi / 180
     self.update()
 
   def radius_changed(self, radius):
@@ -786,7 +790,7 @@ class Interact(object):
     
     '''
     
-    self.planet.x0 = -x0
+    self.occulted.x0 = -x0
     self.update()
 
   def y0_changed(self, y0):
@@ -794,7 +798,7 @@ class Interact(object):
     
     '''
     
-    self.planet.y0 = -y0
+    self.occulted.y0 = -y0
     self.update()
   
   def update(self):
@@ -802,44 +806,44 @@ class Interact(object):
   
     '''
     
-    self.planet.compute_delta()
-    ellipses = self.planet.ellipses
-    vertices = self.planet.vertices
+    self.occulted.compute_delta()
+    ellipses = self.occulted.ellipses
+    vertices = self.occulted.vertices
   
     # Set up plot
     self.ax.clear()
     self.ax.set_xlim(-2, 2)
     self.ax.set_ylim(-2, 2)
   
-    # Plot the planet
+    # Plot the occulted
     self.ax.plot(self.x, self.ylower, color = 'k', zorder = 98)
     self.ax.plot(self.x, self.yupper, color = 'k', zorder = 98)
   
     # Plot the occultor
-    self.ax.plot(self.occultor.r * self.x - self.planet.x0, self.occultor.r * self.ylower - self.planet.y0, color = 'k', zorder = 99)
-    self.ax.plot(self.occultor.r * self.x - self.planet.x0, self.occultor.r * self.yupper - self.planet.y0, color = 'k', zorder = 99)
-    self.ax.fill_between(self.occultor.r * self.x - self.planet.x0, self.occultor.r * self.ylower - self.planet.y0, self.occultor.r * self.yupper - self.planet.y0, color = 'k', alpha = 0.1)
+    self.ax.plot(self.occultor.r * self.x - self.occulted.x0, self.occultor.r * self.ylower - self.occulted.y0, color = 'k', zorder = 99)
+    self.ax.plot(self.occultor.r * self.x - self.occulted.x0, self.occultor.r * self.yupper - self.occulted.y0, color = 'k', zorder = 99)
+    self.ax.fill_between(self.occultor.r * self.x - self.occulted.x0, self.occultor.r * self.ylower - self.occulted.y0, self.occultor.r * self.yupper - self.occulted.y0, color = 'k', alpha = 0.1)
     
     # Plot the ellipses
     for ellipse in ellipses:
 
       # First identify and remove points behind the limb
       x = np.linspace(ellipse.x0 - ellipse.b, ellipse.x0 + ellipse.b, 1000)
-      if self.planet.theta > 0:
+      if self.occulted.theta > 0:
         x[x < ellipse.x0 - ellipse.xlimb] = np.nan
       else:
         x[x > ellipse.x0 - ellipse.xlimb] = np.nan
 
-      self.ax.plot(x - self.planet.x0, ellipse.val_lower(x) - self.planet.y0, **self.style(ellipse.latitude))
-      self.ax.plot(x - self.planet.x0, ellipse.val_upper(x) - self.planet.y0, **self.style(ellipse.latitude))
+      self.ax.plot(x - self.occulted.x0, ellipse.val_lower(x) - self.occulted.y0, **self.style(ellipse.latitude))
+      self.ax.plot(x - self.occulted.x0, ellipse.val_upper(x) - self.occulted.y0, **self.style(ellipse.latitude))
 
     # Plot the vertices  
     for v in vertices:
-      self.ax.plot(v[0] - self.planet.x0, v[1] - self.planet.y0, 'o', color = 'k', ms = 3)
+      self.ax.plot(v[0] - self.occulted.x0, v[1] - self.occulted.y0, 'o', color = 'k', ms = 3)
     
     # Update the light curve
     self.flux = np.roll(self.flux, -1)
-    self.flux[-1] = 1 + self.planet.delta_flux
+    self.flux[-1] = 1 + self.occulted.delta_flux
     self.lc.set_ydata(self.flux)
     self.lcr.set_ydata(self.flux[-1])
     ymin = self.flux.min()

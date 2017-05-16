@@ -12,7 +12,6 @@
 #define ERR_BAD_ECC             5                                                     // Bad value for eccentricity
 #define ERR_RADIUS              9                                                     // Bad input radius
 #define ERR_INC                 10                                                    // Bad inclination
-#define ERR_STAR_CROSS          12                                                    // Star-crossing orbit
 #define ERR_PER                 13                                                    // Bad period
 #define ERR_RHOS_ARS            14                                                    // Must specify either rhos or aRs!
 #define ERR_RHOS                15                                                    // Bad rhos
@@ -36,15 +35,13 @@
 // Structs
 typedef struct {
   double inc;
-  double rhos;
-  double MpMs;
   double esw;
   double ecw;
   double per;
-  double RpRs;
   double ecc;
   double w;
-  double aRs;
+  double a;
+  double t0;
 } PLANET;
 
 typedef struct {
