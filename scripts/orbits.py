@@ -1,12 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as pl
+AUREARTH = 23454.9271
 
-
-semis = np.array([11.11, 15.21, 21.44, 28.17, 37.1, 45.1, 60])
-radii = np.array([1.086, 1.056, 0.772, 0.918, 1.045, 1.127, 0.755]) / (23.455)
+semis = np.array([11.11, 15.21, 21.44, 28.17, 37.1, 45.1, 60]) * 1e-3
+radii = np.array([1.086, 1.056, 0.772, 0.918, 1.045, 1.127, 0.755]) / AUREARTH
 incs = np.array([89.65, 89.67, 89.75, 89.86, 89.680, 89.710, 89.80]) * np.pi / 180
 colors = ['#92C6FF', '#97F0AA', '#FF9F9A', '#D0BBFF', '#FFFEA3', '#B0E0E6', '#999999']
-
 
 fig = pl.figure(figsize = (5,5))
 
