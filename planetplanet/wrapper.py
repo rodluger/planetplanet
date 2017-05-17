@@ -20,14 +20,11 @@ NEWTON = 1
 
 # Load the C library
 try:
-  lib = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ppo.so'))
+  ppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ppo.so'))
 except:
   raise Exception("Can't find `ppo.so`; please run `make` to compile it.")
-Flux = lib.Flux
-Flux.restype = ctypes.c_double
-Flux.argtypes = [ctypes.c_double, ctypes.POINTER(PLANET), ctypes.POINTER(PLANET), ctypes.POINTER(SETTINGS)]
 
-class PLANET(ctypes.Structure):
+class Planet(ctypes.Structure):
   '''
   The class containing all the input planet parameters
   
@@ -63,7 +60,7 @@ class PLANET(ctypes.Structure):
     self.y = np.nan
     self.z = np.nan
     
-class SETTINGS(ctypes.Structure):
+class Settings(ctypes.Structure):
   '''
   The class that contains the model settings
   
@@ -71,14 +68,16 @@ class SETTINGS(ctypes.Structure):
   
   _fields_ = [("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
-              ("kepsolver", ctypes.c_int)]
+              ("kepsolver", ctypes.c_int),
+              ("phasecurve", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = kwargs.pop('kepsolver', NEWTON)
-
-def Plot(ax, occultor, occulted, pad = 0.5):
+    self.phasecurve = int(kwargs.pop('phasecurve', False))
+    
+def Image(ax, occultor, occulted, pad = 0.5):
   '''
   
   '''
@@ -135,11 +134,46 @@ def Plot(ax, occultor, occulted, pad = 0.5):
   ax.set_xlim(occulted.x - occultor.x - (pad + 1) * r, occulted.x - occultor.x + (pad + 1) * r)
   ax.set_ylim(occulted.y - occultor.y - (pad + 1) * r, occulted.y - occultor.y + (pad + 1) * r)
 
+def Lightcurve(time, planets, **kwargs):
+  '''
+  
+  '''
+  
+  # Initialize
+  Flux = ppo.Flux
+  Flux.restype = ctypes.c_double
+  Flux.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.POINTER(Planet), 
+                   Settings, ctypes.ARRAY(ctypes.c_double, len(planets))]
+  if type(planets) is Planet:
+    planets = [planet]
+  n = len(planets)
+  p = (Planet * n)(*planets)
+  f = ctypes.ARRAY(ctypes.c_double, n)()
+  s = Settings(**kwargs)
+  
+  # Call the C function in a loop
+  flux = np.zeros((len(time), n))
+  for i, t in enumerate(time):
+    Flux(t, n, p, s, f)
+    flux[i] = np.array(f)
+
+  return flux
 
 
+b = Planet(per = 1.51087081, inc = 89.65, a = 0.01111 * AUREARTH, r = 1.086, t0 = 7322.51736, midnight = 1, n = 31)
+c = Planet(per = 2.4218233, inc = 89.67, a = 0.01521 * AUREARTH, r = 1.056, t0 = 7282.80728, midnight = 1, n = 31)
+d = Planet(per = 4.049610, inc = 89.75, a = 0.02144 * AUREARTH, r = 0.772, t0 = 7670.14165, midnight = 1, n = 31)
+e = Planet(per = 6.099615, inc = 89.86, a = 0.02817 * AUREARTH, r = 0.918, t0 = 7660.37859, midnight = 1, n = 31)
+f = Planet(per = 9.206690, inc = 89.68, a = 0.0371 * AUREARTH, r = 1.045, t0 = 7671.39767, midnight = 1, n = 31)
+g = Planet(per = 12.35294, inc = 89.71, a = 0.0451 * AUREARTH, r = 1.127, t0 = 7665.34937, midnight = 1, n = 31)
+h = Planet(per = 18.766, inc = 89.80, a = 0.06 * AUREARTH, r = 0.755, t0 = 7662.55463, midnight = 1, n = 31)
+planets = [b, c, d, e, f, g, h]
 
-settings = SETTINGS()
-t1b = PLANET(per = 1.51087081, inc = 89.65, a = 0.01111 * AUREARTH, r = 1.086, t0 = 7322.51736, midnight = 0, n = 31)
-t1c = PLANET(per = 2.4218233, inc = 89.67, a = 0.01521 * AUREARTH, r = 1.056, t0 = 7282.80728, midnight = 0, n = 31)
-time = np.linspace(0, 50, 100000)
-flux = [Flux(t, t1b, t1c, settings) for t in time]
+time = np.linspace(0, 100, 10000)
+flux = Lightcurve(time, planets, phasecurve = False)
+fig, ax = pl.subplots(7)
+for i in range(7):
+  ax[i].plot(time, flux[:,i], lw = 1)
+  #ax[i].set_xticklabels([])
+  #ax[i].set_yticklabels([])
+pl.show()

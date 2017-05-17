@@ -3,59 +3,54 @@
 #include <math.h>
 #include "ppo.h"
 
-double Flux(double time, PLANET *planet1, PLANET *planet2, SETTINGS *settings){
+void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n]){
   /*
   
-  */
+  NOTE: This does not properly handle the pathological case of *multiple* simultaneous 
+  planet-planet occultations involving the same planet!
   
+  */
+
   double d, dx, dy;
-  double r, x0, y0, ro, theta, noon, midnight;
+  double x0, theta;
   double total;
-  int nlat;
+  int i, j, nlat;
   
   // Compute the instantaneous orbital positions
-  OrbitXYZ(time, planet1, settings);
-  OrbitXYZ(time, planet2, settings);
+  // of all the planets
+  for (i = 0; i < n; i++)
+    OrbitXYZ(time, &planet[i], &settings);
   
-  // Compute the planet-planet separation
-  dx = (planet1->x - planet2->x);
-  dy = (planet1->y - planet2->y);
-  d = sqrt(dx * dx + dy * dy);
-  
-  // Do they occult?
-  if (d <= planet1->r + planet2->r) {
-    if (planet1->z < planet2->z) {
-      // Planet 1 is occulted
-      r = planet1->r;
-      if (planet1->x < 0)
-        x0 = -dx;
-      else
-        x0 = dx;
-      y0 = dy;
-      ro = planet2->r;
-      theta = atan(planet1->z / fabs(planet1->x));
-      noon = planet1->noon;
-      midnight = planet1->midnight;
-      nlat = planet1->nlat;
-    } else {
-      // Planet 2 is occulted
-      r = planet2->r;
-      if (planet1->x < 0)
-        x0 = dx;
-      else
-        x0 = -dx;
-      y0 = -dy;
-      ro = planet1->r;
-      theta = atan(planet2->z / fabs(planet2->x));
-      noon = planet2->noon;
-      midnight = planet2->midnight;
-      nlat = planet2->nlat;
-    }
-
-    return -OccultedFlux(r, x0, y0, ro, theta, noon, midnight, nlat);
+  // Loop over all planets
+  for (i = 0; i < n; i++) {
     
+    // Compute the phase curve?
+    if (settings.phasecurve) {
+      theta = atan(planet[i].z / fabs(planet[i].x));
+      flux[i] = UnoccultedFlux(planet[i].r, theta, planet[i].noon, planet[i].midnight, planet[i].nlat);
+    } else {
+      flux[i] = 0;
+    }
+    
+    // Loop over all possible occultors
+    for (j = 0; j < n; j++) {
+      
+      // Skip self
+      if (i == j) continue;
+      
+      // Compute the planet-planet separation between
+      // the ith planet and all the others and check
+      // if the first planet is occulted.
+      dx = (planet[i].x - planet[j].x);
+      dy = (planet[i].y - planet[j].y);
+      d = sqrt(dx * dx + dy * dy);
+      if ((d <= planet[i].r + planet[j].r) && (planet[i].z < planet[j].z)){
+        if (planet[i].x < i) x0 = -dx;
+        else x0 = dx;
+        theta = atan(planet[i].z / fabs(planet[i].x));
+        flux[i] -= OccultedFlux(planet[i].r, x0, dy, planet[j].r, theta, planet[i].noon, planet[i].midnight, planet[i].nlat);
+      
+      }
+    }
   }
-  
-  return 0;
-  
 }
