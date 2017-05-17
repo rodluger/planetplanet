@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "eyeball.h"
+#include "ppo.h"
 #include "complex.h"
 
 void GetRoots(double a, double b, double x0, double y0, double r, double roots[2]){
@@ -46,7 +46,7 @@ void GetRoots(double a, double b, double x0, double y0, double r, double roots[2
   roots[1] = NAN;
   j = 0;
   for (i = 1; i < 5; i++) {
-    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < 1.e-15)) {
+    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < DTOL1)) {
       roots[j] = croots[i].r;
       j += 1;
     }
