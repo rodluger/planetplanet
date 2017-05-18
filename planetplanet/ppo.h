@@ -69,8 +69,8 @@ typedef struct {
 } FUNCTION;
 
 // Functions
-int OrbitXYZ(double time, PLANET *planet, SETTINGS *settings);
+int OrbitXYZ(double time, PLANET *planet, SETTINGS settings);
 double SurfaceBrightness(double lat, double noon, double midnight, int n);
 double OccultedFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n);
 double UnoccultedFlux(double r, double theta, double noon, double midnight, int n);
-void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n]);
+void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n], int occultor[n]);

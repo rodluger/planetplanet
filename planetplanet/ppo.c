@@ -3,7 +3,7 @@
 #include <math.h>
 #include "ppo.h"
 
-void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n]){
+void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n], int occultor[n]){
   /*
   
   NOTE: This does not properly handle the pathological case of *multiple* simultaneous 
@@ -19,13 +19,13 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
   // Compute the instantaneous orbital positions
   // of all the planets
   for (i = 0; i < n; i++)
-    OrbitXYZ(time, &planet[i], &settings);
+    OrbitXYZ(time, &planet[i], settings);
   
   // Loop over all planets
   for (i = 0; i < n; i++) {
     
     // Compute the phase curve?
-    if (settings.phasecurve) {
+    if ((settings.phasecurve) && (planet[i].noon != planet[i].midnight)) {
       theta = atan(planet[i].z / fabs(planet[i].x));
       flux[i] = UnoccultedFlux(planet[i].r, theta, planet[i].noon, planet[i].midnight, planet[i].nlat);
     } else {
@@ -33,6 +33,7 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
     }
     
     // Loop over all possible occultors
+    occultor[i] = 0;
     for (j = 0; j < n; j++) {
       
       // Skip self
@@ -45,6 +46,7 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
       dy = (planet[i].y - planet[j].y);
       d = sqrt(dx * dx + dy * dy);
       if ((d <= planet[i].r + planet[j].r) && (planet[i].z < planet[j].z)){
+        occultor[i] = j;
         if (planet[i].x < i) x0 = -dx;
         else x0 = dx;
         theta = atan(planet[i].z / fabs(planet[i].x));

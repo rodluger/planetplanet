@@ -96,7 +96,7 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
 	
 }
 
-int OrbitXYZ(double time, PLANET *planet, SETTINGS *settings){
+int OrbitXYZ(double time, PLANET *planet, SETTINGS settings){
   /*
       Compute the orbital parameters
   */
@@ -144,10 +144,10 @@ int OrbitXYZ(double time, PLANET *planet, SETTINGS *settings){
   M = 2. * PI / per * modulus(time - tperi0 - t0, per);                  
   
   // Eccentric anomaly
-  if (settings->kepsolver == MDFAST)
-    E = EccentricAnomalyFast(M, ecc, settings->keptol, settings->maxkepiter);
+  if (settings.kepsolver == MDFAST)
+    E = EccentricAnomalyFast(M, ecc, settings.keptol, settings.maxkepiter);
   else
-    E = EccentricAnomaly(M, ecc, settings->keptol, settings->maxkepiter);
+    E = EccentricAnomaly(M, ecc, settings.keptol, settings.maxkepiter);
   if (E == -1) return ERR_KEPLER;
   
   // True anomaly
