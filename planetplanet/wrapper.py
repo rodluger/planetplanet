@@ -187,13 +187,13 @@ OrbitXYZ.argtypes = [ctypes.c_double, ctypes.POINTER(Planet), Settings]
 settings = Settings()
 
 # Define the planets
-b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, midnight = 0, nlat = 11)
-c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, midnight = 0, nlat = 11)
-d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, midnight = 0, nlat = 11)
-e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, midnight = 0, nlat = 11)
-f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, midnight = 0, nlat = 11)
-g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, midnight = 0, nlat = 11)
-h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, midnight = 0, nlat = 11)
+b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, midnight = 0, nlat = 31)
+c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, midnight = 0, nlat = 31)
+d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, midnight = 0, nlat = 31)
+e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, midnight = 0, nlat = 31)
+f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, midnight = 0, nlat = 31)
+g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, midnight = 0, nlat = 31)
+h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, midnight = 0, nlat = 31)
 planets = [b, c, d, e, f, g, h]
 
 # Get the light curves
@@ -211,6 +211,8 @@ for n, planet in enumerate(planets):
 
 # Loop over each planet
 for n, _ in enumerate(planets):
+
+  if n == 0: continue
 
   # Get the flux
   flux = fluxes[:,n]
