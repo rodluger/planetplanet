@@ -145,8 +145,9 @@ def Image(time, occultor, occulted, ax = None, pad = 2.5, **kwargs):
   ax.set_xlim(occulted.x - occultor.x - (pad + 1) * r, occulted.x - occultor.x + (pad + 1) * r)
   ax.set_ylim(occulted.y - occultor.y - (pad + 1) * r, occulted.y - occultor.y + (pad + 1) * r)
   
-  #if occulted.x < 0:
-  #  ax.invert_xaxis()
+  # In quadrants II and III we mirror the problem to compute it!
+  if occulted.x < 0:
+    ax.invert_xaxis()
   
   return ax
 
@@ -178,18 +179,35 @@ def Lightcurve(time, planets, **kwargs):
     occultor[i] = np.array(o)
   return flux, occultor
 
-b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, midnight = 0, nlat = 31)
-c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, midnight = 0, nlat = 31)
-d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, midnight = 0, nlat = 31)
-e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, midnight = 0, nlat = 31)
-f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, midnight = 0, nlat = 31)
-g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, midnight = 0, nlat = 31)
-h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, midnight = 0, nlat = 31)
+# Set up the orbit function
+# TODO: Move this up
+OrbitXYZ = ppo.OrbitXYZ
+OrbitXYZ.restype = ctypes.c_int
+OrbitXYZ.argtypes = [ctypes.c_double, ctypes.POINTER(Planet), Settings]
+settings = Settings()
+
+# Define the planets
+b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, midnight = 0, nlat = 11)
+c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, midnight = 0, nlat = 11)
+d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, midnight = 0, nlat = 11)
+e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, midnight = 0, nlat = 11)
+f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, midnight = 0, nlat = 11)
+g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, midnight = 0, nlat = 11)
+h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, midnight = 0, nlat = 11)
 planets = [b, c, d, e, f, g, h]
 
 # Get the light curves
-time = np.linspace(0, 10, 100000)
+time = np.linspace(0, 5, 100000)
 fluxes, occultors = Lightcurve(time, planets, phasecurve = False)
+
+# Get orbits for each planet
+x = np.zeros((len(planets), 300))
+z = np.zeros((len(planets), 300))
+for n, planet in enumerate(planets):
+  for j, tt in enumerate(np.linspace(0, planet.per, 300)):
+    OrbitXYZ(tt, ctypes.byref(planet), settings)
+    x[n,j] = planet.x
+    z[n,j] = planet.z
 
 # Loop over each planet
 for n, _ in enumerate(planets):
@@ -204,11 +222,10 @@ for n, _ in enumerate(planets):
   ne = len(s) - 1
   
   # Set up the figure
-  fig = pl.figure(figsize = (10, 4))
+  fig = pl.figure(figsize = (10, 6))
   axlc = [None for i in range(ne)]
-  axim1 = [None for i in range(ne)]
-  axim2 = [None for i in range(ne)]
-  axim3 = [None for i in range(ne)]
+  axxz = [None for i in range(ne)]
+  axim = [[None, None, None] for i in range(ne)]
 
   # Loop over the events
   for i in range(ne):
@@ -234,27 +251,53 @@ for n, _ in enumerate(planets):
     t = np.concatenate((lpad, t, rpad))
     
     # Plot the occultation
-    axlc[i] = pl.subplot2grid((4, 3 * ne), (1, 3 * i), colspan = 3, rowspan = 3, sharey = axlc[0] if i > 0 else None)
+    axlc[i] = pl.subplot2grid((5, 3 * ne), (3, 3 * i), colspan = 3, rowspan = 2, sharey = axlc[0] if i > 0 else None)
     if i > 0:
       axlc[i].set_yticklabels([])
     axlc[i].plot(t, f)
     
-    # Plot the image
-    axim1[i] = pl.subplot2grid((4, 3 * ne), (0, 3 * i), colspan = 1, rowspan = 1)
-    axim2[i] = pl.subplot2grid((4, 3 * ne), (0, 3 * i + 1), colspan = 1, rowspan = 1)
-    axim3[i] = pl.subplot2grid((4, 3 * ne), (0, 3 * i + 2), colspan = 1, rowspan = 1)
-    Image(tstart, planets[n], planets[o], ax = axim1[i])
-    Image(tmid, planets[n], planets[o], ax = axim2[i])
-    Image(tend, planets[n], planets[o], ax = axim3[i])
+    # Plot the orbits
+    axxz[i] = pl.subplot2grid((5, 3 * ne), (0, 3 * i), colspan = 3, rowspan = 2, 
+                              sharey = axxz[0] if i > 0 else None,
+                              sharex = axxz[0] if i > 0 else None)
+    for j, _ in enumerate(planets):
+      if (j > n) and (j > o):
+        break
+      if j == n:
+        style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
+      elif j == o:
+        style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
+      else:
+        style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
+      axxz[i].plot(x[j], z[j], **style)
+    for j, tt in enumerate(np.linspace(t[-1] - 25 * dt, t[-1], 50)):
+      OrbitXYZ(tt, ctypes.byref(planets[n]), settings)
+      OrbitXYZ(tt, ctypes.byref(planets[o]), settings)
+      axxz[i].plot(planets[n].x, planets[n].z, 'o', color = 'r', alpha = float(j) / 250.)
+      axxz[i].plot(planets[o].x, planets[o].z, 'o', color = 'lightgrey', alpha = float(j) / 250.)
+    axxz[i].plot(planets[n].x, planets[n].z, 'o', color = 'r', alpha = 1, markeredgecolor = 'k')
+    axxz[i].plot(planets[o].x, planets[o].z, 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k')
+    axxz[i].set_aspect('equal')
+    axxz[i].axis('off')
     
-    axim1[i].annotate(planets[o].name, xy = (0,0), ha = 'center', va = 'center', zorder = 100, fontsize = 8)
-    axim2[i].annotate(planets[o].name, xy = (0,0), ha = 'center', va = 'center', zorder = 100, fontsize = 8)
-    axim3[i].annotate(planets[o].name, xy = (0,0), ha = 'center', va = 'center', zorder = 100, fontsize = 8)
-    axim1[i].axis('off')
-    axim2[i].axis('off')
-    axim3[i].axis('off')
+    # Plot the images
+    axim[i][0] = pl.subplot2grid((5, 3 * ne), (2, 3 * i), colspan = 1, rowspan = 1)
+    axim[i][1] = pl.subplot2grid((5, 3 * ne), (2, 3 * i + 1), colspan = 1, rowspan = 1)
+    axim[i][2] = pl.subplot2grid((5, 3 * ne), (2, 3 * i + 2), colspan = 1, rowspan = 1)
+    for j in range(3): 
+      axim[i][j].axis('off')
+      axim[i][j].set_aspect('equal')
     
-    print(planets[n].nlat)
+    # Recall that in quadrants II and III we mirror the geometry,
+    # so flip the plots around
+    if planets[n].x < 0:
+      Image(tend, planets[o], planets[n], ax = axim[i][0])
+      Image(tmid, planets[o], planets[n], ax = axim[i][1])
+      Image(tstart, planets[o], planets[n], ax = axim[i][2])
+    else:
+      Image(tstart, planets[o], planets[n], ax = axim[i][0])
+      Image(tmid, planets[o], planets[n], ax = axim[i][1])
+      Image(tend, planets[o], planets[n], ax = axim[i][2])
     
   pl.show()
   quit()

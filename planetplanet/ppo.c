@@ -45,7 +45,7 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
       dx = (planet[i].x - planet[j].x);
       dy = (planet[i].y - planet[j].y);
       d = sqrt(dx * dx + dy * dy);
-      if ((d <= planet[i].r + planet[j].r) && (planet[i].z < planet[j].z)){
+      if ((d <= planet[i].r + planet[j].r) && (planet[i].z > planet[j].z)){
         occultor[i] = j;
         if (planet[i].x < i) x0 = -dx;
         else x0 = dx;
