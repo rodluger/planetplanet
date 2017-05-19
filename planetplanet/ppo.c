@@ -3,7 +3,7 @@
 #include <math.h>
 #include "ppo.h"
 
-void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n], int occultor[n]){
+void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, double lambda[nlam], int occultor[n], double flux[n][nlam]){
   /*
   
   NOTE: This does not properly handle the pathological case of *multiple* simultaneous 
@@ -13,8 +13,8 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
 
   double d, dx, dy;
   double x0, theta;
-  double total;
-  int i, j, nlat;
+  double tmp[nlam];
+  int i, j, m;
   
   // Compute the instantaneous orbital positions
   // of all the planets
@@ -25,15 +25,16 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
   for (i = 0; i < n; i++) {
     
     // Compute the phase curve?
-    if ((settings.phasecurve) && (planet[i].noon != planet[i].midnight)) {
+    if (settings.phasecurve) {
       theta = atan(planet[i].z / fabs(planet[i].x));
-      flux[i] = UnoccultedFlux(planet[i].r, theta, planet[i].noon, planet[i].midnight, planet[i].nlat);
+      UnoccultedFlux(planet[i].r, theta, planet[i].albedo, planet[i].irrad, planet[i].nlat, nlam, lambda, flux[i]);
     } else {
-      flux[i] = 0;
+      for (m = 0; m < nlam; m++)
+        flux[i][m] = 0;
     }
-    
+
     // Loop over all possible occultors
-    occultor[i] = 0;
+    occultor[i] = -1;
     for (j = 0; j < n; j++) {
       
       // Skip self
@@ -50,8 +51,10 @@ void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n
         if (planet[i].x < i) x0 = -dx;
         else x0 = dx;
         theta = atan(planet[i].z / fabs(planet[i].x));
-        flux[i] -= OccultedFlux(planet[i].r, x0, dy, planet[j].r, theta, planet[i].noon, planet[i].midnight, planet[i].nlat);
-      
+        OccultedFlux(planet[i].r, x0, dy, planet[j].r, theta, planet[i].albedo, planet[i].irrad, planet[i].nlat, nlam, lambda, tmp);
+        for (m = 0; m < nlam; m++)
+          flux[i][m] -= tmp[m];
+        
       }
     }
   }

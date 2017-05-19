@@ -4,7 +4,29 @@
 #include "ppo.h"
 #include "complex.h"
 
-void GetRoots(double a, double b, double x0, double y0, double r, double roots[2]){
+double Temperature(double lat, double irrad, double albedo) {
+  /*
+  
+  */
+  
+  if (lat < PI / 2)
+    return pow((irrad * cos(lat) * (1 - albedo)) / SBOLTZ, 0.25);
+  else
+    return 0;
+}
+
+double Blackbody(double lambda, double T) {
+  /*
+  
+  */
+  
+  // Planck's law
+  double a = 2 * HPLANCK * CLIGHT * CLIGHT / (lambda * lambda * lambda * lambda * lambda);
+  double b = HPLANCK * CLIGHT / (lambda * KBOLTZ * T);
+  return a / (exp(b) - 1);
+}
+
+void GetRoots(double a, double b, double x0, double y0, double r, double roots[2]) {
   /*
   
   */
@@ -141,36 +163,57 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
     }
   
   }
-  
+
   return NAN;
 }
 
-double SurfaceBrightness(double lat, double noon, double midnight, int n) {
+void SurfaceIntensity(double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
   /*
+  Returns the blackbody intensity at the center of each latitude slice 
+  integrated over a given array of wavelength bin centers.
   
   */
   
-  int i;
-  double l;
+  int i, j;
+  double latitude;
+  double T;
+  double B1, B2;
+  double L1, L2;
   
-  for (i = 0; i < n + 2; i++) {
-    if (lat < PI / 2.) {
-      l = i * PI / (n + 1);
-      if (l > lat) {
-        l -= PI / (n + 1);
-        break;
+  // Loop over each slice
+  for (i = 0; i < nlat + 1; i++) {
+    
+    // Get the latitude at the *center* of this slice
+    latitude = (i + 0.5) * PI / (nlat + 1.);
+    
+    // Get its blackbody temperature
+    T = Temperature(latitude, irrad, albedo);
+
+    // Loop over each wavelength bin
+    for (j = 0; j < nlam; j++) {
+    
+      // Compute the left and right edges of the wavelength bin
+      if (j == 0) {
+        L1 = 0.5 * (3 * lambda[j] - lambda[j + 1]);
+        L2 = 0.5 * (lambda[j] + lambda[j + 1]);
+      } else if (j == nlam - 1) {
+        L1 = 0.5 * (lambda[j - 1] + lambda[j]);
+        L2 = 0.5 * (3 * lambda[j] - lambda[j - 1]);
+      } else {
+        L1 = 0.5 * (lambda[j - 1] + lambda[j]);
+        L2 = 0.5 * (lambda[j] + lambda[j + 1]);
       }
+      
+      // Compute the blackbody function at the two edges
+      B1 = Blackbody(L1, T);
+      B2 = Blackbody(L2, T);
+      
+      // Trapezoidal rule: integrated blackbody intensity at
+      // each wavelength
+      B[i][j] = 0.5 * (L2 - L1) * (B1 + B2);
+      
     }
-    else {
-      l = i * PI / (n + 1);
-      if (l > lat) {
-        break;
-      }
-    }
-  }
-  
-  return 0.5 * (noon - midnight) * (cos(l) + 1) + midnight;
-  
+  } 
 }
 
 double curve(double x, FUNCTION function) {
@@ -432,43 +475,49 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
 }
 
-double OccultedFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n) {
+void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
   /*
   
   */
   
-  int i, j;
+  int i, j, k, m;
   int b = 0;
   int v = 0;
   int f = 0;
-  double s;
   double lat;
   double xL, xR, x, y, area;
-  double flux = 0.;
   double r2 = r * r + DTOL2;
   double ro2 = ro * ro + DTOL2;
   double vertices[MAXVERTICES];
   FUNCTION functions[MAXFUNCTIONS];
   FUNCTION boundaries[MAXFUNCTIONS];
+  double B[nlat + 1][nlam];
   
   // Avoid the singular point
   if (fabs(theta) < 1e-2)
     theta = 1e-2;
   
+  // Zero out the flux
+  for (m = 0; m < nlam; m++)
+    flux[m] = 0.;
+  
+  // Pre-compute the surface intensity in each latitude slice
+  SurfaceIntensity(albedo, irrad, nlat, nlam, lambda, B);
+  
   // Generate all the shapes and get their vertices and curves
   AddOccultor(r, x0, y0, ro, vertices, &v, functions, &f);   
   AddOcculted(r, x0, y0, ro, vertices, &v, functions, &f); 
-  for (i = 0; i < n; i++) {
-    lat = (i + 1) * PI / (n + 1);
+  for (i = 0; i < nlat; i++) {
+    lat = (i + 1.) * PI / (nlat + 1.);
     AddLatitudeSlice(lat, r, x0, y0, ro, theta, vertices, &v, functions, &f);
   }
-    
+  
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
     
   // Loop over all vertices
   for (i = 0; i < v - 1; i++) {
-    
+
     // Get the integration limits, with a
     // small perturbation for stability
     xL = vertices[i] + DTOL2;
@@ -495,17 +544,25 @@ double OccultedFlux(double r, double x0, double y0, double ro, double theta, dou
 
     // Sort boundaries based on y
     qsort(boundaries, b, sizeof(FUNCTION), funcomp);
-
+        
     // Loop over all regions bounded by xL and xR
     for (j = 0; j < b - 1; j++) {
+    
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
-
-      // Get the latitude of the midpoint and the corresponding surface brightness
+      
+      // Get the latitude of the midpoint and the index of the latitude
+      // grid *above* this latitude
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
       lat = Latitude(x, y, x0, y0, r, theta);
-      s = SurfaceBrightness(lat, noon, midnight, n);
-      flux += s * area;
+      if (!isnan(lat)) {
+        k = (int) (lat / (PI / (nlat + 1.)));
+        // Multiply by the area of the latitude slice to get the flux at each wavelength
+        for (m = 0; m < nlam; m++)
+          flux[m] += B[k][m] * area;
+      } else {
+        // TODO: Issue a warning
+      }
       
     } 
     
@@ -515,15 +572,14 @@ double OccultedFlux(double r, double x0, double y0, double ro, double theta, dou
   for (j = 0; j < f; j+=2) {
     free(functions[j].ellipse);
   }  
-
-  return flux;
    
 }
 
-double UnoccultedFlux(double r, double theta, double noon, double midnight, int n) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
   /*
   
   */
   
-  return OccultedFlux(r, 0, 0, 2 * r, theta, noon, midnight, n);
+  OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, nlat, nlam, lambda, flux);
+  
 }

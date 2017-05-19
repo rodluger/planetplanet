@@ -4,7 +4,7 @@
 
 #define EPS 2.0e-6
 #define MAXM 100
-#define EPSS 6.e-8
+#define EPSS 6.e-9
 #define MAXIT 100
 
 void laguer(a,m,x,eps,polish)

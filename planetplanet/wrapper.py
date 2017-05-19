@@ -15,6 +15,7 @@ from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 cmap = pl.get_cmap('RdBu_r')
 AUREARTH = 23454.9271
+SEARTH = 1.361e6
 MDFAST = 0
 NEWTON = 1
 try:
@@ -35,8 +36,8 @@ class Planet(ctypes.Structure):
               ("a", ctypes.c_double),
               ("t0", ctypes.c_double),
               ("r", ctypes.c_double),
-              ("noon", ctypes.c_double),
-              ("midnight", ctypes.c_double),
+              ("albedo", ctypes.c_double),
+              ("flux", ctypes.c_double),
               ("nlat", ctypes.c_int),
               ("x", ctypes.c_double),
               ("y", ctypes.c_double),
@@ -52,8 +53,8 @@ class Planet(ctypes.Structure):
     self.a = kwargs.pop('a', 0.01111) * AUREARTH
     self.t0 = kwargs.pop('t0', 7322.51736)
     self.r = kwargs.pop('r', 1.086)
-    self.noon = kwargs.pop('noon', 1.)
-    self.midnight = kwargs.pop('midnight', 0.1)
+    self.albedo = kwargs.pop('albedo', 0.3)
+    self.flux = kwargs.pop('flux', 4.25) * SEARTH
     self.nlat = kwargs.pop('nlat', 11)
     self.x = np.nan
     self.y = np.nan
@@ -151,32 +152,37 @@ def Image(time, occultor, occulted, ax = None, pad = 2.5, **kwargs):
   
   return ax
 
-def Lightcurve(time, planets, **kwargs):
+def Lightcurve(time, lam, planets, **kwargs):
   '''
   
   '''
   
-  # Initialize
-  Flux = ppo.Flux
-  Flux.restype = ctypes.c_double
-  Flux.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.POINTER(Planet), 
-                   Settings, ctypes.ARRAY(ctypes.c_double, len(planets)),
-                   ctypes.ARRAY(ctypes.c_int, len(planets))]
   if type(planets) is Planet:
     planets = [planet]
   n = len(planets)
+  nt = len(time)
+  nlam = len(lam)
+  
+  # Initialize
+  Flux = ppo.Flux
+  Flux.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.POINTER(Planet), 
+                   Settings, ctypes.ARRAY(ctypes.c_double, nlam), 
+                   ctypes.ARRAY(ctypes.c_int, n),
+                   ctypes.ARRAY(ctypes.ARRAY(ctypes.c_double, nlam), n)]
   p = (Planet * n)(*planets)
-  f = ctypes.ARRAY(ctypes.c_double, n)()
+  l = ctypes.ARRAY(ctypes.c_double, nlam)(*lam)
+  f = ctypes.ARRAY(ctypes.ARRAY(ctypes.c_double, nlam), n)()
   o = ctypes.ARRAY(ctypes.c_int, n)()
   s = Settings(**kwargs)
   
   # Call the C function in a loop
-  flux = np.zeros((len(time), n))
-  occultor = np.zeros((len(time), n), dtype = 'int32')
+  flux = np.zeros((n, nt, nlam))
+  occultor = np.zeros((n, nt), dtype = 'int32')
   for i, t in enumerate(time):
-    Flux(t, n, p, s, f, o)
-    flux[i] = np.array(f)
-    occultor[i] = np.array(o)
+    Flux(t, n, nlam, p, s, l, o, f)
+    flux[:,i] = np.array(f)
+    occultor[:,i] = np.array(o)
+    
   return flux, occultor
 
 # Set up the orbit function
@@ -187,18 +193,19 @@ OrbitXYZ.argtypes = [ctypes.c_double, ctypes.POINTER(Planet), Settings]
 settings = Settings()
 
 # Define the planets
-b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, midnight = 0, nlat = 31)
-c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, midnight = 0, nlat = 31)
-d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, midnight = 0, nlat = 31)
-e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, midnight = 0, nlat = 31)
-f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, midnight = 0, nlat = 31)
-g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, midnight = 0, nlat = 31)
-h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, midnight = 0, nlat = 31)
+b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, nlat = 11)
+c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, nlat = 11)
+d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, nlat = 11)
+e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, nlat = 11)
+f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, nlat = 11)
+g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, nlat = 11)
+h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, nlat = 11)
 planets = [b, c, d, e, f, g, h]
 
 # Get the light curves
 time = np.linspace(0, 5, 100000)
-fluxes, occultors = Lightcurve(time, planets, phasecurve = False)
+lam = np.linspace(5, 15, 100) * 1e-4
+fluxes, occultors = Lightcurve(time, lam, planets, phasecurve = False)
 
 # Get orbits for each planet
 x = np.zeros((len(planets), 300))
@@ -212,14 +219,16 @@ for n, planet in enumerate(planets):
 # Loop over each planet
 for n, _ in enumerate(planets):
 
-  if n == 0: continue
+  # DEBUG
+  #if n == 0: 
+  #  continue
 
-  # Get the flux
-  flux = fluxes[:,n]
-  occultor = occultors[:,n]
-
+  # Get the flux for this planet
+  flux = fluxes[n]
+  occultor = occultors[n]
+  
   # Identify the different events
-  inds = np.where(flux)[0]
+  inds = np.where(flux[:,0])[0]
   s = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [len(flux)]))
   ne = len(s) - 1
   
@@ -238,11 +247,11 @@ for n, _ in enumerate(planets):
     o = occultor[s[i]:s[i+1]]
     inds = np.where(f)[0]
     t = t[inds]
-    f = f[inds]
+    f = f[inds,:]
     o = o[inds[0]]
 
     # Add padding to ingress and egress
-    pad = np.zeros(len(f))
+    pad = np.zeros_like(f)
     f = np.concatenate((pad, f, pad))
     tstart = t[0]
     tmid = (t[-1] + t[0]) / 2
@@ -255,8 +264,12 @@ for n, _ in enumerate(planets):
     # Plot the occultation
     axlc[i] = pl.subplot2grid((5, 3 * ne), (3, 3 * i), colspan = 3, rowspan = 2, sharey = axlc[0] if i > 0 else None)
     if i > 0:
-      axlc[i].set_yticklabels([])
-    axlc[i].plot(t, f)
+      pl.setp(axlc[i].get_yticklabels(), visible=False)
+    
+    # Plot three different wavelengths (first, mid, and last)
+    axlc[i].plot(t, f[:,0], 'b-')
+    axlc[i].plot(t, f[:,len(lam)//2], 'g-')
+    axlc[i].plot(t, f[:,-1], 'r-')
     
     # Plot the orbits
     axxz[i] = pl.subplot2grid((5, 3 * ne), (0, 3 * i), colspan = 3, rowspan = 2, 

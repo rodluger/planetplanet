@@ -15,6 +15,11 @@
 #define PI                      acos(-1.)
 #define G                       6.672e-8
 #define DAYSEC                  86400.
+#define KBOLTZ                  1.38064852e-16                                        // erg / K
+#define SBOLTZ                  5.670367e-5                                           // erg / cm^2 / s / K^4
+#define SEARTH                  1.361e6                                               // erg / cm^2 / s
+#define HPLANCK                 6.62607004e-27                                        // cm^2 g / s
+#define CLIGHT                  2.998e10                                              // cm / 2
 
 // Settings
 #define MAXVERTICES             200
@@ -31,8 +36,8 @@ typedef struct {
   double a;
   double t0;
   double r;
-  double noon;
-  double midnight;
+  double albedo;
+  double irrad;
   int nlat;
   double x;
   double y;
@@ -70,7 +75,6 @@ typedef struct {
 
 // Functions
 int OrbitXYZ(double time, PLANET *planet, SETTINGS settings);
-double SurfaceBrightness(double lat, double noon, double midnight, int n);
-double OccultedFlux(double r, double x0, double y0, double ro, double theta, double noon, double midnight, int n);
-double UnoccultedFlux(double r, double theta, double noon, double midnight, int n);
-void Flux(double time, int n, PLANET planet[n], SETTINGS settings, double flux[n], int occultor[n]);
+void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
+void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, double lambda[nlam], int occultor[n], double flux[n][nlam]);
