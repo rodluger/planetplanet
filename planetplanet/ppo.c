@@ -16,6 +16,12 @@ void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, dou
   double tmp[nlam];
   int i, j, m;
   
+  //
+  if (nlam == 1) {
+    printf("Wavelength array must have length > 1.\n");
+    return;
+  }
+  
   // Compute the instantaneous orbital positions
   // of all the planets
   for (i = 0; i < n; i++)
@@ -27,7 +33,7 @@ void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, dou
     // Compute the phase curve?
     if (settings.phasecurve) {
       theta = atan(planet[i].z / fabs(planet[i].x));
-      UnoccultedFlux(planet[i].r, theta, planet[i].albedo, planet[i].irrad, planet[i].nlat, nlam, lambda, flux[i]);
+      UnoccultedFlux(planet[i].r, theta, planet[i].albedo, planet[i].irrad, settings.polyeps1, settings.polyeps2, settings.maxpolyiter, planet[i].nlat, nlam, lambda, flux[i]);
     } else {
       for (m = 0; m < nlam; m++)
         flux[i][m] = 0;
@@ -51,7 +57,7 @@ void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, dou
         if (planet[i].x < i) x0 = -dx;
         else x0 = dx;
         theta = atan(planet[i].z / fabs(planet[i].x));
-        OccultedFlux(planet[i].r, x0, dy, planet[j].r, theta, planet[i].albedo, planet[i].irrad, planet[i].nlat, nlam, lambda, tmp);
+        OccultedFlux(planet[i].r, x0, dy, planet[j].r, theta, planet[i].albedo, planet[i].irrad, settings.polyeps1, settings.polyeps2, settings.maxpolyiter, planet[i].nlat, nlam, lambda, tmp);
         for (m = 0; m < nlam; m++)
           flux[i][m] -= tmp[m];
         

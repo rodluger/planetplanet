@@ -1,38 +1,38 @@
 #ifndef _NR_COMPLEX_H_
 #define _NR_COMPLEX_H_
 
-#ifndef _FCOMPLEX_DECLARE_T_
-typedef struct FCOMPLEX {float r,i;} fcomplex;
-#define _FCOMPLEX_DECLARE_T_
-#endif /* _FCOMPLEX_DECLARE_T_ */
+#ifndef _dcomplex_DECLARE_T_
+typedef struct dcomplex {double r,i;} dcomplex;
+#define _dcomplex_DECLARE_T_
+#endif /* _dcomplex_DECLARE_T_ */
 
 #if defined(__STDC__) || defined(ANSI) || defined(NRANSI) /* ANSI */
 
-fcomplex Cadd(fcomplex a, fcomplex b);
-fcomplex Csub(fcomplex a, fcomplex b);
-fcomplex Cmul(fcomplex a, fcomplex b);
-fcomplex Complex(float re, float im);
-fcomplex Conjg(fcomplex z);
-fcomplex Cdiv(fcomplex a, fcomplex b);
-float Cabs(fcomplex z);
-fcomplex Csqrt(fcomplex z);
-fcomplex RCmul(float x, fcomplex a);
+dcomplex Cadd(dcomplex a, dcomplex b);
+dcomplex Csub(dcomplex a, dcomplex b);
+dcomplex Cmul(dcomplex a, dcomplex b);
+dcomplex Complex(double re, double im);
+dcomplex Conjg(dcomplex z);
+dcomplex Cdiv(dcomplex a, dcomplex b);
+double Cabs(dcomplex z);
+dcomplex Csqrt(dcomplex z);
+dcomplex RCmul(double x, dcomplex a);
 
 #else /* ANSI */
 /* traditional - K&R */
 
-fcomplex Cadd();
-fcomplex Csub();
-fcomplex Cmul();
-fcomplex Complex();
-fcomplex Conjg();
-fcomplex Cdiv();
-float Cabs();
-fcomplex Csqrt();
-fcomplex RCmul();
+dcomplex Cadd();
+dcomplex Csub();
+dcomplex Cmul();
+dcomplex Complex();
+dcomplex Conjg();
+dcomplex Cdiv();
+double Cabs();
+dcomplex Csqrt();
+dcomplex RCmul();
 
 #endif /* ANSI */
 
 #endif /* _NR_COMPLEX_H_ */
 
-void zroots(fcomplex *a, int m, fcomplex *roots, int polish);
+void zroots(dcomplex a[], int m, dcomplex roots[], int polish, double polyeps1, double polyeps2, int maxpolyiter);

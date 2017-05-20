@@ -26,15 +26,15 @@ double Blackbody(double lambda, double T) {
   return a / (exp(b) - 1);
 }
 
-void GetRoots(double a, double b, double x0, double y0, double r, double roots[2]) {
+void GetRoots(double a, double b, double x0, double y0, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[2]) {
   /*
   
   */
   
   int i, j;
   double A, B, C, D;
-  fcomplex c[5];
-  fcomplex croots[5];
+  dcomplex c[5];
+  dcomplex croots[5];
   double r2 = r * r;
   double a2 = a * a;
   double b2 = b * b;
@@ -61,7 +61,7 @@ void GetRoots(double a, double b, double x0, double y0, double r, double roots[2
   }
   
   // Solve the quartic w/ polishing
-  zroots(c, 4, croots, 1);
+  zroots(c, 4, croots, 1, polyeps1, polyeps2, maxpolyiter);
   
   // Get the real roots (up to 2)
   roots[0] = NAN;
@@ -164,6 +164,8 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
   
   }
 
+  // TODO: This should never happen in theory, but it does in practice.
+  // Find a way to handle these cases...
   return NAN;
 }
 
@@ -318,7 +320,7 @@ int funcomp( const void* a, const void* b) {
   else return 1;
 }
 
-void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro, double theta, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro, double theta, double polyeps1, double polyeps2, int maxpolyiter, double *vertices, int *v, FUNCTION *functions, int *f){
   /*
   
   */    
@@ -370,7 +372,7 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   }
   
   // Ellipse-occultor vertices
-  GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, ro, roots);
+  GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, ro, polyeps1, polyeps2, maxpolyiter, roots);
 
   if (!(isnan(roots[0])) && (((theta > 0) && (roots[0] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[0] < ellipse->x0 - xlimb)))) {
     vertices[(*v)++] = roots[0];
@@ -475,7 +477,7 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
 }
 
-void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
+void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
   /*
   
   */
@@ -509,7 +511,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   AddOcculted(r, x0, y0, ro, vertices, &v, functions, &f); 
   for (i = 0; i < nlat; i++) {
     lat = (i + 1.) * PI / (nlat + 1.);
-    AddLatitudeSlice(lat, r, x0, y0, ro, theta, vertices, &v, functions, &f);
+    AddLatitudeSlice(lat, r, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
   }
   
   // Sort the vertices
@@ -568,6 +570,10 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     
   }
   
+  // Scale flux by REARTH**2
+  for (m = 0; m < nlam; m++)
+    flux[m] *= REARTH * REARTH;
+  
   // Free all of the ellipse instances
   for (j = 0; j < f; j+=2) {
     free(functions[j].ellipse);
@@ -575,11 +581,11 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
   /*
   
   */
   
-  OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, nlat, nlam, lambda, flux);
+  OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nlat, nlam, lambda, flux);
   
 }

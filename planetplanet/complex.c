@@ -1,54 +1,54 @@
 #include <math.h>
 
-typedef struct FCOMPLEX {float r,i;} fcomplex;
+typedef struct dcomplex {double r,i;} dcomplex;
 
 #if defined(__STDC__) || defined(ANSI) || defined(NRANSI) /* ANSI */
 
-fcomplex Cadd(fcomplex a, fcomplex b)
+dcomplex Cadd(dcomplex a, dcomplex b)
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=a.r+b.r;
 	c.i=a.i+b.i;
 	return c;
 }
 
-fcomplex Csub(fcomplex a, fcomplex b)
+dcomplex Csub(dcomplex a, dcomplex b)
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=a.r-b.r;
 	c.i=a.i-b.i;
 	return c;
 }
 
 
-fcomplex Cmul(fcomplex a, fcomplex b)
+dcomplex Cmul(dcomplex a, dcomplex b)
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=a.r*b.r-a.i*b.i;
 	c.i=a.i*b.r+a.r*b.i;
 	return c;
 }
 
-fcomplex Complex(float re, float im)
+dcomplex Complex(double re, double im)
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=re;
 	c.i=im;
 	return c;
 }
 
-fcomplex Conjg(fcomplex z)
+dcomplex Conjg(dcomplex z)
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=z.r;
 	c.i = -z.i;
 	return c;
 }
 
-fcomplex Cdiv(fcomplex a, fcomplex b)
+dcomplex Cdiv(dcomplex a, dcomplex b)
 {
-	fcomplex c;
-	float r,den;
+	dcomplex c;
+	double r,den;
 	if (fabs(b.r) >= fabs(b.i)) {
 		r=b.i/b.r;
 		den=b.r+r*b.i;
@@ -63,9 +63,9 @@ fcomplex Cdiv(fcomplex a, fcomplex b)
 	return c;
 }
 
-float Cabs(fcomplex z)
+double Cabs(dcomplex z)
 {
-	float x,y,ans,temp;
+	double x,y,ans,temp;
 	x=fabs(z.r);
 	y=fabs(z.i);
 	if (x == 0.0)
@@ -82,10 +82,10 @@ float Cabs(fcomplex z)
 	return ans;
 }
 
-fcomplex Csqrt(fcomplex z)
+dcomplex Csqrt(dcomplex z)
 {
-	fcomplex c;
-	float x,y,w,r;
+	dcomplex c;
+	double x,y,w,r;
 	if ((z.r == 0.0) && (z.i == 0.0)) {
 		c.r=0.0;
 		c.i=0.0;
@@ -111,9 +111,9 @@ fcomplex Csqrt(fcomplex z)
 	}
 }
 
-fcomplex RCmul(float x, fcomplex a)
+dcomplex RCmul(double x, dcomplex a)
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=x*a.r;
 	c.i=x*a.i;
 	return c;
@@ -122,57 +122,57 @@ fcomplex RCmul(float x, fcomplex a)
 #else /* ANSI */
 /* traditional - K&R */
 
-fcomplex Cadd(a,b)
-fcomplex a,b;
+dcomplex Cadd(a,b)
+dcomplex a,b;
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=a.r+b.r;
 	c.i=a.i+b.i;
 	return c;
 }
 
-fcomplex Csub(a,b)
-fcomplex a,b;
+dcomplex Csub(a,b)
+dcomplex a,b;
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=a.r-b.r;
 	c.i=a.i-b.i;
 	return c;
 }
 
 
-fcomplex Cmul(a,b)
-fcomplex a,b;
+dcomplex Cmul(a,b)
+dcomplex a,b;
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=a.r*b.r-a.i*b.i;
 	c.i=a.i*b.r+a.r*b.i;
 	return c;
 }
 
-fcomplex Complex(re,im)
-float im,re;
+dcomplex Complex(re,im)
+double im,re;
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=re;
 	c.i=im;
 	return c;
 }
 
-fcomplex Conjg(z)
-fcomplex z;
+dcomplex Conjg(z)
+dcomplex z;
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=z.r;
 	c.i = -z.i;
 	return c;
 }
 
-fcomplex Cdiv(a,b)
-fcomplex a,b;
+dcomplex Cdiv(a,b)
+dcomplex a,b;
 {
-	fcomplex c;
-	float r,den;
+	dcomplex c;
+	double r,den;
 	if (fabs(b.r) >= fabs(b.i)) {
 		r=b.i/b.r;
 		den=b.r+r*b.i;
@@ -187,10 +187,10 @@ fcomplex a,b;
 	return c;
 }
 
-float Cabs(z)
-fcomplex z;
+double Cabs(z)
+dcomplex z;
 {
-	float x,y,ans,temp;
+	double x,y,ans,temp;
 	x=fabs(z.r);
 	y=fabs(z.i);
 	if (x == 0.0)
@@ -207,11 +207,11 @@ fcomplex z;
 	return ans;
 }
 
-fcomplex Csqrt(z)
-fcomplex z;
+dcomplex Csqrt(z)
+dcomplex z;
 {
-	fcomplex c;
-	float x,y,w,r;
+	dcomplex c;
+	double x,y,w,r;
 	if ((z.r == 0.0) && (z.i == 0.0)) {
 		c.r=0.0;
 		c.i=0.0;
@@ -237,11 +237,11 @@ fcomplex z;
 	}
 }
 
-fcomplex RCmul(x,a)
-fcomplex a;
-float x;
+dcomplex RCmul(x,a)
+dcomplex a;
+double x;
 {
-	fcomplex c;
+	dcomplex c;
 	c.r=x*a.r;
 	c.i=x*a.i;
 	return c;
