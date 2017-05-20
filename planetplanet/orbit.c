@@ -3,13 +3,6 @@
 #include <math.h>
 #include "ppo.h"
  
-void dbl_free(double *ptr){
-  /* 
-      Called by python to free a double pointer
-  */ 
-  free(ptr);
-} 
- 
 double modulus(double x, double y) {
   /*
       The arithmetic modulus, x mod y
