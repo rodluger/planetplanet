@@ -42,7 +42,8 @@ class Planet(ctypes.Structure):
   :param float albedo: Planet albedo. Default `0.3`
   :param float irrad: Stellar irradiation at the planet's distance in units \
          of the solar constant (1370 W/m^2). Default `0.3`
-  :param int nlat: Number of latitude slices. Default `11`
+  :param bool phasecurve: Compute the full phase curve? Default `False`
+  :param int nl: Number of latitude slices. Default `11`
   
   '''
   
@@ -55,26 +56,47 @@ class Planet(ctypes.Structure):
               ("r", ctypes.c_double),
               ("albedo", ctypes.c_double),
               ("irrad", ctypes.c_double),
-              ("nlat", ctypes.c_int),
-              ("x", ctypes.c_double),
-              ("y", ctypes.c_double),
-              ("z", ctypes.c_double)]
-        
+              ("phasecurve", ctypes.c_int),
+              ("nl", ctypes.c_int),
+              ("t", ctypes.c_int),
+              ("nt", ctypes.c_int),
+              ("nw", ctypes.c_int),
+              ("time", ctypes.POINTER(ctypes.c_double)),
+              ("wavelength", ctypes.POINTER(ctypes.c_double)),
+              ("x", ctypes.POINTER(ctypes.c_double)),
+              ("y", ctypes.POINTER(ctypes.c_double)),
+              ("z", ctypes.POINTER(ctypes.c_double)),
+              ("occultor", ctypes.POINTER(ctypes.c_int)),
+              ("flux", ctypes.POINTER(ctypes.POINTER(ctypes.c_double)))]
+
   def __init__(self, name, **kwargs):
+  
+    # User
     self.name = name
     self.per = kwargs.pop('per', 1.51087081)
     self.inc = kwargs.pop('inc', 89.65) * np.pi / 180.
     self.ecc = kwargs.pop('ecc', 0.)
     self.w = kwargs.pop('w', 0.) * np.pi / 180.
     self.a = kwargs.pop('a', 0.01111) * AUREARTH
-    self.t0 = kwargs.pop('t0', 7322.51736)
     self.r = kwargs.pop('r', 1.086)
     self.albedo = kwargs.pop('albedo', 0.3)
     self.irrad = kwargs.pop('irrad', 4.25) * SEARTH
-    self.nlat = kwargs.pop('nlat', 11)
-    self.x = np.nan
-    self.y = np.nan
-    self.z = np.nan
+    self.phasecurve = int(kwargs.pop('phasecurve', False))
+    self.nl = kwargs.pop('nl', 11)
+    
+    # System
+    self.t = 0
+    self.nt = 0
+    self.nw = 0
+    
+    # Compute the time of pericenter passage (e.g. Shields et al. 2015) 
+    fi = (3. * np.pi / 2.) - self.w + np.pi
+    tperi0 = (self.per * np.sqrt(1. - self.ecc * self.ecc) / (2. * np.pi) * (self.ecc * np.sin(fi) / 
+             (1. + self.ecc * np.cos(fi)) - 2. / np.sqrt(1. - self.ecc * self.ecc) * 
+             np.arctan2(np.sqrt(1. - self.ecc * self.ecc) * np.tan(fi/2.), 1. + self.ecc)))
+    
+    # We define the mean anomaly to be zero at t = t0 = trn0 + tperi0
+    self.t0 = kwargs.pop('trn0', 7322.51736) + tperi0
     
 class Settings(ctypes.Structure):
   '''
@@ -86,7 +108,6 @@ class Settings(ctypes.Structure):
   :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `2.0e-6`
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `6.0e-9`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
-  :param bool phasecurve: Compute the full phase curve of the planets? Default `False`
   
   '''
   
@@ -95,8 +116,7 @@ class Settings(ctypes.Structure):
               ("kepsolver", ctypes.c_int),
               ("polyeps1", ctypes.c_double),
               ("polyeps2", ctypes.c_double),
-              ("maxpolyiter", ctypes.c_int),
-              ("phasecurve", ctypes.c_int)]
+              ("maxpolyiter", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.keptol = kwargs.pop('keptol', 1.e-15)
@@ -105,7 +125,6 @@ class Settings(ctypes.Structure):
     self.polyeps1 = kwargs.pop('polyeps1', 2.0e-6)
     self.polyeps2 = kwargs.pop('polyeps2', 6.0e-9)
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
-    self.phasecurve = int(kwargs.pop('phasecurve', False))
 
 class Occultation(object):
   '''
@@ -263,42 +282,28 @@ class Lightcurve(object):
     # Dimensions
     n = len(self.planets)
     nt = len(self.time)
-    nwav = len(self.wavelength)
+    nw = len(self.wavelength)
   
     # Initialize the C interface
     Orbit = ppo.OrbitXYZ
     Orbit.restype = ctypes.c_int
-    Orbit.argtypes = [ctypes.c_double, ctypes.POINTER(Planet), Settings]
+    Orbit.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Planet)), Settings]
     Flux = ppo.Flux
-    Flux.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.POINTER(Planet), 
-                     Settings, ctypes.ARRAY(ctypes.c_double, nwav), 
-                     ctypes.ARRAY(ctypes.c_int, n),
-                     ctypes.ARRAY(ctypes.ARRAY(ctypes.c_double, nwav), n)]
-    p = (Planet * n)(*self.planets)
-    l = ctypes.ARRAY(ctypes.c_double, nwav)(*self.wavelength)
-    f = ctypes.ARRAY(ctypes.ARRAY(ctypes.c_double, nwav), n)()
-    o = ctypes.ARRAY(ctypes.c_int, n)()
-    s = Settings(**kwargs)
+    Flux.restype = ctypes.c_int
+    Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                     ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
+                     ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Planet)),
+                     Settings]
     
-    # Compute the orbits
-    self.x = np.zeros((n, 50))
-    self.y = np.zeros((n, 50))
-    self.z = np.zeros((n, 50))
-    for i in range(n):
-      for j, t in enumerate(np.linspace(0, self.planets[i].per, 50)):
-        Orbit(t, ctypes.byref(self.planets[i]), s)
-        self.x[i,j] = self.planets[i].x
-        self.y[i,j] = self.planets[i].y
-        self.z[i,j] = self.planets[i].z
-
-    # Call the C light curve function in a loop
-    self._flux = np.zeros((n, nt, nwav))
-    self._occultor = np.zeros((n, nt), dtype = 'int32')
-    for i, t in enumerate(self.time):
-      Flux(t, n, nwav, p, s, l, o, f)
-      self._flux[:,i] = np.array(f)
-      self._occultor[:,i] = np.array(o)
-  
+    # A pointer to a pointer to `Planet`. This is an array of `n` `Planet` instances, 
+    # passed by reference. The contents can all be accessed through `self.planets`
+    planets = (ctypes.POINTER(Planet) * n)(*[ctypes.pointer(p) for p in self.planets])
+    
+    # Call the light curve routine
+    Flux(nt, np.ctypeslib.as_ctypes(self.time), nw, np.ctypeslib.as_ctypes(self.wavelength), n, planets, Settings(**kwargs))
+    
+    import pdb; pdb.set_trace()
+    
     # Loop over all planets and store each occultation
     # event as a separate object
     self.occultations = []
@@ -458,7 +463,6 @@ def Image(time, occulted, occultor, ax = None, pad = 2.5, **kwargs):
     ax.invert_xaxis()
   
   return ax
-
 
 # Define the planets
 b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, nlat = 11)

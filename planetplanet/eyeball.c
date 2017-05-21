@@ -172,15 +172,13 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
 void SurfaceIntensity(double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
   /*
   Returns the blackbody intensity at the center of each latitude slice 
-  integrated over a given array of wavelength bin centers.
+  evaluated at a given array of wavelengths.
   
   */
   
   int i, j;
   double latitude;
   double T;
-  double B1, B2;
-  double L1, L2;
   
   // Loop over each slice
   for (i = 0; i < nlat + 1; i++) {
@@ -193,26 +191,9 @@ void SurfaceIntensity(double albedo, double irrad, int nlat, int nlam, double la
 
     // Loop over each wavelength bin
     for (j = 0; j < nlam; j++) {
-    
-      // Compute the left and right edges of the wavelength bin
-      if (j == 0) {
-        L1 = 0.5 * (3 * lambda[j] - lambda[j + 1]);
-        L2 = 0.5 * (lambda[j] + lambda[j + 1]);
-      } else if (j == nlam - 1) {
-        L1 = 0.5 * (lambda[j - 1] + lambda[j]);
-        L2 = 0.5 * (3 * lambda[j] - lambda[j - 1]);
-      } else {
-        L1 = 0.5 * (lambda[j - 1] + lambda[j]);
-        L2 = 0.5 * (lambda[j] + lambda[j + 1]);
-      }
-      
-      // Compute the blackbody function at the two edges
-      B1 = Blackbody(L1, T);
-      B2 = Blackbody(L2, T);
-      
-      // Trapezoidal rule: integrated blackbody intensity at
-      // each wavelength
-      B[i][j] = 0.5 * (L2 - L1) * (B1 + B2);
+        
+      // Get the blackbody intensity (W / m^2 / m / sr)
+      B[i][j] = Blackbody(lambda[j], T);
       
     }
   } 
@@ -571,8 +552,9 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   }
   
   // Scale flux by REARTH**2
+  // Convert to W m^2 / m^2 / um / sr
   for (m = 0; m < nlam; m++)
-    flux[m] *= REARTH * REARTH;
+    flux[m] *= REARTH * REARTH * 1e-6;  
   
   // Free all of the ellipse instances
   for (j = 0; j < f; j+=2) {

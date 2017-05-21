@@ -89,82 +89,54 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
 	
 }
 
-int OrbitXYZ(double time, PLANET *planet, SETTINGS settings){
+int OrbitXYZ(int np, PLANET **planet, SETTINGS settings){
   /*
       Compute the orbital parameters
   */
   
-  double per, a, inc, w, ecc, fi, tperi0, t0;
   double M, E, f, r, b;
   double tmp;
   int iErr = ERR_NONE;
+  int p;
+  
+  // Loop over all planets
+  for (p = 0; p < np; p++) {
+  
+    // Mean anomaly
+    M = 2. * PI / planet[p]->per * modulus(planet[p]->time[planet[p]->t] - planet[p]->t0, planet[p]->per);                  
 
-  // Orbital period
-  per = planet->per;                                                                  
-  if (!(per > 0.)) return ERR_INPUT;
+    // Eccentric anomaly
+    if (settings.kepsolver == MDFAST)
+      E = EccentricAnomalyFast(M, planet[p]->ecc, settings.keptol, settings.maxkepiter);
+    else
+      E = EccentricAnomaly(M, planet[p]->ecc, settings.keptol, settings.maxkepiter);
+    if (E == -1) return ERR_KEPLER;
   
-  // Orbital inclination
-  inc = planet->inc;                                                                  
-  if (!((inc >= 0.) && (inc <= PI / 2.))) return ERR_INPUT;
+    // True anomaly
+    f = TrueAnomaly(E, planet[p]->ecc);        
   
-  // Semi-major axis
-  a = planet->a;
-  if (!(a > 0.)) return ERR_INPUT;
+    // Star-planet[p] separation                                  
+    r = planet[p]->a * (1. - planet[p]->ecc * planet[p]->ecc)/(1. + planet[p]->ecc * cos(f));                     
   
-  // Time of transit/inferior conjunction
-  t0 = planet->t0;
-  
-  // Longitude of pericenter
-  w = planet->w;
-  if (!((w >= 0.) && (w <= 2 * PI))) return ERR_INPUT;
-  
-  // NOTE: Adding a phase shift to be consistent with BATMAN
-  w = w - PI;
-  
-  // Eccentricity
-  ecc = planet->ecc;
-  if (!((ecc >= 0.) && (ecc < 1))) return ERR_INPUT;
-  
-  // True anomaly at planet center (Shields et al. 2015)
-  fi = (3. * PI / 2.) - w;                
-  
-  // Time of pericenter passage (Shields et al. 2015)                                            
-  tperi0 = per * sqrt(1. - ecc * ecc) / (2. * PI) * (ecc * sin(fi) / 
-           (1. + ecc * cos(fi)) - 2. / sqrt(1. - ecc * ecc) * 
-           atan2(sqrt(1. - ecc * ecc) * tan(fi/2.), 1. + ecc));                       
+    // Instantaneous impact parameter  
+    b = r * sqrt(1. - pow(sin(planet[p]->w - PI + f) * sin(planet[p]->inc), 2.));                                         
 
-  // Mean anomaly
-  M = 2. * PI / per * modulus(time - tperi0 - t0, per);                  
+    // Cartesian sky-projected coordinates
+    planet[p]->x[planet[p]->t] = r * cos(planet[p]->w - PI + f);                                       
+    planet[p]->z[planet[p]->t] = r * sin(planet[p]->w - PI + f);
+    if (b * b - planet[p]->x[planet[p]->t] * planet[p]->x[planet[p]->t] < 1.e-15) 
+      // Prevent numerical errors
+      planet[p]->y[planet[p]->t] = 0.;                                                                 
+    else {
+      tmp = modulus(f + planet[p]->w - PI, 2 * PI);
+      planet[p]->y[planet[p]->t] = sqrt(b * b - planet[p]->x[planet[p]->t] * planet[p]->x[planet[p]->t]);
+      if (!((0 < tmp) && (tmp < PI))) 
+        planet[p]->y[planet[p]->t] *= -1;
+
+    }
   
-  // Eccentric anomaly
-  if (settings.kepsolver == MDFAST)
-    E = EccentricAnomalyFast(M, ecc, settings.keptol, settings.maxkepiter);
-  else
-    E = EccentricAnomaly(M, ecc, settings.keptol, settings.maxkepiter);
-  if (E == -1) return ERR_KEPLER;
-  
-  // True anomaly
-  f = TrueAnomaly(E, ecc);        
-  
-  // Star-planet separation                                  
-  r = a * (1. - ecc * ecc)/(1. + ecc * cos(f));                     
-  
-  // Instantaneous impact parameter  
-  b = r * sqrt(1. - pow(sin(w + f) * sin(inc), 2.));                                         
-  
-  // Cartesian sky-projected coordinates
-  planet->x = r * cos(w + f);                                       
-  planet->z = r * sin(w + f);
-  if (b * b - planet->x * planet->x < 1.e-15) 
-    // Prevent numerical errors
-    planet->y = 0.;                                                                 
-  else {
-    tmp = modulus(f + w, 2 * PI);
-    planet->y = sqrt(b * b - planet->x * planet->x);
-    if (!((0 < tmp) && (tmp < PI))) 
-      planet->y *= -1;
   }
-
+  
 	return iErr;
 	
 }

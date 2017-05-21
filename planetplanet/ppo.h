@@ -39,10 +39,18 @@ typedef struct {
   double r;
   double albedo;
   double irrad;
-  int nlat;
-  double x;
-  double y;
-  double z;
+  int phasecurve;
+  int nl;
+  int t;
+  int nt;
+  int nw;
+  double *time;
+  double *wavelength;
+  double *x;
+  double *y;
+  double *z;
+  int *occultor;
+  double **flux;
 } PLANET;
 
 typedef struct {
@@ -52,7 +60,6 @@ typedef struct {
   double polyeps1;
   double polyeps2;
   int maxpolyiter;
-  int phasecurve;
 } SETTINGS;
 
 typedef struct {
@@ -78,7 +85,7 @@ typedef struct {
 } FUNCTION;
 
 // Functions
-int OrbitXYZ(double time, PLANET *planet, SETTINGS settings);
+int OrbitXYZ(int np, PLANET **planet, SETTINGS settings);
 void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
-void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, double lambda[nlam], int occultor[n], double flux[n][nlam]);
+int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET **planet, SETTINGS settings);

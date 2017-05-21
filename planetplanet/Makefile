@@ -1,5 +1,5 @@
 # -*- makefile -*-
-export OPENGL=1
+export OPENGL=0
 include ../../rebound/src/Makefile.defs
 
 all: librebound

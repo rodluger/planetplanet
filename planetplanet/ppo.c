@@ -3,65 +3,127 @@
 #include <math.h>
 #include "ppo.h"
 
-void Flux(double time, int n, int nlam, PLANET planet[n], SETTINGS settings, double lambda[nlam], int occultor[n], double flux[n][nlam]){
+int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET **planet, SETTINGS settings){
   /*
   
-  NOTE: This does not properly handle the pathological case of *multiple* simultaneous 
+  NOTE: This does not yet handle the pathological case of *multiple* simultaneous 
   planet-planet occultations involving the same planet!
   
   */
 
-  double d, dx, dy;
-  double x0, theta;
-  double tmp[nlam];
-  int i, j, m;
+  double d, dx, dy, x0;
+  double tmp[nw];
+  double theta;
+  int t, p, o, w;
+  int iErr = ERR_NONE;
   
-  //
-  if (nlam == 1) {
-    printf("Wavelength array must have length > 1.\n");
-    return;
-  }
-  
-  // Compute the instantaneous orbital positions
-  // of all the planets
-  for (i = 0; i < n; i++)
-    OrbitXYZ(time, &planet[i], settings);
-  
-  // Loop over all planets
-  for (i = 0; i < n; i++) {
+  // Initialize the arrays for each planet
+  for (p = 0; p < np; p++) {
     
-    // Compute the phase curve?
-    if (settings.phasecurve) {
-      theta = atan(planet[i].z / fabs(planet[i].x));
-      UnoccultedFlux(planet[i].r, theta, planet[i].albedo, planet[i].irrad, settings.polyeps1, settings.polyeps2, settings.maxpolyiter, planet[i].nlat, nlam, lambda, flux[i]);
-    } else {
-      for (m = 0; m < nlam; m++)
-        flux[i][m] = 0;
+    // Wavelength array
+    planet[p]->wavelength = malloc(nw * sizeof(double));
+    for (w = 0; w < nw; w++) {
+      planet[p]->wavelength[w] = wavelength[w];
     }
+    
+    // Time and orbital arrays
+    planet[p]->time = malloc(nt * sizeof(double));
+    planet[p]->x = malloc(nt * sizeof(double));
+    planet[p]->y = malloc(nt * sizeof(double));
+    planet[p]->z = malloc(nt * sizeof(double));
+    planet[p]->occultor = malloc(nt * sizeof(int));
+    for (t = 0; t < nt; t++)
+      planet[p]->time[t] = time[t];
+    
+    // Flux array
+    planet[p]->flux = malloc(nt * sizeof(double*));
+    for (t = 0; t < nt; t++)
+      planet[p]->flux[t] = malloc(nw * sizeof(double));
+    
+  }
 
-    // Loop over all possible occultors
-    occultor[i] = -1;
-    for (j = 0; j < n; j++) {
+  // Loop over the time array
+  for (t = 0; t < nt; t++) {
+    
+    // Update the time array index in each planet struct
+    for (p = 0; p < np; p++)
+      planet[p]->t = t;
+
+    // Compute the instantaneous orbital positions of all the planets
+    iErr = OrbitXYZ(np, planet, settings);
+    if (iErr != ERR_NONE) return iErr;
+    
+    // Compute the light curve for each planet
+    for (p = 0; p < np; p++) {
+    
+      // Compute the phase curve for this planet?
+      if (planet[p]->phasecurve) {
+        
+        // The orbital phase (edge-on limit!)
+        theta = atan(planet[p]->z[t] / fabs(planet[p]->x[t]));
+        
+        // Call the eyeball routine
+        UnoccultedFlux(planet[p]->r, theta, planet[p]->albedo, planet[p]->irrad, 
+                       settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
+                       planet[p]->nl, nw, wavelength, planet[p]->flux[t]);
       
-      // Skip self
-      if (i == j) continue;
-      
-      // Compute the planet-planet separation between
-      // the ith planet and all the others and check
-      // if the first planet is occulted.
-      dx = (planet[i].x - planet[j].x);
-      dy = (planet[i].y - planet[j].y);
-      d = sqrt(dx * dx + dy * dy);
-      if ((d <= planet[i].r + planet[j].r) && (planet[i].z > planet[j].z)){
-        occultor[i] = j;
-        if (planet[i].x < i) x0 = -dx;
-        else x0 = dx;
-        theta = atan(planet[i].z / fabs(planet[i].x));
-        OccultedFlux(planet[i].r, x0, dy, planet[j].r, theta, planet[i].albedo, planet[i].irrad, settings.polyeps1, settings.polyeps2, settings.maxpolyiter, planet[i].nlat, nlam, lambda, tmp);
-        for (m = 0; m < nlam; m++)
-          flux[i][m] -= tmp[m];
+      } else {
+        
+        // Initialize to zero at all wavelengths
+        for (w = 0; w < nw; w++) {
+          planet[p]->flux[t][w] = 0;
+        }
         
       }
+
+      // Default is no occultation
+      planet[p]->occultor[t] = -1;
+      
+      // Loop over all possible occultors
+      for (o = 0; o < np; o++) {
+      
+        // Skip self
+        if (o == p) continue;
+      
+        // Compute the planet-planet separation between planet `p` and planet `o`
+        dx = (planet[p]->x[t] - planet[o]->x[t]);
+        dy = (planet[p]->y[t] - planet[o]->y[t]);
+        d = sqrt(dx * dx + dy * dy);
+        
+        // Is planet `o` occulting planet `p`?
+        if ((d <= planet[p]->r + planet[o]->r) && (planet[p]->z[t] > planet[o]->z[t])){
+          
+          // Yes!
+          planet[p]->occultor[t] = o;
+          
+          // If the planet is in quadrants II or III, we need to mirror
+          // the problem, since `OccultedFlux` assumes the star is always
+          // to the *left* of the planet.
+          if (planet[p]->x[t] < 0) 
+            x0 = -dx;
+          else 
+            x0 = dx;
+          
+          // The orbital phase (edge-on limit!)
+          theta = atan(planet[p]->z[t] / fabs(planet[p]->x[t]));
+          
+          // Call the eyeball routine
+          OccultedFlux(planet[p]->r, x0, dy, planet[o]->r, theta, planet[p]->albedo, 
+                       planet[p]->irrad, settings.polyeps1, settings.polyeps2, 
+                       settings.maxpolyiter, planet[p]->nl, nw, wavelength, tmp);
+          
+          // Update the planet light curve
+          for (w = 0; w < nw; w++)
+            planet[p]->flux[t][w] -= tmp[w];
+        
+        }
+        
+      }
+      
     }
+  
   }
+
+  return iErr;
+
 }
