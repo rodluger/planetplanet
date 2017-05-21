@@ -19,27 +19,10 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET 
   
   // Initialize the arrays for each planet
   for (p = 0; p < np; p++) {
-    
-    // Wavelength array
-    planet[p]->wavelength = malloc(nw * sizeof(double));
-    for (w = 0; w < nw; w++) {
+    for (w = 0; w < nw; w++)
       planet[p]->wavelength[w] = wavelength[w];
-    }
-    
-    // Time and orbital arrays
-    planet[p]->time = malloc(nt * sizeof(double));
-    planet[p]->x = malloc(nt * sizeof(double));
-    planet[p]->y = malloc(nt * sizeof(double));
-    planet[p]->z = malloc(nt * sizeof(double));
-    planet[p]->occultor = malloc(nt * sizeof(int));
     for (t = 0; t < nt; t++)
       planet[p]->time[t] = time[t];
-    
-    // Flux array
-    planet[p]->flux = malloc(nt * sizeof(double*));
-    for (t = 0; t < nt; t++)
-      planet[p]->flux[t] = malloc(nw * sizeof(double));
-    
   }
 
   // Loop over the time array
