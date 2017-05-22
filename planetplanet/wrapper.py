@@ -14,13 +14,17 @@ import os
 from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
-cmap = pl.get_cmap('RdBu_r')
+rdbu = pl.get_cmap('RdBu_r')
+greys = pl.get_cmap('Greys')
+plasma = pl.get_cmap('plasma')
 
 # Define constants
 AUREARTH = 23454.9271
 SEARTH = 1.361e3
 MDFAST = 0
 NEWTON = 1
+
+DOUBLEPP = np.ctypeslib.ndpointer(dtype = np.uintp, ndim=1, flags='C')
 
 # Load the library
 try:
@@ -155,7 +159,7 @@ class System(object):
     
     self.planets = planets
     self.settings = Settings(**kwargs)
-    self._names = [p.name for p in self.planets]
+    self._names = np.array([p.name for p in self.planets])
   
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
@@ -198,10 +202,11 @@ class System(object):
       planet._z = np.ctypeslib.as_ctypes(planet.z)
       planet.occultor = np.zeros(nt, dtype = 'int32')
       planet._occultor = np.ctypeslib.as_ctypes(planet.occultor)
+      
       # TODO: The following works but is SUPER slow. Find a better way to allocate
       planet.flux = np.zeros((nt, nw))
       planet._flux = (ctypes.POINTER(ctypes.c_double) * nt)(*[np.ctypeslib.as_ctypes(f) for f in planet.flux])
-    
+      
     # A pointer to a pointer to `Planet`. This is an array of `n` `Planet` instances, 
     # passed by reference. The contents can all be accessed through `planets`
     ptr_planets = (ctypes.POINTER(Planet) * n)(*[ctypes.pointer(p) for p in self.planets])
@@ -231,15 +236,15 @@ class System(object):
           tdur = t[-1] - t[0]
           a = np.argmin(np.abs(time - (t[0] - tdur)))
           b = np.argmin(np.abs(time - (t[-1] + tdur)))
-        planet._inds.append(list(range(a,b)))
+          planet._inds.append(list(range(a,b)))
   
-  def plot_occultations(self, name):
+  def plot_occultations(self, planet):
     '''
     
     '''
     
     # Get the occulted planet
-    p = np.argmax(self._names == name)
+    p = np.argmax(self._names == planet)
     planet = self.planets[p]
     
     # Loop over all events
@@ -279,7 +284,7 @@ class System(object):
           style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
         else:
           style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
-        tmax = np.argmin(np.abs(self.planets[j].time - (self.planets[j].time[0] + self.planets[j].time[0] + self.planets[j].per)))
+        tmax = np.argmin(np.abs(self.planets[j].time - (self.planets[j].time[0] + self.planets[j].per)))
         axxz.plot(self.planets[j].x[:tmax], self.planets[j].z[:tmax], **style)
       
       # Plot their current positions
@@ -336,6 +341,42 @@ class System(object):
                     fontweight = 'bold', fontsize = 12)
     
     pl.show()
+  
+  def plot_orbits(self, t, ax = None):
+    '''
+    
+    '''
+
+    # Set up the figure
+    if ax is None:
+      fig, ax = pl.subplots(1, figsize = (5, 6))
+      fig.subplots_adjust(left = 0.175)
+
+    # Plot the orbits of the two planets and all interior ones
+    for j, _ in enumerate(self.planets):
+    
+      # The full orbit
+      tmax = np.argmin(np.abs(self.planets[j].time - (self.planets[j].time[0] + self.planets[j].per)))
+      x = self.planets[j].x[:tmax]
+      z = self.planets[j].z[:tmax]
+      
+      # Thin
+      thin = max(1, len(x) // 100)
+      x = np.append(x[::thin], x[-1])
+      z = np.append(z[::thin], z[-1])
+      
+      # Plot
+      for i in range(len(x) - 1):
+        ax.plot(x[i:i+2], z[i:i+2], '-', lw = 1, color = greys(i / (len(x) - 1.)))
+      
+      # The current position
+      ax.plot(self.planets[j].x[t], self.planets[j].z[t], 'o', color = plasma(1 - self.planets[j].per / self.planets[-1].per), alpha = 1, markeredgecolor = 'k', zorder = 99)
+    
+    # Appearance
+    ax.set_aspect('equal')
+    ax.axis('off')
+  
+    return ax
       
   def image(self, t, occulted, occultor, ax = None, pad = 2.5, **kwargs):
     '''
@@ -391,7 +432,7 @@ class System(object):
       if np.abs(np.cos(lat)) < 1e-5:
         style = dict(color = 'k', ls = '--', lw = 1)
       else:
-        style = dict(color = cmap(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1)
+        style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1)
       ax.plot(x - occultor.x[t], occulted.y[t] - occultor.y[t] + y, **style)
       ax.plot(x - occultor.x[t], occulted.y[t] - occultor.y[t] - y, **style)
 
@@ -406,18 +447,18 @@ class System(object):
     return ax
 
 # Define the planets
-b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, t0 = 7322.51736, nlat = 11)
-c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, t0 = 7282.80728, nlat = 11)
-d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, t0 = 7670.14165, nlat = 11)
-e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, t0 = 7660.37859, nlat = 11)
-f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, t0 = 7671.39767, nlat = 11)
-g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, t0 = 7665.34937, nlat = 11)
-h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, t0 = 7662.55463, nlat = 11)
+b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, trn0 = 7322.51736, nlat = 11)
+c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, trn0 = 7282.80728, nlat = 11)
+d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, trn0 = 7670.14165, nlat = 11)
+e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, trn0 = 7660.37859, nlat = 11)
+f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, trn0 = 7671.39767, nlat = 11)
+g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, trn0 = 7665.34937, nlat = 11)
+h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, trn0 = 7662.55463, nlat = 11)
 system = System(b, c, d, e, f, g, h)
 
 # Get the light curves
-time = np.linspace(0, 5, 10000)
+time = np.linspace(0, 10, 100000)
 system.compute(time)
 
-system.plot_occultations('b')
+system.plot_occultations('c')
 pl.show()
