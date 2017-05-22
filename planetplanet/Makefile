@@ -5,7 +5,7 @@ include ../../rebound/src/Makefile.defs
 all: librebound
 	@echo ""
 	@echo "[planetplanet] Compiling C source..."
-	$(CC) -fPIC -I../../src/ $(OPT) $(PREDEF) -c orbit.c complex.c roots.c eyeball.c ppo.c
+	$(CC) -fPIC -I../../rebound/src/ $(OPT) $(PREDEF) -c orbit.c complex.c roots.c eyeball.c ppo.c
 	@echo "[planetplanet] Generating shared library..."
 	$(CC) -shared -Wl,-install_name,libppo.so -o libppo.so orbit.o complex.o roots.o eyeball.o ppo.o -L. -lrebound $(LIB)
 	@-rm orbit.o

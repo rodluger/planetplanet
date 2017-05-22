@@ -43,7 +43,8 @@ class Settings(ctypes.Structure):
   
   '''
   
-  _fields_ = [("keptol", ctypes.c_double),
+  _fields_ = [("ttvs", ctypes.c_int),
+              ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
               ("kepsolver", ctypes.c_int),
               ("polyeps1", ctypes.c_double),
@@ -51,6 +52,7 @@ class Settings(ctypes.Structure):
               ("maxpolyiter", ctypes.c_int)]
   
   def __init__(self, **kwargs):
+    self.ttvs = int(kwargs.pop('ttvs', False))
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = eval(kwargs.pop('kepsolver', 'newton').upper())
@@ -62,6 +64,7 @@ class Planet(ctypes.Structure):
   '''
   The class containing all the input planet parameters.
   
+  :param float per: Planet mass in Earth masses. Default `0.85`
   :param float per: Orbital period in days. Default `1.51087081`
   :param float inc: Orbital inclination in degrees. Default `89.65`
   :param float ecc: Orbital eccentricity. Default `0.`
@@ -77,7 +80,8 @@ class Planet(ctypes.Structure):
   
   '''
   
-  _fields_ = [("per", ctypes.c_double),
+  _fields_ = [("m", ctypes.c_double),
+              ("per", ctypes.c_double),
               ("inc", ctypes.c_double),
               ("ecc", ctypes.c_double),
               ("w", ctypes.c_double),
@@ -88,7 +92,6 @@ class Planet(ctypes.Structure):
               ("irrad", ctypes.c_double),
               ("phasecurve", ctypes.c_int),
               ("nl", ctypes.c_int),
-              ("t", ctypes.c_int),
               ("nt", ctypes.c_int),
               ("nw", ctypes.c_int),
               ("_time", ctypes.POINTER(ctypes.c_double)),
@@ -103,6 +106,7 @@ class Planet(ctypes.Structure):
   
     # User
     self.name = name
+    self.m = kwargs.pop('m', )
     self.per = kwargs.pop('per', 1.51087081)
     self.inc = kwargs.pop('inc', 89.65) * np.pi / 180.
     self.ecc = kwargs.pop('ecc', 0.)
@@ -115,7 +119,6 @@ class Planet(ctypes.Structure):
     self.nl = kwargs.pop('nl', 11)
     
     # System
-    self.t = 0
     self.nt = 0
     self.nw = 0
     self._inds = []
@@ -176,9 +179,6 @@ class System(object):
     nw = len(wavelength)
 
     # Initialize the C interface
-    Orbit = libppo.OrbitXYZ
-    Orbit.restype = ctypes.c_int
-    Orbit.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Planet)), Settings]
     Flux = libppo.Flux
     Flux.restype = ctypes.c_int
     Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
@@ -455,13 +455,13 @@ class System(object):
 if __name__ == '__main__':
 
   # Define the planets
-  b = Planet('b', per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, trn0 = 7322.51736, nlat = 11)
-  c = Planet('c', per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, trn0 = 7282.80728, nlat = 11)
-  d = Planet('d', per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, trn0 = 7670.14165, nlat = 11)
-  e = Planet('e', per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, trn0 = 7660.37859, nlat = 11)
-  f = Planet('f', per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, trn0 = 7671.39767, nlat = 11)
-  g = Planet('g', per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, trn0 = 7665.34937, nlat = 11)
-  h = Planet('h', per = 18.766, inc = 89.80, a = 0.06, r = 0.755, trn0 = 7662.55463, nlat = 11)
+  b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, trn0 = 7322.51736, nlat = 11)
+  c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, trn0 = 7282.80728, nlat = 11)
+  d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, trn0 = 7670.14165, nlat = 11)
+  e = Planet('e', m = 0.62, per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, trn0 = 7660.37859, nlat = 11)
+  f = Planet('f', m = 0.68, per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, trn0 = 7671.39767, nlat = 11)
+  g = Planet('g', m = 1.34, per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, trn0 = 7665.34937, nlat = 11)
+  h = Planet('h', m = 0.80, per = 18.766, inc = 89.80, a = 0.06, r = 0.755, trn0 = 7662.55463, nlat = 11)
   system = System(b, c, d, e, f, g, h)
 
   # Get the light curves 

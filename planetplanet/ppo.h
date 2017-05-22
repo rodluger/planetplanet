@@ -13,7 +13,6 @@
 
 // Constants
 #define PI                      acos(-1.)
-#define G                       6.672e-8
 #define DAYSEC                  86400.
 #define KBOLTZ                  1.38064852e-23                                        // W s / K
 #define SBOLTZ                  5.670367e-8                                           // W / m^2 / K^4
@@ -30,6 +29,7 @@
 
 // Structs
 typedef struct {
+  double m;
   double per;
   double inc;
   double ecc;
@@ -41,7 +41,6 @@ typedef struct {
   double irrad;
   int phasecurve;
   int nl;
-  int t;
   int nt;
   int nw;
   double *time;
@@ -54,6 +53,7 @@ typedef struct {
 } PLANET;
 
 typedef struct {
+  int ttvs;
   double keptol;
   int maxkepiter;
   int kepsolver;
@@ -85,7 +85,8 @@ typedef struct {
 } FUNCTION;
 
 // Functions
-int OrbitXYZ(int np, PLANET **planet, SETTINGS settings);
+int NBody(int np, PLANET **planet, SETTINGS settings);
+int Kepler(int np, PLANET **planet, SETTINGS settings);
 void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET **planet, SETTINGS settings);

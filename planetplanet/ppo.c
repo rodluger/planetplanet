@@ -19,23 +19,24 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET 
   
   // Initialize the arrays for each planet
   for (p = 0; p < np; p++) {
+    planet[p]->nw = nw;
     for (w = 0; w < nw; w++)
       planet[p]->wavelength[w] = wavelength[w];
+    planet[p]->nt = nt;
     for (t = 0; t < nt; t++)
       planet[p]->time[t] = time[t];
   }
+  
+  // Solve for the orbits
+  if (settings.ttvs)
+    iErr = NBody(np, planet, settings);
+  else
+    iErr = Kepler(np, planet, settings);
+  if (iErr != ERR_NONE) return iErr;
 
   // Loop over the time array
   for (t = 0; t < nt; t++) {
-    
-    // Update the time array index in each planet struct
-    for (p = 0; p < np; p++)
-      planet[p]->t = t;
-
-    // Compute the instantaneous orbital positions of all the planets
-    iErr = OrbitXYZ(np, planet, settings);
-    if (iErr != ERR_NONE) return iErr;
-    
+        
     // Compute the light curve for each planet
     for (p = 0; p < np; p++) {
     

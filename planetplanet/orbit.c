@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
+#include "rebound.h"
  
 double modulus(double x, double y) {
   /*
@@ -89,54 +90,153 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
 	
 }
 
-int OrbitXYZ(int np, PLANET **planet, SETTINGS settings){
+int Kepler(int np, PLANET **planet, SETTINGS settings){
   /*
-      Compute the orbital parameters
+      Compute the instantaneous x, y, and z positions of all 
+      planets with a simple Keplerian solver
   */
   
   double M, E, f, r, b;
   double tmp;
   int iErr = ERR_NONE;
-  int p;
+  int t, p;
   
   // Loop over all planets
   for (p = 0; p < np; p++) {
   
-    // Mean anomaly
-    M = 2. * PI / planet[p]->per * modulus(planet[p]->time[planet[p]->t] - planet[p]->t0, planet[p]->per);                  
+    // Loop over the time array
+    for (t = 0; t < planet[p]->nt; t++) {
+      
+      // Mean anomaly
+      M = 2. * PI / planet[p]->per * modulus(planet[p]->time[t] - planet[p]->t0, planet[p]->per);                  
 
-    // Eccentric anomaly
-    if (settings.kepsolver == MDFAST)
-      E = EccentricAnomalyFast(M, planet[p]->ecc, settings.keptol, settings.maxkepiter);
-    else
-      E = EccentricAnomaly(M, planet[p]->ecc, settings.keptol, settings.maxkepiter);
-    if (E == -1) return ERR_KEPLER;
+      // Eccentric anomaly
+      if (settings.kepsolver == MDFAST)
+        E = EccentricAnomalyFast(M, planet[p]->ecc, settings.keptol, settings.maxkepiter);
+      else
+        E = EccentricAnomaly(M, planet[p]->ecc, settings.keptol, settings.maxkepiter);
+      if (E == -1) return ERR_KEPLER;
   
-    // True anomaly
-    f = TrueAnomaly(E, planet[p]->ecc);        
+      // True anomaly
+      f = TrueAnomaly(E, planet[p]->ecc);        
   
-    // Star-planet[p] separation                                  
-    r = planet[p]->a * (1. - planet[p]->ecc * planet[p]->ecc)/(1. + planet[p]->ecc * cos(f));                     
+      // Star-planet separation                                  
+      r = planet[p]->a * (1. - planet[p]->ecc * planet[p]->ecc)/(1. + planet[p]->ecc * cos(f));                     
   
-    // Instantaneous impact parameter  
-    b = r * sqrt(1. - pow(sin(planet[p]->w - PI + f) * sin(planet[p]->inc), 2.));                                         
+      // Instantaneous impact parameter  
+      b = r * sqrt(1. - pow(sin(planet[p]->w - PI + f) * sin(planet[p]->inc), 2.));                                         
 
-    // Cartesian sky-projected coordinates
-    planet[p]->x[planet[p]->t] = r * cos(planet[p]->w - PI + f);                                       
-    planet[p]->z[planet[p]->t] = r * sin(planet[p]->w - PI + f);
-    if (b * b - planet[p]->x[planet[p]->t] * planet[p]->x[planet[p]->t] < 1.e-15) 
-      // Prevent numerical errors
-      planet[p]->y[planet[p]->t] = 0.;                                                                 
-    else {
-      tmp = modulus(f + planet[p]->w - PI, 2 * PI);
-      planet[p]->y[planet[p]->t] = sqrt(b * b - planet[p]->x[planet[p]->t] * planet[p]->x[planet[p]->t]);
-      if (!((0 < tmp) && (tmp < PI))) 
-        planet[p]->y[planet[p]->t] *= -1;
+      // Cartesian sky-projected coordinates
+      planet[p]->x[t] = r * cos(planet[p]->w - PI + f);                                       
+      planet[p]->z[t] = r * sin(planet[p]->w - PI + f);
+      if (b * b - planet[p]->x[t] * planet[p]->x[t] < 1.e-15) 
+        // Prevent numerical errors
+        planet[p]->y[t] = 0.;                                                                 
+      else {
+        tmp = modulus(f + planet[p]->w - PI, 2 * PI);
+        planet[p]->y[t] = sqrt(b * b - planet[p]->x[t] * planet[p]->x[t]);
+        if (!((0 < tmp) && (tmp < PI))) 
+          planet[p]->y[t] *= -1;
 
+      }
+  
     }
   
   }
   
 	return iErr;
 	
+}
+
+void heartbeat(struct reb_simulation* r){
+  /*
+  
+  */
+  
+  // TODO
+	
+}
+
+int NBody(int np, PLANET **planet, SETTINGS settings) {
+  /*
+  
+  */
+  
+  int p, t;
+  double tmax;
+  double vx[np], vy[np], vz[np];
+  struct reb_simulation* r = reb_create_simulation();
+  
+  // Velocities. TODO: Compute analytically
+  int stupid = 1;
+  if (stupid) {
+    double time[6];
+    for (t = 0; t < 6; t++)
+      time[t] = planet[0]->time[t];
+    t = planet[0]->nt;
+    for (p = 0; p < np; p++) {
+      planet[p]->time[0] = time[0] - 3e-7;
+      planet[p]->time[1] = time[0] - 2e-7;
+      planet[p]->time[2] = time[0] - 1e-7;
+      planet[p]->time[3] = time[0] + 1e-7;
+      planet[p]->time[4] = time[0] + 2e-7;
+      planet[p]->time[5] = time[0] + 3e-7;
+      planet[p]->nt = 6;
+    }
+    Kepler(np, planet, settings); 
+    for (p = 0; p < np; p++) {
+      planet[p]->time[0] = time[0];
+      planet[p]->time[1] = time[1];
+      planet[p]->time[2] = time[2];
+      planet[p]->time[3] = time[3];
+      planet[p]->time[4] = time[4];
+      planet[p]->time[5] = time[5];
+      planet[p]->nt = t;
+    }
+    for (p = 0; p < np; p++) {
+      vx[p] = (-(1/60.) * planet[p]->x[0] + (3/20.) * planet[p]->x[1] - (3/4.) * planet[p]->x[2] + 
+              (3/4.) * planet[p]->x[3] - (3/20.) * planet[p]->x[4] + (1/60.) * planet[p]->x[5]) / 1e-7;
+      vy[p] = (-(1/60.) * planet[p]->y[0] + (3/20.) * planet[p]->y[1] - (3/4.) * planet[p]->y[2] + 
+              (3/4.) * planet[p]->y[3] - (3/20.) * planet[p]->y[4] + (1/60.) * planet[p]->y[5]) / 1e-7;
+      vz[p] = (-(1/60.) * planet[p]->z[0] + (3/20.) * planet[p]->z[1] - (3/4.) * planet[p]->z[2] + 
+              (3/4.) * planet[p]->z[3] - (3/20.) * planet[p]->z[4] + (1/60.) * planet[p]->z[5]) / 1e-7;
+    }
+  }
+  
+	// Timestep in days
+	r->dt = 0.01;
+	
+	// Max time in days
+	tmax = 10.;
+	
+	// G in REARTH^3 / MEARTH / day^2
+	r->G = 11466.9811868;
+	
+	// 11th order symplectic corrector
+	r->ri_whfast.safe_mode 	= 0;
+	r->ri_whfast.corrector 	= 11;		
+	r->integrator = REB_INTEGRATOR_WHFAST;
+	r->heartbeat = heartbeat;
+	r->exact_finish_time = 1;
+
+  // Initialize the star
+
+	// Initialize the planets
+	for (p = 0; p < np; p++) {
+		struct reb_particle body = {0};
+		body.x  = planet[p]->x[0]; 		
+		body.y  = planet[p]->y[0];	 	
+		body.z  = planet[p]->z[0];
+		body.vx = vx[p]; 		
+		body.vy = vy[p];	 	
+		body.vz = vz[p];
+		body.m  = planet[p]->m;
+		reb_add(r, body);
+	}
+	
+	// Move to center of mass frame and integrate!
+	reb_move_to_com(r);
+	reb_integrate(r, tmax);
+  
+  return 0;
 }
