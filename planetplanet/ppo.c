@@ -48,13 +48,15 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET 
         // Call the eyeball routine
         UnoccultedFlux(planet[p]->r, theta, planet[p]->albedo, planet[p]->irrad, 
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
-                       planet[p]->nl, nw, wavelength, planet[p]->flux[t]);
-      
+                       planet[p]->nl, nw, wavelength, tmp);
+        for (w = 0; w < nw; w++)
+          planet[p]->flux[nw * t + w] = tmp[w];
+        
       } else {
         
         // Initialize to zero at all wavelengths
         for (w = 0; w < nw; w++) {
-          planet[p]->flux[t][w] = 0;
+          planet[p]->flux[nw * t + w] = 0;
         }
         
       }
@@ -97,7 +99,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET 
           
           // Update the planet light curve
           for (w = 0; w < nw; w++)
-            planet[p]->flux[t][w] -= tmp[w];
+            planet[p]->flux[nw * t + w] -= tmp[w];
         
         }
         

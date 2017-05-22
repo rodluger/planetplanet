@@ -50,7 +50,7 @@ typedef struct {
   double *y;
   double *z;
   int *occultor;
-  double **flux;
+  double *flux;
 } PLANET;
 
 typedef struct {

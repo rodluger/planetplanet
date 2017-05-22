@@ -99,7 +99,7 @@ class Planet(ctypes.Structure):
               ("_y", ctypes.POINTER(ctypes.c_double)),
               ("_z", ctypes.POINTER(ctypes.c_double)),
               ("_occultor", ctypes.POINTER(ctypes.c_int)),
-              ("_flux", ctypes.POINTER(ctypes.POINTER(ctypes.c_double)))]
+              ("_flux", ctypes.POINTER(ctypes.c_double))]
               
   def __init__(self, name, **kwargs):
   
@@ -202,11 +202,13 @@ class System(object):
       planet._z = np.ctypeslib.as_ctypes(planet.z)
       planet.occultor = np.zeros(nt, dtype = 'int32')
       planet._occultor = np.ctypeslib.as_ctypes(planet.occultor)
-      
-      # TODO: The following works but is SUPER slow. Find a better way to allocate
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
       planet.flux = np.zeros((nt, nw))
-      planet._flux = (ctypes.POINTER(ctypes.c_double) * nt)(*[np.ctypeslib.as_ctypes(f) for f in planet.flux])
-      
+      planet._flux1d = planet.flux.reshape(nt * nw)
+      planet._flux = np.ctypeslib.as_ctypes(planet._flux1d)
+
     # A pointer to a pointer to `Planet`. This is an array of `n` `Planet` instances, 
     # passed by reference. The contents can all be accessed through `planets`
     ptr_planets = (ctypes.POINTER(Planet) * n)(*[ctypes.pointer(p) for p in self.planets])
