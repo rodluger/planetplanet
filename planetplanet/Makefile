@@ -7,7 +7,7 @@ all: librebound
 	@echo "[planetplanet] Compiling C source..."
 	$(CC) -fPIC -I../../src/ $(OPT) $(PREDEF) -c orbit.c complex.c roots.c eyeball.c ppo.c
 	@echo "[planetplanet] Generating shared library..."
-	$(CC) -shared -Wl,-install_name,ppo.so -o ppo.so orbit.o complex.o roots.o eyeball.o ppo.o -L. -lrebound $(LIB)
+	$(CC) -shared -Wl,-install_name,libppo.so -o libppo.so orbit.o complex.o roots.o eyeball.o ppo.o -L. -lrebound $(LIB)
 	@-rm orbit.o
 	@-rm complex.o
 	@-rm roots.o
@@ -26,5 +26,5 @@ clean:
 	@echo "[planetplanet] Cleaning up shared library librebound.so ..."
 	@-rm -f librebound.so
 	$(MAKE) -C ../../rebound/src/ clean
-	@echo "[planetplanet] Cleaning up local directory ..."
-	@-rm -vf ppo.so
+	@echo "[planetplanet] Cleaning up shared library libppo.so ..."
+	@-rm -vf libppo.so
