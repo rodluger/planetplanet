@@ -34,6 +34,7 @@ typedef struct {
   double inc;
   double ecc;
   double w;
+  double Omega;
   double a;
   double t0;
   double r;
@@ -50,7 +51,7 @@ typedef struct {
   double *z;
   int *occultor;
   double *flux;
-} PLANET;
+} BODY;
 
 typedef struct {
   int ttvs;
@@ -85,8 +86,8 @@ typedef struct {
 } FUNCTION;
 
 // Functions
-int NBody(int np, PLANET **planet, SETTINGS settings);
-int Kepler(int np, PLANET **planet, SETTINGS settings);
+int NBody(int np, BODY **body, SETTINGS settings);
+int Kepler(int np, BODY **body, SETTINGS settings);
 void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]);
-int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, PLANET **planet, SETTINGS settings);
+int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);
