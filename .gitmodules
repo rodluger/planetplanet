@@ -1,0 +1,3 @@
+[submodule "rebound"]
+	path = rebound
+	url = https://github.com/rodluger/rebound
