@@ -18,6 +18,8 @@ REARTH = 6.3781e6
 DAYSEC = 86400.
 AUM = 1.49598e11
 
+__all__ = ['Trappist1']
+
 def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertainty = True):
   '''
   

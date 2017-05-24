@@ -17,14 +17,14 @@ from matplotlib.ticker import MaxNLocator
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
-
-# Define constants
 AUREARTH = 23454.9271
 MSUNMEARTH = 332968.308
 RSUNREARTH = 109.045013
 SEARTH = 1.361e3
 MDFAST = 0
 NEWTON = 1
+
+__all__ = ['Settings', 'Star', 'Planet', 'Body', 'System']
 
 # Load the library
 try:

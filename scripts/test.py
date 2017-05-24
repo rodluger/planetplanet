@@ -9,7 +9,7 @@ test.py
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.trappist1 import Trappist1
+from planetplanet.photo import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
 
