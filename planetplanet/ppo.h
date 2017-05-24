@@ -61,6 +61,7 @@ typedef struct {
   double polyeps1;
   double polyeps2;
   int maxpolyiter;
+  double dt;
 } SETTINGS;
 
 typedef struct {

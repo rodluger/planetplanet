@@ -3,6 +3,7 @@
 #include <math.h>
 #include "ppo.h"
 #include "rebound.h"
+#include "progress.h"
  
 double modulus(double x, double y) {
   /*
@@ -101,6 +102,9 @@ int Kepler(int np, BODY **body, SETTINGS settings){
   int iErr = ERR_NONE;
   int t, p;
   
+  // Log
+  printf("Computing orbits with the Kepler solver...\n");
+  
   // In this simple solver, the star is fixed at the origin (massless planets)
   for (t = 0; t < body[0]->nt; t++) {
     body[0]->x[t] = 0;
@@ -175,8 +179,16 @@ void heartbeat(struct reb_simulation* r){
   
   */
   
-  // TODO
+  // Nothing!
 	
+}
+
+void on_progress(progress_data_t *data) {
+  /*
+  
+  */
+  
+  progress_write(data->holder);
 }
 
 int NBody(int np, BODY **body, SETTINGS settings) {
@@ -185,16 +197,24 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   */
   
   int p, t;
-  double tmax;
   double M, E, f;
   struct reb_simulation* r = reb_create_simulation();
+  progress_t *progress = progress_new(body[0]->nt, 100);
+  progress->fmt = "[:bar] :percent :elapsed";
+  progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
   
-	// Timestep in days
-	r->dt = 0.01;
-	
-	// Max time in days
-	tmax = 10.;
-	
+  // Log
+  printf("Computing orbits with REBOUND...\n");
+  
+	// Set the timestep
+	double diff;
+	double dt = settings.dt;
+	for (t = 0; t < body[0]->nt - 1; t++) {
+	  diff = body[0]->time[t + 1] - body[0]->time[t];
+	  if (diff < dt) dt = diff;
+	}
+	r->dt = dt;
+
 	// G in REARTH^3 / MEARTH / day^2
 	r->G = 11466.9811868;
 	
@@ -208,8 +228,8 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   // Initialize the star
   struct reb_particle primary = {0};
   primary.m = body[0]->m;
-  t = 0;
-  
+  reb_add(r, primary);
+
 	// Initialize the planets
 	for (p = 1; p < np; p++) {
 	
@@ -222,16 +242,45 @@ int NBody(int np, BODY **body, SETTINGS settings) {
     if (E == -1) return ERR_KEPLER;
     f = TrueAnomaly(E, body[p]->ecc);  
 	  
-	  
-	  struct reb_particle planet = reb_tools_orbit_to_particle(r->G, primary, body[p]->m, 
+	  // Create the particle in REBOUND
+	  struct reb_particle planet = reb_tools_orbit_to_particle(r->G, primary, body[p]->m,
 	                               body[p]->a, body[p]->ecc, body[p]->inc, 
 	                               body[p]->Omega, body[p]->w, f);
 		reb_add(r, planet);
+	 
 	}
 	
-	// Move to center of mass frame and integrate!
+	// Move to center of mass frame
 	reb_move_to_com(r);
-	reb_integrate(r, tmax);
+	
+	// Store the initial positions
+	for (p = 0; p < np; p++) {
+	  body[p]->x[0] = r->particles[p].x;
+	  body[p]->y[0] = r->particles[p].y;
+	  body[p]->z[0] = r->particles[p].z;
+	}
+	
+	// Integrate!
+	for (t = 1; t < body[0]->nt; t++) {
+    
+    // Take one step
+	  reb_integrate(r, body[0]->time[t] - body[0]->time[0]);
+	  reb_integrator_synchronize(r);
+	  
+	  // Update body positions
+	  for (p = 0; p < np; p++) {
+	    body[p]->x[t] = r->particles[p].x;
+	    body[p]->y[t] = r->particles[p].y;
+	    body[p]->z[t] = r->particles[p].z;
+	  }
+	  
+	  // Display the progress
+	  if (t % 1000 == 0) progress_tick(progress, 1000);
+
+  }
   
+  progress_free(progress);
+  printf("\n");
   return 0;
+  
 }

@@ -36,12 +36,14 @@ class Settings(ctypes.Structure):
   '''
   The class that contains the model settings.
   
+  :param bool ttvs: Allow for TTVs? Uses `REBOUND` N-body code to compute orbits. Default `False`
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
   :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `2.0e-6`
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `6.0e-9`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
+  :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
   
   '''
   
@@ -51,7 +53,8 @@ class Settings(ctypes.Structure):
               ("kepsolver", ctypes.c_int),
               ("polyeps1", ctypes.c_double),
               ("polyeps2", ctypes.c_double),
-              ("maxpolyiter", ctypes.c_int)]
+              ("maxpolyiter", ctypes.c_int),
+              ("dt", ctypes.c_double)]
   
   def __init__(self, **kwargs):
     self.ttvs = int(kwargs.pop('ttvs', False))
@@ -61,6 +64,7 @@ class Settings(ctypes.Structure):
     self.polyeps1 = kwargs.pop('polyeps1', 2.0e-6)
     self.polyeps2 = kwargs.pop('polyeps2', 6.0e-9)
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
+    self.dt = kwargs.pop('dt', 0.01)
 
 def Star(*args, **kwargs):
   '''
@@ -260,7 +264,8 @@ class System(object):
           tdur = t[-1] - t[0]
           a = np.argmin(np.abs(time - (t[0] - tdur)))
           b = np.argmin(np.abs(time - (t[-1] + tdur)))
-          body._inds.append(list(range(a,b)))
+          if b > a:
+            body._inds.append(list(range(a,b)))
   
   def plot_occultations(self, body):
     '''
@@ -477,19 +482,23 @@ if __name__ == '__main__':
 
   # Define the bodies
   star = Star('star', m = 0.0802)
-  b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, trn0 = 7322.51736, nlat = 11)
-  c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, trn0 = 7282.80728, nlat = 11)
-  d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, trn0 = 7670.14165, nlat = 11)
-  e = Planet('e', m = 0.62, per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, trn0 = 7660.37859, nlat = 11)
-  f = Planet('f', m = 0.68, per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, trn0 = 7671.39767, nlat = 11)
-  g = Planet('g', m = 1.34, per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, trn0 = 7665.34937, nlat = 11)
-  h = Planet('h', m = 0.80, per = 18.766, inc = 89.80, a = 0.06, r = 0.755, trn0 = 7662.55463, nlat = 11)
-  system = System(star, b, c, d, e, f, g, h)
+  b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, trn0 = 7322.51736, nl = 11)
+  c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, trn0 = 7282.80728, nl = 11)
+  d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, trn0 = 7670.14165, nl = 11)
+  e = Planet('e', m = 0.62, per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, trn0 = 7660.37859, nl = 11)
+  f = Planet('f', m = 0.68, per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, trn0 = 7671.39767, nl = 11)
+  g = Planet('g', m = 1.34, per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, trn0 = 7665.34937, nl = 11)
+  h = Planet('h', m = 0.80, per = 18.766, inc = 89.80, a = 0.06, r = 0.755, trn0 = 7662.55463, nl = 11)
+  system = System(star, b, c, d, e, f, g, h, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True)
 
   # Get the light curves 
   time = np.linspace(0, 10, 100000)
   system.compute(time)
   
   # Plot the occultations of `c`
-  system.plot_occultations('d')
+  #system.plot_occultations('d')
+  
+  for body in system.bodies:
+    pl.plot(body.x, body.z, '.', alpha = 0.1, ms = 1)
+  
   pl.show()

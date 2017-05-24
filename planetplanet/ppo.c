@@ -33,7 +33,10 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   else
     iErr = Kepler(np, body, settings);
   if (iErr != ERR_NONE) return iErr;
-
+  
+  // Log
+  printf("Computing occultation light curves...\n");
+  
   // Loop over the time array
   for (t = 0; t < nt; t++) {
         
@@ -109,6 +112,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     }
   
   }
+
+  // Log
+  printf("Done!\n");
 
   return iErr;
 
