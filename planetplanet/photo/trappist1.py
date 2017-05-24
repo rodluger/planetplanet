@@ -9,7 +9,6 @@
 from __future__ import division, print_function, absolute_import, unicode_literals
 from .ppo import Star, Planet, System
 import numpy as np
-np.random.seed(1234)
 MSUN = 1.988416e30
 RSUN = 6.957e8
 G = 6.67428e-11

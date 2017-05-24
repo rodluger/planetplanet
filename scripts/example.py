@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-test.py
--------
+example.py
+----------
 
 '''
 
@@ -13,12 +13,13 @@ from planetplanet.photo import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
 
+# Instantiate the Trappist-1 system
 system = Trappist1(uncertainty = True)
 
-# Get the light curves 
+# Get the occultation light curves for the first 10 days
 time = np.linspace(0, 10, 100000)
 system.compute(time)
 
-# Plot the occultations of `b`
+# Plot all of the occultations of planet `b`
 system.plot_occultations('b')
 pl.show()
