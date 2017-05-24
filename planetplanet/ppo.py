@@ -10,7 +10,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
-import os
+import os, shutil
 from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
@@ -28,8 +28,12 @@ NEWTON = 1
 
 # Load the library
 try:
+  cwd = os.getcwd()
+  if cwd != os.path.dirname(os.path.abspath(__file__)):
+    shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'librebound.so'), cwd)
   libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
 except:
+  import pdb; pdb.set_trace()
   raise Exception("Can't find `libppo.so`; please run `make` to compile it.")
 
 class Settings(ctypes.Structure):
@@ -351,29 +355,24 @@ class System(object):
       for j in range(3): 
         axim[i][j].axis('off')
         axim[i][j].set_aspect('equal')
-  
-      # Recall that in quadrants II and III we mirror the geometry,
-      # so flip the plots around
-      if body.x[tend] < 0:
-        self.image(tend, body, occultor, ax = axim[i][0])
-        self.image(tmid, body, occultor, ax = axim[i][1])
-        self.image(tstart, body, occultor, ax = axim[i][2])
-      else:
-        self.image(tstart, body, occultor, ax = axim[i][0])
-        self.image(tmid, body, occultor, ax = axim[i][1])
-        self.image(tend, body, occultor, ax = axim[i][2])
+      self.image(tstart, body, occultor, ax = axim[i][0])
+      self.image(tmid, body, occultor, ax = axim[i][1])
+      self.image(tend, body, occultor, ax = axim[i][2])
   
       # The title
-      axxz[i].annotate(body.name, xy = (0.15, 1.1),
+      axxz[i].annotate(body.name, xy = (0.15, 1.25),
                        xycoords = "axes fraction", ha = 'right', va = 'center',
                        fontweight = 'bold', color = 'r', fontsize = 12)
-      axxz[i].annotate(occultor.name, xy = (0.85, 1.1),
+      axxz[i].annotate(occultor.name, xy = (0.85, 1.25),
                        xycoords = "axes fraction", ha = 'left', va = 'center',
                        fontweight = 'bold', color = 'grey', fontsize = 12)
-      axxz[i].annotate("occulted by", xy = (0.5, 1.1),
+      axxz[i].annotate("occulted by", xy = (0.5, 1.25),
                        xycoords = "axes fraction", ha = 'center', va = 'center',
                        fontweight = 'bold', fontsize = 12)
-    
+      axxz[i].annotate("Duration: %.2f minutes" % ((body.time[tend] - body.time[tstart]) * 1440.),
+                       xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
+                       fontsize = 10, style = 'italic')
+      
     return fig, axlc, axxz, axim
   
   def plot_orbits(self, t, ax = None):
@@ -476,29 +475,3 @@ class System(object):
       ax.set_ylim(occulted.y[t] - occultor.y[t] - (pad + 1) * r, occulted.y[t] - occultor.y[t] + (pad + 1) * r)
 
     return ax
-
-# For testing
-if __name__ == '__main__':
-
-  # Define the bodies
-  star = Star('star', m = 0.0802)
-  b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, a = 0.01111, r = 1.086, trn0 = 7322.51736, nl = 11)
-  c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, a = 0.01521, r = 1.056, trn0 = 7282.80728, nl = 11)
-  d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75, a = 0.02144, r = 0.772, trn0 = 7670.14165, nl = 11)
-  e = Planet('e', m = 0.62, per = 6.099615, inc = 89.86, a = 0.02817, r = 0.918, trn0 = 7660.37859, nl = 11)
-  f = Planet('f', m = 0.68, per = 9.206690, inc = 89.68, a = 0.0371, r = 1.045, trn0 = 7671.39767, nl = 11)
-  g = Planet('g', m = 1.34, per = 12.35294, inc = 89.71, a = 0.0451, r = 1.127, trn0 = 7665.34937, nl = 11)
-  h = Planet('h', m = 0.80, per = 18.766, inc = 89.80, a = 0.06, r = 0.755, trn0 = 7662.55463, nl = 11)
-  system = System(star, b, c, d, e, f, g, h, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True)
-
-  # Get the light curves 
-  time = np.linspace(0, 10, 100000)
-  system.compute(time)
-  
-  # Plot the occultations of `c`
-  #system.plot_occultations('d')
-  
-  for body in system.bodies:
-    pl.plot(body.x, body.z, '.', alpha = 0.1, ms = 1)
-  
-  pl.show()
