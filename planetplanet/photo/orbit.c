@@ -4,6 +4,15 @@
 #include "ppo.h"
 #include "rebound.h"
 #include "progress.h"
+
+void on_progress(progress_data_t *data) {
+  /*
+  
+  */
+  
+  progress_write(data->holder);
+  
+} 
  
 double modulus(double x, double y) {
   /*
@@ -74,6 +83,7 @@ double EccentricAnomalyFast(double dMeanA, double dEcc, double tol, int maxiter)
     return -1.;                                                                       // Solver didn't converge
   else
     return dEccA;
+    
 }
 
 double EccentricAnomaly(double M, double e, double tol, int maxiter) {
@@ -101,6 +111,9 @@ int Kepler(int np, BODY **body, SETTINGS settings){
   double  cwf, swf, co, so, ci, si;
   int iErr = ERR_NONE;
   int t, p;
+  progress_t *progress = progress_new(body[0]->nt, 100);
+  progress->fmt = "[:bar] :percent :elapsed";
+  progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
   
   // Log
   printf("Computing orbits with the Kepler solver...\n");
@@ -112,11 +125,11 @@ int Kepler(int np, BODY **body, SETTINGS settings){
     body[0]->z[t] = 0;
   }
   
-  // Loop over all planets
-  for (p = 1; p < np; p++) {
+  // Loop over the time array
+  for (t = 0; t < body[0]->nt; t++) {
   
-    // Loop over the time array
-    for (t = 0; t < body[p]->nt; t++) {
+    // Loop over all planets
+    for (p = 1; p < np; p++) {
       
       // Mean anomaly
       M = 2. * PI / body[p]->per * modulus(body[p]->time[t] - body[p]->t0, body[p]->per);                  
@@ -133,32 +146,11 @@ int Kepler(int np, BODY **body, SETTINGS settings){
   
       // Orbital radius                                  
       r = body[p]->a * (1. - body[p]->ecc * body[p]->ecc)/(1. + body[p]->ecc * cos(f));                     
-      
-      /*
-      // OLD PYSYZYGY CODE
-      double b, tmp;
-      
-      // Instantaneous impact parameter  
-      b = r * sqrt(1. - pow(sin(body[p]->w - PI + f) * sin(body[p]->inc), 2.));                                         
-
-      // Cartesian sky-projected coordinates
-      body[p]->x[t] = r * cos(body[p]->w - PI + f);                                       
-      body[p]->z[t] = r * sin(body[p]->w - PI + f);
-      if (b * b - body[p]->x[t] * body[p]->x[t] < 1.e-15) 
-        // Prevent numerical errors
-        body[p]->y[t] = 0.;                                                                 
-      else {
-        tmp = modulus(f + body[p]->w - PI, 2 * PI);
-        body[p]->y[t] = sqrt(b * b - body[p]->x[t] * body[p]->x[t]);
-        if (!((0 < tmp) && (tmp < PI))) 
-          body[p]->y[t] *= -1;
-      }
-      */
-      
+            
       // Murray and Dermott p. 51
       cwf = cos(body[p]->w + f);
-      swf = sin(body[p]->w + f);    // Negative in pysyzygy
-      co = cos(body[p]->Omega);     // Negative in pysyzygy
+      swf = sin(body[p]->w + f);    // NOTE: This is negative in pysyzygy
+      co = cos(body[p]->Omega);     // NOTE: This is negative in pysyzygy
       so = sin(body[p]->Omega);
       ci = cos(body[p]->inc);
       si = sin(body[p]->inc);
@@ -168,8 +160,13 @@ int Kepler(int np, BODY **body, SETTINGS settings){
       
     }
   
+    // Display the progress
+	  if (t % 1000 == 0) progress_tick(progress, 1000);
+  
   }
   
+  progress_free(progress);
+  printf("\n");
 	return iErr;
 	
 }
@@ -181,14 +178,6 @@ void heartbeat(struct reb_simulation* r){
   
   // Nothing!
 	
-}
-
-void on_progress(progress_data_t *data) {
-  /*
-  
-  */
-  
-  progress_write(data->holder);
 }
 
 int NBody(int np, BODY **body, SETTINGS settings) {
@@ -207,13 +196,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   printf("Computing orbits with REBOUND...\n");
   
 	// Set the timestep
-	double diff;
-	double dt = settings.dt;
-	for (t = 0; t < body[0]->nt - 1; t++) {
-	  diff = body[0]->time[t + 1] - body[0]->time[t];
-	  if (diff < dt) dt = diff;
-	}
-	r->dt = dt;
+	r->dt = settings.dt;
 
 	// G in REARTH^3 / MEARTH / day^2
 	r->G = 11466.9811868;

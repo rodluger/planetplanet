@@ -150,9 +150,11 @@ class Body(ctypes.Structure):
     self.phasecurve = int(kwargs.pop('phasecurve', False))
     self.nl = kwargs.pop('nl', 11)
     
-    # System
+    # C stuff
     self.nt = 0
     self.nw = 0
+    
+    # Python stuff
     self._inds = []
     self._computed = False
     
@@ -194,6 +196,84 @@ class System(object):
     self.settings = Settings(**kwargs)
     self._names = np.array([p.name for p in self.bodies])
   
+  def occultation_histogram(self, tstart, tend):
+    '''
+    
+    '''
+  
+    # Dimensions
+    n = len(self.bodies)
+    time = np.arange(tstart, tend, self.settings.dt)
+    nt = len(time)
+    nw = 1
+
+    # Initialize the C interface
+    Orbits = libppo.Orbits
+    Orbits.restype = ctypes.c_int
+    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
+                       Settings]
+  
+    # Allocate memory for all the arrays
+    for body in self.bodies:
+      body.time = np.zeros(nt)
+      body._time = np.ctypeslib.as_ctypes(body.time)
+      body.wavelength = np.zeros(nw)
+      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
+      body.x = np.zeros(nt)
+      body._x = np.ctypeslib.as_ctypes(body.x)
+      body.y = np.zeros(nt)
+      body._y = np.ctypeslib.as_ctypes(body.y)
+      body.z = np.zeros(nt)
+      body._z = np.ctypeslib.as_ctypes(body.z)
+      body.occultor = np.zeros(nt, dtype = 'int32')
+      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
+      body.flux = np.zeros((nt, nw))
+      body._flux1d = body.flux.reshape(nt * nw)
+      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+
+    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # passed by reference. The contents can all be accessed through `bodies`
+    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+
+    # Call the light curve routine
+    Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    
+    # Loop over all bodies and plot each occultation event
+    fig, ax = pl.subplots(1, figsize = (8,8))
+
+    ax.axis('off')
+    color = ['k', 'firebrick', 'coral', 'gold', 'mediumseagreen', 'turquoise', 'cornflowerblue', 'midnightblue']
+    for body in self.bodies:
+    
+      # Identify the different events
+      inds = np.where(body.occultor >= 0)[0]
+      difs = np.where(np.diff(inds) > 1)[0]
+      
+      # Plot the orbit outline
+      f = np.linspace(0, 2 * np.pi, 1000)
+      r = body.a * (1 - body.ecc ** 2) / (1 + body.ecc * np.cos(f))
+      x = r * np.cos(body.w + f) - r * np.sin(body.w + f) * np.cos(body.inc) * np.sin(body.Omega)
+      z = r * np.sin(body.w + f)* np.sin(body.inc)
+      ax.plot(x, z, 'k-', lw = 1, alpha = 0.05)
+      
+      # Loop over individual ones
+      plot_secondary = True
+      for i in inds[difs]:
+        # i is the last index of the occultation
+        sz = np.argmax(body.occultor[:i][::-1] != body.occultor[i])
+        
+        # If the occultor is the star, plot it only once
+        if (body.occultor[i] == 0):
+          if plot_secondary:
+            ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.3, ms = sz / 3, markeredgecolor = 'none')
+            plot_secondary = False
+        else:
+          ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.2, ms = sz / 3, markeredgecolor = 'none')
+
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
     
