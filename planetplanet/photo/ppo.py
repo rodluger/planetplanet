@@ -272,7 +272,7 @@ class System(object):
             ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.3, ms = sz / 3, markeredgecolor = 'none')
             plot_secondary = False
         else:
-          ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.2, ms = sz / 3, markeredgecolor = 'none')
+          ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.5, ms = sz / 3, markeredgecolor = 'none')
 
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
