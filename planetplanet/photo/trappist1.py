@@ -173,7 +173,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
   # Instantiate the star
   mstar = N(0.0802, 0.0073)
   rstar = N(0.117, 0.0036)
-  star = Star('star', m = mstar, r = rstar)
+  star = Star('A', m = mstar, r = rstar)
   
   # Parameters from Gillon et al. (2017) and Luger et al. (2017)
   # Mass for `h` is currently unconstrained, so basing it loosely on 

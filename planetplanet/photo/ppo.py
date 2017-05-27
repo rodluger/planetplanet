@@ -14,6 +14,7 @@ import os, shutil
 from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
+import corner
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
@@ -196,7 +197,9 @@ class System(object):
     self.settings = Settings(**kwargs)
     self._names = np.array([p.name for p in self.bodies])
   
-  def occultation_histogram(self, tstart, tend):
+  def scatter_plot(self, tstart, tend, colors = ['k', 'firebrick', 'coral', 'gold', 
+                                                 'mediumseagreen', 'turquoise', 
+                                                 'cornflowerblue', 'midnightblue']):
     '''
     
     '''
@@ -242,38 +245,174 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
     
-    # Loop over all bodies and plot each occultation event
-    fig, ax = pl.subplots(1, figsize = (8,8))
-
-    ax.axis('off')
-    color = ['k', 'firebrick', 'coral', 'gold', 'mediumseagreen', 'turquoise', 'cornflowerblue', 'midnightblue']
+    # Loop over all bodies and plot each occultation event as a circle
+    figp, axp = pl.subplots(1, figsize = (8,8))
+    figp.subplots_adjust(left = 0.1, right = 0.9, bottom = 0.1, top = 0.9)
+    axp.axis('off')
     for body in self.bodies:
-    
+  
       # Identify the different events
       inds = np.where(body.occultor >= 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
-      
+    
       # Plot the orbit outline
       f = np.linspace(0, 2 * np.pi, 1000)
       r = body.a * (1 - body.ecc ** 2) / (1 + body.ecc * np.cos(f))
       x = r * np.cos(body.w + f) - r * np.sin(body.w + f) * np.cos(body.inc) * np.sin(body.Omega)
-      z = r * np.sin(body.w + f)* np.sin(body.inc)
-      ax.plot(x, z, 'k-', lw = 1, alpha = 0.05)
+      z = r * np.sin(body.w + f) * np.sin(body.inc)
+      axp.plot(x, z, 'k-', lw = 1, alpha = 0.05)
+      n = np.argmin(1e10 * (x < 0) + np.abs(z))
+      axp.annotate(body.name, xy = (x[n], z[n]), color = 'k', alpha = 0.2, fontweight = 'bold',
+                   fontsize = 8, zorder = -99, ha = 'center', va = 'center')
       
       # Loop over individual ones
       plot_secondary = True
       for i in inds[difs]:
-        # i is the last index of the occultation
-        sz = np.argmax(body.occultor[:i][::-1] != body.occultor[i])
+        
+        # The occultor index
+        occ = body.occultor[i]
+        
+        # Note that `i` is the last index of the occultation
+        duration = np.argmax(body.occultor[:i][::-1] != body.occultor[i])          
+        
+        # Compute the minimum impact parameter
+        impact = np.min(np.sqrt((self.bodies[occ].x[i-duration:i+1] - body.x[i-duration:i+1]) ** 2 + (self.bodies[occ].y[i-duration:i+1] - body.y[i-duration:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
+        
+        # Transparency proportional to the impact parameter
+        alpha = 1 - impact
+        
+        # Size = duration in minutes / 3
+        ms = duration * self.settings.dt * 1440 / 3
         
         # If the occultor is the star, plot it only once
         if (body.occultor[i] == 0):
           if plot_secondary:
-            ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.3, ms = sz / 3, markeredgecolor = 'none')
+            axp.plot(body.x[i], body.z[i], 'o', color = colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
             plot_secondary = False
         else:
-          ax.plot(body.x[i], body.z[i], 'o', color = color[body.occultor[i]], alpha = 0.5, ms = sz / 3, markeredgecolor = 'none')
+          axp.plot(body.x[i], body.z[i], 'o', color = colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
+    
+    # Legend 1: Occultor names/colors
+    axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
+    axl1.axis('off')
+    axl1.set_xlim(-0.5, 1.5)
+    axl1.set_ylim(-len(self.bodies) // 2 - 1, 1.5)
+    axl1.annotate('Occultations by', xy = (0.5, 1), ha = 'center', va = 'center', fontweight = 'bold')
+    for j, body in enumerate(self.bodies):
+      if j < len(self.bodies) // 2:
+        x, y = (0, -j)
+      else:
+        x, y = (0.825, len(self.bodies) // 2 - j)
+      axl1.plot(x, y, 'o', color = colors[j], ms = 6, alpha = 0.65, markeredgecolor = 'none')
+      axl1.annotate(body.name, xy = (x + 0.1, y), xycoords = 'data', 
+                    ha = 'left', va = 'center', color = colors[j])
+    
+    # Legend 2: Size/duration
+    axl2 = pl.axes([0.775, 0.775, 0.2, 0.2])
+    axl2.axis('off')
+    axl2.set_xlim(-1, 1)
+    axl2.set_ylim(-3, 1.5)
+    axl2.annotate('Duration', xy = (0., 1), ha = 'center', va = 'center', fontweight = 'bold')
+    for j, duration in enumerate([10, 30, 60]):
+      ms = duration / 3.
+      axl2.plot(-0.65, -0.75 * j + 0.2, 'o', color = 'k', ms = ms, alpha = 0.65, markeredgecolor = 'none')
+      axl2.annotate('%d minutes' % duration, xy = (-0.3, -0.75 * j + 0.2), xycoords = 'data', 
+                    ha = 'left', va = 'center', color = 'k')
 
+    # Legend 3: Transparency/impact parameter
+    axl3 = pl.axes([0.025, 0.025, 0.2, 0.2])
+    axl3.axis('off')
+    axl3.set_xlim(-0.5, 1.5)
+    axl3.set_ylim(-2, 1.5)
+    axl3.annotate('Impact parameter', xy = (0.5, 0.65), ha = 'center', va = 'center', fontweight = 'bold')
+    for j, impact in enumerate([0, 0.2, 0.4]):
+      alpha = 1 - impact
+      axl3.plot(-0.15, -0.75 * j, 'o', color = 'k', ms = 8, alpha = alpha, markeredgecolor = 'none')
+      axl3.annotate('%.1f' % impact, xy = (-0.05, -0.75 * j), xycoords = 'data', 
+                    ha = 'left', va = 'center', color = 'k')
+    for j, impact in enumerate([0.6, 0.8, 0.99]):
+      alpha = 1 - impact
+      axl3.plot(0.675, -0.75 * j, 'o', color = 'k', ms = 8, alpha = alpha, markeredgecolor = 'none')
+      axl3.annotate('%.1f' % impact, xy = (0.775, -0.75 * j), xycoords = 'data', 
+                    ha = 'left', va = 'center', color = 'k')                
+    
+    # Observer direction
+    axp.annotate("To observer", xy = (0.5, -0.1), xycoords = "axes fraction", xytext = (0, 30),
+                 ha = 'center', va = 'center', annotation_clip = False, color = 'cornflowerblue',
+                 textcoords = "offset points", arrowprops=dict(arrowstyle = "-|>", color = 'cornflowerblue'))
+  
+    return figp
+      
+  def corner_plot(self, tstart, tend):
+    '''
+    
+    '''
+  
+    # Dimensions
+    n = len(self.bodies)
+    time = np.arange(tstart, tend, self.settings.dt)
+    nt = len(time)
+    nw = 1
+
+    # Initialize the C interface
+    Orbits = libppo.Orbits
+    Orbits.restype = ctypes.c_int
+    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
+                       Settings]
+  
+    # Allocate memory for all the arrays
+    for body in self.bodies:
+      body.time = np.zeros(nt)
+      body._time = np.ctypeslib.as_ctypes(body.time)
+      body.wavelength = np.zeros(nw)
+      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
+      body.x = np.zeros(nt)
+      body._x = np.ctypeslib.as_ctypes(body.x)
+      body.y = np.zeros(nt)
+      body._y = np.ctypeslib.as_ctypes(body.y)
+      body.z = np.zeros(nt)
+      body._z = np.ctypeslib.as_ctypes(body.z)
+      body.occultor = np.zeros(nt, dtype = 'int32')
+      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
+      body.flux = np.zeros((nt, nw))
+      body._flux1d = body.flux.reshape(nt * nw)
+      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+
+    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # passed by reference. The contents can all be accessed through `bodies`
+    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+
+    # Call the light curve routine
+    Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+
+    # A corner plot for each planet, showing
+    # distribution of phases, impact parameters, and durations
+    fig = [None for i in self.bodies[1:]]
+    for k, body in enumerate(self.bodies[1:]):
+      
+      # Identify the different planet-planet events
+      inds = np.where(body.occultor > 0)[0]
+      difs = np.where(np.diff(inds) > 1)[0]
+          
+      # Loop over individual ones
+      duration = np.zeros(len(difs), dtype = int)
+      phase = np.zeros(len(difs))
+      impact = np.zeros(len(difs))
+      for j, i in enumerate(inds[difs]):
+        occ = body.occultor[i]
+        duration[j] = np.argmax(body.occultor[:i][::-1] != occ) 
+        phase[j] = np.arctan2(body.z[i], body.x[i]) * 180 / np.pi
+        impact[j] = np.min(np.sqrt((self.bodies[occ].x[i-duration[j]:i+1] - body.x[i-duration[j]:i+1]) ** 2 + (self.bodies[occ].y[i-duration[j]:i+1] - body.y[i-duration[j]:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
+
+      samples = np.array([phase, impact, np.log10(duration * self.settings.dt * 1440)]).T
+      fig[k] = corner.corner(samples, range = [(-180,180), (0,1), (0, 3)])
+    
+    return fig
+        
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
     
