@@ -22,8 +22,8 @@
 #define REARTH                  6371000.                                              // m
 
 // Settings
-#define MAXVERTICES             200
-#define MAXFUNCTIONS            200
+#define MAXVERTICES             500
+#define MAXFUNCTIONS            500
 #define DTOL1                   1.e-10
 #define DTOL2                   1.e-15
 

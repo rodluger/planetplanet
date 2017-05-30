@@ -481,7 +481,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   int b = 0;
   int v = 0;
   int f = 0;
-  double lat;
+  double d, lmin, lmax, lat;
   double xL, xR, x, y, area;
   double r2 = r * r + DTOL2;
   double ro2 = ro * ro + DTOL2;
@@ -495,8 +495,23 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     theta = 1e-2;
   
   // If we're doing limb darkening, theta must be pi/2 (full phase)
-  if (nu > 0)
+  // If the occultor is completely within the occulted body (usually
+  // the case during transit), only compute latitude circles that
+  // intersect the occultor
+  if (nu > 0) {
     theta = PI / 2.;
+    d = sqrt(x0 * x0 + y0 * y0);
+    if (d < r - ro) {
+      lmin = asin((d - ro) / r) - 1e-5;
+      lmax = asin((d + ro) / r) + 1e-5;
+    } else {
+      lmin = 0 - 1e-5;
+      lmax = PI + 1e-5;
+    }
+  } else {
+    lmin = 0 - 1e-5;
+    lmax = PI + 1e-5;
+  }
   
   // Zero out the flux
   for (m = 0; m < nlam; m++)
@@ -510,7 +525,10 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   AddOcculted(r, x0, y0, ro, vertices, &v, functions, &f); 
   for (i = 0; i < nlat; i++) {
     lat = (i + 1.) * PI / (nlat + 1.);
-    AddLatitudeSlice(lat, r, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
+
+    if ((lat >= lmin) && (lat <= lmax))
+      AddLatitudeSlice(lat, r, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
+
   }
   
   // Sort the vertices

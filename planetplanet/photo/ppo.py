@@ -86,7 +86,7 @@ def Star(*args, **kwargs):
                      per = 0., inc = 0., ecc = 0., w = 0., 
                      Omega = 0., a = 0., t0 = 0., irrad = 0.,
                      albedo = 0., phasecurve = False, u = u,
-                     nl = kwargs.get('nl', 31)))
+                     nl = kwargs.get('nl', 99)))
   return Body(*args, **kwargs)
 
 def Planet(*args, **kwargs):

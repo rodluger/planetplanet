@@ -18,7 +18,7 @@ np.random.seed(1234)
 system = Trappist1(uncertainty = True, ttvs = False)
 
 # Get the occultation light curves for the first 10 days
-time = np.linspace(0, 10, 100000)
+time = np.linspace(0, 10, 10000)
 system.compute(time)
 
 # Plot all of the occultations of planet `b`
