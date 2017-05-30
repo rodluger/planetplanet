@@ -122,9 +122,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                 
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-        
-        printf("%.3f\n", theta);
-        
+
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, body[p]->irrad, 
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
@@ -157,7 +155,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Is body `o` occulting body `p`?
         if ((d <= body[p]->r + body[o]->r) && (body[p]->z[t] > body[o]->z[t])){
-          
+
           // Yes!
           body[p]->occultor[t] = o;
           
@@ -183,9 +181,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
             body[p]->flux[nw * t + w] -= tmp[w];
           
           // Prevent double-counting of missing flux due to
-          // simultaneous occultations. In the future, need
-          // to actually solve the three-body problem.
-          break;
+          // simultaneous occultations among two planets. In 
+          // the future, need to actually solve the three-body 
+          // problem. Simultaneous transits are ok, assuming
+          // the planets don't overlap. TODO.
+          if (p > 0)
+            break;
           
         }
         

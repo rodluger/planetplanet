@@ -577,6 +577,7 @@ class System(object):
         axxz[i].plot(occultor.x[ti], occultor.z[ti], 'o', color = 'lightgrey', alpha = float(j) / 30.)
       
       # Appearance
+      axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
       axxz[i].set_aspect('equal')
       axxz[i].axis('off')
     
@@ -592,13 +593,7 @@ class System(object):
       self.image(tend, body, occultor, ax = axim[i][2])
   
       # The title
-      axxz[i].annotate(body.name, xy = (0.15, 1.25),
-                       xycoords = "axes fraction", ha = 'right', va = 'center',
-                       fontweight = 'bold', color = 'r', fontsize = 12)
-      axxz[i].annotate(occultor.name, xy = (0.85, 1.25),
-                       xycoords = "axes fraction", ha = 'left', va = 'center',
-                       fontweight = 'bold', color = 'grey', fontsize = 12)
-      axxz[i].annotate("occulted by", xy = (0.5, 1.25),
+      axxz[i].annotate("%s occulted by %s" % (body.name, occultor.name), xy = (0.5, 1.25),
                        xycoords = "axes fraction", ha = 'center', va = 'center',
                        fontweight = 'bold', fontsize = 12)
       axxz[i].annotate("Duration: %.2f minutes" % ((body.time[tend] - body.time[tstart]) * 1440.),
