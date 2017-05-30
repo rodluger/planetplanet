@@ -76,11 +76,17 @@ def Star(*args, **kwargs):
   
   '''
   
+  # Effective temperature and limb darkening
+  T = kwargs.get('T', 2559.)
+  u = kwargs.get('u', np.array([1., -1.]))
+  u *= T / u[0]
+  
   kwargs.update(dict(m = kwargs.get('m', 0.0802) * MSUNMEARTH, 
                      r = kwargs.get('r', 0.117) * RSUNREARTH, 
                      per = 0., inc = 0., ecc = 0., w = 0., 
                      Omega = 0., a = 0., t0 = 0., irrad = 0.,
-                     phasecurve = False))
+                     albedo = 0., phasecurve = False, u = u,
+                     nl = kwargs.get('nl', 31)))
   return Body(*args, **kwargs)
 
 def Planet(*args, **kwargs):
@@ -123,9 +129,11 @@ class Body(ctypes.Structure):
               ("albedo", ctypes.c_double),
               ("irrad", ctypes.c_double),
               ("phasecurve", ctypes.c_int),
+              ("nu", ctypes.c_int),
               ("nl", ctypes.c_int),
               ("nt", ctypes.c_int),
               ("nw", ctypes.c_int),
+              ("_u", ctypes.POINTER(ctypes.c_double)),
               ("_time", ctypes.POINTER(ctypes.c_double)),
               ("_wavelength", ctypes.POINTER(ctypes.c_double)),
               ("_x", ctypes.POINTER(ctypes.c_double)),
@@ -154,6 +162,8 @@ class Body(ctypes.Structure):
     # C stuff
     self.nt = 0
     self.nw = 0
+    self.u = kwargs.pop('u', np.array([], dtype = float))
+    self.nu = len(self.u)
     
     # Python stuff
     self._inds = []
@@ -219,6 +229,7 @@ class System(object):
   
     # Allocate memory for all the arrays
     for body in self.bodies:
+      body._u = np.ctypeslib.as_ctypes(body.u)
       body.time = np.zeros(nt)
       body._time = np.ctypeslib.as_ctypes(body.time)
       body.wavelength = np.zeros(nw)
@@ -303,7 +314,7 @@ class System(object):
         x, y = (0, -j)
       else:
         x, y = (0.825, len(self.bodies) // 2 - j)
-      axl1.plot(x, y, 'o', color = colors[j], ms = 6, alpha = 0.65, markeredgecolor = 'none')
+      axl1.plot(x, y, 'o', color = colors[j], ms = 6, alpha = 1, markeredgecolor = 'none')
       axl1.annotate(body.name, xy = (x + 0.1, y), xycoords = 'data', 
                     ha = 'left', va = 'center', color = colors[j])
     
@@ -363,6 +374,7 @@ class System(object):
   
     # Allocate memory for all the arrays
     for body in self.bodies:
+      body._u = np.ctypeslib.as_ctypes(body.u)
       body.time = np.zeros(nt)
       body._time = np.ctypeslib.as_ctypes(body.time)
       body.wavelength = np.zeros(nw)
@@ -439,6 +451,7 @@ class System(object):
   
     # Allocate memory for all the arrays
     for body in self.bodies:
+      body._u = np.ctypeslib.as_ctypes(body.u)
       body.time = np.zeros(nt)
       body._time = np.ctypeslib.as_ctypes(body.time)
       body.wavelength = np.zeros(nw)
@@ -652,7 +665,10 @@ class System(object):
     r = occulted.r
     x0 = occulted.x[t] - occultor.x[t]
     y0 = occulted.y[t] - occultor.y[t]
-    theta = np.arctan(occulted.z[t] / np.abs(occulted.x[t]))
+    if occulted.nu == 0:
+      theta = np.arctan(occulted.z[t] / np.abs(occulted.x[t]))
+    else:
+      theta = np.pi / 2
     x = np.linspace(x0 - r, x0 + r, 1000)
     y = np.sqrt(r ** 2 - (x - x0) ** 2)
     ax.plot(x, y0 + y, color = 'k', zorder = 98, lw = 1)

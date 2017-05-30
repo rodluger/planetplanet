@@ -4,7 +4,7 @@
 #include "ppo.h"
 #include "complex.h"
 
-double Temperature(double lat, double irrad, double albedo) {
+double EyeballTemperature(double lat, double irrad, double albedo) {
   /*
   
   */
@@ -169,7 +169,7 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
   return NAN;
 }
 
-void SurfaceIntensity(double albedo, double irrad, int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
+void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
   /*
   Returns the blackbody intensity at the center of each latitude slice 
   evaluated at a given array of wavelengths.
@@ -177,8 +177,8 @@ void SurfaceIntensity(double albedo, double irrad, int nlat, int nlam, double la
   */
   
   int i, j;
-  double latitude;
-  double T;
+  double latitude, sinlat;
+  double T = 0.;
   
   // Loop over each slice
   for (i = 0; i < nlat + 1; i++) {
@@ -187,7 +187,21 @@ void SurfaceIntensity(double albedo, double irrad, int nlat, int nlam, double la
     latitude = (i + 0.5) * PI / (nlat + 1.);
     
     // Get its blackbody temperature
-    T = Temperature(latitude, irrad, albedo);
+    if (nu == 0) {
+      
+      // No limb darkening
+      T = EyeballTemperature(latitude, irrad, albedo);
+    
+    } else {
+    
+      // Polynomial limb darkening
+      T = 0;
+      sinlat = sin(latitude);
+      for (j = 0; j < nu; j++) {
+        T += u[j] * pow(sinlat, j);
+      }
+      
+    }
 
     // Loop over each wavelength bin
     for (j = 0; j < nlam; j++) {
@@ -458,7 +472,7 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
 }
 
-void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
+void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
   /*
   
   */
@@ -480,13 +494,17 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   if (fabs(theta) < 1e-2)
     theta = 1e-2;
   
+  // If we're doing limb darkening, theta must be pi/2 (full phase)
+  if (nu > 0)
+    theta = PI / 2.;
+  
   // Zero out the flux
   for (m = 0; m < nlam; m++)
     flux[m] = 0.;
-  
+
   // Pre-compute the surface intensity in each latitude slice
-  SurfaceIntensity(albedo, irrad, nlat, nlam, lambda, B);
-  
+  SurfaceIntensity(albedo, irrad, nu, u, nlat, nlam, lambda, B);
+    
   // Generate all the shapes and get their vertices and curves
   AddOccultor(r, x0, y0, ro, vertices, &v, functions, &f);   
   AddOcculted(r, x0, y0, ro, vertices, &v, functions, &f); 
@@ -563,11 +581,11 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nlat, int nlam, double lambda[nlam], double flux[nlam]) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
   /*
   
   */
   
-  OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nlat, nlam, lambda, flux);
+  OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
   
 }

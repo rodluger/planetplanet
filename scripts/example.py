@@ -12,14 +12,15 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
+np.random.seed(1234)
 
 # Instantiate the Trappist-1 system
 system = Trappist1(uncertainty = True)
 
 # Get the occultation light curves for the first 10 days
-time = np.linspace(0, 10, 100000)
+time = np.linspace(0, 1, 10000)
 system.compute(time)
 
 # Plot all of the occultations of planet `b`
-system.plot_occultations('b')
+system.plot_occultations('A')
 pl.show()

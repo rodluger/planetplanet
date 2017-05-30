@@ -114,22 +114,21 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   // Loop over the time array
   for (t = 0; t < nt; t++) {
     
-    // Star
-    body[0]->occultor[t] = -1;
-     
-    // Compute the light curve for each planet
-    for (p = 1; p < np; p++) {
-    
-      // Compute the phase curve for this planet?
+    // Compute the light curve for each body
+    for (p = 0; p < np; p++) {
+      
+      // Compute the phase curve for this body?
       if (body[p]->phasecurve) {
-        
+                
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
+        
+        printf("%.3f\n", theta);
         
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, body[p]->irrad, 
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
-                       body[p]->nl, nw, wavelength, tmp);
+                       body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, tmp);
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] = tmp[w];
         
@@ -176,7 +175,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           // Call the eyeball routine
           OccultedFlux(body[p]->r, x0, dy, body[o]->r, theta, body[p]->albedo, 
                        body[p]->irrad, settings.polyeps1, settings.polyeps2, 
-                       settings.maxpolyiter, body[p]->nl, nw, wavelength, tmp);
+                       settings.maxpolyiter, body[p]->nu, body[p]->nl, nw, 
+                       body[p]->u, wavelength, tmp);
           
           // Update the body light curve
           for (w = 0; w < nw; w++)
