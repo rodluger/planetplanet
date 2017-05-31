@@ -578,19 +578,19 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
       // Get the latitude of the midpoint and the index of the latitude
       // grid *above* this latitude
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
-      lat = Latitude(x, y, x0, y0, r, theta);
-      if (!isnan(lat)) {
-        k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
-        // Multiply by the area of the latitude slice to get the flux at each wavelength
-        
-        printf("%.3f, %.3f, %.3f\n", lmin * 180 / PI, lmax * 180 / PI, lat * 180 / PI);
-        
-        for (m = 0; m < nlam; m++)
-          flux[m] += B[k][m] * area;
-      } else {
-        // TODO: Issue a warning
+      lat = Latitude(x, y, x0, y0, r, theta);      
+      k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
+      
+      // Sanity check
+      if ((k < 0) || (k > nlat)) {
+        printf("Invalid index for latitude grid! Aborting.\n");
+        abort();
       }
       
+      // Multiply by the area of the latitude slice to get the flux at each wavelength
+      for (m = 0; m < nlam; m++)
+        flux[m] += B[k][m] * area;
+
     } 
     
   }

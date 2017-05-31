@@ -111,7 +111,7 @@ int Kepler(int np, BODY **body, SETTINGS settings){
   double  cwf, swf, co, so, ci, si;
   int iErr = ERR_NONE;
   int t, p;
-  progress_t *progress = progress_new(body[0]->nt, 100);
+  progress_t *progress = progress_new(body[0]->nt, 50);
   progress->fmt = "[:bar] :percent :elapsed";
   progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
   
@@ -188,7 +188,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   int p, t;
   double M, E, f;
   struct reb_simulation* r = reb_create_simulation();
-  progress_t *progress = progress_new(body[0]->nt, 100);
+  progress_t *progress = progress_new(body[0]->nt, 50);
   progress->fmt = "[:bar] :percent :elapsed";
   progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
   
