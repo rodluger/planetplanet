@@ -108,6 +108,15 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     iErr = Kepler(np, body, settings);
   if (iErr != ERR_NONE) return iErr;
   
+  // Compute the stellar flux
+  UnoccultedFlux(body[0]->r, PI / 2., 0., 0., settings.polyeps1, settings.polyeps2, 
+                 settings.maxpolyiter, body[0]->nu, body[0]->nl, nw, body[0]->u, 
+                 wavelength, tmp);
+  for (t = 0; t < nt; t++) {
+    for (w = 0; w < nw; w++)
+      body[0]->flux[nw * t + w] = tmp[w];
+  }
+  
   // Log
   printf("Computing occultation light curves...\n");
   
@@ -118,7 +127,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     for (p = 0; p < np; p++) {
       
       // Compute the phase curve for this body?
-      if (body[p]->phasecurve) {
+      if ((p > 0) && (body[p]->phasecurve)) {
                 
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
@@ -129,8 +138,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                        body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, tmp);
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] = tmp[w];
-        
-      } else {
+      
+      } else if (p > 0) {
         
         // Initialize to zero at all wavelengths
         for (w = 0; w < nw; w++) {

@@ -158,6 +158,7 @@ class Body(ctypes.Structure):
     self.irrad = kwargs.pop('irrad', 4.25) * SEARTH
     self.phasecurve = int(kwargs.pop('phasecurve', False))
     self.nl = kwargs.pop('nl', 11)
+    self.color = kwargs.pop('color', 'k')
     
     # C stuff
     self.nt = 0
@@ -204,12 +205,11 @@ class System(object):
     '''
     
     self.bodies = bodies
+    self.colors = [b.color for b in self.bodies]
     self.settings = Settings(**kwargs)
     self._names = np.array([p.name for p in self.bodies])
   
-  def scatter_plot(self, tstart, tend, colors = ['k', 'firebrick', 'coral', 'gold', 
-                                                 'mediumseagreen', 'turquoise', 
-                                                 'cornflowerblue', 'midnightblue']):
+  def scatter_plot(self, tstart, tend):
     '''
     
     '''
@@ -298,10 +298,10 @@ class System(object):
         # If the occultor is the star, plot it only once
         if (body.occultor[i] == 0):
           if plot_secondary:
-            axp.plot(body.x[i], body.z[i], 'o', color = colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
+            axp.plot(body.x[i], body.z[i], 'o', color = self.colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
             plot_secondary = False
         else:
-          axp.plot(body.x[i], body.z[i], 'o', color = colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
+          axp.plot(body.x[i], body.z[i], 'o', color = self.colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
     
     # Legend 1: Occultor names/colors
     axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
@@ -314,9 +314,9 @@ class System(object):
         x, y = (0, -j)
       else:
         x, y = (0.825, len(self.bodies) // 2 - j)
-      axl1.plot(x, y, 'o', color = colors[j], ms = 6, alpha = 1, markeredgecolor = 'none')
+      axl1.plot(x, y, 'o', color = self.colors[j], ms = 6, alpha = 1, markeredgecolor = 'none')
       axl1.annotate(body.name, xy = (x + 0.1, y), xycoords = 'data', 
-                    ha = 'left', va = 'center', color = colors[j])
+                    ha = 'left', va = 'center', color = self.colors[j])
     
     # Legend 2: Size/duration
     axl2 = pl.axes([0.775, 0.775, 0.2, 0.2])
@@ -494,7 +494,8 @@ class System(object):
         # Split the light curve, trim it, and add a little padding
         t = time[si[i]:si[i+1]]
         f = body.flux[si[i]:si[i+1]]
-        inds = np.where(f)[0]
+        o = body.occultor[si[i]:si[i+1]]
+        inds = np.where(o >= 0)[0]
         if len(inds):        
           t = t[inds]
           tdur = t[-1] - t[0]
@@ -518,6 +519,11 @@ class System(object):
     axxz = [None for i in range(len(body._inds))]
     axim = [[None, None, None] for i in range(len(body._inds))]
     
+    # Stellar flux (baseline)
+    normb = np.nanmedian(self.bodies[0].flux[:,0])
+    normg = np.nanmedian(self.bodies[0].flux[:,body.flux.shape[-1] // 2])
+    normr = np.nanmedian(self.bodies[0].flux[:,-1])
+    
     # Loop over all events
     for i, t in enumerate(body._inds):
       
@@ -527,19 +533,19 @@ class System(object):
   
       # Plot three different wavelengths (first, mid, and last)
       axlc[i] = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-      axlc[i].plot(body.time[t], 1e-12 * body.flux[t, 0], 'b-')
-      axlc[i].plot(body.time[t], 1e-12 * body.flux[t, body.flux.shape[-1] // 2], 'g-')
-      axlc[i].plot(body.time[t], 1e-12 * body.flux[t, -1], 'r-')
+      axlc[i].plot(body.time[t], (normb + body.flux[t, 0]) / normb, 'b-')
+      axlc[i].plot(body.time[t], (normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-')
+      axlc[i].plot(body.time[t], (normr + body.flux[t, -1]) / normr, 'r-')
       axlc[i].set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
-      axlc[i].set_ylabel(r'Occulted Flux [TW/$\mathbf{\mu}$m/sr]', fontweight = 'bold', fontsize = 10)
+      axlc[i].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
       axlc[i].get_yaxis().set_major_locator(MaxNLocator(4))
       axlc[i].get_xaxis().set_major_locator(MaxNLocator(4))
       for tick in axlc[i].get_xticklabels() + axlc[i].get_yticklabels():
         tick.set_fontsize(8)
     
       # Get the times of ingress, midpoint, and egress
-      tstart = t[0] + np.argmax(body.flux[t,0] < 0)
-      tend = t[0] + len(body.time[t]) - np.argmax(body.flux[t,0][::-1] < 0)
+      tstart = t[0] + np.argmax(body.occultor[t] >= 0)
+      tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
       tmid = (tstart + tend) // 2
       o = body.occultor[tmid]
       occultor = self.bodies[o]
@@ -705,3 +711,46 @@ class System(object):
       ax.set_ylim(occulted.y[t] - occultor.y[t] - (pad + 1) * r, occulted.y[t] - occultor.y[t] + (pad + 1) * r)
 
     return ax
+
+  def plot_lightcurve(self, wavelength = 15.):
+    '''
+    
+    '''
+    
+    # Plot
+    fig, ax = pl.subplots(1, figsize = (12, 4))
+    time = self.bodies[0].time
+    assert (wavelength >= self.bodies[0].wavelength[0]) and (wavelength >= self.bodies[0].wavelength[-1]), "Wavelength value outside of computed grid."
+    w = np.argmax(1e-6 * wavelength <= self.bodies[0].wavelength)
+    flux = np.sum([b.flux[:,w] for b in self.bodies], axis = 0)
+    flux /= np.nanmedian(flux)
+    ax.plot(time, flux, 'k-', lw = 1)
+    
+    # Appearance
+    ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
+    ax.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
+    ax.get_yaxis().set_major_locator(MaxNLocator(4))
+    ax.get_xaxis().set_major_locator(MaxNLocator(4))
+    for tick in ax.get_xticklabels() + ax.get_yticklabels():
+      tick.set_fontsize(8)
+    
+    # Limits
+    ymax = np.nanmax(flux)
+    ymin = np.nanmin(flux)
+    yrng = ymax - ymin
+    ax.set_ylim(ymin - 0.2 * yrng, ymax + 0.2 * yrng)
+    
+    # Label all of the events
+    for body in self.bodies:
+      for i, t in enumerate(body._inds):
+        tstart = t[0] + np.argmax(body.occultor[t] >= 0)
+        tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
+        tmid = (tstart + tend) // 2
+        o = body.occultor[tmid]
+        occultor = self.bodies[o]
+        time = body.time[tmid]
+        ax.annotate("%s" % body.name, xy = (time, ymax + 0.1 * yrng), ha = 'center',
+                    va = 'center', color = occultor.color, fontweight = 'bold',
+                    fontsize = 8)
+    
+    return fig, ax

@@ -159,7 +159,7 @@ def OmegaPrior(nwalk = 42, nsteps = 50000, nburn = 10000, thin = 10, calc = Fals
   # Show
   fig.savefig('omega.pdf', bbox_inches = 'tight')
 
-def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertainty = True):
+def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertainty = True, phasecurve = False):
   '''
   
   '''
@@ -173,7 +173,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
   # Instantiate the star
   mstar = N(0.0802, 0.0073)
   rstar = N(0.117, 0.0036)
-  star = Star('A', m = mstar, r = rstar)
+  star = Star('A', m = mstar, r = rstar, color = 'k')
   
   # Parameters from Gillon et al. (2017) and Luger et al. (2017)
   # Mass for `h` is currently unconstrained, so basing it loosely on 
@@ -189,6 +189,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
                   (89.710, 0.025), (89.80, 0.075)]
   depths = [(0.7266, 0.0088), (0.687, 0.010), (0.367, 0.017), (0.519, 0.026), (0.673, 0.023), 
             (0.782, 0.027), (0.752, 0.032)]
+  colors = ['firebrick', 'coral', 'gold', 'mediumseagreen', 'turquoise', 'cornflowerblue', 'midnightblue']
   
   # These are eyeballed from Supplementary Figure 6 in Luger et al. (2017).
   # These are likely quite biased and model-specific. Need to re-think them.
@@ -239,7 +240,9 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
     r = RpRs * rstar * RSUN / REARTH
   
     # Instantiate!
-    planets[i] = Planet(names[i], m = m, per = per, inc = inc, a = a, r = r, trn0 = trn0, nl = nl, Omega = Omega, w = w, ecc = ecc)
+    planets[i] = Planet(names[i], m = m, per = per, inc = inc, a = a, r = r, trn0 = trn0, 
+                        nl = nl, Omega = Omega, w = w, ecc = ecc, phasecurve = phasecurve,
+                        color = colors[i])
 
   # Return the system
   return System(star, *planets, polyeps1 = polyeps1, polyeps2 = polyeps2, ttvs = ttvs)
