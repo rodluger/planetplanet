@@ -169,7 +169,7 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
   return NAN;
 }
 
-void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
+void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], double lmin, double lmax, int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
   /*
   Returns the blackbody intensity at the center of each latitude slice 
   evaluated at a given array of wavelengths.
@@ -184,7 +184,7 @@ void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nla
   for (i = 0; i < nlat + 1; i++) {
     
     // Get the latitude at the *center* of this slice
-    latitude = (i + 0.5) * PI / (nlat + 1.);
+    latitude = (i + 0.5) / (nlat + 1.) * (lmax - lmin) + lmin;
     
     // Get its blackbody temperature
     if (nu == 0) {
@@ -518,17 +518,14 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     flux[m] = 0.;
 
   // Pre-compute the surface intensity in each latitude slice
-  SurfaceIntensity(albedo, irrad, nu, u, nlat, nlam, lambda, B);
+  SurfaceIntensity(albedo, irrad, nu, u, lmin, lmax, nlat, nlam, lambda, B);
     
   // Generate all the shapes and get their vertices and curves
   AddOccultor(r, x0, y0, ro, vertices, &v, functions, &f);   
   AddOcculted(r, x0, y0, ro, vertices, &v, functions, &f); 
   for (i = 0; i < nlat; i++) {
-    lat = (i + 1.) * PI / (nlat + 1.);
-
-    if ((lat >= lmin) && (lat <= lmax))
-      AddLatitudeSlice(lat, r, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
-
+    lat = (i + 1.) / (nlat + 1.) * (lmax - lmin) + lmin;
+    AddLatitudeSlice(lat, r, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
   }
   
   // Sort the vertices
@@ -575,7 +572,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
       lat = Latitude(x, y, x0, y0, r, theta);
       if (!isnan(lat)) {
-        k = (int) (lat / (PI / (nlat + 1.)));
+        k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
         // Multiply by the area of the latitude slice to get the flux at each wavelength
         for (m = 0; m < nlam; m++)
           flux[m] += B[k][m] * area;

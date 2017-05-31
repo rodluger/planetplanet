@@ -85,8 +85,7 @@ def Star(*args, **kwargs):
                      r = kwargs.get('r', 0.117) * RSUNREARTH, 
                      per = 0., inc = 0., ecc = 0., w = 0., 
                      Omega = 0., a = 0., t0 = 0., irrad = 0.,
-                     albedo = 0., phasecurve = False, u = u,
-                     nl = kwargs.get('nl', 99)))
+                     albedo = 0., phasecurve = False, u = u))
   return Body(*args, **kwargs)
 
 def Planet(*args, **kwargs):
