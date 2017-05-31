@@ -81,92 +81,100 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
   /*
   
   */
-  
+    
   int i;
   double alpha, beta, gamma, c1, c2, c3, a, b, c;
-  double xterm, xlimb, xE, yE, dx, xmin, xmax;
+  double xE, yE;
   double z[2];
+  double l[2];
+  double d;
+  double la, lb, da, db;
+  double tmp, tmp1, tmp2;
+  double sintheta, costheta, cotantheta;
+  double solution;
+
+  // Are we dealing with circles?
+  if ((fabs(fabs(theta) - PI / 2)) < 1.e-5) {
+    
+    // Trivial!
+    d = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
+    solution = asin(d / r);
+    if (theta < 0)
+      solution = PI - solution;
+    return solution;
+    
+  }
+  
+  // A little trig
+  sintheta = sin(theta);
+  costheta = cos(theta);
+  cotantheta = costheta / sintheta;
   
   // Compute the latitude. We will solve
   // a quadratic equation for z = sin(lat) **  2  
-  alpha = (x - x0) / (r * sin(theta));
-  beta = 1 / tan(theta);
+  alpha = (x - x0) / (r * sintheta);
+  beta = cotantheta;
   gamma = (y - y0) / r;
   c1 = 4 * alpha * alpha * beta * beta;
   c2 = 1 + beta * beta;
   c3 = alpha * alpha + gamma * gamma + beta * beta;
   b = (c1 - 2 * c2 * c3) / (c2 * c2);
   c = (c3 * c3 - c1) / (c2 * c2);
-  z[0] = (-b + sqrt(b * b - 4 * c)) / 2;
-  z[1] = (-b - sqrt(b * b - 4 * c)) / 2;
+  tmp = b * b - 4 * c;
+  if (tmp < 0) tmp = 0;
+  z[0] = (-b + sqrt(tmp)) / 2;
+  z[1] = (-b - sqrt(tmp)) / 2;
   
-  // Where is the terminator for this value of `y`?
-  if (theta <= 0)
-    xterm = x0 - fabs(sin(theta)) * sqrt(r * r - (y - y0) * (y - y0));
-  else
-    xterm = x0 + fabs(sin(theta)) * sqrt(r * r - (y - y0) * (y - y0));
-
-  // Are we on the dayside?
-  if (x <= xterm) {
-  
-    // We have two possible solutions. But only one is on the
-    // observer's side of the occulted planet. TODO: Speed this up?
-    for (i = 0; i < 2; i++) {
-      if ((z[i] >= 0) && (z[i] <= 1)) {
-        a = r * sqrt(z[i]);
-        b = a * fabs(sin(theta));
-        xE = x0 - r * sqrt(1 - z[i]) * cos(theta);
-        yE = y0;
-        dx = (b / a) * sqrt(a * a - (y - yE) * (y - yE));
-        xlimb = r * sqrt(1 - z[i]) * sin(theta) * tan(theta);
-        if (((theta > 0) && (b < xlimb)) || ((theta <= 0) && (b > xlimb)))
-          xmin = xE - b;
-        else
-          xmin = xE - xlimb;
-        if (((theta > 0) && (b > -xlimb)) || ((theta <= 0) && (b < -xlimb)))
-          xmax = xE + b;
-        else
-          xmax = xE - xlimb;
-        if ((x >= xmin - DTOL1) && (x <= xmax + DTOL1)) {
-          if (((fabs(x - (xE + dx)) < DTOL1) || (fabs(x - (xE - dx)) < DTOL1)))
-            return asin(sqrt(z[i]));
-        }
-      }
-    }
+  // Find the two solutions that thread the point
+  for (i = 0; i < 2; i++) {
     
-  // Or the nightside?
-  } else {
+    // A: Compute the distance to the desired (x,y) point
+    la = asin(sqrt(z[i]));
+    a = r * fabs(sin(la));
+    b = a * fabs(sintheta);
+    xE = x0 - r * cos(la) * costheta;
+    yE = y0;
+    tmp = (a / b) * sqrt(fabs(b * b - (x - xE) * (x - xE)));
+    tmp1 = fabs(y - (yE - tmp));
+    tmp2 = fabs(y - (yE + tmp));
+    if (tmp1 < tmp2) da = tmp1;
+    else da = tmp2;
     
-    // We have two possible solutions. But only one is on the
-    // observer's side of the occulted. TODO: Speed this up?
-    for (i = 0; i < 2; i++) {
-      if ((z[i] >= 0) && (z[i] <= 1)) {
-        a = r * sqrt(z[i]);
-        b = a * fabs(sin(theta));
-        xE = x0 + r * sqrt(1 - z[i]) * cos(theta);
-        yE = y0;
-        dx = (b / a) * sqrt(a * a - (y - yE) * (y - yE));
-        xlimb = -r * sqrt(1 - z[i]) * sin(theta) * tan(theta);
-        if (((theta > 0) && (b < xlimb)) || ((theta <= 0) && (b > xlimb)))
-          xmin = xE - b;
-        else
-          xmin = xE - xlimb;
-        if (((theta > 0) && (b > -xlimb)) || ((theta <= 0) && (b < -xlimb)))
-          xmax = xE + b;
-        else
-          xmax = xE - xlimb;
-        if ((x >= xmin - DTOL1) && (x <= xmax + DTOL1)) {
-          if (((fabs(x - (xE + dx)) < DTOL1) || (fabs(x - (xE - dx)) < DTOL1)))
-            return PI - asin(sqrt(z[i]));
-        }
-      }
-    }
-  
+    // B: Compute the distance to the desired (x,y) point
+    lb = PI - la;
+    a = r * fabs(sin(lb));
+    b = a * fabs(sintheta);
+    xE = x0 - r * cos(lb) * costheta;
+    yE = y0;
+    tmp = (a / b) * sqrt(fabs(b * b - (x - xE) * (x - xE)));
+    tmp1 = fabs(y - (yE - tmp));
+    tmp2 = fabs(y - (yE + tmp));
+    if (tmp1 < tmp2) db = tmp1;
+    else db = tmp2;
+    
+    // Get the closest solution
+    if (da < db)
+      l[i] = la;
+    else
+      l[i] = lb;
+    
   }
-
-  // TODO: This should never happen in theory, but it does in practice.
-  // Find a way to handle these cases...
-  return NAN;
+    
+  // Only one of these solutions is on the observer's side
+  if (theta < 0) {
+    if (l[0] > l[1])
+      solution = l[0];
+    else
+      solution = l[1];
+  } else {
+    if (l[0] < l[1])
+      solution = l[0];
+    else
+      solution = l[1];
+  }
+  
+  return solution;
+  
 }
 
 void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], double lmin, double lmax, int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
@@ -574,6 +582,9 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
       if (!isnan(lat)) {
         k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
         // Multiply by the area of the latitude slice to get the flux at each wavelength
+        
+        printf("%.3f, %.3f, %.3f\n", lmin * 180 / PI, lmax * 180 / PI, lat * 180 / PI);
+        
         for (m = 0; m < nlam; m++)
           flux[m] += B[k][m] * area;
       } else {
