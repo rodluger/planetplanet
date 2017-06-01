@@ -480,7 +480,7 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
 }
 
-void OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
+void _OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
   /*
   
   */
@@ -521,10 +521,6 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     lmax = PI + DTOL1;
   }
   
-  // Zero out the flux
-  for (m = 0; m < nlam; m++)
-    flux[m] = 0.;
-
   // Pre-compute the surface intensity in each latitude slice
   SurfaceIntensity(albedo, irrad, nu, u, lmin, lmax, nlat, nlam, lambda, B);
     
@@ -594,12 +590,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     } 
     
   }
-  
-  // Scale flux by REARTH**2
-  // Convert to W m^2 / m^2 / um / sr
-  for (m = 0; m < nlam; m++)
-    flux[m] *= REARTH * REARTH * MICRON;  
-  
+    
   // Free all of the ellipse instances
   for (j = 0; j < f; j+=2) {
     free(functions[j].ellipse);
@@ -612,6 +603,52 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   
   */
   
-  OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
+  // First, zero out the flux
+  int m;
+  for (m = 0; m < nlam; m++) flux[m] = 0.;
   
+  // Hack: compute the occulted flux with a huge occultor
+  _OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
+  
+  // Scale flux by REARTH**2 and convert to W m^2 / m^2 / um / sr
+  for (m = 0; m < nlam; m++) flux[m] *= REARTH * REARTH * MICRON;
+  
+}
+
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
+  /*
+  
+  */
+
+  // First, zero out the flux
+  int m;
+  for (m = 0; m < nlam; m++) flux[m] = 0.;
+  
+  // How many occultors are there?
+  if (no == 0) {
+  
+    // No occultors
+  
+  } else if (no == 1) {
+  
+    // One occultor: easy
+    _OccultedFlux(r, x0[0], y0[0], ro[0], theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
+  
+  } else {
+    
+    // Multiple occultors: hard
+    
+    // First, compute the occulted flux as usual
+    for (int i = 0; i < no; i++)
+      _OccultedFlux(r, x0[i], y0[i], ro[i], theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
+    
+    // Now we need to go back and remove the flux we double-counted
+    // TODO!
+    
+  
+  }
+  
+  // Scale flux by REARTH**2 and convert to W m^2 / m^2 / um / sr
+  for (m = 0; m < nlam; m++) flux[m] *= REARTH * REARTH * MICRON;
+
 }

@@ -484,7 +484,7 @@ class System(object):
       body._computed = True
     
       # Identify the different events
-      inds = np.where(body.occultor >= 0)[0]
+      inds = np.where(body.occultor > 0)[0]
       si = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [nt]))
 
       # Loop over the events
@@ -494,7 +494,7 @@ class System(object):
         t = time[si[i]:si[i+1]]
         f = body.flux[si[i]:si[i+1]]
         o = body.occultor[si[i]:si[i+1]]
-        inds = np.where(o >= 0)[0]
+        inds = np.where(o > 0)[0]
         if len(inds):        
           t = t[inds]
           tdur = t[-1] - t[0]
@@ -546,17 +546,21 @@ class System(object):
       tstart = t[0] + np.argmax(body.occultor[t] >= 0)
       tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
       tmid = (tstart + tend) // 2
-      o = body.occultor[tmid]
-      occultor = self.bodies[o]
+      occultors = []
+      for b in range(len(self.bodies)):
+        for ti in t:
+          if (body.occultor[ti] & 2 ** b):
+            occultors.append(b)
+      occultors = list(set(occultors))
 
-      # Plot the orbits of the two bodies and all interior ones
+      # Plot the orbits of all interior bodies
       axxz[i] = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
       for j, _ in enumerate(self.bodies):
-        if (j > p) and (j > o):
+        if (j > p) and (j > occultors[-1]):
           break
         if j == p:
           style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
-        elif j == o:
+        elif j in occultors:
           style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
         else:
           style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
@@ -565,18 +569,14 @@ class System(object):
       
       # Plot their current positions
       axxz[i].plot(body.x[tmid], body.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
-      axxz[i].plot(occultor.x[tmid], occultor.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
+      for occultor in [self.bodies[o] for o in occultors]:
+        axxz[i].plot(occultor.x[tmid], occultor.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
       
-      # Which object is moving faster in the sky plane?
-      xp0 = body.x[tmid]
-      xo0 = occultor.x[tmid]
-      xp1 = body.x[tmid+1]
-      xo1 = occultor.x[tmid+1]
-      if np.abs(xp1 - xp0) > np.abs(xo1 - xo0):
-        t0 = np.argmin(np.abs(body.time - (body.time[tmid] - body.per / 8)))
-        ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
-        axxz[i].plot(body.x[ti], body.z[ti], 'o', color = 'r', alpha = float(j) / 30.)
-      else:
+      # Plot orbital motion
+      t0 = np.argmin(np.abs(body.time - (body.time[tmid] - body.per / 8)))
+      ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
+      axxz[i].plot(body.x[ti], body.z[ti], 'o', color = 'r', alpha = float(j) / 30.)
+      for occultor in [self.bodies[o] for o in occultors]:
         t0 = np.argmin(np.abs(occultor.time - (occultor.time[tmid] - occultor.per / 8)))
         ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
         axxz[i].plot(occultor.x[ti], occultor.z[ti], 'o', color = 'lightgrey', alpha = float(j) / 30.)
@@ -593,14 +593,21 @@ class System(object):
       for j in range(3): 
         axim[i][j].axis('off')
         axim[i][j].set_aspect('equal')
-      self.image(tstart, body, occultor, ax = axim[i][0])
-      self.image(tmid, body, occultor, ax = axim[i][1])
-      self.image(tend, body, occultor, ax = axim[i][2])
+      self.image(tstart, body, occultors, ax = axim[i][0])
+      self.image(tmid, body, occultors, ax = axim[i][1])
+      self.image(tend, body, occultors, ax = axim[i][2])
   
       # The title
-      axxz[i].annotate("%s occulted by %s" % (body.name, occultor.name), xy = (0.5, 1.25),
-                       xycoords = "axes fraction", ha = 'center', va = 'center',
-                       fontweight = 'bold', fontsize = 12)
+      if len(occultors) == 1:
+        axxz[i].annotate("%s occulted by %s" % (body.name, self.bodies[occultors[0]].name), xy = (0.5, 1.25),
+                         xycoords = "axes fraction", ha = 'center', va = 'center',
+                         fontweight = 'bold', fontsize = 12)
+      else:
+        axxz[i].annotate("%s occulted by %s" % (body.name, 
+                        ", ".join([occultor.name for occultor in [self.bodies[o] for o in occultors]])), 
+                         xy = (0.5, 1.25),
+                         xycoords = "axes fraction", ha = 'center', va = 'center',
+                         fontweight = 'bold', fontsize = 12)
       axxz[i].annotate("Duration: %.2f minutes" % ((body.time[tend] - body.time[tstart]) * 1440.),
                        xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
                        fontsize = 10, style = 'italic')
@@ -643,7 +650,7 @@ class System(object):
   
     return ax
       
-  def image(self, t, occulted, occultor, ax = None, pad = 2.5, **kwargs):
+  def image(self, t, occulted, occultors, ax = None, pad = 2.5, **kwargs):
     '''
     Plots an image of the `occulted` body and the `occultor` at a given `time`.
   
@@ -654,12 +661,13 @@ class System(object):
       fig, ax = pl.subplots(1, figsize = (6,6))
   
     # Plot the occultor
-    r = occultor.r
-    x = np.linspace(-r, r, 1000)
-    y = np.sqrt(r ** 2 - x ** 2)
-    ax.plot(x, y, color = 'k', zorder = 99, lw = 1)
-    ax.plot(x, -y, color = 'k', zorder = 99, lw = 1)
-    ax.fill_between(x, -y, y, color = 'lightgray', zorder = 99, lw = 1)
+    for occultor in [self.bodies[o] for o in occultors]: 
+      r = occultor.r
+      x = np.linspace(-r, r, 1000)
+      y = np.sqrt(r ** 2 - x ** 2)
+      ax.plot(x, y, color = 'k', zorder = 99, lw = 1)
+      ax.plot(x, -y, color = 'k', zorder = 99, lw = 1)
+      ax.fill_between(x, -y, y, color = 'lightgray', zorder = 99, lw = 1)
 
     # Plot the occulted body
     r = occulted.r
@@ -742,14 +750,19 @@ class System(object):
     # Label all of the events
     for body in self.bodies:
       for i, t in enumerate(body._inds):
-        tstart = t[0] + np.argmax(body.occultor[t] >= 0)
-        tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
+        tstart = t[0] + np.argmax(body.occultor[t] > 0)
+        tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] > 0)
         tmid = (tstart + tend) // 2
-        o = body.occultor[tmid]
-        occultor = self.bodies[o]
+        occultors = []
+        for b in range(len(self.bodies)):
+          for ti in t:
+            if (body.occultor[ti] & 2 ** b):
+              occultors.append(b)
+        occultors = list(set(occultors))
         time = body.time[tmid]
-        ax.annotate("%s" % body.name, xy = (time, ymax + 0.1 * yrng), ha = 'center',
-                    va = 'center', color = occultor.color, fontweight = 'bold',
-                    fontsize = 8)
+        for n, occultor in enumerate([self.bodies[o] for o in occultors]):
+          ax.annotate("%s" % body.name, xy = (time, ymax + (0.1 + 0.05 * n) * yrng), ha = 'center',
+                      va = 'center', color = occultor.color, fontweight = 'bold',
+                      fontsize = 8)
     
     return fig, ax

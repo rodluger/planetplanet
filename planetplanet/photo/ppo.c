@@ -85,10 +85,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   
   */
 
-  double d, dx, dy, x0;
+  double d, dx, dy;
+  int no;
+  double xo[np-1], yo[np-1], ro[np-1];
   double tmp[nw];
   double theta;
-  int t, p, o, w;
+  int v, t, p, o, w;
   int iErr = ERR_NONE;
   
   // Initialize the arrays for each body
@@ -149,9 +151,11 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       }
 
       // Default is no occultation
-      body[p]->occultor[t] = -1;
+      body[p]->occultor[t] = 0;
+      no = 0;
       
       // Loop over all possible occultors, including the star
+      // and check whether an occultation is occurring
       for (o = 0; o < np; o++) {
       
         // Skip self
@@ -165,42 +169,41 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // Is body `o` occulting body `p`?
         if ((d <= body[p]->r + body[o]->r) && (body[p]->z[t] > body[o]->z[t])){
 
-          // Yes!
-          body[p]->occultor[t] = o;
+          // Yes! Add to the occultor flag
+          for (v = 1; v <= o; v *= 2);
+          body[p]->occultor[t] += v;
           
           // If the body is in quadrants II or III, we need to mirror
           // the problem, since `OccultedFlux` assumes the star is always
           // to the *left* of the body.
           if (body[p]->x[t] < 0) 
-            x0 = -dx;
+            xo[no] = -dx;
           else 
-            x0 = dx;
-          
-          // The orbital phase (edge-on limit!)
-          theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-          
-          // Call the eyeball routine
-          OccultedFlux(body[p]->r, x0, dy, body[o]->r, theta, body[p]->albedo, 
-                       body[p]->irrad, settings.polyeps1, settings.polyeps2, 
-                       settings.maxpolyiter, body[p]->nu, body[p]->nl, nw, 
-                       body[p]->u, wavelength, tmp);
-          
-          // Update the body light curve
-          for (w = 0; w < nw; w++)
-            body[p]->flux[nw * t + w] -= tmp[w];
-          
-          // Prevent double-counting of missing flux due to
-          // simultaneous occultations among two planets. In 
-          // the future, need to actually solve the three-body 
-          // problem. Simultaneous transits are ok, assuming
-          // the planets don't overlap. TODO.
-          if (p > 0)
-            break;
-          
+            xo[no] = dx;
+          yo[no] = dy;
+          ro[no++] = body[o]->r;
+
         }
         
       }
       
+      // Finally, compute the light curve for this planet
+      if (no > 0) {
+      
+        // The orbital phase (edge-on limit!)
+        theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
+      
+        // Call the eyeball routine
+        OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
+                     body[p]->irrad, settings.polyeps1, settings.polyeps2, 
+                     settings.maxpolyiter, body[p]->nu, body[p]->nl, nw, 
+                     body[p]->u, wavelength, tmp);
+      
+        // Update the body light curve
+        for (w = 0; w < nw; w++)
+          body[p]->flux[nw * t + w] -= tmp[w];
+      
+      }
     }
   
   }
