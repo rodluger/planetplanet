@@ -3,6 +3,22 @@
 #include <math.h>
 #include "ppo.h"
 
+int ipow(int base, int exp){
+  /*
+  
+  */
+  
+  int result = 1;
+  while (exp) {
+    if (exp & 1)
+      result *= base;
+    exp >>= 1;
+    base *= base;
+  }
+  return result;
+  
+}
+
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
   /*
   
@@ -90,7 +106,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   double xo[np-1], yo[np-1], ro[np-1];
   double tmp[nw];
   double theta;
-  int v, t, p, o, w;
+  int t, p, o, w;
   int iErr = ERR_NONE;
   
   // Initialize the arrays for each body
@@ -170,8 +186,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         if ((d <= body[p]->r + body[o]->r) && (body[p]->z[t] > body[o]->z[t])){
 
           // Yes! Add to the occultor flag
-          for (v = 1; v <= o; v *= 2);
-          body[p]->occultor[t] += v;
+          body[p]->occultor[t] += ipow(2, o);
           
           // If the body is in quadrants II or III, we need to mirror
           // the problem, since `OccultedFlux` assumes the star is always

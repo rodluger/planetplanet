@@ -572,6 +572,16 @@ class System(object):
       for occultor in [self.bodies[o] for o in occultors]:
         axxz[i].plot(occultor.x[tmid], occultor.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
       
+      # Appearance
+      axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
+      axxz[i].set_xlim(-max(np.abs(axxz[i].get_xlim())), max(np.abs(axxz[i].get_xlim())))
+      axxz[i].set_aspect('equal')
+      axxz[i].axis('off')
+      
+      # Plot the other planets
+      for b in self.bodies:
+        axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#cccccc', alpha = 1, markeredgecolor = 'none', zorder = 98)
+      
       # Plot orbital motion
       t0 = np.argmin(np.abs(body.time - (body.time[tmid] - body.per / 8)))
       ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
@@ -580,12 +590,7 @@ class System(object):
         t0 = np.argmin(np.abs(occultor.time - (occultor.time[tmid] - occultor.per / 8)))
         ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
         axxz[i].plot(occultor.x[ti], occultor.z[ti], 'o', color = 'lightgrey', alpha = float(j) / 30.)
-      
-      # Appearance
-      axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
-      axxz[i].set_aspect('equal')
-      axxz[i].axis('off')
-    
+
       # Plot the images
       axim[i][0] = pl.subplot2grid((5, 3), (2, 0), colspan = 1, rowspan = 1)
       axim[i][1] = pl.subplot2grid((5, 3), (2, 1), colspan = 1, rowspan = 1)
@@ -663,31 +668,31 @@ class System(object):
     # Plot the occultor
     for occultor in [self.bodies[o] for o in occultors]: 
       r = occultor.r
-      x = np.linspace(-r, r, 1000)
-      y = np.sqrt(r ** 2 - x ** 2)
-      ax.plot(x, y, color = 'k', zorder = 99, lw = 1)
-      ax.plot(x, -y, color = 'k', zorder = 99, lw = 1)
-      ax.fill_between(x, -y, y, color = 'lightgray', zorder = 99, lw = 1)
+      x = np.linspace(occultor.x[t] - r, occultor.x[t] + r, 1000)
+      y = np.sqrt(r ** 2 - (x - occultor.x[t]) ** 2)
+      ax.plot(x, occultor.y[t] + y, color = 'k', zorder = 99, lw = 1)
+      ax.plot(x, occultor.y[t] - y, color = 'k', zorder = 99, lw = 1)
+      ax.fill_between(x, occultor.y[t] - y, occultor.y[t] + y, color = 'lightgray', zorder = 99, lw = 1)
 
     # Plot the occulted body
     r = occulted.r
-    x0 = occulted.x[t] - occultor.x[t]
-    y0 = occulted.y[t] - occultor.y[t]
+    x0 = occulted.x[t]
+    y0 = occulted.y[t]
     if occulted.nu == 0:
       theta = np.arctan(occulted.z[t] / np.abs(occulted.x[t]))
     else:
       theta = np.pi / 2
-    x = np.linspace(x0 - r, x0 + r, 1000)
-    y = np.sqrt(r ** 2 - (x - x0) ** 2)
-    ax.plot(x, y0 + y, color = 'k', zorder = 98, lw = 1)
-    ax.plot(x, y0 - y, color = 'k', zorder = 98, lw = 1)
+    x = np.linspace(-r, r, 1000)
+    y = np.sqrt(r ** 2 - x ** 2)
+    ax.plot(x, y, color = 'k', zorder = 98, lw = 1)
+    ax.plot(x, -y, color = 'k', zorder = 98, lw = 1)
   
     # Plot the latitude ellipses
     for lat in np.linspace(0, np.pi, occulted.nl + 2)[1:-1]:
       a = occulted.r * np.abs(np.sin(lat))
       b = a * np.abs(np.sin(theta))
-      x0 = occulted.x[t] - occulted.r * np.cos(lat) * np.cos(theta)
-      y0 = occulted.y[t]
+      x0 = -occulted.r * np.cos(lat) * np.cos(theta)
+      y0 = 0
       xlimb = occulted.r * np.cos(lat) * np.sin(theta) * np.tan(theta)
       if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
         xmin = x0 - b
@@ -709,13 +714,8 @@ class System(object):
         style = dict(color = 'k', ls = '--', lw = 1)
       else:
         style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1)
-      ax.plot(x - occultor.x[t], occulted.y[t] - occultor.y[t] + y, **style)
-      ax.plot(x - occultor.x[t], occulted.y[t] - occultor.y[t] - y, **style)
-
-    # Limits
-    if (occulted.x[t] - occultor.x[t]) ** 2 + (occulted.y[t] - occultor.y[t]) ** 2 > (occultor.r - occulted.r) ** 2:
-      ax.set_xlim(occulted.x[t] - occultor.x[t] - (pad + 1) * r, occulted.x[t] - occultor.x[t] + (pad + 1) * r)
-      ax.set_ylim(occulted.y[t] - occultor.y[t] - (pad + 1) * r, occulted.y[t] - occultor.y[t] + (pad + 1) * r)
+      ax.plot(x, y, **style)
+      ax.plot(x, -y, **style)
 
     return ax
 
