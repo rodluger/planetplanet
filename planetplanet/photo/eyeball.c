@@ -185,7 +185,7 @@ void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], double 
   */
   
   int i, j;
-  double latitude, sinlat;
+  double latitude, coslat;
   double T = 0.;
   
   // Loop over each slice
@@ -204,9 +204,9 @@ void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], double 
     
       // Polynomial limb darkening
       T = 0;
-      sinlat = sin(latitude);
+      coslat = cos(latitude);
       for (j = 0; j < nu; j++) {
-        T += u[j] * pow(sinlat, j);
+        T += u[j] * pow(1 - coslat, j);
       }
       
     }
