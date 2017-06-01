@@ -157,9 +157,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // Skip self
         if (o == p) continue;
       
-        // Compute the body-body separation between body `p` and body `o`
-        dx = (body[p]->x[t] - body[o]->x[t]);
-        dy = (body[p]->y[t] - body[o]->y[t]);
+        // Compute the body-body separation between body `o` and body `p`
+        dx = (body[o]->x[t] - body[p]->x[t]);
+        dy = (body[o]->y[t] - body[p]->y[t]);
         d = sqrt(dx * dx + dy * dy);
         
         // Is body `o` occulting body `p`?
@@ -180,7 +180,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
           
           // Call the eyeball routine
-          OccultedFlux(body[p]->r, -x0, -dy, body[o]->r, theta, body[p]->albedo, 
+          OccultedFlux(body[p]->r, x0, dy, body[o]->r, theta, body[p]->albedo, 
                        body[p]->irrad, settings.polyeps1, settings.polyeps2, 
                        settings.maxpolyiter, body[p]->nu, body[p]->nl, nw, 
                        body[p]->u, wavelength, tmp);

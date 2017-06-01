@@ -96,7 +96,7 @@ double Latitude(double x, double y, double r, double theta) {
   double solution;
 
   // Are we dealing with circles?
-  if ((fabs(fabs(theta) - PI / 2)) < 1.e-5) {
+  if ((fabs(fabs(theta) - PI / 2)) < DTOL1) {
     
     // Trivial!
     d = sqrt(x * x + y * y);
@@ -441,8 +441,8 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
   // Initialize the occulted planet
   occulted->r = r;
-  occulted->x0 = 0;
-  occulted->y0 = 0;
+  occulted->x0 = 0.;
+  occulted->y0 = 0.;
   occulted->circle = 1;
   
   // Occulted planet x minimum
@@ -465,7 +465,7 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
       x = (d * d - r * r + ro * ro) / (2 * d);
       cost = -x0 / d;
       sint = -y0 / d;
-      vertices[(*v)++] = -x * cost + y * sint + x0;  // TODO TODO TODO CHECK THIS
+      vertices[(*v)++] = -x * cost + y * sint + x0;
       vertices[(*v)++] = -x * cost - y * sint + x0;
     }
   }
@@ -491,16 +491,16 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   int f = 0;
   double d, lmin, lmax, lat;
   double xL, xR, x, y, area;
-  double r2 = r * r + DTOL2;
-  double ro2 = ro * ro + DTOL2;
+  double r2 = r * r + DTOL1;
+  double ro2 = ro * ro + DTOL1;
   double vertices[MAXVERTICES];
   FUNCTION functions[MAXFUNCTIONS];
   FUNCTION boundaries[MAXFUNCTIONS];
   double B[nlat + 1][nlam];
   
   // Avoid the singular point
-  if (fabs(theta) < 1e-2)
-    theta = 1e-2;
+  if (fabs(theta) < MINTHETA)
+    theta = MINTHETA;
   
   // If we're doing limb darkening, theta must be pi/2 (full phase)
   // If the occultor is completely within the occulted body (usually
@@ -510,15 +510,15 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     theta = PI / 2.;
     d = sqrt(x0 * x0 + y0 * y0);
     if (d < r - ro) {
-      lmin = asin((d - ro) / r) - 1e-5;
-      lmax = asin((d + ro) / r) + 1e-5;
+      lmin = asin((d - ro) / r) - DTOL1;
+      lmax = asin((d + ro) / r) + DTOL1;
     } else {
-      lmin = 0 - 1e-5;
-      lmax = PI + 1e-5;
+      lmin = 0 - DTOL1;
+      lmax = PI + DTOL1;
     }
   } else {
-    lmin = 0 - 1e-5;
-    lmax = PI + 1e-5;
+    lmin = 0 - DTOL1;
+    lmax = PI + DTOL1;
   }
   
   // Zero out the flux
@@ -546,7 +546,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     // small perturbation for stability
     xL = vertices[i] + DTOL2;
     xR = vertices[i+1] - DTOL2;
-
+    
     // Check if they are identical
     if (xR <= xL + DTOL2)
       continue;
@@ -598,7 +598,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
   // Scale flux by REARTH**2
   // Convert to W m^2 / m^2 / um / sr
   for (m = 0; m < nlam; m++)
-    flux[m] *= REARTH * REARTH * 1e-6;  
+    flux[m] *= REARTH * REARTH * MICRON;  
   
   // Free all of the ellipse instances
   for (j = 0; j < f; j+=2) {

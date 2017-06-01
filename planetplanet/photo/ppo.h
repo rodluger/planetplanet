@@ -20,12 +20,14 @@
 #define HPLANCK                 6.62607004e-34                                        // m^2 kg / s
 #define CLIGHT                  2.998e8                                               // m / 2
 #define REARTH                  6371000.                                              // m
+#define MICRON                  1e-6
 
 // Settings
 #define MAXVERTICES             500
 #define MAXFUNCTIONS            500
 #define DTOL1                   1.e-10
 #define DTOL2                   1.e-15
+#define MINTHETA                1.e-2
 
 // Structs
 typedef struct {
