@@ -26,9 +26,9 @@ double Blackbody(double lambda, double T) {
   return a / (exp(b) - 1);
 }
 
-void GetRoots(double a, double b, double x0, double y0, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[2]) {
+void GetRoots(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[2]) {
   /*
-  
+
   */
   
   int i, j;
@@ -39,6 +39,8 @@ void GetRoots(double a, double b, double x0, double y0, double r, double polyeps
   double a2 = a * a;
   double b2 = b * b;
   double a2b2 = a2 / b2;
+  double x0 = xE - xC;
+  double y0 = yE - yC;
   double y2 = y0 * y0;
   double x2 = x0 * x0;
   
@@ -69,7 +71,7 @@ void GetRoots(double a, double b, double x0, double y0, double r, double polyeps
   j = 0;
   for (i = 1; i < 5; i++) {
     if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < DTOL1)) {
-      roots[j] = croots[i].r;
+      roots[j] = croots[i].r + xC;
       j += 1;
     }
     if (j == 2) break;
@@ -77,14 +79,14 @@ void GetRoots(double a, double b, double x0, double y0, double r, double polyeps
 
 }
 
-double Latitude(double x, double y, double x0, double y0, double r, double theta) {
+double Latitude(double x, double y, double r, double theta) {
   /*
   
   */
     
   int i;
   double alpha, beta, gamma, c1, c2, c3, a, b, c;
-  double xE, yE;
+  double xE;
   double z[2];
   double l[2];
   double d;
@@ -97,7 +99,7 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
   if ((fabs(fabs(theta) - PI / 2)) < 1.e-5) {
     
     // Trivial!
-    d = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
+    d = sqrt(x * x + y * y);
     solution = asin(d / r);
     if (theta < 0)
       solution = PI - solution;
@@ -112,9 +114,9 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
   
   // Compute the latitude. We will solve
   // a quadratic equation for z = sin(lat) **  2  
-  alpha = (x - x0) / (r * sintheta);
+  alpha = x / (r * sintheta);
   beta = cotantheta;
-  gamma = (y - y0) / r;
+  gamma = y / r;
   c1 = 4 * alpha * alpha * beta * beta;
   c2 = 1 + beta * beta;
   c3 = alpha * alpha + gamma * gamma + beta * beta;
@@ -132,11 +134,10 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
     la = asin(sqrt(z[i]));
     a = r * fabs(sin(la));
     b = a * fabs(sintheta);
-    xE = x0 - r * cos(la) * costheta;
-    yE = y0;
+    xE = -r * cos(la) * costheta;
     tmp = (a / b) * sqrt(fabs(b * b - (x - xE) * (x - xE)));
-    tmp1 = fabs(y - (yE - tmp));
-    tmp2 = fabs(y - (yE + tmp));
+    tmp1 = fabs(y + tmp);
+    tmp2 = fabs(y - tmp);
     if (tmp1 < tmp2) da = tmp1;
     else da = tmp2;
     
@@ -144,11 +145,10 @@ double Latitude(double x, double y, double x0, double y0, double r, double theta
     lb = PI - la;
     a = r * fabs(sin(lb));
     b = a * fabs(sintheta);
-    xE = x0 - r * cos(lb) * costheta;
-    yE = y0;
+    xE = -r * cos(lb) * costheta;
     tmp = (a / b) * sqrt(fabs(b * b - (x - xE) * (x - xE)));
-    tmp1 = fabs(y - (yE - tmp));
-    tmp2 = fabs(y - (yE + tmp));
+    tmp1 = fabs(y + tmp);
+    tmp2 = fabs(y - tmp);
     if (tmp1 < tmp2) db = tmp1;
     else db = tmp2;
     
@@ -330,7 +330,7 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   
   double xlimb, x, y;
   double roots[2];
-  double r2 = ro * ro + DTOL2;
+  double ro2 = ro * ro + DTOL2;
   ELLIPSE *ellipse;
   ellipse = malloc(sizeof(ELLIPSE)); 
   
@@ -338,8 +338,8 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   ellipse->circle = 0;
   ellipse->a = r * fabs(sin(latitude));
   ellipse->b = ellipse->a * fabs(sin(theta));
-  ellipse->x0 = x0 - r * cos(latitude) * cos(theta);
-  ellipse->y0 = y0;
+  ellipse->x0 = -r * cos(latitude) * cos(theta);
+  ellipse->y0 = 0;
   
   // The x position of the intersection with the occulted planet
   // limb, relative to the ellipse center
@@ -348,7 +348,7 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   // Ellipse x minimum
   if (((theta > 0) && (ellipse->b < xlimb)) || ((theta <= 0) && (ellipse->b > xlimb))) {
     ellipse->xmin = ellipse->x0 - ellipse->b;
-    if (ellipse->xmin * ellipse->xmin + ellipse->y0 * ellipse->y0 < r2)
+    if ((ellipse->xmin - x0) * (ellipse->xmin - x0) + y0 * y0 < ro2)
       vertices[(*v)++] = ellipse->xmin;    
   } else {
     ellipse->xmin = ellipse->x0 - xlimb;
@@ -357,7 +357,7 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   // Ellipse x maximum
   if (((theta > 0) && (ellipse->b > -xlimb)) || ((theta <= 0) && (ellipse->b < -xlimb))) {
     ellipse->xmax = ellipse->x0 + ellipse->b;
-    if (ellipse->xmax * ellipse->xmax + ellipse->y0 * ellipse->y0 < r2)
+    if ((ellipse->xmax - x0) * (ellipse->xmax - x0) + y0 * y0 < ro2)
       vertices[(*v)++] = ellipse->xmax;    
   } else {
     ellipse->xmax = ellipse->x0 - xlimb;
@@ -367,15 +367,15 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   if (ellipse->b >= fabs(xlimb)) {
     x = ellipse->x0 - xlimb;
     y = fupper(x, ellipse);
-    if (x * x + y * y < r2)
+    if ((x - x0) * (x - x0) + (y - y0) * (y - y0) < ro2)
       vertices[(*v)++] = x;
     y = flower(x, ellipse);
-    if (x * x + y * y < r2)
+    if ((x - x0) * (x - x0) + (y - y0) * (y - y0) < ro2)
       vertices[(*v)++] = x;
   }
   
   // Ellipse-occultor vertices
-  GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, ro, polyeps1, polyeps2, maxpolyiter, roots);
+  GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0, y0, ro, polyeps1, polyeps2, maxpolyiter, roots);
 
   if (!(isnan(roots[0])) && (((theta > 0) && (roots[0] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[0] < ellipse->x0 - xlimb)))) {
     vertices[(*v)++] = roots[0];
@@ -405,18 +405,18 @@ void AddOccultor(double r, double x0, double y0, double ro, double *vertices, in
   
   // Initialize the occultor (always at the origin)
   occultor->r = ro;
-  occultor->x0 = 0.;
-  occultor->y0 = 0.;
+  occultor->x0 = x0;
+  occultor->y0 = y0;
   occultor->circle = 1;
     
   // Occultor x minimum
-  occultor->xmin = -occultor->r;
-  if ((occultor->xmin - x0) * (occultor->xmin - x0) + (y0 * y0) < r2)
+  occultor->xmin = x0 - occultor->r;
+  if (occultor->xmin * occultor->xmin + occultor->y0 * occultor->y0 < r2)
     vertices[(*v)++] = occultor->xmin;    
   
   // Occultor x maximum
-  occultor->xmax = occultor->r;
-  if ((occultor->xmax - x0) * (occultor->xmax - x0) + (y0 * y0) < r2)
+  occultor->xmax = x0 + occultor->r;
+  if (occultor->xmax * occultor->xmax + occultor->y0 * occultor->y0 < r2)
     vertices[(*v)++] = occultor->xmax;    
 
   // Finally, the boundary curves and their integrals
@@ -434,25 +434,25 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
   */ 
 
-  double r2 = ro * ro + DTOL2;
+  double ro2 = ro * ro + DTOL2;
   double d, A, x, y, cost, sint;
   ELLIPSE *occulted;
   occulted = malloc(sizeof(ELLIPSE));
   
   // Initialize the occulted planet
   occulted->r = r;
-  occulted->x0 = x0;
-  occulted->y0 = y0;
+  occulted->x0 = 0;
+  occulted->y0 = 0;
   occulted->circle = 1;
   
   // Occulted planet x minimum
-  occulted->xmin = x0 - r;
-  if (occulted->xmin * occulted->xmin + occulted->y0 * occulted->y0 < r2)
+  occulted->xmin = -r;
+  if ((occulted->xmin - x0) * (occulted->xmin - x0) + y0 * y0 < ro2)
     vertices[(*v)++] = occulted->xmin;    
   
   // Occulted planet x maximum
-  occulted->xmax = x0 + r;
-  if (occulted->xmax * occulted->xmax + occulted->y0 * occulted->y0 < r2)
+  occulted->xmax = r;
+  if ((occulted->xmax - x0) * (occulted->xmax - x0) + y0 * y0 < ro2)
     vertices[(*v)++] = occulted->xmax;    
   
   // Vertices of intersection with the occultor
@@ -465,8 +465,8 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
       x = (d * d - r * r + ro * ro) / (2 * d);
       cost = -x0 / d;
       sint = -y0 / d;
-      vertices[(*v)++] = -x * cost + y * sint;
-      vertices[(*v)++] = -x * cost - y * sint;
+      vertices[(*v)++] = -x * cost + y * sint + x0;  // TODO TODO TODO CHECK THIS
+      vertices[(*v)++] = -x * cost - y * sint + x0;
     }
   }
   
@@ -560,7 +560,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
     b = 0;
     for (j = 0; j < f; j++) {
       y = curve(x, functions[j]);
-      if (!(isnan(y)) && (x * x + y * y < ro2) && ((x - x0) * (x - x0) + (y - y0) * (y - y0) < r2)) {
+      if (!(isnan(y)) && (x * x + y * y < r2) && ((x - x0) * (x - x0) + (y - y0) * (y - y0) < ro2)) {
         boundaries[b] = functions[j];
         boundaries[b++].y = y;
       }
@@ -578,7 +578,7 @@ void OccultedFlux(double r, double x0, double y0, double ro, double theta, doubl
       // Get the latitude of the midpoint and the index of the latitude
       // grid *above* this latitude
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
-      lat = Latitude(x, y, x0, y0, r, theta);      
+      lat = Latitude(x, y, r, theta);      
       k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
       
       // Sanity check
