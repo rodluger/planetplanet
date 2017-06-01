@@ -342,7 +342,7 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   ellipse->y0 = y0;
   
   // The x position of the intersection with the occulted planet
-  // limb, relative to the occulted planet center
+  // limb, relative to the ellipse center
   xlimb = r * cos(latitude) * sin(theta) * tan(theta);
 
   // Ellipse x minimum
