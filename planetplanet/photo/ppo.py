@@ -531,7 +531,7 @@ class System(object):
     for i, t in enumerate(body._inds):
       
       # Set up the figure
-      fig[i] = pl.figure(figsize = (5, 6))
+      fig[i] = pl.figure(figsize = (5, 8))
       fig[i].subplots_adjust(left = 0.175)
   
       # Plot three different wavelengths (first, mid, and last)
@@ -557,11 +557,9 @@ class System(object):
             occultors.append(b)
       occultors = list(set(occultors))
 
-      # Plot the orbits of all interior bodies
+      # Plot the orbits of all bodies
       axxz[i] = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
       for j, _ in enumerate(self.bodies):
-        if (j > p) and (j > occultors[-1]):
-          break
         if j == p:
           style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
         elif j in occultors:
@@ -571,29 +569,24 @@ class System(object):
         tmax = np.argmin(np.abs(self.bodies[j].time - (self.bodies[j].time[0] + self.bodies[j].per)))
         axxz[i].plot(self.bodies[j].x[:tmax], self.bodies[j].z[:tmax], **style)
       
-      # Plot their current positions
-      axxz[i].plot(body.x[tmid], body.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
-      for occultor in [self.bodies[o] for o in occultors]:
-        axxz[i].plot(occultor.x[tmid], occultor.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
+      # Plot the bodies
+      for bi, b in enumerate(self.bodies):
+        if b == body:
+          axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
+        elif bi in occultors:
+          axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
+        else:
+          axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
+      
+        # Plot orbital motion
+        ti = np.array(sorted(list(set(np.array(np.linspace(tstart, tmid, 10), dtype = int)))))
+        axxz[i].plot(b.x[ti], b.z[ti], 'o', color = 'k', alpha = float(j) / 100.)
       
       # Appearance
       axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
       axxz[i].set_xlim(-max(np.abs(axxz[i].get_xlim())), max(np.abs(axxz[i].get_xlim())))
       axxz[i].set_aspect('equal')
       axxz[i].axis('off')
-      
-      # Plot the other planets
-      for b in self.bodies:
-        axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#cccccc', alpha = 1, markeredgecolor = 'none', zorder = 98)
-      
-      # Plot orbital motion
-      t0 = np.argmin(np.abs(body.time - (body.time[tmid] - body.per / 8)))
-      ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
-      axxz[i].plot(body.x[ti], body.z[ti], 'o', color = 'r', alpha = float(j) / 30.)
-      for occultor in [self.bodies[o] for o in occultors]:
-        t0 = np.argmin(np.abs(occultor.time - (occultor.time[tmid] - occultor.per / 8)))
-        ti = np.array(sorted(list(set(np.array(np.linspace(t0, tmid, 30), dtype = int)))))
-        axxz[i].plot(occultor.x[ti], occultor.z[ti], 'o', color = 'lightgrey', alpha = float(j) / 30.)
 
       # Plot the images
       axim[i][0] = pl.subplot2grid((5, 3), (2, 0), colspan = 1, rowspan = 1)

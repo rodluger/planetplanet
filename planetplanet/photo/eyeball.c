@@ -177,7 +177,7 @@ double Latitude(double x, double y, double r, double theta) {
   
 }
 
-void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], double lmin, double lmax, int nlat, int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
+void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nlat, double latgrid[nlat], int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
   /*
   Returns the blackbody intensity at the center of each latitude slice 
   evaluated at a given array of wavelengths.
@@ -191,9 +191,16 @@ void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], double 
   // Loop over each slice
   for (i = 0; i < nlat + 1; i++) {
     
-    // Get the latitude at the *center* of this slice
-    latitude = (i + 0.5) / (nlat + 1.) * (lmax - lmin) + lmin;
-    
+    // Get the latitude in between the ellipses
+    if (i == 0) {
+      latitude = latgrid[0] - 0.5 * (latgrid[1] - latgrid[0]);
+      if (latitude < 0) latitude = 0;
+    } else if (i == nlat) {
+      latitude = latgrid[nlat - 1] + 0.5 * (latgrid[nlat - 1] - latgrid[nlat - 2]);
+      if (latitude > PI) latitude = PI;
+    } else
+      latitude = 0.5 * (latgrid[i] + latgrid[i - 1]);
+
     // Get its blackbody temperature
     if (nu == 0) {
       
@@ -535,16 +542,17 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   int b = 0;
   int v = 0;
   int f = 0;
-  double d, lmin, lmax, lat;
+  double lmin, lmax, lat;
   double xL, xR, x, y, area;
   double r2 = r * r + DTOL1;
-  double tmp, dmin, dmax;
+  //double d, tmp, dmin, dmax;
   double ro2[no];
   for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
   double vertices[MAXVERTICES];
   FUNCTION functions[MAXFUNCTIONS];
   FUNCTION boundaries[MAXFUNCTIONS];
-  double B[nlat + 1][nlam];
+  double B[nlat * no + 1][nlam];
+  double latgrid[nlat * no];
   
   // Avoid the singular point
   if (fabs(theta) < MINTHETA)
@@ -558,13 +566,8 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   if (nu > 0)
     theta = PI / 2.;
   
-  // Latitude grid bounds
-  lmin = -DTOL1;
-  lmax = PI + DTOL1;
-  
-  // TODO! Adaptive grid is broken!!!
-  
-  // Adaptive grid? Let's only compute latitude circles that intersect the occultors
+  // TODO
+  /*
   if ((adaptive) && (nu > 0)) {
   
     dmin = 1.;
@@ -597,17 +600,22 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       lmin = asin(dmin) - DTOL1;  
 
   }
-  
-  // Pre-compute the surface intensity in each latitude slice
-  SurfaceIntensity(albedo, irrad, nu, u, lmin, lmax, nlat, nlam, lambda, B);
-    
+  */
+      
   // Generate all the shapes and get their vertices and curves
   AddOccultors(r, no, x0, y0, ro, vertices, &v, functions, &f);   
   AddOcculted(r, no, x0, y0, ro, vertices, &v, functions, &f); 
-  for (i = 0; i < nlat; i++) {
-    lat = (i + 1.) / (nlat + 1.) * (lmax - lmin) + lmin;
-    AddLatitudeSlice(lat, r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
+  
+  // The latitude grid
+  lmin = 0.;
+  lmax = PI;
+  for (i = 0; i < nlat * no; i++) {
+    latgrid[i] = (i + 1.) / (nlat * no + 1.) * (lmax - lmin) + lmin;
+    AddLatitudeSlice(latgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
   }
+  
+  // Pre-compute the surface intensity in each latitude slice
+  SurfaceIntensity(albedo, irrad, nu, u, nlat * no, latgrid, nlam, lambda, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
@@ -672,12 +680,14 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       lat = Latitude(x, y, r, theta);
       
       // Get the index of the latitude grid *above* this latitude
-      k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
+      for (k = 0; k < nlat * no; k++) {
+        if (latgrid[k] > lat)
+          break;
+      }
             
       // Sanity check
-      if ((k < 0) || (k > nlat)) {
+      if ((lat < lmin) || (lat > lmax)) {
         printf("Invalid index for latitude grid.\n");
-        printf("k = %d; nlat = %d\n", k, nlat);
         printf("Latitude = %.3f; min, max = %.3f, %.3f\n", lat * 180/PI, lmin * 180/PI, lmax * 180/PI);
         printf("x, y, r, theta = %.3f, %.3f, %.3f, %.3f\n", x, y, r, theta);
         printf("Aborting.\n");        
