@@ -195,24 +195,6 @@ class Body(ctypes.Structure):
     # We define the mean anomaly to be zero at t = t0 = trn0 + tperi0
     self.t0 = kwargs.pop('trn0', 7322.51736) + tperi0
   
-  def plot_lightcurve(self):
-    '''
-    
-    '''
-    
-    fig, ax = pl.subplots(1, figsize = (12, 4))
-    ax.plot(self.time, 1e-12 * self.flux[:, 0], 'b-')
-    ax.plot(self.time, 1e-12 * self.flux[:, self.nw // 2], 'g-')
-    ax.plot(self.time, 1e-12 * self.flux[:, -1], 'r-')
-    ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
-    ax.set_ylabel(r'Occulted Flux [TW/$\mathbf{\mu}$m/sr]', fontweight = 'bold', fontsize = 10)
-    ax.get_yaxis().set_major_locator(MaxNLocator(4))
-    ax.get_xaxis().set_major_locator(MaxNLocator(4))
-    for tick in ax.get_xticklabels() + ax.get_yticklabels():
-      tick.set_fontsize(8)
-    
-    return fig, ax
-
 class System(object):
 
   def __init__(self, *bodies, **kwargs):
@@ -554,9 +536,9 @@ class System(object):
   
       # Plot three different wavelengths (first, mid, and last)
       axlc[i] = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-      axlc[i].plot(body.time[t], (normb + body.flux[t, 0]) / normb, 'b-')
-      axlc[i].plot(body.time[t], (normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-')
-      axlc[i].plot(body.time[t], (normr + body.flux[t, -1]) / normr, 'r-')
+      axlc[i].plot(body.time[t], (int(p > 0) * normb + body.flux[t, 0]) / normb, 'b-')
+      axlc[i].plot(body.time[t], (int(p > 0) * normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-')
+      axlc[i].plot(body.time[t], (int(p > 0) * normr + body.flux[t, -1]) / normr, 'r-')
       axlc[i].set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
       axlc[i].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
       axlc[i].get_yaxis().set_major_locator(MaxNLocator(4))
