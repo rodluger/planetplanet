@@ -186,8 +186,8 @@ class Body(ctypes.Structure):
     self._inds = []
     self._computed = False
     
-    # Compute the time of pericenter passage (e.g. Shields et al. 2015) 
-    fi = (3. * np.pi / 2.) - self.w + np.pi
+    # Compute the time of pericenter passage (e.g. Shields et al. 2015)
+    fi = (3 * np.pi / 2.) - self.w
     tperi0 = (self.per * np.sqrt(1. - self.ecc * self.ecc) / (2. * np.pi) * (self.ecc * np.sin(fi) / 
              (1. + self.ecc * np.cos(fi)) - 2. / np.sqrt(1. - self.ecc * self.ecc) * 
              np.arctan2(np.sqrt(1. - self.ecc * self.ecc) * np.tan(fi/2.), 1. + self.ecc)))
