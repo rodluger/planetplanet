@@ -323,14 +323,16 @@ int funcomp( const void* a, const void* b) {
   else return 1;
 }
 
-void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro, double theta, double polyeps1, double polyeps2, int maxpolyiter, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y0[no], double ro[no], double theta, double polyeps1, double polyeps2, int maxpolyiter, double *vertices, int *v, FUNCTION *functions, int *f){
   /*
   
   */    
   
+  int i;
   double xlimb, x, y;
   double roots[2];
-  double ro2 = ro * ro + DTOL2;
+  double ro2[no];
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
   ELLIPSE *ellipse;
   ellipse = malloc(sizeof(ELLIPSE)); 
   
@@ -348,8 +350,13 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   // Ellipse x minimum
   if (((theta > 0) && (ellipse->b < xlimb)) || ((theta <= 0) && (ellipse->b > xlimb))) {
     ellipse->xmin = ellipse->x0 - ellipse->b;
-    if ((ellipse->xmin - x0) * (ellipse->xmin - x0) + y0 * y0 < ro2)
-      vertices[(*v)++] = ellipse->xmin;    
+    // Is this point inside __at least__ one occultor?
+    for (i = 0; i < no; i++) {
+      if ((ellipse->xmin - x0[i]) * (ellipse->xmin - x0[i]) + y0[i] * y0[i] < ro2[i]) {
+        vertices[(*v)++] = ellipse->xmin;
+        break;    
+      }
+    }
   } else {
     ellipse->xmin = ellipse->x0 - xlimb;
   }
@@ -357,84 +364,111 @@ void AddLatitudeSlice(double latitude, double r, double x0, double y0, double ro
   // Ellipse x maximum
   if (((theta > 0) && (ellipse->b > -xlimb)) || ((theta <= 0) && (ellipse->b < -xlimb))) {
     ellipse->xmax = ellipse->x0 + ellipse->b;
-    if ((ellipse->xmax - x0) * (ellipse->xmax - x0) + y0 * y0 < ro2)
-      vertices[(*v)++] = ellipse->xmax;    
+    // Is this point inside __at least__ one occultor?
+    for (i = 0; i < no; i++) {
+      if ((ellipse->xmax - x0[i]) * (ellipse->xmax - x0[i]) + y0[i] * y0[i] < ro2[i]) {
+        vertices[(*v)++] = ellipse->xmax;
+        break;    
+      }
+    }
   } else {
     ellipse->xmax = ellipse->x0 - xlimb;
   }
   
-  // Are the limb vertices inside the occultor? 
+  // Are the limb vertices inside __at least__ one occultor? 
   if (ellipse->b >= fabs(xlimb)) {
     x = ellipse->x0 - xlimb;
     y = fupper(x, ellipse);
-    if ((x - x0) * (x - x0) + (y - y0) * (y - y0) < ro2)
-      vertices[(*v)++] = x;
+    for (i = 0; i < no; i++) {
+      if ((x - x0[i]) * (x - x0[i]) + (y - y0[i]) * (y - y0[i]) < ro2[i]) {
+        vertices[(*v)++] = x;
+        break;    
+      }
+    }
     y = flower(x, ellipse);
-    if ((x - x0) * (x - x0) + (y - y0) * (y - y0) < ro2)
-      vertices[(*v)++] = x;
+    for (i = 0; i < no; i++) {
+      if ((x - x0[i]) * (x - x0[i]) + (y - y0[i]) * (y - y0[i]) < ro2[i]) {
+        vertices[(*v)++] = x;
+        break;    
+      }
+    }
   }
   
   // Ellipse-occultor vertices
-  GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0, y0, ro, polyeps1, polyeps2, maxpolyiter, roots);
-
-  if (!(isnan(roots[0])) && (((theta > 0) && (roots[0] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[0] < ellipse->x0 - xlimb)))) {
-    vertices[(*v)++] = roots[0];
-  }
-  if (!(isnan(roots[1])) && (((theta > 0) && (roots[1] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[1] < ellipse->x0 - xlimb)))) {
-    vertices[(*v)++] = roots[1];
-  }
-  
-  // Finally, the boundary curves and their integrals
-  functions[*f].ellipse = ellipse;
-  functions[*f].curve = fupper;
-  functions[(*f)++].integral = iupper;
-  functions[*f].ellipse = ellipse;
-  functions[*f].curve = flower;
-  functions[(*f)++].integral = ilower;
-  
-}
-
-void AddOccultor(double r, double x0, double y0, double ro, double *vertices, int *v, FUNCTION *functions, int *f) {
-  /*
-  
-  */ 
-
-  double r2 = r * r + DTOL2;
-  ELLIPSE *occultor;
-  occultor = malloc(sizeof(ELLIPSE)); 
-  
-  // Initialize the occultor (always at the origin)
-  occultor->r = ro;
-  occultor->x0 = x0;
-  occultor->y0 = y0;
-  occultor->circle = 1;
+  for (i = 0; i < no; i++) {
     
-  // Occultor x minimum
-  occultor->xmin = x0 - occultor->r;
-  if (occultor->xmin * occultor->xmin + occultor->y0 * occultor->y0 < r2)
-    vertices[(*v)++] = occultor->xmin;    
-  
-  // Occultor x maximum
-  occultor->xmax = x0 + occultor->r;
-  if (occultor->xmax * occultor->xmax + occultor->y0 * occultor->y0 < r2)
-    vertices[(*v)++] = occultor->xmax;    
+    // Solve the quartic
+    GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
 
+    if (!(isnan(roots[0])) && (((theta > 0) && (roots[0] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[0] < ellipse->x0 - xlimb)))) {
+      vertices[(*v)++] = roots[0];
+    }
+    if (!(isnan(roots[1])) && (((theta > 0) && (roots[1] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[1] < ellipse->x0 - xlimb)))) {
+      vertices[(*v)++] = roots[1];
+    }
+    
+  }
+  
   // Finally, the boundary curves and their integrals
-  functions[*f].ellipse = occultor;
+  functions[*f].ellipse = ellipse;
   functions[*f].curve = fupper;
   functions[(*f)++].integral = iupper;
-  functions[*f].ellipse = occultor;
+  functions[*f].ellipse = ellipse;
   functions[*f].curve = flower;
   functions[(*f)++].integral = ilower;
   
 }
 
-void AddOcculted(double r, double x0, double y0, double ro, double *vertices, int *v, FUNCTION *functions, int *f) {
+void AddOccultors(double r,int no, double x0[no], double y0[no], double ro[no], double *vertices, int *v, FUNCTION *functions, int *f) {
   /*
   
   */ 
 
-  double ro2 = ro * ro + DTOL2;
+  int i;
+  double r2 = r * r + DTOL2;
+  ELLIPSE *occultor[no];
+   
+  for (i = 0; i < no; i++) {
+    
+    // Allocate memory
+    occultor[i] = malloc(sizeof(ELLIPSE));
+    
+    // Initialize the occultor (always at the origin)
+    occultor[i]->r = ro[i];
+    occultor[i]->x0 = x0[i];
+    occultor[i]->y0 = y0[i];
+    occultor[i]->circle = 1;
+    
+    // Occultor x minimum
+    occultor[i]->xmin = x0[i] - occultor[i]->r;
+    if (occultor[i]->xmin * occultor[i]->xmin + occultor[i]->y0 * occultor[i]->y0 < r2)
+      vertices[(*v)++] = occultor[i]->xmin;    
+  
+    // Occultor x maximum
+    occultor[i]->xmax = x0[i] + occultor[i]->r;
+    if (occultor[i]->xmax * occultor[i]->xmax + occultor[i]->y0 * occultor[i]->y0 < r2)
+      vertices[(*v)++] = occultor[i]->xmax;    
+
+    // Finally, the boundary curves and their integrals
+    functions[*f].ellipse = occultor[i];
+    functions[*f].curve = fupper;
+    functions[(*f)++].integral = iupper;
+    functions[*f].ellipse = occultor[i];
+    functions[*f].curve = flower;
+    functions[(*f)++].integral = ilower;
+  
+  }
+  
+}
+
+void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], double *vertices, int *v, FUNCTION *functions, int *f) {
+  /*
+  
+  */ 
+
+  int i;
+  double ro2[no];
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
   double d, A, x, y, cost, sint;
   ELLIPSE *occulted;
   occulted = malloc(sizeof(ELLIPSE));
@@ -447,26 +481,38 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
   // Occulted planet x minimum
   occulted->xmin = -r;
-  if ((occulted->xmin - x0) * (occulted->xmin - x0) + y0 * y0 < ro2)
-    vertices[(*v)++] = occulted->xmin;    
+  // Is this point inside __at least__ one occultor?
+  for (i = 0; i < no; i++) {
+    if ((occulted->xmin - x0[i]) * (occulted->xmin - x0[i]) + y0[i] * y0[i] < ro2[i]) {
+      vertices[(*v)++] = occulted->xmin;
+      break;    
+    }
+  }  
   
   // Occulted planet x maximum
   occulted->xmax = r;
-  if ((occulted->xmax - x0) * (occulted->xmax - x0) + y0 * y0 < ro2)
-    vertices[(*v)++] = occulted->xmax;    
-  
-  // Vertices of intersection with the occultor
+  // Is this point inside __at least__ one occultor?
+  for (i = 0; i < no; i++) {
+    if ((occulted->xmax - x0[i]) * (occulted->xmax - x0[i]) + y0[i] * y0[i] < ro2[i]) {
+      vertices[(*v)++] = occulted->xmax;
+      break;    
+    }
+  }  
+
+  // Vertices of intersection with the occultors
   // Adapted from http://mathworld.wolfram.com/Circle-CircleIntersection.html
-  d = sqrt(x0 * x0 + y0 * y0);
-  if (d < (ro + r)) {
-    A = (-d + r - ro) * (-d - r + ro) * (-d + r + ro) * (d + r + ro);
-    if (A >= 0) {
-      y = sqrt(A) / (2 * d);
-      x = (d * d - r * r + ro * ro) / (2 * d);
-      cost = -x0 / d;
-      sint = -y0 / d;
-      vertices[(*v)++] = -x * cost + y * sint + x0;
-      vertices[(*v)++] = -x * cost - y * sint + x0;
+  for (i = 0; i < no; i++) {
+    d = sqrt(x0[i] * x0[i] + y0[i] * y0[i]);
+    if (d < (ro[i] + r)) {
+      A = (-d + r - ro[i]) * (-d - r + ro[i]) * (-d + r + ro[i]) * (d + r + ro[i]);
+      if (A >= 0) {
+        y = sqrt(A) / (2 * d);
+        x = (d * d - r * r + ro[i] * ro[i]) / (2 * d);
+        cost = -x0[i] / d;
+        sint = -y0[i] / d;
+        vertices[(*v)++] = -x * cost + y * sint + x0[i];
+        vertices[(*v)++] = -x * cost - y * sint + x0[i];
+      }
     }
   }
   
@@ -480,7 +526,7 @@ void AddOcculted(double r, double x0, double y0, double ro, double *vertices, in
   
 }
 
-void _OccultedFlux(double r, double x0, double y0, double ro, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
   /*
   
   */
@@ -492,7 +538,9 @@ void _OccultedFlux(double r, double x0, double y0, double ro, double theta, doub
   double d, lmin, lmax, lat;
   double xL, xR, x, y, area;
   double r2 = r * r + DTOL1;
-  double ro2 = ro * ro + DTOL1;
+  double tmp, dmin, dmax;
+  double ro2[no];
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
   double vertices[MAXVERTICES];
   FUNCTION functions[MAXFUNCTIONS];
   FUNCTION boundaries[MAXFUNCTIONS];
@@ -502,34 +550,61 @@ void _OccultedFlux(double r, double x0, double y0, double ro, double theta, doub
   if (fabs(theta) < MINTHETA)
     theta = MINTHETA;
   
+  // Zero out the flux
+  for (m = 0; m < nlam; m++) 
+    flux[m] = 0.;
+  
   // If we're doing limb darkening, theta must be pi/2 (full phase)
-  // If the occultor is completely within the occulted body (usually
-  // the case during transit), only compute latitude circles that
-  // intersect the occultor
-  if (nu > 0) {
+  if (nu > 0)
     theta = PI / 2.;
-    d = sqrt(x0 * x0 + y0 * y0);
-    if (d < r - ro) {
-      lmin = asin((d - ro) / r) - DTOL1;
-      lmax = asin((d + ro) / r) + DTOL1;
-    } else {
-      lmin = 0 - DTOL1;
-      lmax = PI + DTOL1;
+  
+  // Latitude grid bounds
+  lmin = -DTOL1;
+  lmax = PI + DTOL1;
+  
+  // Adaptive grid? Let's only compute latitude circles that intersect the occultors
+  if ((adaptive) && (nu > 0)) {
+  
+    dmin = 1.;
+    dmax = 0.;
+    
+    // Loop over each occultor
+    for (i = 0; i < no; i++) {
+    
+      // Distance to occultor center
+      d = sqrt(x0[i] * x0[i] + y0[i] * y0[i]);
+      
+      // Distance to far side
+      tmp = (d + ro[i]) / r;
+      if (tmp > dmax) dmax = tmp;
+      
+      // Distance to near side
+      tmp = (d - ro[i]) / r;
+      if (tmp < dmin) dmin = tmp;
+    
     }
-  } else {
-    lmin = 0 - DTOL1;
-    lmax = PI + DTOL1;
+    
+    // Compute min and max latitudes
+    if (dmax >= 1 - DTOL1)
+      lmax = PI + DTOL1;
+    else
+      lmax = asin(dmax) + DTOL1;
+    if (dmin <= DTOL1)
+      lmin = -DTOL1;
+    else
+      lmin = asin(dmin) - DTOL1;  
+
   }
   
   // Pre-compute the surface intensity in each latitude slice
   SurfaceIntensity(albedo, irrad, nu, u, lmin, lmax, nlat, nlam, lambda, B);
     
   // Generate all the shapes and get their vertices and curves
-  AddOccultor(r, x0, y0, ro, vertices, &v, functions, &f);   
-  AddOcculted(r, x0, y0, ro, vertices, &v, functions, &f); 
+  AddOccultors(r, no, x0, y0, ro, vertices, &v, functions, &f);   
+  AddOcculted(r, no, x0, y0, ro, vertices, &v, functions, &f); 
   for (i = 0; i < nlat; i++) {
     lat = (i + 1.) / (nlat + 1.) * (lmax - lmin) + lmin;
-    AddLatitudeSlice(lat, r, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
+    AddLatitudeSlice(lat, r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
   }
   
   // Sort the vertices
@@ -556,10 +631,25 @@ void _OccultedFlux(double r, double x0, double y0, double ro, double theta, doub
     b = 0;
     for (j = 0; j < f; j++) {
       y = curve(x, functions[j]);
-      if (!(isnan(y)) && (x * x + y * y < r2) && ((x - x0) * (x - x0) + (y - y0) * (y - y0) < ro2)) {
-        boundaries[b] = functions[j];
-        boundaries[b++].y = y;
+      
+      // Check that it's inside the planet
+      if (!(isnan(y)) && (x * x + y * y < r2)) {
+      
+        // Check that it's inside __at least__ one occultor
+        for (k = 0; k < no; k++) {
+          if ((x - x0[k]) * (x - x0[k]) + (y - y0[k]) * (y - y0[k]) < ro2[k]) {
+            
+            // Add the function to the list of boundaries
+            boundaries[b] = functions[j];
+            boundaries[b++].y = y;
+            break;
+          
+          }
+        
+        }
+      
       }
+      
     }
 
     // Sort boundaries based on y
@@ -571,26 +661,38 @@ void _OccultedFlux(double r, double x0, double y0, double ro, double theta, doub
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
       
-      // Get the latitude of the midpoint and the index of the latitude
-      // grid *above* this latitude
+      // Get the latitude of the midpoint
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
-      lat = Latitude(x, y, r, theta);      
-      k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
+      if (x * x + y * y > r * r) {
+        // We are off-planet!
+        continue;
+      }
+      lat = Latitude(x, y, r, theta);
       
+      // Get the index of the latitude grid *above* this latitude
+      k = (int) ((lat - lmin) / ((lmax - lmin) / (nlat + 1.)));
+            
       // Sanity check
       if ((k < 0) || (k > nlat)) {
-        printf("Invalid index for latitude grid! Aborting.\n");
+        printf("Invalid index for latitude grid.\n");
+        printf("k = %d; nlat = %d\n", k, nlat);
+        printf("Latitude = %.3f; min, max = %.3f, %.3f\n", lat * 180/PI, lmin * 180/PI, lmax * 180/PI);
+        printf("x, y, r, theta = %.3f, %.3f, %.3f, %.3f\n", x, y, r, theta);
+        printf("Aborting.\n");        
         abort();
       }
       
       // Multiply by the area of the latitude slice to get the flux at each wavelength
       for (m = 0; m < nlam; m++)
         flux[m] += B[k][m] * area;
-
     } 
     
   }
-    
+  
+  // Scale flux by REARTH**2 and convert to W m^2 / m^2 / um / sr
+  for (m = 0; m < nlam; m++) 
+    flux[m] *= REARTH * REARTH * MICRON;
+  
   // Free all of the ellipse instances
   for (j = 0; j < f; j+=2) {
     free(functions[j].ellipse);
@@ -598,57 +700,16 @@ void _OccultedFlux(double r, double x0, double y0, double ro, double theta, doub
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
   /*
   
   */
   
-  // First, zero out the flux
-  int m;
-  for (m = 0; m < nlam; m++) flux[m] = 0.;
+  double x0[1] = {0};
+  double y0[1] = {0};
+  double ro[1] = {2 * r};
   
-  // Hack: compute the occulted flux with a huge occultor
-  _OccultedFlux(r, 0, 0, 2 * r, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
-  
-  // Scale flux by REARTH**2 and convert to W m^2 / m^2 / um / sr
-  for (m = 0; m < nlam; m++) flux[m] *= REARTH * REARTH * MICRON;
-  
-}
-
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
-  /*
-  
-  */
-
-  // First, zero out the flux
-  int m;
-  for (m = 0; m < nlam; m++) flux[m] = 0.;
-  
-  // How many occultors are there?
-  if (no == 0) {
-  
-    // No occultors
-  
-  } else if (no == 1) {
-  
-    // One occultor: easy
-    _OccultedFlux(r, x0[0], y0[0], ro[0], theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
-  
-  } else {
+  // Hack: compute the occulted flux with a single huge occultor
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, adaptive, nu, nlat, nlam, u, lambda, flux);
     
-    // Multiple occultors: hard
-    
-    // First, compute the occulted flux as usual
-    for (int i = 0; i < no; i++)
-      _OccultedFlux(r, x0[i], y0[i], ro[i], theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, nu, nlat, nlam, u, lambda, flux);
-    
-    // Now we need to go back and remove the flux we double-counted
-    // TODO!
-    
-  
-  }
-  
-  // Scale flux by REARTH**2 and convert to W m^2 / m^2 / um / sr
-  for (m = 0; m < nlam; m++) flux[m] *= REARTH * REARTH * MICRON;
-
 }

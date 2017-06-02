@@ -173,7 +173,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
   # Instantiate the star
   mstar = N(0.0802, 0.0073)
   rstar = N(0.117, 0.0036)
-  star = Star('A', m = mstar, r = rstar, color = 'k')
+  star = Star('A', m = mstar, r = rstar, color = 'k', nl = 31)
   
   # Parameters from Gillon et al. (2017) and Luger et al. (2017)
   # Mass for `h` is currently unconstrained, so basing it loosely on 
@@ -229,10 +229,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
     ecc = 1
     while (ecc < 0) or (ecc >= 1):
       ecc = N(*eccentricities[i])
-    
-    # Semi-major axis in AU from Kepler's law
-    a = ((per * DAYSEC) ** 2 * G * (mstar * MSUN + m * MEARTH) / (4 * np.pi ** 2)) ** (1. / 3.) / AUM
-  
+
     # Radius from Rp / Rstar
     mu = np.sqrt(depths[i][0] / 100)
     sig = 0.5 * depths[i][1] / 100 / mu
@@ -240,7 +237,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
     r = RpRs * rstar * RSUN / REARTH
   
     # Instantiate!
-    planets[i] = Planet(names[i], m = m, per = per, inc = inc, a = a, r = r, trn0 = trn0, 
+    planets[i] = Planet(names[i], m = m, per = per, inc = inc, r = r, trn0 = trn0, 
                         nl = nl, Omega = Omega, w = w, ecc = ecc, phasecurve = phasecurve,
                         color = colors[i])
 

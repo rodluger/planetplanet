@@ -22,6 +22,14 @@ AUREARTH = 23454.9271
 MSUNMEARTH = 332968.308
 RSUNREARTH = 109.045013
 SEARTH = 1.361e3
+MSUN = 1.988416e30
+RSUN = 6.957e8
+G = 6.67428e-11
+MEARTH = 5.9722e24
+REARTH = 6.3781e6
+DAYSEC = 86400.
+AUM = 1.49598e11
+G = 6.67428e-11
 MDFAST = 0
 NEWTON = 1
 
@@ -49,6 +57,7 @@ class Settings(ctypes.Structure):
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `6.0e-9`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
   
   '''
   
@@ -59,17 +68,19 @@ class Settings(ctypes.Structure):
               ("polyeps1", ctypes.c_double),
               ("polyeps2", ctypes.c_double),
               ("maxpolyiter", ctypes.c_int),
-              ("dt", ctypes.c_double)]
+              ("dt", ctypes.c_double),
+              ("adaptive", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.ttvs = int(kwargs.pop('ttvs', False))
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = eval(kwargs.pop('kepsolver', 'newton').upper())
-    self.polyeps1 = kwargs.pop('polyeps1', 2.0e-6)
-    self.polyeps2 = kwargs.pop('polyeps2', 6.0e-9)
+    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)  # was 2.0e-6
+    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15) # was 6.0e-9
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.dt = kwargs.pop('dt', 0.01)
+    self.adaptive = int(kwargs.pop('adaptive', True))
 
 def Star(*args, **kwargs):
   '''
@@ -105,7 +116,6 @@ class Body(ctypes.Structure):
   :param float ecc: Orbital eccentricity. Default `0.`
   :param float w: Longitude of pericenter in degrees. `0.`
   :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float a: Semi-major axis in AU. Default `0.01111`
   :param float t0: Time of first transit in days. Default `7322.51736`
   :param float r: Body radius in Earth radii. Default `1.086`
   :param float albedo: Body albedo. Default `0.3`
@@ -151,7 +161,6 @@ class Body(ctypes.Structure):
     self.ecc = kwargs.pop('ecc', 0.)
     self.w = kwargs.pop('w', 0.) * np.pi / 180.
     self.Omega = kwargs.pop('Omega', 0.) * np.pi / 180.
-    self.a = kwargs.pop('a', 0.01111) * AUREARTH
     self.r = kwargs.pop('r', 1.086)
     self.albedo = kwargs.pop('albedo', 0.3)
     self.irrad = kwargs.pop('irrad', 4.25) * SEARTH
@@ -164,6 +173,9 @@ class Body(ctypes.Structure):
     self.nw = 0
     self.u = kwargs.pop('u', np.array([], dtype = float))
     self.nu = len(self.u)
+    
+    # Semi-major axis computed in `System` class
+    self.a = 0.
     
     # Python stuff
     self._inds = []
@@ -204,10 +216,15 @@ class System(object):
     '''
     
     self.bodies = bodies
+    self.star = self.bodies[0]
     self.colors = [b.color for b in self.bodies]
     self.settings = Settings(**kwargs)
     self._names = np.array([p.name for p in self.bodies])
   
+    # Compute the semi-major axis for each planet (in Earth radii)
+    for body in self.bodies:
+      body.a = ((body.per * DAYSEC) ** 2 * G * (self.star.m + body.m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
+      
   def scatter_plot(self, tstart, tend):
     '''
     
