@@ -57,7 +57,7 @@ class Settings(ctypes.Structure):
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `6.0e-9`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `False`
   
   '''
   
@@ -80,7 +80,7 @@ class Settings(ctypes.Structure):
     self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15) # was 6.0e-9
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.dt = kwargs.pop('dt', 0.01)
-    self.adaptive = int(kwargs.pop('adaptive', True))
+    self.adaptive = int(kwargs.pop('adaptive', False))
 
 def Star(*args, **kwargs):
   '''
@@ -92,11 +92,16 @@ def Star(*args, **kwargs):
   u = kwargs.get('u', np.array([1., -1.]))
   u *= T / u[0]
   
+  # Number of layers
+  nl = kwargs.get('nl', 31)
+  
   kwargs.update(dict(m = kwargs.get('m', 0.0802) * MSUNMEARTH, 
                      r = kwargs.get('r', 0.117) * RSUNREARTH, 
                      per = 0., inc = 0., ecc = 0., w = 0., 
                      Omega = 0., a = 0., t0 = 0., irrad = 0.,
-                     albedo = 0., phasecurve = False, u = u))
+                     albedo = 0., phasecurve = False, u = u,
+                     nl = nl))
+                     
   return Body(*args, **kwargs)
 
 def Planet(*args, **kwargs):

@@ -159,13 +159,13 @@ def OmegaPrior(nwalk = 42, nsteps = 50000, nburn = 10000, thin = 10, calc = Fals
   # Show
   fig.savefig('omega.pdf', bbox_inches = 'tight')
 
-def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertainty = True, phasecurve = False):
+def Trappist1(sample = True, **kwargs):
   '''
   
   '''
   
   # Account for the uncertainty?
-  if not uncertainty:
+  if not sample:
     N = lambda mu, sigma: mu
   else: 
     N = lambda mu, sigma: mu + sigma * np.random.randn()
@@ -173,7 +173,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
   # Instantiate the star
   mstar = N(0.0802, 0.0073)
   rstar = N(0.117, 0.0036)
-  star = Star('A', m = mstar, r = rstar, color = 'k', nl = 31)
+  star = Star('A', m = mstar, r = rstar, color = 'k', **kwargs)
   
   # Parameters from Gillon et al. (2017) and Luger et al. (2017)
   # Mass for `h` is currently unconstrained, so basing it loosely on 
@@ -238,8 +238,7 @@ def Trappist1(nl = 11, polyeps1 = 1e-8, polyeps2 = 1e-15, ttvs = True, uncertain
   
     # Instantiate!
     planets[i] = Planet(names[i], m = m, per = per, inc = inc, r = r, trn0 = trn0, 
-                        nl = nl, Omega = Omega, w = w, ecc = ecc, phasecurve = phasecurve,
-                        color = colors[i])
+                        Omega = Omega, w = w, ecc = ecc, color = colors[i], **kwargs)
 
   # Return the system
-  return System(star, *planets, polyeps1 = polyeps1, polyeps2 = polyeps2, ttvs = ttvs)
+  return System(star, *planets, **kwargs)

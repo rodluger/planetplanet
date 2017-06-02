@@ -419,7 +419,7 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   
 }
 
-void AddOccultors(double r,int no, double x0[no], double y0[no], double ro[no], double *vertices, int *v, FUNCTION *functions, int *f) {
+void AddOccultors(double r, int no, double x0[no], double y0[no], double ro[no], double *vertices, int *v, FUNCTION *functions, int *f) {
   /*
   
   */ 
@@ -433,7 +433,7 @@ void AddOccultors(double r,int no, double x0[no], double y0[no], double ro[no], 
     // Allocate memory
     occultor[i] = malloc(sizeof(ELLIPSE));
     
-    // Initialize the occultor (always at the origin)
+    // Initialize the occultor
     occultor[i]->r = ro[i];
     occultor[i]->x0 = x0[i];
     occultor[i]->y0 = y0[i];
@@ -473,7 +473,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   ELLIPSE *occulted;
   occulted = malloc(sizeof(ELLIPSE));
   
-  // Initialize the occulted planet
+  // Initialize the occulted planet at the origin
   occulted->r = r;
   occulted->x0 = 0.;
   occulted->y0 = 0.;
@@ -561,6 +561,8 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   // Latitude grid bounds
   lmin = -DTOL1;
   lmax = PI + DTOL1;
+  
+  // TODO! Adaptive grid is broken!!!
   
   // Adaptive grid? Let's only compute latitude circles that intersect the occultors
   if ((adaptive) && (nu > 0)) {
