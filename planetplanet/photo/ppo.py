@@ -480,7 +480,7 @@ class System(object):
 
     # Call the light curve routine
     Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
-  
+
     # Loop over all bodies and store each occultation event as a separate attribute
     for body in self.bodies:
     
@@ -511,6 +511,8 @@ class System(object):
     '''
     
     '''
+    
+    print("Plotting the occultations...")
     
     # Get the occulted body
     p = np.argmax(self._names == body)
@@ -720,6 +722,8 @@ class System(object):
     '''
     
     '''
+    
+    print("Plotting the light curve...")
     
     # Plot
     fig, ax = pl.subplots(1, figsize = (12, 4))

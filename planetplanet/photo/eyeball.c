@@ -191,7 +191,11 @@ void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nla
   // Loop over each slice
   for (i = 0; i < nlat + 1; i++) {
     
-    // Get the latitude in between the ellipses
+    // Get the latitude halfway between the `latgrid` points.
+    // In the regular grid, B[0] is the intensity of the region between the 
+    // sub-stellar point and latgrid[0] (the location of the first latitude ellipse); 
+    // B[1] is the intensity between latgrid[1] and latgrid[2], and so forth.
+    // B[nlat] is the intensity between latgrid[nlat - 1] and the anti-stellar point.
     if (i == 0) {
       latitude = latgrid[0] - 0.5 * (latgrid[1] - latgrid[0]);
       if (latitude < 0) latitude = 0;
@@ -545,7 +549,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   double lmin, lmax, lat;
   double xL, xR, x, y, area;
   double r2 = r * r + DTOL1;
-  //double d, tmp, dmin, dmax;
+  double d, dmin, dmax;
   double ro2[no];
   for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
   double vertices[MAXVERTICES];
@@ -566,13 +570,14 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   if (nu > 0)
     theta = PI / 2.;
   
-  // TODO
-  /*
-  if ((adaptive) && (nu > 0)) {
+  // Generate all the shapes and get their vertices and curves
+  AddOccultors(r, no, x0, y0, ro, vertices, &v, functions, &f);   
+  AddOcculted(r, no, x0, y0, ro, vertices, &v, functions, &f); 
   
-    dmin = 1.;
-    dmax = 0.;
-    
+  // Compute the latitude grid
+  if (adaptive && (nu > 0)) {
+  
+    // Adaptive latitude grid
     // Loop over each occultor
     for (i = 0; i < no; i++) {
     
@@ -580,37 +585,38 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       d = sqrt(x0[i] * x0[i] + y0[i] * y0[i]);
       
       // Distance to far side
-      tmp = (d + ro[i]) / r;
-      if (tmp > dmax) dmax = tmp;
+      dmax = (d + ro[i]) / r;
+      if (dmax >= 1 - DTOL1) dmax = 1;
+      lmax = asin(dmax);
       
       // Distance to near side
-      tmp = (d - ro[i]) / r;
-      if (tmp < dmin) dmin = tmp;
-    
+      dmin = (d - ro[i]) / r;
+      if (dmin <= DTOL1) dmin = 0;
+      lmin = asin(dmin);
+      
+      // Add to latitude grid
+      for (j = 0; j < nlat; j++) {
+        latgrid[nlat * i + j] = (j + 1.) / (nlat + 1.) * (lmax - lmin) + lmin;
+      }
+      
     }
     
-    // Compute min and max latitudes
-    if (dmax >= 1 - DTOL1)
-      lmax = PI + DTOL1;
-    else
-      lmax = asin(dmax) + DTOL1;
-    if (dmin <= DTOL1)
-      lmin = -DTOL1;
-    else
-      lmin = asin(dmin) - DTOL1;  
-
-  }
-  */
-      
-  // Generate all the shapes and get their vertices and curves
-  AddOccultors(r, no, x0, y0, ro, vertices, &v, functions, &f);   
-  AddOcculted(r, no, x0, y0, ro, vertices, &v, functions, &f); 
+    // Sort the grid
+    qsort(latgrid, nlat * no, sizeof(double), dblcomp);
+    
+  } else {
   
-  // The latitude grid
-  lmin = 0.;
-  lmax = PI;
+    // Linearly spaced latitude grid
+    lmin = 0;
+    lmax = PI;
+    for (i = 0; i < nlat * no; i++) {
+      latgrid[i] = (i + 1.) / (nlat * no + 1.) * (lmax - lmin) + lmin;
+    }
+    
+  }
+
+  // Add the ellipses  
   for (i = 0; i < nlat * no; i++) {
-    latgrid[i] = (i + 1.) / (nlat * no + 1.) * (lmax - lmin) + lmin;
     AddLatitudeSlice(latgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, vertices, &v, functions, &f);
   }
   
@@ -670,7 +676,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
-      
+            
       // Get the latitude of the midpoint
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
       if (x * x + y * y > r * r) {
@@ -678,20 +684,12 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
         continue;
       }
       lat = Latitude(x, y, r, theta);
-      
-      // Get the index of the latitude grid *above* this latitude
+
+      // Get the index `k` of the latitude grid *above* this latitude.
+      // B[k] is the intensity of this region.
       for (k = 0; k < nlat * no; k++) {
         if (latgrid[k] > lat)
           break;
-      }
-            
-      // Sanity check
-      if ((lat < lmin) || (lat > lmax)) {
-        printf("Invalid index for latitude grid.\n");
-        printf("Latitude = %.3f; min, max = %.3f, %.3f\n", lat * 180/PI, lmin * 180/PI, lmax * 180/PI);
-        printf("x, y, r, theta = %.3f, %.3f, %.3f, %.3f\n", x, y, r, theta);
-        printf("Aborting.\n");        
-        abort();
       }
       
       // Multiply by the area of the latitude slice to get the flux at each wavelength
