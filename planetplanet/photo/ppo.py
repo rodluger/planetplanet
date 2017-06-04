@@ -13,6 +13,7 @@ np.seterr(invalid = 'ignore')
 import os, shutil
 from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
+import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
 import corner
 rdbu = pl.get_cmap('RdBu_r')
@@ -502,8 +503,8 @@ class System(object):
         if len(inds):        
           t = t[inds]
           tdur = t[-1] - t[0]
-          a = np.argmin(np.abs(time - (t[0] - tdur)))
-          b = np.argmin(np.abs(time - (t[-1] + tdur)))
+          a = np.argmin(np.abs(time - (t[0] - 0.25 * tdur)))
+          b = np.argmin(np.abs(time - (t[-1] + 0.25 * tdur)))
           if b > a:
             body._inds.append(list(range(a,b)))
   
@@ -522,7 +523,7 @@ class System(object):
     fig = [None for i in range(len(body._inds))]
     axlc = [None for i in range(len(body._inds))]
     axxz = [None for i in range(len(body._inds))]
-    axim = [[None, None, None] for i in range(len(body._inds))]
+    axim = [None for i in range(len(body._inds))]
     
     # Stellar flux (baseline)
     normb = np.nanmedian(self.bodies[0].flux[:,0])
@@ -545,6 +546,7 @@ class System(object):
       axlc[i].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
       axlc[i].get_yaxis().set_major_locator(MaxNLocator(4))
       axlc[i].get_xaxis().set_major_locator(MaxNLocator(4))
+      vline = axlc[i].axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
       for tick in axlc[i].get_xticklabels() + axlc[i].get_yticklabels():
         tick.set_fontsize(8)
     
@@ -558,6 +560,10 @@ class System(object):
           if (body.occultor[ti] & 2 ** b):
             occultors.append(b)
       occultors = list(set(occultors))
+      
+      # Sort occultors by z-order (occultor closest to observer last)
+      zorders = [-self.bodies[o].z[tmid] for o in occultors]
+      occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
 
       # Plot the orbits of all bodies
       axxz[i] = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
@@ -590,17 +596,19 @@ class System(object):
       axxz[i].set_aspect('equal')
       axxz[i].axis('off')
 
-      # Plot the images
-      axim[i][0] = pl.subplot2grid((5, 3), (2, 0), colspan = 1, rowspan = 1)
-      axim[i][1] = pl.subplot2grid((5, 3), (2, 1), colspan = 1, rowspan = 1)
-      axim[i][2] = pl.subplot2grid((5, 3), (2, 2), colspan = 1, rowspan = 1)
-      for j in range(3): 
-        axim[i][j].axis('off')
-        axim[i][j].set_aspect('equal')
-      self.image(tstart, body, occultors, ax = axim[i][0])
-      self.image(tmid, body, occultors, ax = axim[i][1])
-      self.image(tend, body, occultors, ax = axim[i][2])
-  
+      # Plot the image
+      axim[i] = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1) 
+      _, pto = self.image(tmid, body, occultors, ax = axim[i])
+      xmin = min([self.bodies[o].x[tstart] for o in occultors])
+      xmax = max([self.bodies[o].x[tend] for o in occultors])
+      if (body.x[tmid] - xmin) > (xmax - body.x[tmid]):
+        dx = body.x[tmid] - xmin
+      else:
+        dx = xmax - body.x[tmid]
+      axim[i].set_xlim(body.x[tmid] - dx, body.x[tmid] + dx)
+      axim[i].axis('off')
+      axim[i].set_aspect('equal')
+      
       # The title
       if len(occultors) == 1:
         axxz[i].annotate("%s occulted by %s" % (body.name, self.bodies[occultors[0]].name), xy = (0.5, 1.25),
@@ -616,6 +624,19 @@ class System(object):
                        xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
                        fontsize = 10, style = 'italic')
       
+      # Animate!
+      def run(j):
+        vline.set_xdata(body.time[t[j]])
+        for k, occultor in enumerate([self.bodies[o] for o in occultors]): 
+          r = occultor.r
+          x = np.linspace(occultor.x[t[j]] - r, occultor.x[t[j]] + r, 1000)
+          y = np.sqrt(r ** 2 - (x - occultor.x[t[j]]) ** 2)
+          pto[k].remove()
+          pto[k] = axim[i].fill_between(x, occultor.y[t[j]] - y, occultor.y[t[j]] + y, color = 'lightgray', zorder = 99 + k, lw = 1)
+          pto[k].set_edgecolor('k')
+        return
+      ani = animation.FuncAnimation(fig[i], run, frames = len(t), interval = 1, repeat = True)
+      pl.show()
     return fig, axlc, axxz, axim
   
   def plot_orbits(self, t, ax = None):
@@ -664,14 +685,14 @@ class System(object):
     if ax is None:
       fig, ax = pl.subplots(1, figsize = (6,6))
   
-    # Plot the occultor
-    for occultor in [self.bodies[o] for o in occultors]: 
+    # Plot the occultors
+    pto = [None for o in occultors]
+    for i, occultor in enumerate([self.bodies[o] for o in occultors]): 
       r = occultor.r
       x = np.linspace(occultor.x[t] - r, occultor.x[t] + r, 1000)
       y = np.sqrt(r ** 2 - (x - occultor.x[t]) ** 2)
-      ax.plot(x, occultor.y[t] + y, color = 'k', zorder = 99, lw = 1)
-      ax.plot(x, occultor.y[t] - y, color = 'k', zorder = 99, lw = 1)
-      ax.fill_between(x, occultor.y[t] - y, occultor.y[t] + y, color = 'lightgray', zorder = 99, lw = 1)
+      pto[i] = ax.fill_between(x, occultor.y[t] - y, occultor.y[t] + y, color = 'lightgray', zorder = 99 + i, lw = 1)
+      pto[i].set_edgecolor('k')
 
     # Plot the occulted body
     r = occulted.r
@@ -710,13 +731,13 @@ class System(object):
       A[A<0] = 0
       y = (a / b) * np.sqrt(A)
       if np.abs(np.cos(lat)) < 1e-5:
-        style = dict(color = 'k', ls = '--', lw = 1)
+        style = dict(color = 'k', ls = '--', lw = 1, alpha = 0.5)
       else:
-        style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1)
+        style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1, alpha = 0.5)
       ax.plot(x, y, **style)
       ax.plot(x, -y, **style)
 
-    return ax
+    return ax, pto
 
   def plot_lightcurve(self, wavelength = 15.):
     '''
