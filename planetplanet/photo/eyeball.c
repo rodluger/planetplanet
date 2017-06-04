@@ -588,19 +588,23 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       dmax = (d + ro[i]) / r;
       if (dmax >= 1 - DTOL1) dmax = 1;
       lmax = asin(dmax);
-      
+          
       // Distance to near side
       dmin = (d - ro[i]) / r;
       if (dmin <= DTOL1) dmin = 0;
       lmin = asin(dmin);
-      
+
       // Add to latitude grid
       for (j = 0; j < nlat; j++) {
         latgrid[nlat * i + j] = (j + 1.) / (nlat + 1.) * (lmax - lmin) + lmin;
       }
       
+      // Adjust the boundaries
+      latgrid[nlat * i] = lmin;
+      latgrid[nlat * (i + 1) - 1] = lmax;
+      
     }
-    
+
     // Sort the grid
     qsort(latgrid, nlat * no, sizeof(double), dblcomp);
     
