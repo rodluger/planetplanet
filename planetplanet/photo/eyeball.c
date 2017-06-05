@@ -343,7 +343,7 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   double xlimb, x, y;
   double roots[2];
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i];
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL2;
   ELLIPSE *ellipse;
   ellipse = malloc(sizeof(ELLIPSE)); 
   
@@ -479,7 +479,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 
   int i;
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL2;
   double d, A, x, y, cost, sint;
   ELLIPSE *occulted;
   occulted = malloc(sizeof(ELLIPSE));
@@ -551,7 +551,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   double r2 = r * r + DTOL2;
   double d, dmin, dmax;
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL2;
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
   double vertices[MAXVERTICES];
   FUNCTION functions[MAXFUNCTIONS];
   FUNCTION boundaries[MAXFUNCTIONS];
@@ -585,12 +585,12 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       d = sqrt(x0[i] * x0[i] + y0[i] * y0[i]);
       
       // Distance to far side
-      dmax = (d + ro[i]) / r;
+      dmax = (d + ro[i]) / r + DTOL1;
       if (dmax >= 1 - DTOL1) dmax = 1;
       lmax = asin(dmax);
           
       // Distance to near side
-      dmin = (d - ro[i]) / r;
+      dmin = (d - ro[i]) / r - DTOL1;
       if (dmin <= DTOL1) dmin = 0;
       lmin = asin(dmin);
 
@@ -611,8 +611,8 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   } else {
   
     // Linearly spaced latitude grid
-    lmin = 0;
-    lmax = PI;
+    lmin = 0 - DTOL1;
+    lmax = PI + DTOL1;
     for (i = 0; i < nlat * no; i++) {
       latgrid[i] = (i + 1.) / (nlat * no + 1.) * (lmax - lmin) + lmin;
     }
@@ -654,7 +654,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       
       // Check that it's inside the planet
       if (!(isnan(y)) && (x * x + y * y < r2)) {
-      
+        
         // Check that it's inside __at least__ one occultor
         for (k = 0; k < no; k++) {
           if ((x - x0[k]) * (x - x0[k]) + (y - y0[k]) * (y - y0[k]) < ro2[k]) {
@@ -674,13 +674,12 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 
     // Sort boundaries based on y
     qsort(boundaries, b, sizeof(FUNCTION), funcomp);
-        
+    
     // Loop over all regions bounded by xL and xR
     for (j = 0; j < b - 1; j++) {
     
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
-      
       
       // DEBUG
       if (isnan(area)) {
