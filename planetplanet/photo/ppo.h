@@ -67,6 +67,7 @@ typedef struct {
   int maxpolyiter;
   double dt;
   int adaptive;
+  int quiet;
 } SETTINGS;
 
 typedef struct {
@@ -94,7 +95,7 @@ typedef struct {
 // Functions
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);

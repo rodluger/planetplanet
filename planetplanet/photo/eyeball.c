@@ -537,7 +537,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   
 }
 
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
   /*
   
   */
@@ -681,9 +681,10 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
       
-      // DEBUG
+      // TODO: Fix these numerical issues
       if (isnan(area)) {
-        printf("Area is NAN!\n");
+        if (!quiet)
+          printf("WARNING: Area in segment is NAN.\n");
         continue;
       }
             
@@ -720,7 +721,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
   /*
   
   */
@@ -730,6 +731,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, adaptive, nu, nlat, nlam, u, lambda, flux);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, adaptive, nu, nlat, nlam, u, lambda, flux, quiet);
     
 }

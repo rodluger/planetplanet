@@ -70,7 +70,8 @@ class Settings(ctypes.Structure):
               ("polyeps2", ctypes.c_double),
               ("maxpolyiter", ctypes.c_int),
               ("dt", ctypes.c_double),
-              ("adaptive", ctypes.c_int)]
+              ("adaptive", ctypes.c_int),
+              ("quiet", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.ttvs = int(kwargs.pop('ttvs', False))
@@ -82,6 +83,7 @@ class Settings(ctypes.Structure):
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.dt = kwargs.pop('dt', 0.01)
     self.adaptive = int(kwargs.pop('adaptive', False))
+    self.quiet = int(kwargs.pop('quiet', False))
 
 def Star(*args, **kwargs):
   '''
@@ -201,7 +203,8 @@ class Animation(object):
   
   '''
   
-  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors):
+  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors, 
+               interval = 50, gifname = None, quiet = False):
     '''
     
     '''
@@ -217,9 +220,19 @@ class Animation(object):
     self.occultors = occultors
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
-                                             interval = 50, repeat = True)
+                                             interval = interval, repeat = True)
     self.fig.canvas.mpl_connect('button_press_event', self.toggle)
-  
+    
+    # Save?
+    if gifname is not None:
+      self.pause = False
+      if not gifname.endswith('.gif'):
+        gifname += '.gif'
+      if not quiet:
+        print("Saving %s..." % gifname)
+      self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 100)
+      self.pause = True
+      
   def toggle(self, event):
     '''
     
@@ -573,13 +586,65 @@ class System(object):
           b = np.argmin(np.abs(time - (t[-1] + 0.25 * tdur)))
           if b > a:
             body._inds.append(list(range(a,b)))
+  
+  def compute_orbits(self, time):
+    '''
+    
+    '''
+    
+    # Dimensions
+    n = len(self.bodies)
+    nt = len(time)
+    nw = 1
 
-  def plot_occultations(self, body):
+    # Initialize the C interface
+    Orbits = libppo.Orbits
+    Orbits.restype = ctypes.c_int
+    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
+                       Settings]
+  
+    # Allocate memory for all the arrays
+    for body in self.bodies:
+      body._u = np.ctypeslib.as_ctypes(body.u)
+      body.time = np.zeros(nt)
+      body._time = np.ctypeslib.as_ctypes(body.time)
+      body.wavelength = np.zeros(nw)
+      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
+      body.x = np.zeros(nt)
+      body._x = np.ctypeslib.as_ctypes(body.x)
+      body.y = np.zeros(nt)
+      body._y = np.ctypeslib.as_ctypes(body.y)
+      body.z = np.zeros(nt)
+      body._z = np.ctypeslib.as_ctypes(body.z)
+      body.occultor = np.zeros(nt, dtype = 'int32')
+      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
+      body.flux = np.zeros((nt, nw))
+      body._flux1d = body.flux.reshape(nt * nw)
+      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+
+    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # passed by reference. The contents can all be accessed through `bodies`
+    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+
+    # Call the light curve routine
+    Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+  
+  def plot_occultations(self, body, interval = 50, gifname = None):
     '''
     
     '''
     
-    print("Plotting the occultations...")
+    if not self.settings.quiet:
+      print("Plotting the occultations...")
+    
+    # Check file name
+    if gifname is not None:
+      if gifname.endswith(".gif"):
+        gifname = gifname[:-4]    
     
     # Get the occulted body
     p = np.argmax(self._names == body)
@@ -691,8 +756,14 @@ class System(object):
                        fontsize = 10, style = 'italic')
       
       # Animate!
-      self._animations.append(Animation(t, fig[i], axim[i], tracker, pto, ptb, body, self.bodies, [self.bodies[o] for o in occultors]))
-      
+      if gifname is not None:
+        tmp = '%s.%03d.gif' % (gifname, len(self._animations) + 1)
+      else:
+        tmp = None
+      self._animations.append(Animation(t, fig[i], axim[i], tracker, pto, ptb, body, 
+                              self.bodies, [self.bodies[o] for o in occultors],
+                              interval = interval, gifname = tmp, quiet = self.settings.quiet))
+
     return fig, axlc, axxz, axim
   
   def plot_orbits(self, t, ax = None):
@@ -804,7 +875,8 @@ class System(object):
     
     '''
     
-    print("Plotting the light curve...")
+    if not self.settings.quiet:
+      print("Plotting the light curve...")
     
     # Plot
     fig, ax = pl.subplots(1, figsize = (12, 4))
