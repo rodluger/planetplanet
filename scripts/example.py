@@ -18,7 +18,7 @@ np.random.seed(1234)
 system = Trappist1(sample = True, ttvs = False, phasecurve = False, adaptive = True)
 
 # Get the occultation light curves for the first 10 days
-time = np.linspace(0., 10., 100000)
+time = np.linspace(0., 1., 10000)
 
 system.compute(time)
 

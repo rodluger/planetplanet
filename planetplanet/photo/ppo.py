@@ -217,7 +217,7 @@ class Animation(object):
     self.occultors = occultors
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
-                                               interval = 100, repeat = True)
+                                             interval = 50, repeat = True)
     self.fig.canvas.mpl_connect('button_press_event', self.toggle)
   
   def toggle(self, event):
@@ -226,7 +226,7 @@ class Animation(object):
     '''
     
     self.pause ^= True
-  
+    
   def animate(self, j):
     '''
     
