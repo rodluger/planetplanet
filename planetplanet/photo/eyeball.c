@@ -343,7 +343,7 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   double xlimb, x, y;
   double roots[2];
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i];
   ELLIPSE *ellipse;
   ellipse = malloc(sizeof(ELLIPSE)); 
   
@@ -548,10 +548,10 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   int f = 0;
   double lmin, lmax, lat;
   double xL, xR, x, y, area;
-  double r2 = r * r + DTOL1;
+  double r2 = r * r + DTOL2;
   double d, dmin, dmax;
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL1;
+  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + DTOL2;
   double vertices[MAXVERTICES];
   FUNCTION functions[MAXFUNCTIONS];
   FUNCTION boundaries[MAXFUNCTIONS];
@@ -680,6 +680,13 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
+      
+      
+      // DEBUG
+      if (isnan(area)) {
+        printf("Area is NAN!\n");
+        continue;
+      }
             
       // Get the latitude of the midpoint
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
@@ -688,7 +695,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
         continue;
       }
       lat = Latitude(x, y, r, theta);
-
+      
       // Get the index `k` of the latitude grid *above* this latitude.
       // B[k] is the intensity of this region.
       for (k = 0; k < nlat * no; k++) {
