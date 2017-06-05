@@ -195,7 +195,70 @@ class Body(ctypes.Structure):
     
     # We define the mean anomaly to be zero at t = t0 = trn0 + tperi0
     self.t0 = kwargs.pop('trn0', 7322.51736) + tperi0
+
+class Animation(object):
+  '''
   
+  '''
+  
+  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors):
+    '''
+    
+    '''
+    
+    self.t = t
+    self.fig = fig
+    self.axim = axim
+    self.tracker = tracker
+    self.pto = pto
+    self.ptb = ptb
+    self.body = body
+    self.bodies = bodies
+    self.occultors = occultors
+    self.pause = True
+    self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
+                                             interval = 1, repeat = True)
+    self.fig.canvas.mpl_connect('button_press_event', self.toggle)
+  
+  def toggle(self, event):
+    '''
+    
+    '''
+    
+    self.pause ^= True
+  
+  def animate(self, j):
+    '''
+    
+    '''
+    
+    if not self.pause:
+      
+      # Normalize the time index
+      j = int(j * len(self.t) / 100.)
+      
+      # Time tracker
+      self.tracker.set_xdata(self.bodies[0].time[self.t[j]])
+      
+      # Occultor images
+      x0 = self.body.x[self.t[j]]
+      y0 = self.body.y[self.t[j]]
+      for k, occultor in enumerate(self.occultors): 
+        r = occultor.r
+        x = np.linspace(occultor.x[self.t[j]] - r, occultor.x[self.t[j]] + r, 1000)
+        y = np.sqrt(r ** 2 - (x - occultor.x[self.t[j]]) ** 2)
+        try:
+          self.pto[k].remove()
+        except:
+          pass
+        self.pto[k] = self.axim.fill_between(x - x0, occultor.y[self.t[j]] - y - y0, occultor.y[self.t[j]] + y - y0, color = 'lightgray', zorder = 99 + k, lw = 1)
+        self.pto[k].set_edgecolor('k')
+      
+      # Body orbits
+      for k, b in enumerate(self.bodies):
+        self.ptb[k].set_xdata(b.x[self.t[j]])
+        self.ptb[k].set_ydata(b.z[self.t[j]])
+
 class System(object):
 
   def __init__(self, *bodies, **kwargs):
@@ -212,7 +275,10 @@ class System(object):
     # Compute the semi-major axis for each planet (in Earth radii)
     for body in self.bodies:
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.star.m + body.m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-      
+    
+    #
+    self._animations = []
+        
   def scatter_plot(self, tstart, tend):
     '''
     
@@ -507,16 +573,7 @@ class System(object):
           b = np.argmin(np.abs(time - (t[-1] + 0.25 * tdur)))
           if b > a:
             body._inds.append(list(range(a,b)))
-  
-  def _onclick(self, i):
-    '''
-    
-    '''
-    
-    def foo(event):
-      self._pause[i] ^= True
-    return foo
-    
+
   def plot_occultations(self, body):
     '''
     
@@ -540,8 +597,6 @@ class System(object):
     normr = np.nanmedian(self.bodies[0].flux[:,-1])
     
     # Loop over all events
-    ani = [None for i in body._inds]
-    self._pause = [True for i in body._inds]
     for i, t in enumerate(body._inds):
       
       # Set up the figure
@@ -557,7 +612,7 @@ class System(object):
       axlc[i].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
       axlc[i].get_yaxis().set_major_locator(MaxNLocator(4))
       axlc[i].get_xaxis().set_major_locator(MaxNLocator(4))
-      vln = axlc[i].axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
+      tracker = axlc[i].axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
       for tick in axlc[i].get_xticklabels() + axlc[i].get_yticklabels():
         tick.set_fontsize(8)
     
@@ -565,14 +620,14 @@ class System(object):
       tstart = t[0] + np.argmax(body.occultor[t] >= 0)
       tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
       tmid = (tstart + tend) // 2
+      
+      # Sort occultors by z-order (occultor closest to observer last)
       occultors = []
       for b in range(len(self.bodies)):
         for ti in t:
           if (body.occultor[ti] & 2 ** b):
             occultors.append(b)
       occultors = list(set(occultors))
-      
-      # Sort occultors by z-order (occultor closest to observer last)
       zorders = [-self.bodies[o].z[tmid] for o in occultors]
       occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
 
@@ -591,7 +646,7 @@ class System(object):
         z = r * np.sin(b.w + f) * np.sin(b.inc)
         axxz[i].plot(x, z, **style)
 
-      # Plot the bodies
+      # Plot the locations of the bodies
       ptb = [None for b in self.bodies]
       for bi, b in enumerate(self.bodies):
         if b == body:
@@ -600,7 +655,7 @@ class System(object):
           ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
         else:
           ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
-      
+        
       # Appearance
       axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
       axxz[i].set_xlim(-max(np.abs(axxz[i].get_xlim())), max(np.abs(axxz[i].get_xlim())))
@@ -610,13 +665,13 @@ class System(object):
       # Plot the image
       axim[i] = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1) 
       _, pto = self.image(tmid, body, occultors, ax = axim[i])
-      xmin = min([self.bodies[o].x[tstart] for o in occultors])
-      xmax = max([self.bodies[o].x[tend] for o in occultors])
+      xmin = min([self.bodies[o].x[tstart] - 3 * self.bodies[o].r for o in occultors])
+      xmax = max([self.bodies[o].x[tend] + 3 * self.bodies[o].r for o in occultors])
       if (body.x[tmid] - xmin) > (xmax - body.x[tmid]):
         dx = body.x[tmid] - xmin
       else:
         dx = xmax - body.x[tmid]
-      axim[i].set_xlim(body.x[tmid] - dx, body.x[tmid] + dx)
+      axim[i].set_xlim(0 - dx, 0 + dx)
       axim[i].axis('off')
       axim[i].set_aspect('equal')
       
@@ -636,33 +691,9 @@ class System(object):
                        fontsize = 10, style = 'italic')
       
       # Animate!
-      ani[i] = animation.FuncAnimation(fig[i], self._animate, frames = len(t), interval = 1, repeat = True,
-                                       fargs = (i, t, body, occultors, axim[i], vln, pto, ptb))
-      fig[i].canvas.mpl_connect('button_press_event', self._onclick(i))
+      self._animations.append(Animation(t, fig[i], axim[i], tracker, pto, ptb, body, self.bodies, [self.bodies[o] for o in occultors]))
       
-    return fig, axlc, axxz, axim, ani
-  
-  def _animate(self, j, i, t, body, occultors, ax, vln, pto, ptb):
-    '''
-    
-    '''
-    
-    if self._pause[i]:
-      return
-    
-    vln.set_xdata(body.time[t[j]])
-    for k, occultor in enumerate([self.bodies[o] for o in occultors]): 
-      r = occultor.r
-      x = np.linspace(occultor.x[t[j]] - r, occultor.x[t[j]] + r, 1000)
-      y = np.sqrt(r ** 2 - (x - occultor.x[t[j]]) ** 2)
-      pto[k].remove()
-      pto[k] = ax.fill_between(x, occultor.y[t[j]] - y, occultor.y[t[j]] + y, color = 'lightgray', zorder = 99 + k, lw = 1)
-      pto[k].set_edgecolor('k')
-    for k, b in enumerate(self.bodies):
-      ptb[k].set_xdata(b.x[t[j]])
-      ptb[k].set_ydata(b.z[t[j]])
-    
-    return
+    return fig, axlc, axxz, axim
   
   def plot_orbits(self, t, ax = None):
     '''
@@ -743,15 +774,19 @@ class System(object):
         x[x < xE - xlimb] = np.nan
       else:
         x[x > xE - xlimb] = np.nan
-      A = b ** 2 - (x - x0) ** 2
+      A = b ** 2 - (x - xE) ** 2
       A[A<0] = 0
       y = (a / b) * np.sqrt(A)
       if np.abs(np.cos(lat)) < 1e-5:
         style = dict(color = 'k', ls = '--', lw = 1, alpha = 0.5)
       else:
         style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1, alpha = 0.5)
-      ax.plot(x, y, **style)
-      ax.plot(x, -y, **style)
+      if (occulted.x[t] < 0):
+        ax.plot(-x, y, **style)
+        ax.plot(-x, -y, **style)
+      else:
+        ax.plot(x, y, **style)
+        ax.plot(x, -y, **style)
     
     # Plot the occultors
     pto = [None for o in occultors]
@@ -759,7 +794,7 @@ class System(object):
       r = occultor.r
       x = np.linspace(occultor.x[t] - r, occultor.x[t] + r, 1000)
       y = np.sqrt(r ** 2 - (x - occultor.x[t]) ** 2)
-      pto[i] = ax.fill_between(x - x0, occultor.y[t] - y, occultor.y[t] + y, color = 'lightgray', zorder = 99 + i, lw = 1)
+      pto[i] = ax.fill_between(x - x0, occultor.y[t] - y - y0, occultor.y[t] + y - y0, color = 'lightgray', zorder = 99 + i, lw = 1)
       pto[i].set_edgecolor('k')
     
     return ax, pto
