@@ -508,6 +508,15 @@ class System(object):
           if b > a:
             body._inds.append(list(range(a,b)))
   
+  def _onclick(self, i):
+    '''
+    
+    '''
+    
+    def foo(event):
+      self._pause[i] ^= True
+    return foo
+    
   def plot_occultations(self, body):
     '''
     
@@ -531,6 +540,8 @@ class System(object):
     normr = np.nanmedian(self.bodies[0].flux[:,-1])
     
     # Loop over all events
+    ani = [None for i in body._inds]
+    self._pause = [True for i in body._inds]
     for i, t in enumerate(body._inds):
       
       # Set up the figure
@@ -546,7 +557,7 @@ class System(object):
       axlc[i].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
       axlc[i].get_yaxis().set_major_locator(MaxNLocator(4))
       axlc[i].get_xaxis().set_major_locator(MaxNLocator(4))
-      vline = axlc[i].axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
+      vln = axlc[i].axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
       for tick in axlc[i].get_xticklabels() + axlc[i].get_yticklabels():
         tick.set_fontsize(8)
     
@@ -567,28 +578,28 @@ class System(object):
 
       # Plot the orbits of all bodies
       axxz[i] = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
-      for j, _ in enumerate(self.bodies):
+      f = np.linspace(0, 2 * np.pi, 1000)
+      for j, b in enumerate(self.bodies):
         if j == p:
           style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
         elif j in occultors:
           style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
         else:
           style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
-        tmax = np.argmin(np.abs(self.bodies[j].time - (self.bodies[j].time[0] + self.bodies[j].per)))
-        axxz[i].plot(self.bodies[j].x[:tmax], self.bodies[j].z[:tmax], **style)
-      
+        r = b.a * (1 - b.ecc ** 2) / (1 + b.ecc * np.cos(f))
+        x = r * np.cos(b.w + f) - r * np.sin(b.w + f) * np.cos(b.inc) * np.sin(b.Omega)
+        z = r * np.sin(b.w + f) * np.sin(b.inc)
+        axxz[i].plot(x, z, **style)
+
       # Plot the bodies
+      ptb = [None for b in self.bodies]
       for bi, b in enumerate(self.bodies):
         if b == body:
-          axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
+          ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
         elif bi in occultors:
-          axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
+          ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
         else:
-          axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
-      
-        # Plot orbital motion
-        ti = np.array(sorted(list(set(np.array(np.linspace(tstart, tmid, 10), dtype = int)))))
-        axxz[i].plot(b.x[ti], b.z[ti], 'o', color = 'k', alpha = float(j) / 100.)
+          ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
       
       # Appearance
       axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
@@ -625,19 +636,33 @@ class System(object):
                        fontsize = 10, style = 'italic')
       
       # Animate!
-      def run(j):
-        vline.set_xdata(body.time[t[j]])
-        for k, occultor in enumerate([self.bodies[o] for o in occultors]): 
-          r = occultor.r
-          x = np.linspace(occultor.x[t[j]] - r, occultor.x[t[j]] + r, 1000)
-          y = np.sqrt(r ** 2 - (x - occultor.x[t[j]]) ** 2)
-          pto[k].remove()
-          pto[k] = axim[i].fill_between(x, occultor.y[t[j]] - y, occultor.y[t[j]] + y, color = 'lightgray', zorder = 99 + k, lw = 1)
-          pto[k].set_edgecolor('k')
-        return
-      ani = animation.FuncAnimation(fig[i], run, frames = len(t), interval = 1, repeat = True)
-      pl.show()
-    return fig, axlc, axxz, axim
+      ani[i] = animation.FuncAnimation(fig[i], self._animate, frames = len(t), interval = 1, repeat = True,
+                                       fargs = (i, t, body, occultors, axim[i], vln, pto, ptb))
+      fig[i].canvas.mpl_connect('button_press_event', self._onclick(i))
+      
+    return fig, axlc, axxz, axim, ani
+  
+  def _animate(self, j, i, t, body, occultors, ax, vln, pto, ptb):
+    '''
+    
+    '''
+    
+    if self._pause[i]:
+      return
+    
+    vln.set_xdata(body.time[t[j]])
+    for k, occultor in enumerate([self.bodies[o] for o in occultors]): 
+      r = occultor.r
+      x = np.linspace(occultor.x[t[j]] - r, occultor.x[t[j]] + r, 1000)
+      y = np.sqrt(r ** 2 - (x - occultor.x[t[j]]) ** 2)
+      pto[k].remove()
+      pto[k] = ax.fill_between(x, occultor.y[t[j]] - y, occultor.y[t[j]] + y, color = 'lightgray', zorder = 99 + k, lw = 1)
+      pto[k].set_edgecolor('k')
+    for k, b in enumerate(self.bodies):
+      ptb[k].set_xdata(b.x[t[j]])
+      ptb[k].set_ydata(b.z[t[j]])
+    
+    return
   
   def plot_orbits(self, t, ax = None):
     '''
@@ -685,15 +710,6 @@ class System(object):
     if ax is None:
       fig, ax = pl.subplots(1, figsize = (6,6))
   
-    # Plot the occultors
-    pto = [None for o in occultors]
-    for i, occultor in enumerate([self.bodies[o] for o in occultors]): 
-      r = occultor.r
-      x = np.linspace(occultor.x[t] - r, occultor.x[t] + r, 1000)
-      y = np.sqrt(r ** 2 - (x - occultor.x[t]) ** 2)
-      pto[i] = ax.fill_between(x, occultor.y[t] - y, occultor.y[t] + y, color = 'lightgray', zorder = 99 + i, lw = 1)
-      pto[i].set_edgecolor('k')
-
     # Plot the occulted body
     r = occulted.r
     x0 = occulted.x[t]
@@ -711,22 +727,22 @@ class System(object):
     for lat in np.linspace(0, np.pi, occulted.nl + 2)[1:-1]:
       a = occulted.r * np.abs(np.sin(lat))
       b = a * np.abs(np.sin(theta))
-      x0 = -occulted.r * np.cos(lat) * np.cos(theta)
-      y0 = 0
+      xE = -occulted.r * np.cos(lat) * np.cos(theta)
+      yE = 0
       xlimb = occulted.r * np.cos(lat) * np.sin(theta) * np.tan(theta)
       if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
-        xmin = x0 - b
+        xmin = xE - b
       else:
-        xmin = x0 - xlimb
+        xmin = xE - xlimb
       if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
-        xmax = x0 + b
+        xmax = xE + b
       else:
-        xmax = x0 - xlimb
-      x = np.linspace(x0 - b, x0 + b, 1000)
+        xmax = xE - xlimb
+      x = np.linspace(xE - b, xE + b, 1000)
       if theta > 0:
-        x[x < x0 - xlimb] = np.nan
+        x[x < xE - xlimb] = np.nan
       else:
-        x[x > x0 - xlimb] = np.nan
+        x[x > xE - xlimb] = np.nan
       A = b ** 2 - (x - x0) ** 2
       A[A<0] = 0
       y = (a / b) * np.sqrt(A)
@@ -736,7 +752,16 @@ class System(object):
         style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1, alpha = 0.5)
       ax.plot(x, y, **style)
       ax.plot(x, -y, **style)
-
+    
+    # Plot the occultors
+    pto = [None for o in occultors]
+    for i, occultor in enumerate([self.bodies[o] for o in occultors]): 
+      r = occultor.r
+      x = np.linspace(occultor.x[t] - r, occultor.x[t] + r, 1000)
+      y = np.sqrt(r ** 2 - (x - occultor.x[t]) ** 2)
+      pto[i] = ax.fill_between(x - x0, occultor.y[t] - y, occultor.y[t] + y, color = 'lightgray', zorder = 99 + i, lw = 1)
+      pto[i].set_edgecolor('k')
+    
     return ax, pto
 
   def plot_lightcurve(self, wavelength = 15.):
