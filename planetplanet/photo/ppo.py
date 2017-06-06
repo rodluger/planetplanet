@@ -893,7 +893,23 @@ class System(object):
         if index in occultation:
           self.plot_occultation(body.name, body.time[index])
     pl.show()
-          
+  
+  @property
+  def flux(self):
+    '''
+    
+    '''
+    
+    return np.sum([b.flux for b in self.bodies], axis = 0)
+    
+  @property
+  def time(self):
+    '''
+    
+    '''
+    
+    return self.bodies[0].time
+     
   def plot_lightcurve(self, wavelength = 15.):
     '''
     
