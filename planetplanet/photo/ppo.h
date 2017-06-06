@@ -23,8 +23,8 @@
 #define MICRON                  1e-6
 
 // Settings
-#define MAXVERTICES             500
-#define MAXFUNCTIONS            500
+#define MAXVERTICES             999
+#define MAXFUNCTIONS            999
 #define DTOL1                   1.e-10
 #define DTOL2                   1.e-15
 #define MINTHETA                1.e-2
@@ -66,6 +66,8 @@ typedef struct {
   double polyeps2;
   int maxpolyiter;
   double dt;
+  int adaptive;
+  int quiet;
 } SETTINGS;
 
 typedef struct {
@@ -93,7 +95,7 @@ typedef struct {
 // Functions
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam]);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);

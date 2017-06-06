@@ -112,11 +112,12 @@ int Kepler(int np, BODY **body, SETTINGS settings){
   int iErr = ERR_NONE;
   int t, p;
   progress_t *progress = progress_new(body[0]->nt, 50);
-  progress->fmt = "[:bar] :percent :elapsed";
-  progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
   
-  // Log
-  printf("Computing orbits with the Kepler solver...\n");
+  if (!settings.quiet) {
+    progress->fmt = "[:bar] :percent :elapsed";
+    progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
+    printf("Computing orbits with the Kepler solver...\n");
+  }
   
   // In this simple solver, the star is fixed at the origin (massless planets)
   for (t = 0; t < body[0]->nt; t++) {
@@ -161,12 +162,17 @@ int Kepler(int np, BODY **body, SETTINGS settings){
     }
   
     // Display the progress
-	  if (t % 1000 == 0) progress_tick(progress, 1000);
-  
+    if (!settings.quiet) {
+	    if (t % 1000 == 0) 
+	      progress_tick(progress, 1000);
+    }
+    
   }
   
+  if (!settings.quiet)
+    printf("\n");
+  
   progress_free(progress);
-  printf("\n");
 	return iErr;
 	
 }
@@ -189,11 +195,12 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   double M, E, f;
   struct reb_simulation* r = reb_create_simulation();
   progress_t *progress = progress_new(body[0]->nt, 50);
-  progress->fmt = "[:bar] :percent :elapsed";
-  progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
   
-  // Log
-  printf("Computing orbits with REBOUND...\n");
+  if (!settings.quiet) {
+    progress->fmt = "[:bar] :percent :elapsed";
+    progress_on(progress, PROGRESS_EVENT_PROGRESS, on_progress);
+    printf("Computing orbits with REBOUND...\n");
+  }
   
 	// Set the timestep
 	r->dt = settings.dt;
@@ -258,12 +265,17 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	  }
 	  
 	  // Display the progress
-	  if (t % 1000 == 0) progress_tick(progress, 1000);
+	  if (!settings.quiet) {
+	    if (t % 1000 == 0) 
+	      progress_tick(progress, 1000);
+    }
 
   }
   
+  if (!settings.quiet)
+    printf("\n");
+  
   progress_free(progress);
-  printf("\n");
   return 0;
   
 }

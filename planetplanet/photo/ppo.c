@@ -45,49 +45,47 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
   if (iErr != ERR_NONE) return iErr;
   
   // Log
-  printf("Computing occultation events...\n");
+  if (!settings.quiet)
+    printf("Computing occultation events...\n");
   
   // Loop over the time array
   for (t = 0; t < nt; t++) {
     
-    // Star
-    body[0]->occultor[t] = -1;
-        
-    // Compute the light curve for each planet
-    for (p = 1; p < np; p++) {
-    
+    // Loop over each body
+    for (p = 0; p < np; p++) {
+      
       // Default is no occultation
-      body[p]->occultor[t] = -1;
+      body[p]->occultor[t] = 0;
       
       // Loop over all possible occultors, including the star
+      // and check whether an occultation is occurring
       for (o = 0; o < np; o++) {
       
         // Skip self
         if (o == p) continue;
       
-        // Compute the body-body separation between body `p` and body `o`
-        dx = (body[p]->x[t] - body[o]->x[t]);
-        dy = (body[p]->y[t] - body[o]->y[t]);
+        // Compute the body-body separation between body `o` and body `p`
+        dx = (body[o]->x[t] - body[p]->x[t]);
+        dy = (body[o]->y[t] - body[p]->y[t]);
         d = sqrt(dx * dx + dy * dy);
         
         // Is body `o` occulting body `p`?
-        if ((d <= body[p]->r + body[o]->r) && (body[p]->z[t] > body[o]->z[t])) {
-          body[p]->occultor[t] = o;
-        
-          // Simultaneous occultations can sometimes occur.
-          // We ignore them for simplicity for now.
-          break;
-        
+        if ((d <= body[p]->r + body[o]->r) && (body[p]->z[t] > body[o]->z[t])){
+
+          // Yes! Add to the occultor flag
+          body[p]->occultor[t] += ipow(2, o);
+
         }
         
       }
-      
+  
     }
   
   }
   
   // Log
-  printf("Done!\n");
+  if (!settings.quiet)
+    printf("Done!\n");
 
   return iErr;
 
@@ -95,9 +93,6 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
 
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings){
   /*
-  
-  NOTE: This does not yet handle the pathological case of *multiple* simultaneous 
-  planet-planet occultations involving the same planet!
   
   */
 
@@ -128,15 +123,16 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   
   // Compute the stellar flux
   UnoccultedFlux(body[0]->r, PI / 2., 0., 0., settings.polyeps1, settings.polyeps2, 
-                 settings.maxpolyiter, body[0]->nu, body[0]->nl, nw, body[0]->u, 
-                 wavelength, tmp);
+                 settings.maxpolyiter, settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
+                 wavelength, tmp, settings.quiet);
   for (t = 0; t < nt; t++) {
     for (w = 0; w < nw; w++)
       body[0]->flux[nw * t + w] = tmp[w];
   }
   
   // Log
-  printf("Computing occultation light curves...\n");
+  if (!settings.quiet)
+    printf("Computing occultation light curves...\n");
   
   // Loop over the time array
   for (t = 0; t < nt; t++) {
@@ -153,7 +149,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, body[p]->irrad, 
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
-                       body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, tmp);
+                       settings.adaptive, body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, 
+                       tmp, settings.quiet);
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] = tmp[w];
       
@@ -211,8 +208,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // Call the eyeball routine
         OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
                      body[p]->irrad, settings.polyeps1, settings.polyeps2, 
-                     settings.maxpolyiter, body[p]->nu, body[p]->nl, nw, 
-                     body[p]->u, wavelength, tmp);
+                     settings.maxpolyiter, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
+                     body[p]->u, wavelength, tmp, settings.quiet);
       
         // Update the body light curve
         for (w = 0; w < nw; w++)
@@ -224,7 +221,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   }
 
   // Log
-  printf("Done!\n");
+  if (!settings.quiet)
+    printf("Done!\n");
 
   return iErr;
 

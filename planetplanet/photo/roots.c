@@ -42,6 +42,7 @@ void laguer(dcomplex a[], int m, dcomplex *x, double polyeps1, double polyeps2, 
 			if (cdx <= polyeps1*Cabs(*x)) return;
 	}
 	
+	//TODO: This happens quite often!
 	//printf("Too many iterations in routine LAGUER!\n");
 
 }

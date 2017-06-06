@@ -4,8 +4,9 @@
 orbits.py
 ---------
 
-The observer's view of the planet orbits, highlighting
-how they overlap on the sky.
+Plots the orbital path of each of the seven TRAPPIST-1 planets as seen
+by an observer on Earth. The width of each path is the planet diameter.
+Planet-planet occultations may occur anywhere where two orbits cross.
 
 '''
 
