@@ -365,6 +365,10 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
     for (i = 0; i < no; i++) {
       if ((ellipse->xmin - x0[i]) * (ellipse->xmin - x0[i]) + y0[i] * y0[i] < ro2[i]) {
         vertices[(*v)++] = ellipse->xmin;
+        if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
         break;    
       }
     }
@@ -379,6 +383,10 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
     for (i = 0; i < no; i++) {
       if ((ellipse->xmax - x0[i]) * (ellipse->xmax - x0[i]) + y0[i] * y0[i] < ro2[i]) {
         vertices[(*v)++] = ellipse->xmax;
+        if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
         break;    
       }
     }
@@ -393,6 +401,10 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
     for (i = 0; i < no; i++) {
       if ((x - x0[i]) * (x - x0[i]) + (y - y0[i]) * (y - y0[i]) < ro2[i]) {
         vertices[(*v)++] = x;
+        if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
         break;    
       }
     }
@@ -400,6 +412,10 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
     for (i = 0; i < no; i++) {
       if ((x - x0[i]) * (x - x0[i]) + (y - y0[i]) * (y - y0[i]) < ro2[i]) {
         vertices[(*v)++] = x;
+        if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
         break;    
       }
     }
@@ -413,9 +429,17 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
 
     if (!(isnan(roots[0])) && (((theta > 0) && (roots[0] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[0] < ellipse->x0 - xlimb)))) {
       vertices[(*v)++] = roots[0];
+      if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
     }
     if (!(isnan(roots[1])) && (((theta > 0) && (roots[1] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[1] < ellipse->x0 - xlimb)))) {
       vertices[(*v)++] = roots[1];
+      if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
     }
     
   }
@@ -427,6 +451,10 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   functions[*f].ellipse = ellipse;
   functions[*f].curve = flower;
   functions[(*f)++].integral = ilower;
+  if (*f > MAXFUNCTIONS) {
+    printf("ERROR: Maximum number of functions exceeded.\n");
+    abort();
+  }
   
 }
 
@@ -452,13 +480,23 @@ void AddOccultors(double r, int no, double x0[no], double y0[no], double ro[no],
     
     // Occultor x minimum
     occultor[i]->xmin = x0[i] - occultor[i]->r;
-    if (occultor[i]->xmin * occultor[i]->xmin + occultor[i]->y0 * occultor[i]->y0 < r2)
-      vertices[(*v)++] = occultor[i]->xmin;    
-  
+    if (occultor[i]->xmin * occultor[i]->xmin + occultor[i]->y0 * occultor[i]->y0 < r2) {
+      vertices[(*v)++] = occultor[i]->xmin;  
+      if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }  
+    }
+    
     // Occultor x maximum
     occultor[i]->xmax = x0[i] + occultor[i]->r;
-    if (occultor[i]->xmax * occultor[i]->xmax + occultor[i]->y0 * occultor[i]->y0 < r2)
+    if (occultor[i]->xmax * occultor[i]->xmax + occultor[i]->y0 * occultor[i]->y0 < r2) {
       vertices[(*v)++] = occultor[i]->xmax;    
+      if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
+    }
 
     // Finally, the boundary curves and their integrals
     functions[*f].ellipse = occultor[i];
@@ -467,6 +505,10 @@ void AddOccultors(double r, int no, double x0[no], double y0[no], double ro[no],
     functions[*f].ellipse = occultor[i];
     functions[*f].curve = flower;
     functions[(*f)++].integral = ilower;
+    if (*f > MAXFUNCTIONS) {
+      printf("ERROR: Maximum number of functions exceeded.\n");
+      abort();
+    }
   
   }
   
@@ -496,6 +538,10 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   for (i = 0; i < no; i++) {
     if ((occulted->xmin - x0[i]) * (occulted->xmin - x0[i]) + y0[i] * y0[i] < ro2[i]) {
       vertices[(*v)++] = occulted->xmin;
+      if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
       break;    
     }
   }  
@@ -506,6 +552,10 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   for (i = 0; i < no; i++) {
     if ((occulted->xmax - x0[i]) * (occulted->xmax - x0[i]) + y0[i] * y0[i] < ro2[i]) {
       vertices[(*v)++] = occulted->xmax;
+      if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
       break;    
     }
   }  
@@ -523,6 +573,10 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
         sint = -y0[i] / d;
         vertices[(*v)++] = -x * cost + y * sint + x0[i];
         vertices[(*v)++] = -x * cost - y * sint + x0[i];
+        if (*v > MAXVERTICES) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
       }
     }
   }
@@ -534,6 +588,10 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   functions[*f].ellipse = occulted;
   functions[*f].curve = flower;
   functions[(*f)++].integral = ilower;
+  if (*f > MAXFUNCTIONS) {
+    printf("ERROR: Maximum number of functions exceeded.\n");
+    abort();
+  }
   
 }
 
@@ -546,6 +604,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   int b = 0;
   int v = 0;
   int f = 0;
+  int good;
   double lmin, lmax, lat;
   double xL, xR, x, y, area;
   double r2 = r * r + DTOL2;
@@ -678,22 +737,33 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     // Loop over all regions bounded by xL and xR
     for (j = 0; j < b - 1; j++) {
     
+      // Get the midpoint
+      y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
+      
+      // Is it in the planet?
+      if (x * x + y * y > r * r) continue;
+      
+      // Is it in at least one occultor?
+      good = 0;
+      for (k = 0; k < no; k++) {
+        if ((x - x0[k]) * (x - x0[k]) + (y - y0[k]) * (y - y0[k]) < ro2[k]) {
+          good = 1;
+          break;
+        }
+      }
+      if (!good) continue;
+    
       // The area of each region is just the difference of successive integrals
       area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
       
-      // TODO: Fix these numerical issues
+      // TODO: Fix these numerical issues if they keep popping up
       if (isnan(area)) {
         if (!quiet)
           printf("WARNING: Area in segment is NAN.\n");
         continue;
       }
-            
+      
       // Get the latitude of the midpoint
-      y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
-      if (x * x + y * y > r * r) {
-        // We are off-planet!
-        continue;
-      }
       lat = Latitude(x, y, r, theta);
       
       // Get the index `k` of the latitude grid *above* this latitude.

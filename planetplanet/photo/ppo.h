@@ -23,8 +23,8 @@
 #define MICRON                  1e-6
 
 // Settings
-#define MAXVERTICES             500
-#define MAXFUNCTIONS            500
+#define MAXVERTICES             999
+#define MAXFUNCTIONS            999
 #define DTOL1                   1.e-10
 #define DTOL2                   1.e-15
 #define MINTHETA                1.e-2

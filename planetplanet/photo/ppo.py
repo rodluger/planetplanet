@@ -230,7 +230,7 @@ class Animation(object):
         gifname += '.gif'
       if not quiet:
         print("Saving %s..." % gifname)
-      self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 100)
+      self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
       self.pause = True
       
   def toggle(self, event):
@@ -660,7 +660,7 @@ class System(object):
     normb = np.nanmedian(self.bodies[0].flux[:,0])
     normg = np.nanmedian(self.bodies[0].flux[:,body.flux.shape[-1] // 2])
     normr = np.nanmedian(self.bodies[0].flux[:,-1])
-    
+
     # Loop over all events
     for i, t in enumerate(body._inds):
       
@@ -730,13 +730,22 @@ class System(object):
       # Plot the image
       axim[i] = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1) 
       _, pto = self.image(tmid, body, occultors, ax = axim[i])
-      xmin = min([self.bodies[o].x[tstart] - 3 * self.bodies[o].r for o in occultors])
-      xmax = max([self.bodies[o].x[tend] + 3 * self.bodies[o].r for o in occultors])
+      xmin = min([self.bodies[o].x[tstart] - 3 * self.bodies[o].r for o in occultors] + [-1.5 * body.r])
+      xmax = max([self.bodies[o].x[tend] + 3 * self.bodies[o].r for o in occultors] + [1.5 * body.r])
+      if xmin > xmax: xmin, xmax = xmax, xmin
       if (body.x[tmid] - xmin) > (xmax - body.x[tmid]):
         dx = body.x[tmid] - xmin
       else:
         dx = xmax - body.x[tmid]
+      ymin = min([self.bodies[o].y[tstart] - 3 * self.bodies[o].r for o in occultors] + [-1.5 * body.r])
+      ymax = max([self.bodies[o].y[tend] + 3 * self.bodies[o].r for o in occultors] + [1.5 * body.r])
+      if ymin > ymax: ymin, ymax = ymax, ymin
+      if (body.y[tmid] - ymin) > (ymax - body.y[tmid]):
+        dy = body.y[tmid] - ymin
+      else:
+        dy = ymax - body.y[tmid]
       axim[i].set_xlim(0 - dx, 0 + dx)
+      axim[i].set_ylim(0 - dy, 0 + dy)
       axim[i].axis('off')
       axim[i].set_aspect('equal')
       

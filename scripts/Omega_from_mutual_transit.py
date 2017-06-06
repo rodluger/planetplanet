@@ -19,9 +19,9 @@ REARTH = 6.3781e6
 
 # Draw from prior several times and plot
 niter = 100
-time = np.linspace(-0.05, 0.05, 500)
+time = np.linspace(-0.05, 0.05, 1000)
 dt = (time[1] - time[0]) * 1440.
-Omega = np.linspace(0, 180, 30)
+Omega = np.linspace(0, 180, 100)
 duration = np.zeros((niter, len(Omega)))
 for n in tqdm(range(niter)):
   
