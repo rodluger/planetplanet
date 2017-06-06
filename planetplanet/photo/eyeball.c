@@ -9,10 +9,17 @@ double EyeballTemperature(double lat, double irrad, double albedo, double tnight
   
   */
   
-  if (lat < PI / 2)
-    return pow((irrad * cos(lat) * (1 - albedo)) / SBOLTZ, 0.25);
-  else
+  double temp;
+  
+  if (lat < PI / 2) {
+    temp = pow((irrad * cos(lat) * (1 - albedo)) / SBOLTZ, 0.25);
+    if (temp > tnight)
+      return temp;
+    else
+      return tnight;
+  } else {
     return tnight;
+  }
 }
 
 double Blackbody(double lambda, double T) {
@@ -236,8 +243,8 @@ double curve(double x, FUNCTION function) {
   return function.curve(x, function.ellipse);
 }
 
-double integral(double x0, double x1, FUNCTION function) {
-  return function.integral(x0, x1, function.ellipse);
+double integral(double x0, double x1, FUNCTION function, int *oob) {
+  return function.integral(x0, x1, function.ellipse, oob);
 }
 
 double fupper(double x, ELLIPSE *ellipse) {
@@ -270,40 +277,62 @@ double flower(double x, ELLIPSE *ellipse) {
   }
 }
 
-double iupper(double xL, double xR, ELLIPSE *ellipse) {
+double iupper(double xL, double xR, ELLIPSE *ellipse, int *oob) {
+  /*
+  
+  */
+  
   double yL,yR,zL,zR,FL,FR;
-  if ((xL > ellipse->xmax) || (xL < ellipse->xmin)) return NAN;
-  if ((xR > ellipse->xmax) || (xR < ellipse->xmin)) return NAN;
+  
+  // Catch NaNs silently
+  if ((xL > ellipse->xmax) || (xL < ellipse->xmin)) *oob = 1;
+  if ((xR > ellipse->xmax) || (xR < ellipse->xmin)) *oob = 1;
+  
   yL = xL - ellipse->x0;
   yR = xR - ellipse->x0;
   if (ellipse->circle) {
     zL = sqrt((ellipse->r - yL) * (ellipse->r + yL));
+    if (isnan(zL)) zL = 0;
     zR = sqrt((ellipse->r - yR) * (ellipse->r + yR));
+    if (isnan(zR)) zR = 0;
     FL = 0.5 * (yL * zL + ellipse->r * ellipse->r * atan(yL / zL)) + ellipse->y0 * xL;
     FR = 0.5 * (yR * zR + ellipse->r * ellipse->r * atan(yR / zR)) + ellipse->y0 * xR;
   } else {
     zL = sqrt((ellipse->b - yL) * (ellipse->b + yL));
+    if (isnan(zL)) zL = 0;
     zR = sqrt((ellipse->b - yR) * (ellipse->b + yR));
+    if (isnan(zR)) zR = 0;
     FL = (ellipse->a / (2 * ellipse->b)) * (yL * zL + ellipse->b * ellipse->b * atan(yL / zL)) + ellipse->y0 * xL;
     FR = (ellipse->a / (2 * ellipse->b)) * (yR * zR + ellipse->b * ellipse->b * atan(yR / zR)) + ellipse->y0 * xR;
   }
   return FR - FL;
 }
 
-double ilower(double xL, double xR, ELLIPSE *ellipse) {
+double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
+  /*
+  
+  */
+  
   double yL,yR,zL,zR,FL,FR;
-  if ((xL > ellipse->xmax) || (xL < ellipse->xmin)) return NAN;
-  if ((xR > ellipse->xmax) || (xR < ellipse->xmin)) return NAN;
+  
+  // Catch NaNs silently
+  if ((xL > ellipse->xmax) || (xL < ellipse->xmin)) *oob = 1;
+  if ((xR > ellipse->xmax) || (xR < ellipse->xmin)) *oob = 1;
+    
   yL = xL - ellipse->x0;
   yR = xR - ellipse->x0;
   if (ellipse->circle) {
     zL = sqrt((ellipse->r - yL) * (ellipse->r + yL));
+    if (isnan(zL)) zL = 0;
     zR = sqrt((ellipse->r - yR) * (ellipse->r + yR));
+    if (isnan(zR)) zR = 0;
     FL = -0.5 * (yL * zL + ellipse->r * ellipse->r * atan(yL / zL)) + ellipse->y0 * xL;
     FR = -0.5 * (yR * zR + ellipse->r * ellipse->r * atan(yR / zR)) + ellipse->y0 * xR;
   } else {
     zL = sqrt((ellipse->b - yL) * (ellipse->b + yL));
+    if (isnan(zL)) zL = 0;
     zR = sqrt((ellipse->b - yR) * (ellipse->b + yR));
+    if (isnan(zR)) zR = 0;
     FL = -(ellipse->a / (2 * ellipse->b)) * (yL * zL + ellipse->b * ellipse->b * atan(yL / zL)) + ellipse->y0 * xL;
     FR = -(ellipse->a / (2 * ellipse->b)) * (yR * zR + ellipse->b * ellipse->b * atan(yR / zR)) + ellipse->y0 * xR;
   }
@@ -601,6 +630,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   */
   
   int i, j, k, m;
+  int oob;
   int b = 0;
   int v = 0;
   int f = 0;
@@ -616,7 +646,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   FUNCTION boundaries[MAXFUNCTIONS];
   double B[nlat * no + 1][nlam];
   double latgrid[nlat * no];
-  
+
   // Avoid the singular point
   if (fabs(theta) < MINTHETA)
     theta = MINTHETA;
@@ -709,6 +739,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     // Loop over all functions
     b = 0;
     for (j = 0; j < f; j++) {
+    
       y = curve(x, functions[j]);
       
       // Check that it's inside the planet
@@ -741,7 +772,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
       
       // Is it in the planet?
-      if (x * x + y * y > r * r) continue;
+      if (x * x + y * y > r2) continue;
       
       // Is it in at least one occultor?
       good = 0;
@@ -754,14 +785,9 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       if (!good) continue;
     
       // The area of each region is just the difference of successive integrals
-      area = integral(xL, xR, boundaries[j + 1]) - integral(xL, xR, boundaries[j]);
-      
-      // TODO: Fix these numerical issues if they keep popping up
-      if (isnan(area)) {
-        if (!quiet)
-          printf("WARNING: Area in segment is NAN.\n");
-        continue;
-      }
+      oob = 0;
+      area = integral(xL, xR, boundaries[j + 1], &oob) - integral(xL, xR, boundaries[j], &oob);
+      if ((oob) && (!quiet)) printf("WARNING: Integral out of bounds.\n");
       
       // Get the latitude of the midpoint
       lat = Latitude(x, y, r, theta);

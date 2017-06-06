@@ -84,7 +84,7 @@ typedef struct {
 
 typedef double (*CURVE)(double, ELLIPSE*);
 
-typedef double (*INTEGRAL)(double, double, ELLIPSE*);
+typedef double (*INTEGRAL)(double, double, ELLIPSE*, int*);
 
 typedef struct {
   double y;
