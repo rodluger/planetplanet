@@ -905,10 +905,20 @@ class System(object):
   @property
   def time(self):
     '''
+    Time in days.
     
     '''
     
     return self.bodies[0].time
+  
+  @property
+  def wavelength(self):
+    '''
+    Wavelength in microns.
+    
+    '''
+    
+    return self.bodies[0].wavelength * 1.e6
      
   def plot_lightcurve(self, wavelength = 15.):
     '''

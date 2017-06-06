@@ -24,7 +24,7 @@ system = Trappist1(sample = True, ttvs = False, phasecurve = False, adaptive = T
 
 # Get the occultation light curves for the first 10 days
 time = np.linspace(0., 10., 10000)
-system.compute(time, lambda1 = 5, lambda2 = 15, R = 3)
+system.compute(time, lambda1 = 5, lambda2 = 15, R = 1)
 
 # Get the normalized fluxes at each wavelength
 flux5 = system.flux[:,0]
@@ -50,5 +50,5 @@ pl.setp(ax[0].get_xticklabels(), visible = False)
 pl.setp(ax[1].get_xticklabels(), visible = False)
 for axis in ax:
   axis.margins(0, 0.1)
-  
+
 pl.show()
