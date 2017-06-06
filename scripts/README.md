@@ -2,8 +2,8 @@
 
 ## flower
 
-Computes a mutual transit among four planets with longitudes
-of ascending node at right angles to each other:
+Computes and plots a hypothetical mutual transit among four planets with 
+longitudes of ascending node at right angles to each other:
 
 <p align='center'><img src="../img/flower.gif" width="400"/></p>
 
@@ -23,8 +23,8 @@ Then click anywhere in the pop-up window to animate the event.
 
 ## mutual_transit
 
-Computes and plots a mutual transit event, where two planets
-transit the star and occult each other simultaneously:
+Computes and plots a hypothetical mutual transit event, where two large 
+planets transit the star and occult each other simultaneously:
 
 <p align='center'><img src="../img/mutual.gif" width="400"/></p>
 
