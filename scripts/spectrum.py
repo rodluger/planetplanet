@@ -24,27 +24,25 @@ system = Trappist1(sample = True, ttvs = False, phasecurve = False, adaptive = T
 
 # Get the occultation light curves for the first 10 days
 time = np.linspace(0., 10., 10000)
-system.compute(time, lambda1 = 5, lambda2 = 15, R = 1)
+system.compute(time, lambda1 = 5, lambda2 = 15, R = 1000)
 
-# Get the normalized fluxes at each wavelength
-flux5 = system.flux[:,0]
-flux5 /= np.nanmedian(flux5)
-flux10 = system.flux[:,1]
-flux10 /= np.nanmedian(flux10)
-flux15 = system.flux[:,2]
-flux15 /= np.nanmedian(flux15)
+# Get the flux at the first, middle, and last wavelength
+wavelength = []
+flux = []
+for index in [0, len(system.wavelength) // 2, -1]:
+  wavelength.append(system.wavelength[index])
+  flux.append(system.flux[:,index] / np.nanmedian(system.flux[:, index]))
 
 # Plot
 fig, ax = pl.subplots(3, figsize = (11, 7), sharex = True)
 fig.subplots_adjust(bottom = 0.1, top = 0.95, left = 0.1, right = 0.95)
-ax[0].plot(system.time, flux5, color = 'b', lw = 1, label = '5 microns')
-ax[1].plot(system.time, flux10, color = 'g', lw = 1,  label = '10 microns')
-ax[2].plot(system.time, flux15, color = 'r', lw = 1,  label = '15 microns')
+ax[0].plot(system.time, flux[0], color = 'b', lw = 1)
+ax[1].plot(system.time, flux[1], color = 'g', lw = 1)
+ax[2].plot(system.time, flux[2], color = 'r', lw = 1)
 
 # Appearance
-ax[0].set_ylabel('5 $\mathbf{\mu}$m Flux', fontsize = 12, fontweight = 'bold')
-ax[1].set_ylabel('10 $\mathbf{\mu}$m Flux', fontsize = 12, fontweight = 'bold')
-ax[2].set_ylabel('15 $\mathbf{\mu}$m Flux', fontsize = 12, fontweight = 'bold')
+for n in range(3):
+  ax[n].set_ylabel('%.1f $\mathbf{\mu}$m Flux' % wavelength[n], fontsize = 12, fontweight = 'bold')
 ax[2].set_xlabel('Time [days]', fontsize = 14, fontweight = 'bold')
 pl.setp(ax[0].get_xticklabels(), visible = False)
 pl.setp(ax[1].get_xticklabels(), visible = False)
