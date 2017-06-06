@@ -131,6 +131,7 @@ class Body(ctypes.Structure):
          of the solar constant (1370 W/m^2). Default `0.3`
   :param bool phasecurve: Compute the full phase curve? Default `False`
   :param int nl: Number of latitude slices. Default `11`
+  :param float tnight: Nightside temperature in Kelvin. Default `40`
   
   '''
   
@@ -145,6 +146,7 @@ class Body(ctypes.Structure):
               ("r", ctypes.c_double),
               ("albedo", ctypes.c_double),
               ("irrad", ctypes.c_double),
+              ("tnight", ctypes.c_double),
               ("phasecurve", ctypes.c_int),
               ("nu", ctypes.c_int),
               ("nl", ctypes.c_int),
@@ -172,6 +174,7 @@ class Body(ctypes.Structure):
     self.r = kwargs.pop('r', 1.086)
     self.albedo = kwargs.pop('albedo', 0.3)
     self.irrad = kwargs.pop('irrad', 4.25) * SEARTH
+    self.tnight = kwargs.pop('tnight', 40)
     self.phasecurve = int(kwargs.pop('phasecurve', False))
     self.nl = kwargs.pop('nl', 11)
     self.color = kwargs.pop('color', 'k')

@@ -4,7 +4,7 @@
 #include "ppo.h"
 #include "complex.h"
 
-double EyeballTemperature(double lat, double irrad, double albedo) {
+double EyeballTemperature(double lat, double irrad, double albedo, double tnight) {
   /*
   
   */
@@ -12,7 +12,7 @@ double EyeballTemperature(double lat, double irrad, double albedo) {
   if (lat < PI / 2)
     return pow((irrad * cos(lat) * (1 - albedo)) / SBOLTZ, 0.25);
   else
-    return 0;
+    return tnight;
 }
 
 double Blackbody(double lambda, double T) {
@@ -177,7 +177,7 @@ double Latitude(double x, double y, double r, double theta) {
   
 }
 
-void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nlat, double latgrid[nlat], int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
+void SurfaceIntensity(double albedo, double irrad, double tnight, int nu, double u[nu], int nlat, double latgrid[nlat], int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
   /*
   Returns the blackbody intensity at the center of each latitude slice 
   evaluated at a given array of wavelengths.
@@ -209,8 +209,8 @@ void SurfaceIntensity(double albedo, double irrad, int nu, double u[nu], int nla
     if (nu == 0) {
       
       // No limb darkening
-      T = EyeballTemperature(latitude, irrad, albedo);
-    
+      T = EyeballTemperature(latitude, irrad, albedo, tnight);
+
     } else {
     
       // Polynomial limb darkening
@@ -595,7 +595,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   
 }
 
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
   /*
   
   */
@@ -684,7 +684,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   }
   
   // Pre-compute the surface intensity in each latitude slice
-  SurfaceIntensity(albedo, irrad, nu, u, nlat * no, latgrid, nlam, lambda, B);
+  SurfaceIntensity(albedo, irrad, tnight, nu, u, nlat * no, latgrid, nlam, lambda, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
@@ -791,7 +791,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double polyeps1, double polyeps2, int maxpolyiter, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
   /*
   
   */
@@ -801,6 +801,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, polyeps1, polyeps2, maxpolyiter, adaptive, nu, nlat, nlam, u, lambda, flux, quiet);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, polyeps1, polyeps2, maxpolyiter, adaptive, nu, nlat, nlam, u, lambda, flux, quiet);
     
 }
