@@ -46,7 +46,7 @@ Plots the orbital path of each of the seven TRAPPIST-1 planets as seen
 by an observer on Earth. The width of each path is the planet diameter.
 Planet-planet occultations may occur anywhere where two orbits cross.
 
-<p align='center'><img src="../img/orbits.png" width="600"/></p>
+<p align='center'><img src="../img/orbits.png" width="800"/></p>
 
 ## scatter
 
@@ -57,3 +57,12 @@ transparency, and color indicate the duration, impact parameter, and
 occulting body, respectively.
 
 <p align='center'><img src="../img/scatter.png" width="800"/></p>
+
+## spectrum
+
+Computes and plots a light curve of the TRAPPIST-1 system over three days in the
+wavelength range 5-15 microns, with orbital parameters drawn at random 
+from their prior distributions. All transits, secondary eclipses, 
+planet-planet occultations, and mutual transits are shown.
+
+<p align='center'><img src="../img/scatter.png" width="600"/></p>
