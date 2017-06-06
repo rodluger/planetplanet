@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-example.py
-----------
+lightcurve.py
+-------------
+
+Computes a light curve of the TRAPPIST-1 system over ten days, with
+orbital parameters drawn at random from their prior distributions.
+All transits, secondary eclipses, planet-planet occultations, and mutual
+transits are shown. Click on an individual event to see it in detail.
+Then click anywhere in the pop-up window to animate the event.
 
 '''
 
@@ -18,8 +24,7 @@ np.random.seed(1234)
 system = Trappist1(sample = True, ttvs = False, phasecurve = False, adaptive = True)
 
 # Get the occultation light curves for the first 10 days
-time = np.linspace(0., 1., 10000)
-
+time = np.linspace(0., 10., 10000)
 system.compute(time)
 
 # Plot all of the occultations

@@ -4,6 +4,12 @@
 scatter.py
 ----------
 
+Computes all occultations that occur in the TRAPPIST-1 system over a 
+3 year time period for a random draw from the prior. Plots each
+occultation as a circle in a top-view of the system; the circle size, 
+transparency, and color indicate the duration, impact parameter, and 
+occulting body, respectively.
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals

@@ -4,6 +4,9 @@
 flower.py
 ---------
 
+Computes a mutual transit among four planets with longitudes
+of ascending node at right angles to each other.
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
@@ -39,5 +42,5 @@ system = System(star, b, c, d, e, ttvs = False, adaptive = True)
 # Get the occultation light curves
 time = np.linspace(-0.02, 0.02, 100)
 system.compute(time)
-system.plot_occultation('A', 0.) #, gifname = 'flower')
+system.plot_occultation('A', 0., gifname = 'flower')
 pl.show()
