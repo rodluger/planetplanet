@@ -4,6 +4,15 @@
 Omega_from_mutual_transit.py
 ----------------------------
 
+For random draws from the prior, computes the duration of a
+mutual transit between TRAPPIST-1 b and c as a function of the
+difference in their longitude of ascending nodes. With some
+scatter, the difference in this angle is inversely proportional
+to the duration of the mutual transit. Observing such an event
+can place strong constraints on the longitudes of ascending node
+of the TRAPPIST-1 planets.
+
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
