@@ -65,4 +65,4 @@ wavelength range 5-15 microns, with orbital parameters drawn at random
 from their prior distributions. All transits, secondary eclipses, 
 planet-planet occultations, and mutual transits are shown.
 
-<p align='center'><img src="../img/scatter.png" width="600"/></p>
+<p align='center'><img src="../img/spectrum.png" width="600"/></p>
