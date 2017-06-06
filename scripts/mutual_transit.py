@@ -31,5 +31,5 @@ system = System(star, b, c, ttvs = False, adaptive = False)
 # Get the occultation light curves
 time = np.linspace(-0.06, 0.06, 1000)
 system.compute(time)
-system.plot_occultations('A') #, gifname = 'mutual')
+system.plot_occultation('A', 0.) #, gifname = 'mutual')
 pl.show()

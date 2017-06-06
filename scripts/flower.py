@@ -18,26 +18,26 @@ np.random.seed(1234)
 star = Star('A', m = 0.1, r = 0.1, nl = 21, color = 'k')
 
 # Planet b
-b = Planet('b', m = 1, per = 3, inc = 89.6, r = 3., trn0 = 0, 
+b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., trn0 = 0, 
            nl = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
 
 # Planet c
-c = Planet('c', m = 1, per = 3, inc = 89.6, r = 3., trn0 = 0, 
+c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., trn0 = 0, 
            nl = 11, Omega = 90, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # Planet c
-d = Planet('d', m = 1, per = 3, inc = 89.6, r = 3., trn0 = 0, 
+d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., trn0 = 0, 
            nl = 11, Omega = 180, w = 0., ecc = 0., phasecurve = False, color = 'b')
            
 # Planet c
-e = Planet('e', m = 1, per = 3, inc = 89.6, r = 3., trn0 = 0, 
+e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., trn0 = 0, 
            nl = 11, Omega = 270, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # System
 system = System(star, b, c, d, e, ttvs = False, adaptive = True)
 
 # Get the occultation light curves
-time = np.linspace(-0.02, 0.02, 1000)
+time = np.linspace(-0.02, 0.02, 100)
 system.compute(time)
-system.plot_occultations('A') #, gifname = 'flower')
+system.plot_occultation('A', 0.) #, gifname = 'flower')
 pl.show()

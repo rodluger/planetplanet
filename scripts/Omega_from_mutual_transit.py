@@ -73,7 +73,7 @@ for n in tqdm(range(niter)):
   c = Planet('c', m = m, per = per, inc = inc, r = r, trn0 = 0., Omega = 0, w = w, ecc = ecc, color = 'b')
 
   # The system
-  system = System(star, b, c, ttvs = False, adaptive = True)
+  system = System(star, b, c, ttvs = False, adaptive = True, quiet = True)
 
   # Compute
   for i in range(len(Omega)):

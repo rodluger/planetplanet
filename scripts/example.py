@@ -23,5 +23,5 @@ time = np.linspace(0., 1., 10000)
 system.compute(time)
 
 # Plot all of the occultations
-system.plot_occultations('A')
+system.plot_lightcurve()
 pl.show()

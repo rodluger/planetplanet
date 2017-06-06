@@ -343,10 +343,10 @@ class System(object):
     figp, axp = pl.subplots(1, figsize = (8,8))
     figp.subplots_adjust(left = 0.1, right = 0.9, bottom = 0.1, top = 0.9)
     axp.axis('off')
-    for body in self.bodies:
+    for body in self.bodies[1:]:
   
       # Identify the different events
-      inds = np.where(body.occultor >= 0)[0]
+      inds = np.where(body.occultor > 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
     
       # Plot the orbit outline
@@ -363,29 +363,32 @@ class System(object):
       plot_secondary = True
       for i in inds[difs]:
         
-        # The occultor index
-        occ = body.occultor[i]
+        # Loop over all possible occultors
+        for occ in range(len(self.bodies)):
         
-        # Note that `i` is the last index of the occultation
-        duration = np.argmax(body.occultor[:i][::-1] != body.occultor[i])          
+          # Is body `occ` occulting?
+          if (body.occultor[i] & 2 ** occ):
+            
+            # Note that `i` is the last index of the occultation
+            duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)          
+
+            # Compute the minimum impact parameter
+            impact = np.min(np.sqrt((self.bodies[occ].x[i-duration:i+1] - body.x[i-duration:i+1]) ** 2 + (self.bodies[occ].y[i-duration:i+1] - body.y[i-duration:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
         
-        # Compute the minimum impact parameter
-        impact = np.min(np.sqrt((self.bodies[occ].x[i-duration:i+1] - body.x[i-duration:i+1]) ** 2 + (self.bodies[occ].y[i-duration:i+1] - body.y[i-duration:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
+            # Transparency proportional to the impact parameter
+            alpha = 0.8 * (1 - impact) + 0.01
         
-        # Transparency proportional to the impact parameter
-        alpha = 1 - impact
+            # Size = duration in minutes / 3
+            ms = duration * self.settings.dt * 1440 / 3
         
-        # Size = duration in minutes / 3
-        ms = duration * self.settings.dt * 1440 / 3
-        
-        # If the occultor is the star, plot it only once
-        if (body.occultor[i] == 0):
-          if plot_secondary:
-            axp.plot(body.x[i], body.z[i], 'o', color = self.colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
-            plot_secondary = False
-        else:
-          axp.plot(body.x[i], body.z[i], 'o', color = self.colors[body.occultor[i]], alpha = alpha, ms = ms, markeredgecolor = 'none')
-    
+            # If the occultor is the star, plot it only once
+            if (occ == 0):
+              if plot_secondary:
+                axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
+                plot_secondary = False
+            else:
+              axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
+                
     # Legend 1: Occultor names/colors
     axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
     axl1.axis('off')
@@ -420,11 +423,11 @@ class System(object):
     axl3.set_ylim(-2, 1.5)
     axl3.annotate('Impact parameter', xy = (0.5, 0.65), ha = 'center', va = 'center', fontweight = 'bold')
     for j, impact in enumerate([0, 0.2, 0.4]):
-      alpha = 1 - impact
+      alpha = 0.8 * (1 - impact) + 0.01
       axl3.plot(-0.15, -0.75 * j, 'o', color = 'k', ms = 8, alpha = alpha, markeredgecolor = 'none')
       axl3.annotate('%.1f' % impact, xy = (-0.05, -0.75 * j), xycoords = 'data', 
                     ha = 'left', va = 'center', color = 'k')
-    for j, impact in enumerate([0.6, 0.8, 0.99]):
+    for j, impact in enumerate([0.6, 0.8, 1.]):
       alpha = 1 - impact
       axl3.plot(0.675, -0.75 * j, 'o', color = 'k', ms = 8, alpha = alpha, markeredgecolor = 'none')
       axl3.annotate('%.1f' % impact, xy = (0.775, -0.75 * j), xycoords = 'data', 
@@ -570,7 +573,7 @@ class System(object):
       # Identify the different events
       inds = np.where(body.occultor > 0)[0]
       si = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [nt]))
-
+      
       # Loop over the events
       for i in range(len(si) - 1):
   
@@ -633,13 +636,13 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
   
-  def plot_occultations(self, body, interval = 50, gifname = None):
+  def plot_occultation(self, body, time, interval = 50, gifname = None):
     '''
     
     '''
     
     if not self.settings.quiet:
-      print("Plotting the occultations...")
+      print("Plotting the occultation...")
     
     # Check file name
     if gifname is not None:
@@ -650,128 +653,128 @@ class System(object):
     p = np.argmax(self._names == body)
     body = self.bodies[p]
     
-    # Figure lists
-    fig = [None for i in range(len(body._inds))]
-    axlc = [None for i in range(len(body._inds))]
-    axxz = [None for i in range(len(body._inds))]
-    axim = [None for i in range(len(body._inds))]
+    # Get the indices of the occultation
+    tind = np.argmin(np.abs(body.time - time))
+    iind = np.argmax([tind in inds for inds in body._inds])
+    if (iind == 0) and not (tind in body._inds[0]):
+      return None
+    t = body._inds[iind]
     
     # Stellar flux (baseline)
     normb = np.nanmedian(self.bodies[0].flux[:,0])
     normg = np.nanmedian(self.bodies[0].flux[:,body.flux.shape[-1] // 2])
     normr = np.nanmedian(self.bodies[0].flux[:,-1])
-
-    # Loop over all events
-    for i, t in enumerate(body._inds):
-      
-      # Set up the figure
-      fig[i] = pl.figure(figsize = (5, 8))
-      fig[i].subplots_adjust(left = 0.175)
-  
-      # Plot three different wavelengths (first, mid, and last)
-      axlc[i] = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-      axlc[i].plot(body.time[t], (int(p > 0) * normb + body.flux[t, 0]) / normb, 'b-')
-      axlc[i].plot(body.time[t], (int(p > 0) * normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-')
-      axlc[i].plot(body.time[t], (int(p > 0) * normr + body.flux[t, -1]) / normr, 'r-')
-      axlc[i].set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
-      axlc[i].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
-      axlc[i].get_yaxis().set_major_locator(MaxNLocator(4))
-      axlc[i].get_xaxis().set_major_locator(MaxNLocator(4))
-      tracker = axlc[i].axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
-      for tick in axlc[i].get_xticklabels() + axlc[i].get_yticklabels():
-        tick.set_fontsize(8)
     
-      # Get the times of ingress, midpoint, and egress
-      tstart = t[0] + np.argmax(body.occultor[t] >= 0)
-      tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
-      tmid = (tstart + tend) // 2
-      
-      # Sort occultors by z-order (occultor closest to observer last)
-      occultors = []
-      for b in range(len(self.bodies)):
-        for ti in t:
-          if (body.occultor[ti] & 2 ** b):
-            occultors.append(b)
-      occultors = list(set(occultors))
-      zorders = [-self.bodies[o].z[tmid] for o in occultors]
-      occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
+    # Set up the figure
+    fig = pl.figure(figsize = (5, 8))
+    fig.subplots_adjust(left = 0.175)
 
-      # Plot the orbits of all bodies
-      axxz[i] = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
-      f = np.linspace(0, 2 * np.pi, 1000)
-      for j, b in enumerate(self.bodies):
-        if j == p:
-          style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
-        elif j in occultors:
-          style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
-        else:
-          style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
-        r = b.a * (1 - b.ecc ** 2) / (1 + b.ecc * np.cos(f))
-        x = r * np.cos(b.w + f) - r * np.sin(b.w + f) * np.cos(b.inc) * np.sin(b.Omega)
-        z = r * np.sin(b.w + f) * np.sin(b.inc)
-        axxz[i].plot(x, z, **style)
+    # Plot three different wavelengths (first, mid, and last)
+    axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
+    axlc.plot(body.time[t], (int(p > 0) * normb + body.flux[t, 0]) / normb, 'b-')
+    axlc.plot(body.time[t], (int(p > 0) * normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-')
+    axlc.plot(body.time[t], (int(p > 0) * normr + body.flux[t, -1]) / normr, 'r-')
+    axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
+    axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
+    axlc.get_yaxis().set_major_locator(MaxNLocator(4))
+    axlc.get_xaxis().set_major_locator(MaxNLocator(4))
+    tracker = axlc.axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
+    for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
+      tick.set_fontsize(8)
+  
+    # Get the times of ingress, midpoint, and egress
+    tstart = t[0] + np.argmax(body.occultor[t] >= 0)
+    tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
+    tmid = (tstart + tend) // 2
+    
+    # Sort occultors by z-order (occultor closest to observer last)
+    occultors = []
+    for b in range(len(self.bodies)):
+      for ti in t:
+        if (body.occultor[ti] & 2 ** b):
+          occultors.append(b)
+    occultors = list(set(occultors))
+    zorders = [-self.bodies[o].z[tmid] for o in occultors]
+    occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
 
-      # Plot the locations of the bodies
-      ptb = [None for b in self.bodies]
-      for bi, b in enumerate(self.bodies):
-        if b == body:
-          ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
-        elif bi in occultors:
-          ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
-        else:
-          ptb[bi], = axxz[i].plot(b.x[tmid], b.z[tmid], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
-        
-      # Appearance
-      axxz[i].set_ylim(-max(np.abs(axxz[i].get_ylim())), max(np.abs(axxz[i].get_ylim())))
-      axxz[i].set_xlim(-max(np.abs(axxz[i].get_xlim())), max(np.abs(axxz[i].get_xlim())))
-      axxz[i].set_aspect('equal')
-      axxz[i].axis('off')
+    # Plot the orbits of all bodies
+    axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
+    f = np.linspace(0, 2 * np.pi, 1000)
+    for j, b in enumerate(self.bodies):
+      if j == p:
+        style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
+      elif j in occultors:
+        style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
+      else:
+        style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
+      r = b.a * (1 - b.ecc ** 2) / (1 + b.ecc * np.cos(f))
+      x = r * np.cos(b.w + f) - r * np.sin(b.w + f) * np.cos(b.inc) * np.sin(b.Omega)
+      z = r * np.sin(b.w + f) * np.sin(b.inc)
+      axxz.plot(x, z, **style)
 
-      # Plot the image
-      axim[i] = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1) 
-      _, pto = self.image(tmid, body, occultors, ax = axim[i])
-      xmin = min([self.bodies[o].x[tstart] - 3 * self.bodies[o].r for o in occultors] + [-1.5 * body.r])
-      xmax = max([self.bodies[o].x[tend] + 3 * self.bodies[o].r for o in occultors] + [1.5 * body.r])
-      if xmin > xmax: xmin, xmax = xmax, xmin
-      if (body.x[tmid] - xmin) > (xmax - body.x[tmid]):
-        dx = body.x[tmid] - xmin
+    # Plot the locations of the bodies
+    ptb = [None for b in self.bodies]
+    for bi, b in enumerate(self.bodies):
+      if b == body:
+        ptb[bi], = axxz.plot(b.x[tmid], b.z[tmid], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
+      elif bi in occultors:
+        ptb[bi], = axxz.plot(b.x[tmid], b.z[tmid], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
       else:
-        dx = xmax - body.x[tmid]
-      ymin = min([self.bodies[o].y[tstart] - 3 * self.bodies[o].r for o in occultors] + [-1.5 * body.r])
-      ymax = max([self.bodies[o].y[tend] + 3 * self.bodies[o].r for o in occultors] + [1.5 * body.r])
-      if ymin > ymax: ymin, ymax = ymax, ymin
-      if (body.y[tmid] - ymin) > (ymax - body.y[tmid]):
-        dy = body.y[tmid] - ymin
-      else:
-        dy = ymax - body.y[tmid]
-      axim[i].set_xlim(0 - dx, 0 + dx)
-      axim[i].set_ylim(0 - dy, 0 + dy)
-      axim[i].axis('off')
-      axim[i].set_aspect('equal')
+        ptb[bi], = axxz.plot(b.x[tmid], b.z[tmid], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
       
-      # The title
-      if len(occultors) == 1:
-        axxz[i].annotate("%s occulted by %s" % (body.name, self.bodies[occultors[0]].name), xy = (0.5, 1.25),
-                         xycoords = "axes fraction", ha = 'center', va = 'center',
-                         fontweight = 'bold', fontsize = 12)
-      else:
-        axxz[i].annotate("%s occulted by %s" % (body.name, 
-                        ", ".join([occultor.name for occultor in [self.bodies[o] for o in occultors]])), 
-                         xy = (0.5, 1.25),
-                         xycoords = "axes fraction", ha = 'center', va = 'center',
-                         fontweight = 'bold', fontsize = 12)
-      axxz[i].annotate("Duration: %.2f minutes" % ((body.time[tend] - body.time[tstart]) * 1440.),
-                       xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
-                       fontsize = 10, style = 'italic')
-      
-      # Animate!
-      if gifname is not None:
-        tmp = '%s.%03d.gif' % (gifname, len(self._animations) + 1)
-      else:
-        tmp = None
-      self._animations.append(Animation(t, fig[i], axim[i], tracker, pto, ptb, body, 
-                              self.bodies, [self.bodies[o] for o in occultors],
-                              interval = interval, gifname = tmp, quiet = self.settings.quiet))
+    # Appearance
+    axxz.set_ylim(-max(np.abs(axxz.get_ylim())), max(np.abs(axxz.get_ylim())))
+    axxz.set_xlim(-max(np.abs(axxz.get_xlim())), max(np.abs(axxz.get_xlim())))
+    axxz.set_aspect('equal')
+    axxz.axis('off')
+
+    # Plot the image
+    axim = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1) 
+    _, pto = self.plot_image(tmid, body, occultors, ax = axim)
+    xmin = min([self.bodies[o].x[tstart] - 3 * self.bodies[o].r for o in occultors])
+    xmax = max([self.bodies[o].x[tend] + 3 * self.bodies[o].r for o in occultors])
+    if xmin > xmax: xmin, xmax = xmax, xmin
+    if (body.x[tmid] - xmin) > (xmax - body.x[tmid]):
+      dx = body.x[tmid] - xmin
+    else:
+      dx = xmax - body.x[tmid]
+    dx = max(dx, 1.5 * body.r)
+    ymin = min([self.bodies[o].y[tstart] - 3 * self.bodies[o].r for o in occultors])
+    ymax = max([self.bodies[o].y[tend] + 3 * self.bodies[o].r for o in occultors])
+    if ymin > ymax: ymin, ymax = ymax, ymin
+    if (body.y[tmid] - ymin) > (ymax - body.y[tmid]):
+      dy = body.y[tmid] - ymin
+    else:
+      dy = ymax - body.y[tmid]
+    dy = max(dy, 1.5 * body.r)
+    axim.set_xlim(0 - dx, 0 + dx)
+    axim.set_ylim(0 - dy, 0 + dy)
+    axim.axis('off')
+    axim.set_aspect('equal')
+    
+    # The title
+    if len(occultors) == 1:
+      axxz.annotate("%s occulted by %s" % (body.name, self.bodies[occultors[0]].name), xy = (0.5, 1.25),
+                       xycoords = "axes fraction", ha = 'center', va = 'center',
+                       fontweight = 'bold', fontsize = 12)
+    else:
+      axxz.annotate("%s occulted by %s" % (body.name, 
+                      ", ".join([occultor.name for occultor in [self.bodies[o] for o in occultors]])), 
+                       xy = (0.5, 1.25),
+                       xycoords = "axes fraction", ha = 'center', va = 'center',
+                       fontweight = 'bold', fontsize = 12)
+    axxz.annotate("Duration: %.2f minutes" % ((body.time[tend] - body.time[tstart]) * 1440.),
+                     xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
+                     fontsize = 10, style = 'italic')
+    
+    # Animate!
+    if gifname is not None:
+      tmp = '%s.%03d.gif' % (gifname, len(self._animations) + 1)
+    else:
+      tmp = None
+    self._animations.append(Animation(t, fig, axim, tracker, pto, ptb, body, 
+                            self.bodies, [self.bodies[o] for o in occultors],
+                            interval = interval, gifname = tmp, quiet = self.settings.quiet))
 
     return fig, axlc, axxz, axim
   
@@ -811,7 +814,7 @@ class System(object):
   
     return ax
       
-  def image(self, t, occulted, occultors, ax = None, pad = 2.5, **kwargs):
+  def plot_image(self, t, occulted, occultors, ax = None, pad = 2.5, **kwargs):
     '''
     Plots an image of the `occulted` body and the `occultor` at a given `time`.
   
@@ -879,6 +882,18 @@ class System(object):
     
     return ax, pto
 
+  def _onpick(self, event):
+    '''
+    
+    '''
+    
+    index = event.ind[len(event.ind) // 2]
+    for body in self.bodies:
+      for occultation in body._inds:
+        if index in occultation:
+          self.plot_occultation(body.name, body.time[index])
+    pl.show()
+          
   def plot_lightcurve(self, wavelength = 15.):
     '''
     
@@ -894,7 +909,8 @@ class System(object):
     w = np.argmax(1e-6 * wavelength <= self.bodies[0].wavelength)
     flux = np.sum([b.flux[:,w] for b in self.bodies], axis = 0)
     flux /= np.nanmedian(flux)
-    ax.plot(time, flux, 'k-', lw = 1)
+    curve, = ax.plot(time, flux, 'k-', lw = 1, picker = 10)
+    fig.canvas.mpl_connect('pick_event', self._onpick)
     
     # Appearance
     ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
@@ -909,6 +925,7 @@ class System(object):
     ymin = np.nanmin(flux)
     yrng = ymax - ymin
     ax.set_ylim(ymin - 0.2 * yrng, ymax + 0.2 * yrng)
+    ax.margins(0, None)
     
     # Label all of the events
     for body in self.bodies:
