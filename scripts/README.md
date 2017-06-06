@@ -38,7 +38,7 @@ to the duration of the mutual transit. Observing such an event
 can place strong constraints on the longitudes of ascending node
 of the TRAPPIST-1 planets.
 
-<p align='center'><img src="../img/Omega.png" width="400"/></p>
+<p align='center'><img src="../img/Omega.png" width="500"/></p>
 
 ## orbits
 
@@ -56,4 +56,4 @@ occultation as a circle in a top-view of the system; the circle size,
 transparency, and color indicate the duration, impact parameter, and 
 occulting body, respectively.
 
-<p align='center'><img src="../img/scatter.png" width="600"/></p>
+<p align='center'><img src="../img/scatter.png" width="800"/></p>
