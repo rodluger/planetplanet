@@ -59,6 +59,12 @@ class Settings(ctypes.Structure):
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `False`
+  :param bool quiet: Suppress output? Default `False`
+  :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
+         angle, elliptical boundaries of constant surface brightness on the planet surface are \
+         treated as vertical lines. Default `1.`
+  :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
+  :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
   
   '''
   
@@ -71,7 +77,10 @@ class Settings(ctypes.Structure):
               ("maxpolyiter", ctypes.c_int),
               ("dt", ctypes.c_double),
               ("adaptive", ctypes.c_int),
-              ("quiet", ctypes.c_int)]
+              ("quiet", ctypes.c_int),
+              ("mintheta", ctypes.c_double),
+              ("maxvertices", ctypes.c_int),
+              ("maxfunctions", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.ttvs = int(kwargs.pop('ttvs', False))
@@ -84,6 +93,9 @@ class Settings(ctypes.Structure):
     self.dt = kwargs.pop('dt', 0.01)
     self.adaptive = int(kwargs.pop('adaptive', False))
     self.quiet = int(kwargs.pop('quiet', False))
+    self.mintheta = kwargs.pop('mintheta', 1.) * np.pi / 180
+    self.maxvertices = kwargs.pop('maxvertices', 999)
+    self.maxfunctions = kwargs.pop('maxfunctions', 999)
 
 def Star(*args, **kwargs):
   '''

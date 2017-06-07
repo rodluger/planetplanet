@@ -123,7 +123,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   
   // Compute the stellar flux
   UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., settings.polyeps1, settings.polyeps2, 
-                 settings.maxpolyiter, settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
+                 settings.maxpolyiter, settings.mintheta, settings.maxvertices, settings.maxfunctions,
+                 settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
                  wavelength, tmp, settings.quiet);
   for (t = 0; t < nt; t++) {
     for (w = 0; w < nw; w++)
@@ -148,7 +149,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
 
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, body[p]->irrad, body[p]->tnight,
-                       settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
+                       settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
+                       settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, 
                        tmp, settings.quiet);
         for (w = 0; w < nw; w++)
@@ -208,7 +210,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // Call the eyeball routine
         OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
                      body[p]->irrad, body[p]->tnight, settings.polyeps1, settings.polyeps2, 
-                     settings.maxpolyiter, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
+                     settings.maxpolyiter, settings.mintheta, settings.maxvertices,
+                     settings.maxfunctions, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
                      body[p]->u, wavelength, tmp, settings.quiet);
       
         // Update the body light curve
