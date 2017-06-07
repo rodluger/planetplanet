@@ -14,12 +14,14 @@ import os
 import emcee, corner
 from tqdm import tqdm
 MSUN = 1.988416e30
+LSUN = 3.846e26
 RSUN = 6.957e8
 G = 6.67428e-11
 MEARTH = 5.9722e24
 REARTH = 6.3781e6
 DAYSEC = 86400.
 AUM = 1.49598e11
+SBOLTZ = 5.670367e-8
 
 __all__ = ['Trappist1']
 
@@ -37,7 +39,8 @@ def Trappist1(sample = True, **kwargs):
   # Instantiate the star
   mstar = N(0.0802, 0.0073)
   rstar = N(0.117, 0.0036)
-  star = Star('A', m = mstar, r = rstar, color = 'k', **kwargs)
+  T = (N(0.000524, 0.000034) * LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
+  star = Star('A', m = mstar, r = rstar, T = T, color = 'k', **kwargs)
   
   # Parameters from Gillon et al. (2017) and Luger et al. (2017)
   # Mass for `h` is currently unconstrained, so basing it loosely on 
