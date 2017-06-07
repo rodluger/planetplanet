@@ -96,7 +96,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   
   */
 
-  double d, dx, dy;
+  double d, dx, dy, dz, d2;
+  double irrad;
   int no;
   double xo[np-1], yo[np-1], ro[np-1];
   double tmp[nw];
@@ -146,9 +147,16 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                 
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-
+        
+        // The irradiation
+        dx = (body[0]->x[t] - body[p]->x[t]);
+        dy = (body[0]->y[t] - body[p]->y[t]);
+        dz = (body[0]->y[t] - body[p]->y[t]);
+        d2 = dx * dx + dy * dy + dz * dz;
+        irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->T * body[0]->T * body[0]->T * body[0]->T) / d2;
+        
         // Call the eyeball routine
-        UnoccultedFlux(body[p]->r, theta, body[p]->albedo, body[p]->irrad, body[p]->tnight,
+        UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight,
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
                        settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, 
@@ -206,10 +214,20 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-      
+        
+        // The irradiation on the planets
+        if (p > 0) {
+          dx = (body[0]->x[t] - body[p]->x[t]);
+          dy = (body[0]->y[t] - body[p]->y[t]);
+          dz = (body[0]->z[t] - body[p]->z[t]);
+          d2 = dx * dx + dy * dy + dz * dz;
+          irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->T * body[0]->T * body[0]->T * body[0]->T) / d2;
+        } else 
+          irrad = 0.;
+        
         // Call the eyeball routine
         OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
-                     body[p]->irrad, body[p]->tnight, settings.polyeps1, settings.polyeps2, 
+                     irrad, body[p]->tnight, settings.polyeps1, settings.polyeps2, 
                      settings.maxpolyiter, settings.mintheta, settings.maxvertices,
                      settings.maxfunctions, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
                      body[p]->u, wavelength, tmp, settings.quiet);

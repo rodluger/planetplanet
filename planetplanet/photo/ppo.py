@@ -15,6 +15,7 @@ from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
+from scipy.integrate import quad
 import corner
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
@@ -45,6 +46,17 @@ try:
 except:
   import pdb; pdb.set_trace()
   raise Exception("Can't find `libppo.so`; please run `make` to compile it.")
+
+def NormalizeLimbDarkening(u, Teff):
+  '''
+  
+  '''
+  
+  def T(mu):
+    return mu * np.sum([u[n] * (1 - mu) ** (n + 1) for n in range(len(u))]) ** 4
+  muint, _ = quad(T, 0, 1)
+  u0 = (Teff ** 4 - 2 * muint) ** 0.25
+  return np.concatenate(([u0], u))
 
 class Settings(ctypes.Structure):
   '''
@@ -103,19 +115,24 @@ def Star(*args, **kwargs):
   '''
   
   # Effective temperature and limb darkening
+  # Note that the limb darkening coefficients
+  # `u` are the linear, quadratic, cubic, etc.
+  # terms; the constant term is computed by
+  # requiring that the surface brightness integrate
+  # to that of a blackbody at the effective temperature.
   T = kwargs.get('T', 2559.)
-  u = kwargs.get('u', np.array([1., -1.]))
-  u *= T / u[0]
-  
+  u = kwargs.get('u', np.array([-1], dtype = float)) * T
+  u = NormalizeLimbDarkening(u, T)
+
   # Number of layers
   nl = kwargs.get('nl', 31)
   
   kwargs.update(dict(m = kwargs.get('m', 0.0802) * MSUNMEARTH, 
                      r = kwargs.get('r', 0.117) * RSUNREARTH, 
                      per = 0., inc = 0., ecc = 0., w = 0., 
-                     Omega = 0., a = 0., t0 = 0., irrad = 0.,
+                     Omega = 0., a = 0., t0 = 0.,
                      albedo = 0., phasecurve = False, u = u,
-                     nl = nl))
+                     nl = nl, T = T))
                      
   return Body(*args, **kwargs)
 
@@ -139,8 +156,6 @@ class Body(ctypes.Structure):
   :param float t0: Time of first transit in days. Default `7322.51736`
   :param float r: Body radius in Earth radii. Default `1.086`
   :param float albedo: Body albedo. Default `0.3`
-  :param float irrad: Stellar irradiation at the body's distance in units \
-         of the solar constant (1370 W/m^2). Default `0.3`
   :param bool phasecurve: Compute the full phase curve? Default `False`
   :param int nl: Number of latitude slices. Default `11`
   :param float tnight: Nightside temperature in Kelvin. Default `40`
@@ -157,7 +172,7 @@ class Body(ctypes.Structure):
               ("t0", ctypes.c_double),
               ("r", ctypes.c_double),
               ("albedo", ctypes.c_double),
-              ("irrad", ctypes.c_double),
+              ("T", ctypes.c_double),
               ("tnight", ctypes.c_double),
               ("phasecurve", ctypes.c_int),
               ("nu", ctypes.c_int),
@@ -185,11 +200,11 @@ class Body(ctypes.Structure):
     self.Omega = kwargs.pop('Omega', 0.) * np.pi / 180.
     self.r = kwargs.pop('r', 1.086)
     self.albedo = kwargs.pop('albedo', 0.3)
-    self.irrad = kwargs.pop('irrad', 4.25) * SEARTH
     self.tnight = kwargs.pop('tnight', 40)
     self.phasecurve = int(kwargs.pop('phasecurve', False))
     self.nl = kwargs.pop('nl', 11)
     self.color = kwargs.pop('color', 'k')
+    self.T = kwargs.pop('T', 0.)
     
     # C stuff
     self.nt = 0
@@ -303,7 +318,7 @@ class System(object):
     # Compute the semi-major axis for each planet (in Earth radii)
     for body in self.bodies:
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.star.m + body.m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-    
+
     #
     self._animations = []
         

@@ -16,3 +16,4 @@ make -C planetplanet/photo
 - Add limb-darkened planet option
 - Add nightside heat redistribution option
 - Speed up N-body code with adaptive grid
+- Compute orbital phase angle in the general case (not edge-on limit)

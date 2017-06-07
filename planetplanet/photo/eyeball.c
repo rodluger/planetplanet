@@ -4,6 +4,45 @@
 #include "ppo.h"
 #include "complex.h"
 
+int dblcomp( const void* a, const void* b) {
+  /*
+  
+  */
+  
+  double dbl_a = * ( (double*) a );
+  double dbl_b = * ( (double*) b );
+  if ( dbl_a == dbl_b ) return 0;
+  else if ( dbl_a < dbl_b ) return -1;
+  else return 1;
+}
+
+int realcomp( const void* a, const void* b) {
+  /*
+  Compares the magnitude of the imaginary
+  component of two complex numbers, for use
+  with `qsort`.
+  
+  */
+  
+  dcomplex cmp_a = * ( (dcomplex*) a );
+  dcomplex cmp_b = * ( (dcomplex*) b );
+  if ( cmp_a.i == cmp_b.i ) return 0;
+  else if ( fabs(cmp_a.i) < fabs(cmp_b.i) ) return -1;
+  else return 1;
+}
+
+int funcomp( const void* a, const void* b) {
+  /*
+  
+  */
+  
+  FUNCTION *fun_a = (FUNCTION *)a;
+  FUNCTION *fun_b = (FUNCTION *)b;
+  if ( fun_a->y == fun_b->y ) return 0;
+  else if ( fun_a->y < fun_b->y ) return -1;
+  else return 1;
+}
+
 double EyeballTemperature(double lat, double irrad, double albedo, double tnight) {
   /*
   
@@ -83,7 +122,7 @@ void GetRoots(double a, double b, double xE, double yE, double xC, double yC, do
     }
     if (j == 2) break;
   }
-
+  
 }
 
 double Latitude(double x, double y, double r, double theta) {
@@ -252,12 +291,12 @@ double fupper(double x, ELLIPSE *ellipse) {
   if (ellipse->circle) {
     A = ellipse->r * ellipse->r - (x - ellipse->x0) * (x - ellipse->x0);
     if (fabs(A) < TINY) A = 0;
-    if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
+    else if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
     return ellipse->y0 + sqrt(A);
   } else {
     A = ellipse->b * ellipse->b - (x - ellipse->x0) * (x - ellipse->x0);
     if (fabs(A) < TINY) A = 0;
-    if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
+    else if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
     return ellipse->y0 + (ellipse->a / ellipse->b) * sqrt(A);
   }
 }
@@ -267,12 +306,12 @@ double flower(double x, ELLIPSE *ellipse) {
   if (ellipse->circle) {
     A = ellipse->r * ellipse->r - (x - ellipse->x0) * (x - ellipse->x0);
     if (fabs(A) < TINY) A = 0;
-    if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
+    else if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
     return ellipse->y0 - sqrt(A);
   } else {
     A = ellipse->b * ellipse->b - (x - ellipse->x0) * (x - ellipse->x0);
     if (fabs(A) < TINY) A = 0;
-    if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
+    else if ((x > ellipse->xmax) || (x < ellipse->xmin)) return NAN;
     return ellipse->y0 - (ellipse->a / ellipse->b) * sqrt(A);
   }
 }
@@ -337,30 +376,6 @@ double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
     FR = -(ellipse->a / (2 * ellipse->b)) * (yR * zR + ellipse->b * ellipse->b * atan(yR / zR)) + ellipse->y0 * xR;
   }
   return FR - FL;
-}
-
-int dblcomp( const void* a, const void* b) {
-  /*
-  
-  */
-  
-  double dbl_a = * ( (double*) a );
-  double dbl_b = * ( (double*) b );
-  if ( dbl_a == dbl_b ) return 0;
-  else if ( dbl_a < dbl_b ) return -1;
-  else return 1;
-}
-
-int funcomp( const void* a, const void* b) {
-  /*
-  
-  */
-  
-  FUNCTION *fun_a = (FUNCTION *)a;
-  FUNCTION *fun_b = (FUNCTION *)b;
-  if ( fun_a->y == fun_b->y ) return 0;
-  else if ( fun_a->y < fun_b->y ) return -1;
-  else return 1;
 }
 
 void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y0[no], double ro[no], 
@@ -655,7 +670,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   // Avoid the singular point
   if (fabs(theta) < mintheta)
     theta = mintheta;
-  
+
   // Zero out the flux
   for (m = 0; m < nlam; m++) 
     flux[m] = 0.;

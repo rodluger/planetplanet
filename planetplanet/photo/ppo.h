@@ -38,7 +38,7 @@ typedef struct {
   double t0;
   double r;
   double albedo;
-  double irrad;
+  double T;
   double tnight;
   int phasecurve;
   int nu;
