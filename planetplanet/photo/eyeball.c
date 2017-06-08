@@ -254,7 +254,7 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
       latitude = 0.5 * (latgrid[i] + latgrid[i - 1]);
 
     // Get its blackbody temperature
-    if (nu == 0) {
+    if (teff == 0) {
       
       // No limb darkening
       T = EyeballTemperature(latitude, irrad, albedo, tnight);
@@ -270,6 +270,12 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
     } else {
     
       // Polynomial limb darkening
+      
+      // TODO: We are assuming that the intensity at the center
+      // of the body is the blackbody intensity at its effective
+      // temperature. This is not strictly true, but probably OK
+      // for modest limb darkening. We should eventually find the
+      // correct normalization.
       for (j = 0; j < nlam; j++) {
         I1[j] = Blackbody(lambda[j], teff);
         B[i][j] = I1[j];
@@ -691,7 +697,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     flux[m] = 0.;
   
   // If we're doing limb darkening, theta must be pi/2 (full phase)
-  if (nu > 0)
+  if ((nu > 0) || (teff > 0))
     theta = PI / 2.;
   
   // Generate all the shapes and get their vertices and curves
@@ -699,7 +705,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
   // Compute the latitude grid
-  if (adaptive && (nu > 0)) {
+  if (adaptive && ((nu > 0) || (teff > 0))) {
   
     // Adaptive latitude grid
     // Loop over each occultor

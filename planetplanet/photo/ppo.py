@@ -31,6 +31,10 @@ REARTH = 6.3781e6
 DAYSEC = 86400.
 AUM = 1.49598e11
 G = 6.67428e-11
+HPLANCK = 6.62607004e-34
+CLIGHT = 2.998e8
+KBOLTZ = 1.38064852e-23
+
 MDFAST = 0
 NEWTON = 1
 
@@ -46,16 +50,17 @@ except:
   import pdb; pdb.set_trace()
   raise Exception("Can't find `libppo.so`; please run `make` to compile it.")
 
-def NormalizeLimbDarkening(u, Teff):
+def Blackbody(wav, T):
   '''
+  Computes the blackbody intensity according to Planck's law, given a wavelength in microns.
+  Returns an intensity in W / m^2 / um / sr.
   
   '''
   
-  def T(mu):
-    return mu * np.sum([u[n] * (1 - mu) ** (n + 1) for n in range(len(u))]) ** 4
-  muint, _ = quad(T, 0, 1)
-  u0 = (Teff ** 4 - 2 * muint) ** 0.25
-  return np.concatenate(([u0], u))
+  wav /= 1e6
+  a = 2 * HPLANCK * CLIGHT * CLIGHT / (wav * wav * wav * wav * wav)
+  b = HPLANCK * CLIGHT / (wav * KBOLTZ * T)
+  return a / (np.exp(b) - 1) / 1e6
 
 class Settings(ctypes.Structure):
   '''
@@ -115,7 +120,7 @@ def Star(*args, **kwargs):
   
   # Effective temperature and limb darkening coefficients
   teff = kwargs.get('teff', 2559.)
-  u = kwargs.get('u', [1])
+  u = kwargs.get('u', [1., -0.04])
   assert hasattr(u, '__len__'), "Limb darkening coefficients must be provided as a list of scalars or a list of functions."
   
   # Number of layers
@@ -199,11 +204,13 @@ class Body(ctypes.Structure):
     self.nl = kwargs.pop('nl', 11)
     self.color = kwargs.pop('color', 'k')
     self.teff = kwargs.pop('teff', 0.)
+    self.u = kwargs.pop('u', [])
+    if self.teff == 0:
+      self.u = []
     
     # C stuff
     self.nt = 0
     self.nw = 0
-    self.u = kwargs.pop('u', [])
     self.nu = len(self.u)
     
     # Semi-major axis computed in `System` class
@@ -304,7 +311,12 @@ class System(object):
     '''
     
     self.bodies = bodies
+    
+    # Make planets accessible as properties
     self.star = self.bodies[0]
+    for body in self.bodies:
+      setattr(self, body.name, body)
+    
     self.colors = [b.color for b in self.bodies]
     self.settings = Settings(**kwargs)
     self._names = np.array([p.name for p in self.bodies])
@@ -313,9 +325,9 @@ class System(object):
     for body in self.bodies:
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.star.m + body.m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
 
-    #
+    # Init animations
     self._animations = []
-        
+       
   def scatter_plot(self, tstart, tend):
     '''
     
@@ -995,7 +1007,7 @@ class System(object):
     '''
     
     return self.bodies[0].wavelength * 1.e6
-     
+   
   def plot_lightcurve(self, wavelength = 15.):
     '''
     
