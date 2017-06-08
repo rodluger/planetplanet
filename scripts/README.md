@@ -9,7 +9,12 @@ longitudes of ascending node at right angles to each other:
 
 ## hist
 
-_Coming soon_
+Histograms of the occultation events as a function of phase, duration, and
+impact parameter for each of the seven TRAPPIST-1 planets.
+
+<p align='center'><img src="../img/b.corner.png" width="500"/></p>
+
+<p align='center'><img src="../img/hist.png" width="500"/></p>
 
 ## lightcurve
 

@@ -4,6 +4,9 @@
 hist.py
 -------
 
+Histograms of the occultation events as a function of phase, duration, and
+impact parameter for each of the seven TRAPPIST-1 planets.
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
@@ -25,7 +28,7 @@ mind = 10.
 maxb = 0.5
 
 # Compute (or load saved)?
-compute = False
+compute = True
 
 if compute:
 
