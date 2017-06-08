@@ -16,7 +16,6 @@ import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
 from scipy.integrate import quad
-import corner
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
@@ -403,8 +402,10 @@ class System(object):
             duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)          
 
             # Compute the minimum impact parameter
-            impact = np.min(np.sqrt((self.bodies[occ].x[i-duration:i+1] - body.x[i-duration:i+1]) ** 2 + (self.bodies[occ].y[i-duration:i+1] - body.y[i-duration:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
-        
+            inds = range(i - duration, i + 1)
+            impact = np.min(np.sqrt((self.bodies[occ].x[inds] - body.x[inds]) ** 2 + 
+                                    (self.bodies[occ].y[inds] - body.y[inds]) ** 2)) / (self.bodies[occ].r + body.r)
+
             # Transparency proportional to the impact parameter
             alpha = 0.8 * (1 - impact) + 0.01
         
@@ -418,7 +419,25 @@ class System(object):
                 plot_secondary = False
             else:
               axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
+          
+        # Check for mutual transits
+        if self.bodies[0].occultor[i]:
+          
+          # Get all bodies currently occulting the star
+          occultors = []
+          for occ in range(1, len(self.bodies)):
+            if (self.bodies[0].occultor[i] & 2 ** occ):
+              occultors.append(occ)
+          
+          # Check if any of these occult each other
+          for occ1 in occultors:
+            for occ2 in occultors:
+              if self.bodies[occ1].occultor[i] & 2 ** occ2:
+                axp.plot(self.bodies[occ1].x[i], self.bodies[occ1].z[i], 'x', 
+                         color = self.colors[occ2], alpha = 1, zorder = 100, 
+                         ms = 20)
                 
+          
     # Legend 1: Occultor names/colors
     axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
     axl1.axis('off')
@@ -470,7 +489,7 @@ class System(object):
   
     return figp
       
-  def corner_plot(self, tstart, tend):
+  def histogram(self, tstart, tend):
     '''
     
     '''
@@ -517,29 +536,45 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
 
-    # A corner plot for each planet, showing
-    # distribution of phases, impact parameters, and durations
-    fig = [None for i in self.bodies[1:]]
+    # A histogram of the distribution of phases, impact parameters, and durations
+    hist = [[] for body in self.bodies[1:]]
     for k, body in enumerate(self.bodies[1:]):
       
       # Identify the different planet-planet events
       inds = np.where(body.occultor > 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
-          
+      
       # Loop over individual ones
-      duration = np.zeros(len(difs), dtype = int)
-      phase = np.zeros(len(difs))
-      impact = np.zeros(len(difs))
-      for j, i in enumerate(inds[difs]):
-        occ = body.occultor[i]
-        duration[j] = np.argmax(body.occultor[:i][::-1] != occ) 
-        phase[j] = np.arctan2(body.z[i], body.x[i]) * 180 / np.pi
-        impact[j] = np.min(np.sqrt((self.bodies[occ].x[i-duration[j]:i+1] - body.x[i-duration[j]:i+1]) ** 2 + (self.bodies[occ].y[i-duration[j]:i+1] - body.y[i-duration[j]:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
+      for i in inds[difs]:
+        
+        # Is body `occ` occulting?
+        for occ in range(1, len(self.bodies)):
+          
+          # Yes!
+          if (body.occultor[i] & 2 ** occ):
 
-      samples = np.array([phase, impact, np.log10(duration * self.settings.dt * 1440)]).T
-      fig[k] = corner.corner(samples, range = [(-180,180), (0,1), (0, 3)])
+            # Note that `i` is the last index of the occultation
+            duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)
+            if duration > 0:
+            
+              # Orbital phase
+              phase = np.arctan2(body.x[i], -body.z[i]) * 180 / np.pi
+            
+              # Compute the minimum impact parameter
+              inds = range(i - duration, i + 1)
+              impact = np.min(np.sqrt((self.bodies[occ].x[inds] - body.x[inds]) ** 2 + 
+                                      (self.bodies[occ].y[inds] - body.y[inds]) ** 2)) / (self.bodies[occ].r + body.r)
+            
+              # Convert duration to log
+              duration = np.log10(duration * self.settings.dt * 1440)
+            
+              # Running list
+              hist[k].append((phase, impact, duration))
+      
+      # Make into array  
+      hist[k] = np.array(hist[k])
     
-    return fig
+    return hist
         
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
