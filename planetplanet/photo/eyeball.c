@@ -223,16 +223,18 @@ double Latitude(double x, double y, double r, double theta) {
   
 }
 
-void SurfaceIntensity(double albedo, double irrad, double tnight, int nu, double u[nu], int nlat, double latgrid[nlat], int nlam, double lambda[nlam], double B[nlat + 1][nlam]) {
+void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nlat, double latgrid[nlat], int nlam, double lambda[nlam], int nu, double u[nu * nlam], double B[nlat + 1][nlam]) {
   /*
   Returns the blackbody intensity at the center of each latitude slice 
   evaluated at a given array of wavelengths.
   
   */
   
-  int i, j;
+  int i, j, k;
   double latitude, coslat;
   double T = 0.;
+  double I1[nlam];
+  double x;
   
   // Loop over each slice
   for (i = 0; i < nlat + 1; i++) {
@@ -257,25 +259,38 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, int nu, double
       // No limb darkening
       T = EyeballTemperature(latitude, irrad, albedo, tnight);
 
+      // Loop over each wavelength bin
+      for (j = 0; j < nlam; j++) {
+        
+        // Get the blackbody intensity (W / m^2 / m / sr)
+        B[i][j] = Blackbody(lambda[j], T);
+      
+      }
+    
     } else {
     
       // Polynomial limb darkening
-      T = 0;
-      coslat = cos(latitude);
-      for (j = 0; j < nu; j++) {
-        T += u[j] * pow(1 - coslat, j);
+      for (j = 0; j < nlam; j++) {
+        I1[j] = Blackbody(lambda[j], teff);
+        B[i][j] = I1[j];
       }
       
-    }
-
-    // Loop over each wavelength bin
-    for (j = 0; j < nlam; j++) {
-        
-      // Get the blackbody intensity (W / m^2 / m / sr)
-      B[i][j] = Blackbody(lambda[j], T);
+      // Pre-compute mu
+      coslat = cos(latitude);
       
+      // Loop over the coefficient order
+      for (k = 0; k < nu; k++) {
+      
+        // The Taylor expansion is in (1 - mu)
+        x = pow(1 - coslat, k + 1);
+        
+        // Compute the wavelength-dependent intensity
+        for (j = 0; j < nlam; j++) {
+          B[i][j] -= u[nlam * k + j] * I1[j] * x;
+        } 
+      } 
     }
-  } 
+  }   
 }
 
 double curve(double x, FUNCTION function) {
@@ -642,7 +657,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 }
 
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
-                  double irrad, double tnight, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices,
+                  double irrad, double tnight, double teff, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices,
                   int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], 
                   double flux[nlam], int quiet) {
   /*
@@ -734,7 +749,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   }
   
   // Pre-compute the surface intensity in each latitude slice
-  SurfaceIntensity(albedo, irrad, tnight, nu, u, nlat * no, latgrid, nlam, lambda, B);
+  SurfaceIntensity(albedo, irrad, tnight, teff, nlat * no, latgrid, nlam, lambda, nu, u, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
@@ -837,7 +852,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double polyeps1, 
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double polyeps1, 
                     double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, 
                     int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
   /*
@@ -849,6 +864,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nlat, nlam, u, lambda, flux, quiet);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nlat, nlam, u, lambda, flux, quiet);
     
 }

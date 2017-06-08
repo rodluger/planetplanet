@@ -113,16 +113,11 @@ def Star(*args, **kwargs):
   
   '''
   
-  # Effective temperature and limb darkening
-  # Note that the limb darkening coefficients
-  # `u` are the linear, quadratic, cubic, etc.
-  # terms; the constant term is computed by
-  # requiring that the surface brightness integrate
-  # to that of a blackbody at the effective temperature.
-  T = kwargs.get('T', 2559.)
-  u = kwargs.get('u', np.array([-1], dtype = float)) * T
-  u = NormalizeLimbDarkening(u, T)
-
+  # Effective temperature and limb darkening coefficients
+  teff = kwargs.get('teff', 2559.)
+  u = kwargs.get('u', [1])
+  assert hasattr(u, '__len__'), "Limb darkening coefficients must be provided as a list of scalars or a list of functions."
+  
   # Number of layers
   nl = kwargs.get('nl', 31)
   
@@ -131,7 +126,7 @@ def Star(*args, **kwargs):
                      per = 0., inc = 0., ecc = 0., w = 0., 
                      Omega = 0., a = 0., t0 = 0.,
                      albedo = 0., phasecurve = False, u = u,
-                     nl = nl, T = T))
+                     nl = nl, teff = teff))
                      
   return Body(*args, **kwargs)
 
@@ -171,7 +166,7 @@ class Body(ctypes.Structure):
               ("t0", ctypes.c_double),
               ("r", ctypes.c_double),
               ("albedo", ctypes.c_double),
-              ("T", ctypes.c_double),
+              ("teff", ctypes.c_double),
               ("tnight", ctypes.c_double),
               ("phasecurve", ctypes.c_int),
               ("nu", ctypes.c_int),
@@ -203,12 +198,12 @@ class Body(ctypes.Structure):
     self.phasecurve = int(kwargs.pop('phasecurve', False))
     self.nl = kwargs.pop('nl', 11)
     self.color = kwargs.pop('color', 'k')
-    self.T = kwargs.pop('T', 0.)
+    self.teff = kwargs.pop('teff', 0.)
     
     # C stuff
     self.nt = 0
     self.nw = 0
-    self.u = kwargs.pop('u', np.array([], dtype = float))
+    self.u = kwargs.pop('u', [])
     self.nu = len(self.u)
     
     # Semi-major axis computed in `System` class
@@ -585,8 +580,22 @@ class System(object):
     wav = [lambda1]
     while(wav[-1] < lambda2):
       wav.append(wav[-1] + wav[-1] / R) 
-    wavelength = np.array(wav) * 1e-6
-  
+    wavelength = np.array(wav)
+    
+    # Compute all limb darkening coefficients
+    for body in self.bodies:
+      for n, u in enumerate(body.u):
+        if callable(u):
+          body.u[n] = u(wavelength)
+        elif not hasattr(u, '__len__'):
+          body.u[n] = u * np.ones_like(wavelength)
+        else:
+          raise Exception("Limb darkening coefficients must be provided as a list of scalars or a list of functions.")
+      body.u = np.array(body.u)
+
+    # Convert from microns to meters
+    wavelength *= 1e-6
+    
     # Dimensions
     n = len(self.bodies)
     nt = len(time)
@@ -602,7 +611,6 @@ class System(object):
   
     # Allocate memory for all the arrays
     for body in self.bodies:
-      body._u = np.ctypeslib.as_ctypes(body.u)
       body.time = np.zeros(nt)
       body._time = np.ctypeslib.as_ctypes(body.time)
       body.wavelength = np.zeros(nw)
@@ -621,7 +629,10 @@ class System(object):
       body.flux = np.zeros((nt, nw))
       body._flux1d = body.flux.reshape(nt * nw)
       body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-
+      # HACK: Same for the limb darkening coefficients
+      body._u1d = body.u.reshape(-1)
+      body._u = np.ctypeslib.as_ctypes(body._u1d)
+      
     # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
     # passed by reference. The contents can all be accessed through `bodies`
     ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
