@@ -15,7 +15,7 @@ from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
-import corner
+from scipy.integrate import quad
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
@@ -46,6 +46,17 @@ except:
   import pdb; pdb.set_trace()
   raise Exception("Can't find `libppo.so`; please run `make` to compile it.")
 
+def NormalizeLimbDarkening(u, Teff):
+  '''
+  
+  '''
+  
+  def T(mu):
+    return mu * np.sum([u[n] * (1 - mu) ** (n + 1) for n in range(len(u))]) ** 4
+  muint, _ = quad(T, 0, 1)
+  u0 = (Teff ** 4 - 2 * muint) ** 0.25
+  return np.concatenate(([u0], u))
+
 class Settings(ctypes.Structure):
   '''
   The class that contains the model settings.
@@ -59,6 +70,12 @@ class Settings(ctypes.Structure):
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `False`
+  :param bool quiet: Suppress output? Default `False`
+  :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
+         angle, elliptical boundaries of constant surface brightness on the planet surface are \
+         treated as vertical lines. Default `1.`
+  :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
+  :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
   
   '''
   
@@ -71,7 +88,10 @@ class Settings(ctypes.Structure):
               ("maxpolyiter", ctypes.c_int),
               ("dt", ctypes.c_double),
               ("adaptive", ctypes.c_int),
-              ("quiet", ctypes.c_int)]
+              ("quiet", ctypes.c_int),
+              ("mintheta", ctypes.c_double),
+              ("maxvertices", ctypes.c_int),
+              ("maxfunctions", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.ttvs = int(kwargs.pop('ttvs', False))
@@ -84,6 +104,9 @@ class Settings(ctypes.Structure):
     self.dt = kwargs.pop('dt', 0.01)
     self.adaptive = int(kwargs.pop('adaptive', False))
     self.quiet = int(kwargs.pop('quiet', False))
+    self.mintheta = kwargs.pop('mintheta', 1.) * np.pi / 180
+    self.maxvertices = kwargs.pop('maxvertices', 999)
+    self.maxfunctions = kwargs.pop('maxfunctions', 999)
 
 def Star(*args, **kwargs):
   '''
@@ -91,19 +114,24 @@ def Star(*args, **kwargs):
   '''
   
   # Effective temperature and limb darkening
+  # Note that the limb darkening coefficients
+  # `u` are the linear, quadratic, cubic, etc.
+  # terms; the constant term is computed by
+  # requiring that the surface brightness integrate
+  # to that of a blackbody at the effective temperature.
   T = kwargs.get('T', 2559.)
-  u = kwargs.get('u', np.array([1., -1.]))
-  u *= T / u[0]
-  
+  u = kwargs.get('u', np.array([-1], dtype = float)) * T
+  u = NormalizeLimbDarkening(u, T)
+
   # Number of layers
   nl = kwargs.get('nl', 31)
   
   kwargs.update(dict(m = kwargs.get('m', 0.0802) * MSUNMEARTH, 
                      r = kwargs.get('r', 0.117) * RSUNREARTH, 
                      per = 0., inc = 0., ecc = 0., w = 0., 
-                     Omega = 0., a = 0., t0 = 0., irrad = 0.,
+                     Omega = 0., a = 0., t0 = 0.,
                      albedo = 0., phasecurve = False, u = u,
-                     nl = nl))
+                     nl = nl, T = T))
                      
   return Body(*args, **kwargs)
 
@@ -127,10 +155,9 @@ class Body(ctypes.Structure):
   :param float t0: Time of first transit in days. Default `7322.51736`
   :param float r: Body radius in Earth radii. Default `1.086`
   :param float albedo: Body albedo. Default `0.3`
-  :param float irrad: Stellar irradiation at the body's distance in units \
-         of the solar constant (1370 W/m^2). Default `0.3`
   :param bool phasecurve: Compute the full phase curve? Default `False`
   :param int nl: Number of latitude slices. Default `11`
+  :param float tnight: Nightside temperature in Kelvin. Default `40`
   
   '''
   
@@ -144,7 +171,8 @@ class Body(ctypes.Structure):
               ("t0", ctypes.c_double),
               ("r", ctypes.c_double),
               ("albedo", ctypes.c_double),
-              ("irrad", ctypes.c_double),
+              ("T", ctypes.c_double),
+              ("tnight", ctypes.c_double),
               ("phasecurve", ctypes.c_int),
               ("nu", ctypes.c_int),
               ("nl", ctypes.c_int),
@@ -171,10 +199,11 @@ class Body(ctypes.Structure):
     self.Omega = kwargs.pop('Omega', 0.) * np.pi / 180.
     self.r = kwargs.pop('r', 1.086)
     self.albedo = kwargs.pop('albedo', 0.3)
-    self.irrad = kwargs.pop('irrad', 4.25) * SEARTH
+    self.tnight = kwargs.pop('tnight', 40)
     self.phasecurve = int(kwargs.pop('phasecurve', False))
     self.nl = kwargs.pop('nl', 11)
     self.color = kwargs.pop('color', 'k')
+    self.T = kwargs.pop('T', 0.)
     
     # C stuff
     self.nt = 0
@@ -288,7 +317,7 @@ class System(object):
     # Compute the semi-major axis for each planet (in Earth radii)
     for body in self.bodies:
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.star.m + body.m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-    
+
     #
     self._animations = []
         
@@ -373,8 +402,10 @@ class System(object):
             duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)          
 
             # Compute the minimum impact parameter
-            impact = np.min(np.sqrt((self.bodies[occ].x[i-duration:i+1] - body.x[i-duration:i+1]) ** 2 + (self.bodies[occ].y[i-duration:i+1] - body.y[i-duration:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
-        
+            inds = range(i - duration, i + 1)
+            impact = np.min(np.sqrt((self.bodies[occ].x[inds] - body.x[inds]) ** 2 + 
+                                    (self.bodies[occ].y[inds] - body.y[inds]) ** 2)) / (self.bodies[occ].r + body.r)
+
             # Transparency proportional to the impact parameter
             alpha = 0.8 * (1 - impact) + 0.01
         
@@ -388,7 +419,25 @@ class System(object):
                 plot_secondary = False
             else:
               axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
+          
+        # Check for mutual transits
+        if self.bodies[0].occultor[i]:
+          
+          # Get all bodies currently occulting the star
+          occultors = []
+          for occ in range(1, len(self.bodies)):
+            if (self.bodies[0].occultor[i] & 2 ** occ):
+              occultors.append(occ)
+          
+          # Check if any of these occult each other
+          for occ1 in occultors:
+            for occ2 in occultors:
+              if self.bodies[occ1].occultor[i] & 2 ** occ2:
+                axp.plot(self.bodies[occ1].x[i], self.bodies[occ1].z[i], 'x', 
+                         color = self.colors[occ2], alpha = 1, zorder = 100, 
+                         ms = 20)
                 
+          
     # Legend 1: Occultor names/colors
     axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
     axl1.axis('off')
@@ -440,7 +489,7 @@ class System(object):
   
     return figp
       
-  def corner_plot(self, tstart, tend):
+  def histogram(self, tstart, tend):
     '''
     
     '''
@@ -487,29 +536,45 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
 
-    # A corner plot for each planet, showing
-    # distribution of phases, impact parameters, and durations
-    fig = [None for i in self.bodies[1:]]
+    # A histogram of the distribution of phases, impact parameters, and durations
+    hist = [[] for body in self.bodies[1:]]
     for k, body in enumerate(self.bodies[1:]):
       
       # Identify the different planet-planet events
       inds = np.where(body.occultor > 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
-          
+      
       # Loop over individual ones
-      duration = np.zeros(len(difs), dtype = int)
-      phase = np.zeros(len(difs))
-      impact = np.zeros(len(difs))
-      for j, i in enumerate(inds[difs]):
-        occ = body.occultor[i]
-        duration[j] = np.argmax(body.occultor[:i][::-1] != occ) 
-        phase[j] = np.arctan2(body.z[i], body.x[i]) * 180 / np.pi
-        impact[j] = np.min(np.sqrt((self.bodies[occ].x[i-duration[j]:i+1] - body.x[i-duration[j]:i+1]) ** 2 + (self.bodies[occ].y[i-duration[j]:i+1] - body.y[i-duration[j]:i+1]) ** 2)) / (self.bodies[occ].r + body.r)
+      for i in inds[difs]:
+        
+        # Is body `occ` occulting?
+        for occ in range(1, len(self.bodies)):
+          
+          # Yes!
+          if (body.occultor[i] & 2 ** occ):
 
-      samples = np.array([phase, impact, np.log10(duration * self.settings.dt * 1440)]).T
-      fig[k] = corner.corner(samples, range = [(-180,180), (0,1), (0, 3)])
+            # Note that `i` is the last index of the occultation
+            duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)
+            if duration > 0:
+            
+              # Orbital phase
+              phase = np.arctan2(body.x[i], -body.z[i]) * 180 / np.pi
+            
+              # Compute the minimum impact parameter
+              inds = range(i - duration, i + 1)
+              impact = np.min(np.sqrt((self.bodies[occ].x[inds] - body.x[inds]) ** 2 + 
+                                      (self.bodies[occ].y[inds] - body.y[inds]) ** 2)) / (self.bodies[occ].r + body.r)
+            
+              # Convert duration to log
+              duration = np.log10(duration * self.settings.dt * 1440)
+            
+              # Running list
+              hist[k].append((phase, impact, duration))
+      
+      # Make into array  
+      hist[k] = np.array(hist[k])
     
-    return fig
+    return hist
         
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''

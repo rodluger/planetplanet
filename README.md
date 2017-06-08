@@ -12,7 +12,7 @@ make -C planetplanet/photo
 
 ## TODO
 
-- Normalize stellar limb darkening coefficients and compute planet flux self-consistently
+- Figure out how to input stellar limb darkening
 - Add limb-darkened planet option
-- Add nightside heat redistribution option
 - Speed up N-body code with adaptive grid
+- Compute orbital phase angle in the general case (not edge-on limit)
