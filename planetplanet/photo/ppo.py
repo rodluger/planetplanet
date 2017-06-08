@@ -547,11 +547,11 @@ class System(object):
       # Loop over individual ones
       for i in inds[difs]:
         
-        # Is body `occ` occulting?
+        # Loop over possible occultors
         for occ in range(1, len(self.bodies)):
           
-          # Yes!
-          if (body.occultor[i] & 2 ** occ):
+          # Is body `occ` occulting (but not behind the star)?
+          if (body.occultor[i] & 2 ** occ) and (body.occultor[i] & 1 == 0):
 
             # Note that `i` is the last index of the occultation
             duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)

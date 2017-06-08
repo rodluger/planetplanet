@@ -9,10 +9,3 @@ make -C planetplanet/photo
 ```
 
 <p align='center'><img src="img/eyeball.png" width="800"/></p>
-
-## TODO
-
-- Figure out how to input stellar limb darkening
-- Add limb-darkened planet option
-- Speed up N-body code with adaptive grid
-- Compute orbital phase angle in the general case (not edge-on limit)
