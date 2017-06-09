@@ -102,22 +102,18 @@ def Trappist1(sample = True, airless = True, **kwargs):
   albedos = [(0.3, 0), (0.3, 0), (0.3, 0), (0.3, 0), (0.3, 0), (0.3, 0), (0.3, 0)]
   tnights = [(40., 0), (40., 0), (40., 0), (40., 0), (40., 0), (40., 0), (40., 0)]
   
-  # Airless bodies or thick atmospheres?
-  if airless:
-    teffs = [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
-  else:
-    # These are the *equilibrium* temperatures from Gillon et al. (2017) and
-    # Luger et al. (2017) assuming zero albedo. There's no reason they have to
-    # be equal to or even close to the effective temperatures. But since we have
-    # no observational constraints, we'll just use these values as a proof-of-concept.
-    # These can always be changed by the user.
-    teffs = [(400.1, 7.7), 
-             (341.9, 6.6), 
-             (288.0, 5.6), 
-             (251.3, 4.9), 
-             (219.0, 4.2), 
-             (198.6, 3.8), 
-             (173, 4)]
+  # These are the *equilibrium* temperatures from Gillon et al. (2017) and
+  # Luger et al. (2017) assuming zero albedo. There's no reason they have to
+  # be equal to or even close to the effective temperatures. But since we have
+  # no observational constraints, we'll just use these values as a proof-of-concept.
+  # These can always be changed by the user.
+  teffs = [(400.1, 7.7), 
+           (341.9, 6.6), 
+           (288.0, 5.6), 
+           (251.3, 4.9), 
+           (219.0, 4.2), 
+           (198.6, 3.8), 
+           (173, 4)]
   
   # Colors for plotting
   colors = ['firebrick', 'coral', 'gold', 'mediumseagreen', 'turquoise', 'cornflowerblue', 'midnightblue']
@@ -148,7 +144,10 @@ def Trappist1(sample = True, airless = True, **kwargs):
       Omega = 0.3 * np.random.randn()
     
     # Longitude of pericenter (uniform over [0-360 deg])
-    w = 360. * np.random.rand()
+    if sample:
+      w = 360. * np.random.rand()
+    else:
+      w = 0.
     
     # Eccentricity
     ecc = 1
@@ -169,7 +168,8 @@ def Trappist1(sample = True, airless = True, **kwargs):
     # Instantiate!
     planets[i] = Planet(names[i], m = m, per = per, inc = inc, r = r, trn0 = trn0, 
                         Omega = Omega, w = w, ecc = ecc, color = colors[i], 
-                        teff = teff, tnight = tnight, albedo = albedo, **kwargs)
+                        teff = teff, tnight = tnight, albedo = albedo, 
+                        airless = airless, **kwargs)
 
   # Return the system
   return System(star, *planets, **kwargs)

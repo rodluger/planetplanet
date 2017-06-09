@@ -38,7 +38,7 @@ if compute:
   for n in tqdm(range(nsamp)):
 
     # Instantiate the Trappist-1 system
-    system = Trappist1(uncertainty = True, ttvs = False, quiet = True)
+    system = Trappist1(sample = True, nbody = False, quiet = True)
     system.settings.dt = 0.0001
     h = system.histogram(0, 365)
   
@@ -83,7 +83,7 @@ for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
   
 # Frequency histogram
 fig, ax = pl.subplots(1, figsize = (8, 6))
-system = Trappist1(uncertainty = True, ttvs = False, quiet = True)
+system = Trappist1(sample = True, nbody = False, quiet = True)
 for k, planet in enumerate(system.bodies[1:]): 
   ax.hist(count[k], color = planet.color, edgecolor = 'none', alpha = 0.25, histtype = 'stepfilled', normed = True, range = (0,50), zorder = 0, label = planet.name)
   ax.hist(count[k], color = planet.color, histtype = 'step', normed = True, range = (0,50), zorder = 1, lw = 2)

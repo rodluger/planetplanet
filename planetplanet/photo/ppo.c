@@ -38,7 +38,7 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
   }
   
   // Solve for the orbits
-  if (settings.ttvs)
+  if (settings.nbody)
     iErr = NBody(np, body, settings);
   else
     iErr = Kepler(np, body, settings);
@@ -116,7 +116,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   }
   
   // Solve for the orbits
-  if (settings.ttvs)
+  if (settings.nbody)
     iErr = NBody(np, body, settings);
   else
     iErr = Kepler(np, body, settings);

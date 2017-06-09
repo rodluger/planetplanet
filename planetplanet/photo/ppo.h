@@ -56,7 +56,7 @@ typedef struct {
 } BODY;
 
 typedef struct {
-  int ttvs;
+  int nbody;
   double keptol;
   int maxkepiter;
   int kepsolver;
