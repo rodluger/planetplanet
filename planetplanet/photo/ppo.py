@@ -885,6 +885,15 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
   
+  def observe(self):
+    '''
+    TODO: Jake
+    
+    '''
+    
+    from ..detect import jwst
+    self.observation = 0 # Call Jake's code
+  
   def plot_occultation(self, body, time, interval = 50, gifname = None):
     '''
     
