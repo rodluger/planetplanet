@@ -155,6 +155,11 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         d2 = dx * dx + dy * dy + dz * dz;
         irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
         
+        // The planet effective temperature from radiation balance
+        if (body[p]->blackbody) {
+          body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
+        }
+        
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
@@ -222,6 +227,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           dz = (body[0]->z[t] - body[p]->z[t]);
           d2 = dx * dx + dy * dy + dz * dz;
           irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
+        
+          // The planet effective temperature from radiation balance
+          if (body[p]->blackbody) {
+            body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
+          }
+        
         } else 
           irrad = 0.;
         

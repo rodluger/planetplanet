@@ -697,7 +697,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     flux[m] = 0.;
   
   // If we're doing limb darkening, theta must be pi/2 (full phase)
-  if ((nu > 0) || (teff > 0))
+  if (teff > 0)
     theta = PI / 2.;
   
   // Generate all the shapes and get their vertices and curves
@@ -705,7 +705,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
   // Compute the latitude grid
-  if (adaptive && ((nu > 0) || (teff > 0))) {
+  if (adaptive && (teff > 0)) {
   
     // Adaptive latitude grid
     // Loop over each occultor

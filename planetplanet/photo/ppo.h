@@ -41,6 +41,7 @@ typedef struct {
   double teff;
   double tnight;
   int phasecurve;
+  int blackbody;
   int nu;
   int nl;
   int nt;

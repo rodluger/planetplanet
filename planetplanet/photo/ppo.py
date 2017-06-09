@@ -61,7 +61,7 @@ class Settings(ctypes.Structure):
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `False`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
   :param bool quiet: Suppress output? Default `False`
   :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
          angle, elliptical boundaries of constant surface brightness on the planet surface are \
@@ -94,7 +94,7 @@ class Settings(ctypes.Structure):
     self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.dt = kwargs.pop('dt', 0.01)
-    self.adaptive = kwargs.pop('adaptive', False)
+    self.adaptive = kwargs.pop('adaptive', True)
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
@@ -200,7 +200,6 @@ def Planet(name, **kwargs):
          Default `True`
   :param float albedo: Planetary albedo (airless limit). Default `0.3`
   :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
-  :param float teff: The effective temperature of the planet in Kelvin (thick atmosphere limit). Default `0.`
   :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
          in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
          coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
@@ -235,6 +234,7 @@ class Body(ctypes.Structure):
               ("_teff", ctypes.c_double),
               ("tnight", ctypes.c_double),
               ("_phasecurve", ctypes.c_int),
+              ("_blackbody", ctypes.c_int),
               ("nu", ctypes.c_int),
               ("nl", ctypes.c_int),
               ("nt", ctypes.c_int),
@@ -266,22 +266,21 @@ class Body(ctypes.Structure):
     
     # These defaults are different depending on body type
     if self.body_type == 'planet':
-      self.airless = True
+      self.airless = kwargs.pop('airless', True)
       self.nl = kwargs.pop('nl', 11)
       self.per = kwargs.pop('per', 3.)
+      self.albedo = kwargs.pop('albedo', 0.3)
+      self.teff = 0
       if self.airless:
-        self.albedo = kwargs.pop('albedo', 0.3)
         self.tnight = kwargs.pop('tnight', 40.)
-        self.teff = 0
         self.limbdark = []
       else:
-        self.albedo = 0
         self.tnight = 0
-        self.teff = kwargs.pop('teff', 0.)
         self.limbdark = kwargs.pop('limbdark', [])
       self.phasecurve = kwargs.pop('phasecurve', False)
       self.color = kwargs.pop('color', 'r')
     elif self.body_type == 'star':
+      self.airless = False
       self.nl = kwargs.pop('nl', 31)
       self.per = kwargs.pop('per', 0.)
       self.albedo = 0.
@@ -346,6 +345,14 @@ class Body(ctypes.Structure):
   @phasecurve.setter
   def phasecurve(self, val):
     self._phasecurve = int(val)
+
+  @property
+  def airless(self):
+    return not bool(self._blackbody)
+  
+  @airless.setter
+  def airless(self, val):
+    self._blackbody = int(not bool(val))
   
   @property
   def inc(self):
@@ -387,6 +394,8 @@ class System(object):
   A planetary system class. Instantiate with all bodies in the system
   and the desired settings, passed as kwargs.
   
+  ** Calculation settings **
+  
   :param *bodies: Any number of `Planet` or `Star` instances \
          comprising all the bodies in the system. The first body is assumed to be the primary.
   :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
@@ -397,7 +406,7 @@ class System(object):
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `False`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
   :param bool quiet: Suppress output? Default `False`
   :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
          angle, elliptical boundaries of constant surface brightness on the planet surface are \
@@ -405,14 +414,19 @@ class System(object):
   :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
   
+  ** Observational settings **
+  
+  :param float distance: Distance to the system in parsecs. Default `10`
+  
   '''
   
-  def __init__(self, *bodies, **kwargs):
+  def __init__(self, *bodies, distance = 10., **kwargs):
     '''
 
     '''
     
     self.bodies = bodies
+    self.distance = distance
     self.settings = Settings(**kwargs)
     self.reset()
     
