@@ -1050,7 +1050,7 @@ class System(object):
 
     return fig, axlc, axxz, axim
       
-  def plot_image(self, t, occulted, occultors, ax = None, pad = 2.5, **kwargs):
+  def plot_image(self, t, occulted, occultors, ax = None, pad = 2.5, occultor_alpha = 1, **kwargs):
     '''
     Plots an image of the `occulted` body and the `occultor` at a given `time`.
   
@@ -1113,7 +1113,9 @@ class System(object):
       r = occultor._r
       x = np.linspace(occultor.x[t] - r, occultor.x[t] + r, 1000)
       y = np.sqrt(r ** 2 - (x - occultor.x[t]) ** 2)
-      pto[i] = ax.fill_between(x - x0, occultor.y[t] - y - y0, occultor.y[t] + y - y0, color = 'lightgray', zorder = 99 + i, lw = 1)
+      pto[i] = ax.fill_between(x - x0, occultor.y[t] - y - y0, occultor.y[t] + y - y0, 
+                               color = 'lightgray', zorder = 99 + i, lw = 1,
+                               alpha = occultor_alpha)
       pto[i].set_edgecolor('k')
     
     return ax, pto

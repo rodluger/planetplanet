@@ -72,7 +72,7 @@ double Blackbody(double lambda, double T) {
   return a / (exp(b) - 1);
 }
 
-void GetRoots(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[2]) {
+void GetRoots(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[4]) {
   /*
 
   */
@@ -111,18 +111,23 @@ void GetRoots(double a, double b, double xE, double yE, double xC, double yC, do
   // Solve the quartic w/ polishing
   zroots(c, 4, croots, 1, polyeps1, polyeps2, maxpolyiter);
   
-  // Get the real roots (up to 2)
+  // Get the real roots (up to 4)
   roots[0] = NAN;
   roots[1] = NAN;
+  roots[2] = NAN;
+  roots[3] = NAN;
   j = 0;
   for (i = 1; i < 5; i++) {
-    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < SMALL)) {
+    
+    // DEBUG
+    // printf("%.16f, %.16f\n", croots[i].r + xC, croots[i].i);
+  
+    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < 1e-5)) {
       roots[j] = croots[i].r + xC;
       j += 1;
     }
-    if (j == 2) break;
   }
-  
+
 }
 
 double Latitude(double x, double y, double r, double theta) {
@@ -406,9 +411,9 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   
   */    
   
-  int i;
+  int i, j;
   double xlimb, x, y;
-  double roots[2];
+  double roots[4];
   double ro2[no];
   for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + TINY;
   ELLIPSE *ellipse;
@@ -491,22 +496,20 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   // Ellipse-occultor vertices
   for (i = 0; i < no; i++) {
     
+    // Is the occulted planet entirely within the occultor?
+    if (x0[i] * x0[i] + y0[i] * y0[i] < ro2[i] - r) continue;
+    
     // Solve the quartic
     GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
-
-    if (!(isnan(roots[0])) && (((theta > 0) && (roots[0] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[0] < ellipse->x0 - xlimb)))) {
-      vertices[(*v)++] = roots[0];
-      if (*v > maxvertices) {
-          printf("ERROR: Maximum number of vertices exceeded.\n");
-          abort();
-        }
-    }
-    if (!(isnan(roots[1])) && (((theta > 0) && (roots[1] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[1] < ellipse->x0 - xlimb)))) {
-      vertices[(*v)++] = roots[1];
-      if (*v > maxvertices) {
-          printf("ERROR: Maximum number of vertices exceeded.\n");
-          abort();
-        }
+    
+    for (j = 0; j < 4; j++) {
+      if (!(isnan(roots[j])) && (((theta > 0) && (roots[j] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[j] < ellipse->x0 - xlimb)))) {
+        vertices[(*v)++] = roots[j];
+        if (*v > maxvertices) {
+            printf("ERROR: Maximum number of vertices exceeded.\n");
+            abort();
+          }
+      }
     }
     
   }
@@ -638,8 +641,8 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
         x = (d * d - r * r + ro[i] * ro[i]) / (2 * d);
         cost = -x0[i] / d;
         sint = -y0[i] / d;
-        vertices[(*v)++] = -x * cost + y * sint + x0[i];
-        vertices[(*v)++] = -x * cost - y * sint + x0[i];
+        vertices[(*v)++] = -x * cost + y * sint; // + x0[i];
+        vertices[(*v)++] = -x * cost - y * sint; // + x0[i];
         if (*v > maxvertices) {
           printf("ERROR: Maximum number of vertices exceeded.\n");
           abort();
@@ -701,7 +704,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     theta = PI / 2.;
   
   // Generate all the shapes and get their vertices and curves
-  AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);   
+  AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);     
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
   // Compute the latitude grid
@@ -753,13 +756,23 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   for (i = 0; i < nlat * no; i++) {
     AddLatitudeSlice(latgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
   }
-  
   // Pre-compute the surface intensity in each latitude slice
   SurfaceIntensity(albedo, irrad, tnight, teff, nlat * no, latgrid, nlam, lambda, nu, u, B);
   
+  /*
+  // DEBUG
+  if (teff == 0) {
+    printf("[");
+    for (i = 0; i < v; i++) {
+      printf("%.16f,\n", vertices[i]);
+    }
+    printf("],\n\n");
+  }
+  */
+  
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
-    
+      
   // Loop over all vertices
   for (i = 0; i < v - 1; i++) {
 
