@@ -807,7 +807,10 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       // Get the midpoint
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
       
-      // Is it in at least one occultor?
+      // Check again: is it in the planet?
+      if (x * x + y * y > r2) continue;
+      
+      // Check again: is it in at least one occultor?
       good = 0;
       for (k = 0; k < no; k++) {
         if ((x - x0[k]) * (x - x0[k]) + (y - y0[k]) * (y - y0[k]) < ro2[k]) {
