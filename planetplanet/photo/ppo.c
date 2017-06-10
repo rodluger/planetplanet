@@ -120,13 +120,16 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     iErr = NBody(np, body, settings);
   else
     iErr = Kepler(np, body, settings);
-  if (iErr != ERR_NONE) return iErr;
+  if (iErr != ERR_NONE) {
+    printf("ERROR: Kepler solver failure (%d).\n", iErr);
+    abort();
+  }
   
   // Compute the stellar flux
   UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., body[0]->teff, settings.polyeps1, settings.polyeps2, 
                  settings.maxpolyiter, settings.mintheta, settings.maxvertices, settings.maxfunctions,
                  settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
-                 wavelength, tmp, settings.quiet);
+                 wavelength, tmp, settings.quiet, &iErr);
   for (t = 0; t < nt; t++) {
     for (w = 0; w < nw; w++)
       body[0]->flux[nw * t + w] = tmp[w];
@@ -165,7 +168,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                        settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
                        settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, 
-                       tmp, settings.quiet);
+                       tmp, settings.quiet, &iErr);
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] = tmp[w];
       
@@ -241,7 +244,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                      irrad, body[p]->tnight,  body[p]->teff, settings.polyeps1, settings.polyeps2, 
                      settings.maxpolyiter, settings.mintheta, settings.maxvertices,
                      settings.maxfunctions, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
-                     body[p]->u, wavelength, tmp, settings.quiet);
+                     body[p]->u, wavelength, tmp, settings.quiet, &iErr);
       
         // Update the body light curve
         for (w = 0; w < nw; w++)
@@ -253,9 +256,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   }
 
   // Log
-  if (!settings.quiet)
+  if (!settings.quiet) {
+    if (iErr == ERR_OOB)
+      printf("WARNING: Precision loss detected in integration.\n");
     printf("Done!\n");
-
+  }
+  
   return iErr;
 
 }

@@ -103,10 +103,6 @@ void GetRoots(double a, double b, double xE, double yE, double xC, double yC, do
   roots[3] = NAN;
   j = 0;
   for (i = 1; i < 5; i++) {
-    
-    // DEBUG
-    // printf("%.16f, %.16f\n", croots[i].r + xC, croots[i].i);
-  
     if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < MAXIM)) {
       roots[j] = croots[i].r + xC;
       j += 1;
@@ -400,7 +396,10 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   double xlimb, x, y;
   double roots[4];
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + TINY;
+  for (i = 0; i < no; i++) {
+    ro2[i] = ro[i] * ro[i];
+    ro2[i] += TINY * ro2[i];
+  }
   ELLIPSE *ellipse;
   ellipse = malloc(sizeof(ELLIPSE)); 
   
@@ -519,7 +518,8 @@ void AddOccultors(double r, int no, double x0[no], double y0[no], double ro[no],
   */ 
 
   int i;
-  double r2 = r * r + TINY;
+  double r2 = r * r;
+  r2 += TINY * r2;
   ELLIPSE *occultor[no];
    
   for (i = 0; i < no; i++) {
@@ -576,7 +576,10 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 
   int i;
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + TINY;
+  for (i = 0; i < no; i++) {
+    ro2[i] = ro[i] * ro[i];
+    ro2[i] += TINY * ro2[i];
+  }
   double d, A, x, y, cost, sint;
   ELLIPSE *occulted;
   occulted = malloc(sizeof(ELLIPSE));
@@ -626,8 +629,8 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
         x = (d * d - r * r + ro[i] * ro[i]) / (2 * d);
         cost = -x0[i] / d;
         sint = -y0[i] / d;
-        vertices[(*v)++] = -x * cost + y * sint; // + x0[i];
-        vertices[(*v)++] = -x * cost - y * sint; // + x0[i];
+        vertices[(*v)++] = -x * cost + y * sint;
+        vertices[(*v)++] = -x * cost - y * sint;
         if (*v > maxvertices) {
           printf("ERROR: Maximum number of vertices exceeded.\n");
           abort();
@@ -653,7 +656,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
                   double irrad, double tnight, double teff, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices,
                   int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], 
-                  double flux[nlam], int quiet) {
+                  double flux[nlam], int quiet, int *iErr) {
   /*
   
   */
@@ -666,16 +669,21 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   int good;
   double lmin, lmax, lat;
   double xL, xR, x, y, area;
-  double r2 = r * r + TINY;
+  double r2 = r * r;
+  r2 += SMALL * r2;
   double d, dmin, dmax;
   double ro2[no];
-  for (i = 0; i < no; i++) ro2[i] = ro[i] * ro[i] + SMALL;
+  for (i = 0; i < no; i++) {
+    ro2[i] = ro[i] * ro[i];
+    ro2[i] += SMALL * ro2[i];
+  }
   double vertices[maxvertices];
   FUNCTION functions[maxfunctions];
   FUNCTION boundaries[maxfunctions];
   double B[nlat * no + 1][nlam];
   double latgrid[nlat * no];
-
+  *iErr = ERR_NONE;
+  
   // Avoid the singular point
   if (fabs(theta) < mintheta)
     theta = mintheta;
@@ -744,17 +752,6 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   // Pre-compute the surface intensity in each latitude slice
   SurfaceIntensity(albedo, irrad, tnight, teff, nlat * no, latgrid, nlam, lambda, nu, u, B);
   
-  /*
-  // DEBUG
-  if (teff == 0) {
-    printf("[");
-    for (i = 0; i < v; i++) {
-      printf("%.16f,\n", vertices[i]);
-    }
-    printf("],\n\n");
-  }
-  */
-  
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
       
@@ -810,9 +807,6 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       // Get the midpoint
       y = 0.5 * (boundaries[j + 1].y + boundaries[j].y);
       
-      // Is it in the planet?
-      if (x * x + y * y > r2) continue;
-      
       // Is it in at least one occultor?
       good = 0;
       for (k = 0; k < no; k++) {
@@ -822,11 +816,11 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
         }
       }
       if (!good) continue;
-    
+      
       // The area of each region is just the difference of successive integrals
       oob = 0;
-      area = integral(xL, xR, boundaries[j + 1], &oob) - integral(xL, xR, boundaries[j], &oob);
-      if ((oob) && (!quiet)) printf("WARNING: Integral out of bounds.\n");
+      area = integral(xL, xR, boundaries[j + 1], &oob) - integral(xL, xR, boundaries[j], &oob);      
+      if (oob) *iErr = ERR_OOB;
       
       // Get the latitude of the midpoint
       lat = Latitude(x, y, r, theta);
@@ -858,7 +852,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double polyeps1, 
                     double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, 
-                    int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet) {
+                    int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet, int *iErr) {
   /*
   
   */
@@ -868,6 +862,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nlat, nlam, u, lambda, flux, quiet);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nlat, nlam, u, lambda, flux, quiet, iErr);
     
 }

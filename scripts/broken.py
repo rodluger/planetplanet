@@ -12,53 +12,50 @@ computation. Here's an example. Need to fix this.
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo import Star, Planet, System
+from planetplanet.photo import Star, Planet, System, Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
+np.random.seed(1234)
 
-vertices = [[-0.5321789172328408,
-1.0000000000000000,
-0.2339105413836380,
-0.2339105413835211,
--0.2572677222029636,
--0.1620439617193123,
--0.1620439174799243,
+vertices = [[-4.1894798819512191,
+-2.0437458961562811,
+-3.9473799137185788,
+-2.1231321097257405,
+-3.9577115446967541,
+-3.2993770706601921,
 ],
 
-[-0.5278434299325454,
-1.0000000000000000,
-0.2360782850337852,
-0.2360782850336694,
--0.2572431900217150,
+[-4.1055166255840643,
+-1.9597826397891258,
+-3.8968980723907398,
+-2.0505096226210138,
+-3.7420059879226288,
+-3.3762553925035377,
 ],
 
-[-0.5235077282962379,
-1.0000000000000000,
-0.2382461358519384,
-0.2382461358518236,
--0.2572186576746783,
--0.1650050903760042,
--0.1650050903760042,
-],]
+[-4.0215533423894367,
+-1.8758193565944983,
+-3.8438571521412888,
+-1.9782098284259473,
+]]
 
-# Instantiate the system
-star = Star('A')
-b = Planet('b', per = 1., t0 = 0., nl = 11)
-c = Planet('c', per = 2., t0 = 0.)
-system = System(star, b, c)
 
-# Get the occultation light curve
-time = np.linspace(0.2055, 0.21, 1000)
-#time = np.linspace(0.2085, 0.2089, 100)[22:25]
-system.compute(time)
+# Instantiate the Trappist-1 system
+system = Trappist1(sample = True, nbody = False, phasecurve = False, adaptive = True)
+time = np.linspace(2.1, 2.24, 1000)#[783:786]
+
+system.compute(time, lambda1 = 5, lambda2 = 15, R = 1000)
 
 # Plot the image
 fig, ax = pl.subplots(1,3, figsize = (12,6))
 for t in range(3):
-  system.plot_image(t, system.b, [2], occultor_alpha = 0.1, ax = ax[t])
+  system.plot_image(t, system.A, [3,5], occultor_alpha = 0.1, ax = ax[t])
   for v in vertices[t]:
     ax[t].axvline(v, alpha = 0.5, color = 'r')
+  ax[t].set_xlim(-4.5,-1.5)
+  ax[t].set_ylim(-7,-4)
   ax[t].set_aspect('equal')
+  
 
 # Plot all of the occultations
 system.plot_lightcurve()
