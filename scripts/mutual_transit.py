@@ -14,8 +14,21 @@ import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)
 
+def u1(lam):
+  '''
+  A really silly linear limb darkening law with a linear
+  wavelength dependence.
+  
+  '''
+  
+  lam = np.atleast_1d(lam)
+  result = 0.5 * (1 - (lam - 5) / 10) + 0.5
+  result[lam < 5] = 1.
+  result[lam > 15] = 0.5
+  return result
+  
 # Instantiate the star
-star = Star('A', m = 0.1, r = 0.1, nl = 31, color = 'k')
+star = Star('A', m = 0.1, r = 0.1, nl = 31, color = 'k', limbdark = [u1])
 
 # Planet b
 b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., trn0 = 0, 

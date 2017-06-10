@@ -166,9 +166,7 @@ def Star(name, **kwargs):
          coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. For instance, if `limbdark = [lambda x: 1.0 if x < 5 else 0.5]`, \
-         the linear limb darkening coefficient will be `1.0` at wavelengths shortward of 5 microns \
-         and `0.5` at longer wavelengths. Default is `[1.0]`, a grey linear limb darkening law.
+         is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
   :param int nl: Number of latitude slices. Default `31`
   :param str color: Object color (for plotting). Default `k`
   
@@ -205,9 +203,7 @@ def Planet(name, **kwargs):
          coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. For instance, if `limbdark = [lambda x: 1.0 if x < 5 else 0.5]`, \
-         the linear limb darkening coefficient will be `1.0` at wavelengths shortward of 5 microns \
-         and `0.5` at longer wavelengths. Default is `[1.0]`, a grey linear limb darkening law.
+         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
   :param int nl: Number of latitude slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
   
