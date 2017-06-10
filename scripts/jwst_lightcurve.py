@@ -11,7 +11,7 @@ import astropy.units as u
 import numpy as np
 np.random.seed(1234)
 
-cadence = 5.0 # mins
+cadence = 10.0 # mins
 d = 12.2      # pc
 pc_to_meter = u.pc.in_units(u.m)
 
@@ -30,4 +30,9 @@ lam = system.wavelength
 wheel = jwst.get_miri_filter_wheel()
 
 # Compute MIRI lightcurves
-jwst.lightcurves(wheel, flux, time, lam, obscad=cadence, plot=True)
+#jwst.lightcurves(wheel, flux, time, lam, obscad=cadence, plot=True)
+
+for filt in wheel:
+    filt.compute_lightcurve(flux, time, lam, obscad=cadence)
+    filt.plot()
+    plt.show()
