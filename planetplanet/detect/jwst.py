@@ -153,6 +153,18 @@ class Filter(object):
     def convolve(self, lam, flux):
         """
         Convolve flux with normalized throughput
+
+        Parameters
+        ----------
+        lam : numpy.ndarray
+            Wavelength grid [um]
+        flux : numpy.ndarray
+            Flux grid [W/m^2/um]
+
+        Returns
+        -------
+        F : numpy.ndarray
+            Flux convolved with normalized throughput
         """
 
         # interpolate filter throughout to HR grid
@@ -162,6 +174,148 @@ class Filter(object):
         F = np.sum(flux * T) / np.sum(T)
 
         return F
+
+    def compute_lightcurve(self, flux, time, lam, obscad=5.0):
+        """
+        Computes an observed lightcurve in the `Filter`
+
+        Parameters
+        ----------
+        flux : numpy.ndarray
+            Observed flux grid (`time` by `lam`) [W/m^2/um]
+        time : numpy.ndarray
+            Time grid [days]
+        lam : numpy.ndarray
+            Wavelength [um]
+        obscad : float, optional
+            Observation cadence [mins]
+        """
+
+        Ntime = len(time)
+        Nlam = len(lam)
+        tmin = np.min(time)
+        tmax = np.max(time)
+
+        # Convert cadence from mins to hours
+        cadence = obscad / 60. # hours
+
+        # High-res time cadence
+        cadencehr = np.mean(time[1:] - time[:-1]) * 24 # convert from days to hours
+
+        # factor by which to bin neighboring times
+        Ncad = cadence / cadencehr
+
+        # Number of new time points
+        Ntlo = np.floor(Ntime / Ncad)
+
+        # New time grid at observational cadence
+        tlo, dtlo = gen_lr_grid(tmin, tmax, Ntlo)
+
+        # Rebin high spectral res lightcurves to observational grid
+        data = []
+        for i in range(Nlam):
+            data.append(
+                downbin_series(flux[:,i], time, tlo, dxlr=dtlo)
+            )
+        data = np.array(data).T
+
+        # Calculate jwst background flux
+        Fback = jwst_background(lam)
+
+        # Exposure time [s]
+        tint = dtlo * 3600. * 24
+
+        # Allocate arrays
+        obs_snr = np.zeros((len(wheel), len(tlo)))
+        obs_n = np.zeros((len(wheel), len(tlo)))
+
+        # Calculate SYSTEM photons
+        Nphot = tint * self.photon_rate(lam, data[:,:])
+
+        # Calculate BACKGROUND photons
+        Nback = tint * self.photon_rate(lam, Fback)
+
+        # Signal-to-noise
+        SNR = Nphot / np.sqrt(Nphot + Nback)
+
+        # Save arrays
+        obs_snr[i,:] = SNR
+        obs_n[i,:] = Nphot
+
+        # Generate synthetic data points
+        norm = np.median(Nphot)
+        sig = np.sqrt(Nphot + Nback) / norm
+        obs = random_draw(Nphot / norm, sig)
+
+        # Create lightcurve object to hold observed quantities
+        self.lightcurve = Lightcurve(time = tlo,
+                                     Nphot = Nphot,
+                                     Nback = Nback,
+                                     SNR = SNR,
+                                     obs = obs,
+                                     sig = sig,
+                                     norm = norm,
+                                     tint = tint)
+
+        return
+
+################################################################################
+
+class Lightcurve(object):
+    """
+    Lightcurve object to store all observed quantities
+
+    Parameters
+    ----------
+    time : array
+        Observed time grid [days]
+    Nphot : array
+        Number of photons from `System`
+    Nback : array
+        Number of photons from background
+    SNR : array
+        Signal-to-noise on `System`
+    obs : array
+        Observed photon signal (normalized)
+    sig : array
+        1-sigma errors on signal (normalized)
+    norm : float
+        Normalization constant
+    tint : array
+        Integration time [mins]
+    """
+    def __init__(self, time = None, Nphot = None, Nback = None, SNR = None,
+                 obs = None, sig = None, norm = None, tint = None):
+        self.time = time
+        self.Nphot = Nphot
+        self.Nback = Nback
+        self.SNR = SNR
+        self.obs = obs
+        self.sig = sig
+        self.norm = norm
+        self.tint = tint
+
+    def plot(self, ax0=None, title=""):
+
+        # Create new fig if axis is not user provided
+        if ax0 is not None:
+            fig, ax = plt.subplots(figsize=(16,6))
+            ax.set_title(r"%s" %title)
+            ax.set_ylabel("Relative Flux")
+            ax.set_xlabel("Time [days]")
+        else:
+            ax = ax0
+
+        # Plot
+        ax.plot(self.time, self.Nphot/self.norm, label=title, zorder=11, alpha=0.75)
+        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.75, zorder=10)
+        ax.text(0.01, 0.02, r"$\Delta t = %.1f$ mins" %(self.tint[0]/60.),
+                ha="left", va="bottom", transform=ax.transAxes,
+                fontsize=16)
+
+        if ax0 is None:
+            fig.subplots_adjust(bottom=0.2)
+
 ################################################################################
 
 def planck(temp, wav):
