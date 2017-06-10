@@ -43,7 +43,7 @@ vertices = [[-0.5321789172328408,
 
 # Instantiate the system
 star = Star('A')
-b = Planet('b', per = 1., t0 = 0., nl = 1)
+b = Planet('b', per = 1., t0 = 0., nl = 11)
 c = Planet('c', per = 2., t0 = 0.)
 system = System(star, b, c)
 

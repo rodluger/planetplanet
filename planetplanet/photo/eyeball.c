@@ -16,21 +16,6 @@ int dblcomp( const void* a, const void* b) {
   else return 1;
 }
 
-int realcomp( const void* a, const void* b) {
-  /*
-  Compares the magnitude of the imaginary
-  component of two complex numbers, for use
-  with `qsort`.
-  
-  */
-  
-  dcomplex cmp_a = * ( (dcomplex*) a );
-  dcomplex cmp_b = * ( (dcomplex*) b );
-  if ( cmp_a.i == cmp_b.i ) return 0;
-  else if ( fabs(cmp_a.i) < fabs(cmp_b.i) ) return -1;
-  else return 1;
-}
-
 int funcomp( const void* a, const void* b) {
   /*
   
@@ -122,7 +107,7 @@ void GetRoots(double a, double b, double xE, double yE, double xC, double yC, do
     // DEBUG
     // printf("%.16f, %.16f\n", croots[i].r + xC, croots[i].i);
   
-    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < 1e-5)) {
+    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < MAXIM)) {
       roots[j] = croots[i].r + xC;
       j += 1;
     }

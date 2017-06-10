@@ -23,6 +23,7 @@
 #define MICRON                  1e-6
 
 // Settings
+#define MAXIM                   1.e-2
 #define SMALL                   1.e-10
 #define TINY                    1.e-15
 
