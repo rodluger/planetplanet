@@ -191,8 +191,10 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   
   */
   
-  int p, t;
-  double M, E, f;
+  int p, t, i;
+  double M, E, f, d;
+  double cwf, swf, co, so, ci, si;
+  int last_t;
   struct reb_simulation* r = reb_create_simulation();
   progress_t *progress = progress_new(body[0]->nt, 50);
   
@@ -244,6 +246,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	reb_move_to_com(r);
 	
 	// Store the initial positions
+	last_t = 0;
 	for (p = 0; p < np; p++) {
 	  body[p]->x[0] = r->particles[p].x;
 	  body[p]->y[0] = r->particles[p].y;
@@ -253,15 +256,62 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	// Integrate!
 	for (t = 1; t < body[0]->nt; t++) {
     
-    // Take one step
-	  reb_integrate(r, body[0]->time[t] - body[0]->time[0]);
-	  reb_integrator_synchronize(r);
-	  
-	  // Update body positions
-	  for (p = 0; p < np; p++) {
-	    body[p]->x[t] = r->particles[p].x;
-	    body[p]->y[t] = r->particles[p].y;
-	    body[p]->z[t] = r->particles[p].z;
+    // Do we need to synchronize this time step?
+    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.dt) || (t == body[0]->nt - 1)) {
+    
+      // Yes: take one step
+      reb_integrate(r, body[0]->time[t] - body[0]->time[0]);
+      reb_integrator_synchronize(r);
+    
+      // Update body positions
+      for (p = 0; p < np; p++) {
+        body[p]->x[t] = r->particles[p].x;
+        body[p]->y[t] = r->particles[p].y;
+        body[p]->z[t] = r->particles[p].z;
+        
+        // Go back and compute the ones we skipped
+        // with a Keplerian solver using the current
+        // osculating elements
+        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary);
+
+        for (i = last_t + 1; i < t; i++) {
+        
+          // Mean anomaly
+          M = modulus(orbit.M + orbit.n * (body[0]->time[i] - body[0]->time[t]), 2 * PI);
+          
+          // Eccentric anomaly
+          if (settings.kepsolver == MDFAST)
+            E = EccentricAnomalyFast(M, orbit.e, settings.keptol, settings.maxkepiter);
+          else
+            E = EccentricAnomaly(M, orbit.e, settings.keptol, settings.maxkepiter);
+          if (E == -1) return ERR_KEPLER;
+          
+          // True anomaly
+          f = TrueAnomaly(E, orbit.e);
+          
+          // Radial distance                                        
+          d = orbit.a * (1. - orbit.e * orbit.e) / (1. + orbit.e * cos(f));
+          
+          // Murray and Dermott, p. 51
+          cwf = cos(orbit.omega + f);
+          swf = sin(orbit.omega + f);
+          co = cos(orbit.Omega); 
+          so = sin(orbit.Omega);
+          ci = cos(orbit.inc);
+          si = sin(orbit.inc);
+          
+          // Sky coordinates
+          body[p]->x[i] = d * (co * cwf - so * swf * ci);
+          body[p]->y[i] = d * (so * cwf + co * swf * ci);
+          body[p]->z[i] = d * swf * si;
+          
+        }
+        
+      }
+
+	    // Reset
+	    last_t = t;
+	    
 	  }
 	  
 	  // Display the progress

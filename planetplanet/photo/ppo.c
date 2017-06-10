@@ -38,7 +38,7 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
   }
   
   // Solve for the orbits
-  if (settings.ttvs)
+  if (settings.nbody)
     iErr = NBody(np, body, settings);
   else
     iErr = Kepler(np, body, settings);
@@ -96,7 +96,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   
   */
 
-  double d, dx, dy;
+  double d, dx, dy, dz, d2;
+  double irrad;
   int no;
   double xo[np-1], yo[np-1], ro[np-1];
   double tmp[nw];
@@ -115,16 +116,20 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   }
   
   // Solve for the orbits
-  if (settings.ttvs)
+  if (settings.nbody)
     iErr = NBody(np, body, settings);
   else
     iErr = Kepler(np, body, settings);
-  if (iErr != ERR_NONE) return iErr;
+  if (iErr != ERR_NONE) {
+    printf("ERROR: Kepler solver failure (%d).\n", iErr);
+    abort();
+  }
   
   // Compute the stellar flux
-  UnoccultedFlux(body[0]->r, PI / 2., 0., 0., settings.polyeps1, settings.polyeps2, 
-                 settings.maxpolyiter, settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
-                 wavelength, tmp, settings.quiet);
+  UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., body[0]->teff, settings.polyeps1, settings.polyeps2, 
+                 settings.maxpolyiter, settings.mintheta, settings.maxvertices, settings.maxfunctions,
+                 settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
+                 wavelength, tmp, settings.quiet, &iErr);
   for (t = 0; t < nt; t++) {
     for (w = 0; w < nw; w++)
       body[0]->flux[nw * t + w] = tmp[w];
@@ -145,12 +150,25 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                 
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-
+        
+        // The irradiation
+        dx = (body[0]->x[t] - body[p]->x[t]);
+        dy = (body[0]->y[t] - body[p]->y[t]);
+        dz = (body[0]->y[t] - body[p]->y[t]);
+        d2 = dx * dx + dy * dy + dz * dz;
+        irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
+        
+        // The planet effective temperature from radiation balance
+        if (body[p]->blackbody) {
+          body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
+        }
+        
         // Call the eyeball routine
-        UnoccultedFlux(body[p]->r, theta, body[p]->albedo, body[p]->irrad, 
-                       settings.polyeps1, settings.polyeps2, settings.maxpolyiter, 
+        UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
+                       settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
+                       settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, 
-                       tmp, settings.quiet);
+                       tmp, settings.quiet, &iErr);
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] = tmp[w];
       
@@ -204,12 +222,29 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-      
+        
+        // The irradiation on the planets
+        if (p > 0) {
+          dx = (body[0]->x[t] - body[p]->x[t]);
+          dy = (body[0]->y[t] - body[p]->y[t]);
+          dz = (body[0]->z[t] - body[p]->z[t]);
+          d2 = dx * dx + dy * dy + dz * dz;
+          irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
+        
+          // The planet effective temperature from radiation balance
+          if (body[p]->blackbody) {
+            body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
+          }
+        
+        } else 
+          irrad = 0.;
+        
         // Call the eyeball routine
         OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
-                     body[p]->irrad, settings.polyeps1, settings.polyeps2, 
-                     settings.maxpolyiter, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
-                     body[p]->u, wavelength, tmp, settings.quiet);
+                     irrad, body[p]->tnight,  body[p]->teff, settings.polyeps1, settings.polyeps2, 
+                     settings.maxpolyiter, settings.mintheta, settings.maxvertices,
+                     settings.maxfunctions, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
+                     body[p]->u, wavelength, tmp, settings.quiet, &iErr);
       
         // Update the body light curve
         for (w = 0; w < nw; w++)
@@ -221,9 +256,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   }
 
   // Log
-  if (!settings.quiet)
+  if (!settings.quiet) {
+    if (iErr == ERR_OOB)
+      printf("WARNING: Precision loss detected in integration.\n");
     printf("Done!\n");
-
+  }
+  
   return iErr;
 
 }

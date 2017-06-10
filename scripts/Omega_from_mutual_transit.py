@@ -82,11 +82,11 @@ for n in tqdm(range(niter)):
   c = Planet('c', m = m, per = per, inc = inc, r = r, trn0 = 0., Omega = 0, w = w, ecc = ecc, color = 'b')
 
   # The system
-  system = System(star, b, c, ttvs = False, adaptive = True, quiet = True)
+  system = System(star, b, c, nbody = False, adaptive = True, quiet = True)
 
   # Compute
   for i in range(len(Omega)):
-    system.bodies[2].Omega = Omega[i] * np.pi / 180
+    system.bodies[2].Omega = Omega[i]
     system.compute_orbits(time)
     duration[n,i] = dt * len(np.where(system.bodies[1].occultor == 4)[0])
     
