@@ -482,7 +482,7 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   for (i = 0; i < no; i++) {
     
     // Is the occulted planet entirely within the occultor?
-    if (x0[i] * x0[i] + y0[i] * y0[i] < ro2[i] - r) continue;
+    if (sqrt(x0[i] * x0[i] + y0[i] * y0[i]) + r + SMALL < ro[i]) continue;
     
     // Solve the quartic
     GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
