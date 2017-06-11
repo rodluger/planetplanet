@@ -147,14 +147,14 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       
       // Compute the phase curve for this body?
       if ((p > 0) && (body[p]->phasecurve)) {
-                
+        
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
         
         // The irradiation
         dx = (body[0]->x[t] - body[p]->x[t]);
         dy = (body[0]->y[t] - body[p]->y[t]);
-        dz = (body[0]->y[t] - body[p]->y[t]);
+        dz = (body[0]->z[t] - body[p]->z[t]);
         d2 = dx * dx + dy * dy + dz * dz;
         irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
         

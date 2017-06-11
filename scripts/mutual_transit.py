@@ -39,7 +39,7 @@ c = Planet('c', m = 1, per = 30, inc = 90., r = 3., trn0 = 0.,
            nl = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # System
-system = System(star, b, c, ttvs = False, adaptive = True)
+system = System(star, b, c)
 
 # Get the occultation light curves
 time = np.linspace(-0.06, 0.06, 1000)
