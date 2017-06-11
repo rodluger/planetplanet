@@ -416,13 +416,13 @@ class System(object):
   
   '''
   
-  def __init__(self, *bodies, distance = 10., **kwargs):
+  def __init__(self, *bodies, **kwargs):
     '''
 
     '''
     
     self.bodies = bodies
-    self.distance = distance
+    self.distance = kwargs.pop('distance', 10.)
     self.settings = Settings(**kwargs)
     self.reset()
     

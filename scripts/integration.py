@@ -134,15 +134,11 @@ ax.annotate(r'$v_n$', xy = (-0.70711, 0.70711), xycoords = 'data', ha = 'center'
 ax.annotate(r'$v_{n+1}$', xy = (-0.334832, -0.309744), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
             xytext = (20, -8), textcoords = 'offset points', fontsize = 14)
 
-ax.annotate(r'$Occultor$', xy = (-1.6, 1.5), xycoords = 'data', ha = 'center', va = 'center', color = 'k', fontsize = 18)
-ax.annotate(r'$Occulted$', xy = (0, -1.2), xycoords = 'data', ha = 'center', va = 'center', color = 'k', fontsize = 18)
-
 # Appearance
 ax.set_aspect('equal')
 ax.set_frame_on(False)
 ax.set_xticks([])
 ax.set_yticks([])
-ax.set_ylim(-1.2, 1.7)
 
 # Save!
 fig.savefig('../img/integration.pdf', bbox_inches = 'tight')
