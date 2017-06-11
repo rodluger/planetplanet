@@ -191,6 +191,8 @@ class Filter(object):
             Observation cadence [mins]
         """
 
+        print "Computing observed light curve in %s filter..." %self.name
+
         Ntime = len(time)
         Nlam = len(lam)
         tmin = np.min(time)
@@ -225,10 +227,6 @@ class Filter(object):
         # Exposure time [s]
         tint = dtlo * 3600. * 24
 
-        # Allocate arrays
-        obs_snr = np.zeros((len(wheel), len(tlo)))
-        obs_n = np.zeros((len(wheel), len(tlo)))
-
         # Calculate SYSTEM photons
         Nphot = tint * self.photon_rate(lam, data[:,:])
 
@@ -237,10 +235,6 @@ class Filter(object):
 
         # Signal-to-noise
         SNR = Nphot / np.sqrt(Nphot + Nback)
-
-        # Save arrays
-        obs_snr[i,:] = SNR
-        obs_n[i,:] = Nphot
 
         # Generate synthetic data points
         norm = np.median(Nphot)
@@ -298,7 +292,7 @@ class Lightcurve(object):
     def plot(self, ax0=None, title=""):
 
         # Create new fig if axis is not user provided
-        if ax0 is not None:
+        if ax0 is None:
             fig, ax = plt.subplots(figsize=(16,6))
             ax.set_title(r"%s" %title)
             ax.set_ylabel("Relative Flux")
