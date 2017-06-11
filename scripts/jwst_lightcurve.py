@@ -23,7 +23,7 @@ time = np.linspace(0., 10., 10000)
 system.compute(time, lambda1 = 5, lambda2 = 30, R = 2000)
 
 # Calculate flux at a distance, d
-flux = system.flux / (d * pc_to_meter)**2
+flux = system.flux #/ (d * pc_to_meter)**2
 lam = system.wavelength
 
 # Get MIRI Filter "wheel"
@@ -34,5 +34,5 @@ wheel = jwst.get_miri_filter_wheel()
 
 for filt in wheel:
     filt.compute_lightcurve(flux, time, lam, obscad=cadence)
-    filt.plot()
+    filt.lightcurve.plot()
     plt.show()
