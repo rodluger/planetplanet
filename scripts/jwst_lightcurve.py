@@ -14,6 +14,7 @@ np.random.seed(1213)
 cadence = 5.0 # mins
 d = 12.2      # pc
 saveplot = True
+savetxt = False
 pc_to_meter = u.pc.in_units(u.m)
 
 # Instantiate the Trappist-1 system
@@ -55,3 +56,12 @@ for filt in wheel:
     else:
         fig.subplots_adjust(bottom=0.2)
         plt.show()
+
+    # Save data file
+    if savetxt:
+        # Compose data array to save
+        data = np.array([filt.lightcurve.time, filt.lightcurve.obs, filt.lightcurve.sig]).T
+
+        # Save txt file
+        np.savetxt("jwst_lc_%s_%imin.txt" %(filt.name, cadence), data, fmt=str("%.6e"),
+                   header="time [days]      flux         error", comments="")
