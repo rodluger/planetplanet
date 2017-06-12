@@ -114,7 +114,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     for (t = 0; t < nt; t++)
       body[p]->time[t] = time[t];
   }
-  
+    
   // Solve for the orbits
   if (settings.nbody)
     iErr = NBody(np, body, settings);
@@ -124,7 +124,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     printf("ERROR: Kepler solver failure (%d).\n", iErr);
     abort();
   }
-  
+    
   // Compute the stellar flux
   UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., body[0]->teff, settings.polyeps1, settings.polyeps2, 
                  settings.maxpolyiter, settings.mintheta, settings.maxvertices, settings.maxfunctions,

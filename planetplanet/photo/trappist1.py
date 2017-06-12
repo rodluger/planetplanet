@@ -39,8 +39,8 @@ def Trappist1(sample = True, airless = True, **kwargs):
   # Instantiate the star; radius from Burgasser & Mamajek (2017)
   mstar = N(0.0802, 0.0073)
   rstar = N(0.121, 0.003)
-  T = (N(0.000524, 0.000034) * LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
-  star = Star('A', m = mstar, r = rstar, T = T, color = 'k', **kwargs)
+  teff = (N(0.000524, 0.000034) * LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
+  star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k', **kwargs)
   
   # Parameters from Gillon et al. (2017) and Luger et al. (2017)
   # Mass for `h` is currently unconstrained, so basing it loosely on 
