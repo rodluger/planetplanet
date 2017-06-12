@@ -744,7 +744,7 @@ class System(object):
     
     # Reset
     self.reset()
-    
+
     # Compute the wavelength grid
     wav = [lambda1]
     while(wav[-1] < lambda2):
