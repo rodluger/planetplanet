@@ -283,10 +283,9 @@ def Front(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.set_xticks([])
   ax.set_yticks([])
 
-fig, ax = pl.subplots(2,2, figsize = (16, 16))
-Observer(ax[0,0]); ax[0,0].set_title('Observer', fontweight = 'bold', fontsize = 18)
-Side(ax[0,1]); ax[0,1].set_title('Side', fontweight = 'bold', fontsize = 18)
-Top(ax[1,0]); ax[1,0].set_title('Top', fontweight = 'bold', fontsize = 18)
-Front(ax[1,1]); ax[1,1].set_title('Front', fontweight = 'bold', fontsize = 18)
+fig, ax = pl.subplots(3, figsize = (8, 24))
+Observer(ax[0]); ax[0].set_title('Observer', fontweight = 'bold', fontsize = 18)
+Side(ax[1]); ax[1].set_title('Side', fontweight = 'bold', fontsize = 18)
+Top(ax[2]); ax[2].set_title('Top', fontweight = 'bold', fontsize = 18)
 
 fig.savefig('geometry.pdf', bbox_inches = 'tight')
