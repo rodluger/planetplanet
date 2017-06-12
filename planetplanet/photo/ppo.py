@@ -951,8 +951,8 @@ class System(object):
       tick.set_fontsize(8)
   
     # Get the times of ingress, midpoint, and egress
-    tstart = t[0] + np.argmax(body.occultor[t] >= 0)
-    tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] >= 0)
+    tstart = t[0] + np.argmax(body.occultor[t] > 0)
+    tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] > 0)
     tmid = (tstart + tend) // 2
     
     # Sort occultors by z-order (occultor closest to observer last)
