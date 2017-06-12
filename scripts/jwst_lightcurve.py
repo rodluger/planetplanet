@@ -9,11 +9,12 @@ from planetplanet.detect import jwst
 import matplotlib.pyplot as plt
 import astropy.units as u
 import numpy as np
-np.random.seed(1213)
+#np.random.seed(1213)
+np.random.seed(1234)
 
 cadence = 5.0 # mins
 d = 12.2      # pc
-saveplot = True
+saveplot = False
 savetxt = False
 pc_to_meter = u.pc.in_units(u.m)
 
@@ -55,7 +56,8 @@ for filt in wheel:
         fig.savefig("../img/jwst_lc_%s.png" %filt.name, bbox_inches="tight")
     else:
         fig.subplots_adjust(bottom=0.2)
-        plt.show()
+
+plt.show()
 
     # Save data file
     if savetxt:
