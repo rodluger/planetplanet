@@ -939,9 +939,9 @@ class System(object):
 
     # Plot three different wavelengths (first, mid, and last)
     axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-    axlc.plot(body.time[t], (int(p > 0) * normb + body.flux[t, 0]) / normb, 'b-')
-    axlc.plot(body.time[t], (int(p > 0) * normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-')
-    axlc.plot(body.time[t], (int(p > 0) * normr + body.flux[t, -1]) / normr, 'r-')
+    axlc.plot(body.time[t], (int(p > 0) * normb + body.flux[t, 0]) / normb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
+    axlc.plot(body.time[t], (int(p > 0) * normg + body.flux[t, body.flux.shape[-1] // 2]) / normg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
+    axlc.plot(body.time[t], (int(p > 0) * normr + body.flux[t, -1]) / normr, 'r-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[-1])) + r"\ \mu\mathrm{m}$")
     axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
     axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
     axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -949,7 +949,8 @@ class System(object):
     tracker = axlc.axvline(body.time[t[0]], color = 'k', alpha = 0.5, lw = 1, ls = '--')
     for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
       tick.set_fontsize(8)
-  
+    axlc.legend(loc = 'lower right', fontsize = 8)
+    
     # Get the times of ingress, midpoint, and egress
     tstart = t[0] + np.argmax(body.occultor[t] > 0)
     tend = t[0] + len(body.time[t]) - np.argmax(body.occultor[t][::-1] > 0)

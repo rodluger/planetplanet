@@ -116,8 +116,8 @@ y = np.sqrt(ro ** 2 - (x - xo) ** 2)
 ax.fill_between(x, yo - y, yo + y, 
                 color = 'lightgray', zorder = 99, lw = 1,
                 alpha = 0.1)
-ax.plot(x, yo - y, 'k-')
-ax.plot(x, yo + y, 'k-')
+ax.plot(x, yo - y, 'k-', lw = 1)
+ax.plot(x, yo + y, 'k-', lw = 1)
 
 # Integration bounds
 inds = np.where((x >= x1) & (x <= x2))
@@ -127,12 +127,20 @@ ax.plot(x[inds], yo + y[inds], '-', zorder = 999, lw = 2,  color = '#aaaaee')
 # Label regions
 ax.annotate(r'$A_1$', xy = (-0.54, 0), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14)
 ax.annotate(r'$A_2$', xy = (-0.54, 0.64), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14)
-ax.annotate(r'$A_3$', xy = (-0.54, 0.85), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14,
-            xytext = (0, 40), textcoords = 'offset points', arrowprops = dict(arrowstyle = '-|>', color = 'b'))
-ax.annotate(r'$v_n$', xy = (-0.70711, 0.70711), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
+ax.annotate(r'$A_3$', xy = (-0.4, 0.87), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14,
+            xytext = (-20, 40), textcoords = 'offset points', arrowprops = dict(arrowstyle = '-', color = 'b'))
+ax.annotate(r'$x_n$', xy = (-0.70711, 0.70711), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
             xytext = (-14, 8), textcoords = 'offset points', fontsize = 14)
-ax.annotate(r'$v_{n+1}$', xy = (-0.334832, -0.309744), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
+ax.annotate(r'$x_{n+1}$', xy = (-0.334832, -0.309744), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
             xytext = (20, -8), textcoords = 'offset points', fontsize = 14)
+
+ax.annotate(r'$f_0$', xy = (-0.54, -0.44), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+ax.annotate(r'$f_1$', xy = (-0.54, 0.42), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+ax.annotate(r'$f_2$', xy = (-0.54, 0.76), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+ax.annotate(r'$f_3$', xy = (-0.54, 0.9), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+
+ax.annotate(r'$\mathcal{O}$', xy = (-1.54, 1.41), xycoords = 'data', ha = 'center', va = 'center', color = 'k', fontsize = 20)
+ax.annotate(r'$\mathcal{P}$', xy = (0.76, -0.85), xycoords = 'data', ha = 'center', va = 'center', color = 'k', fontsize = 20)
 
 # Appearance
 ax.set_aspect('equal')

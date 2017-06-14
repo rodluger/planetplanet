@@ -117,19 +117,32 @@ def Side(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.plot(0, 0, 'ko')
   ax.annotate(r'$(0, 0)$', xy = (0, 0), ha = 'left', va = 'top', xytext = (5, -5), textcoords = 'offset points', fontsize = 14)
   ax.annotate(r'$a$', xy = (-d, a / 2), ha = 'right', va = 'top', xytext = (-10, 0), textcoords = 'offset points', fontsize = 18)
-  ax.annotate(r'$r\cos$', xy = (-d / 2, 0), ha = 'center', va = 'top', xytext = (0, -10), textcoords = 'offset points', fontsize = 18)
-  ax.annotate(r'l', xy = (-d / 2 + 0.13, 0), ha = 'center', va = 'top', xytext = (0, -10), 
-                   textcoords = 'offset points', fontsize = 20, family='PilGi')
+  ax.annotate(r'$r\cos\phi$', xy = (-d / 2, 0), ha = 'center', va = 'top', xytext = (0, -10), textcoords = 'offset points', fontsize = 18)
   ax.annotate(r'$r$', xy = (-d / 2, a / 2), ha = 'center', va = 'top', xytext = (15, 15), textcoords = 'offset points', fontsize = 18)
   x = np.linspace(-0.1, -0.0707107, 10000)
   y = np.sqrt(0.01 - x ** 2)
   ax.plot(x, y, 'k-', lw = 1)
-  l = ax.annotate(r'l', xy = (-0.15, 0.1), ha = 'center', va = 'top', xytext = (0, 0), 
-                  textcoords = 'offset points', fontsize = 20, family='PilGi')
+  l = ax.annotate(r'$\phi$', xy = (-0.15, 0.1), ha = 'center', va = 'top', xytext = (0, 3), 
+                  textcoords = 'offset points', fontsize = 20)
   
   ax.annotate("To star", xy = (-r, 0), xytext = (-70, 0), fontsize = 16,
               ha = 'center', va = 'center', annotation_clip = False, color = 'k',
               textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
+  
+  
+  ax.annotate("To star", xy = (-r * np.cos(lat), a), xytext = (-122, 0), fontsize = 16,
+              ha = 'center', va = 'center', annotation_clip = False, color = 'k',
+              textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
+  
+  ax.annotate("Zenith", xy = (-r * np.cos(lat), a), xytext = (-80, 80 * r * np.cos(lat) / a), fontsize = 16,
+              ha = 'center', va = 'center', annotation_clip = False, color = 'k',
+              textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
+              
+  x = np.linspace(-r * np.cos(lat) - 0.2, -r * np.cos(lat) - 0.143, 10000)
+  y = a + np.sqrt(0.04 - (x + r * np.cos(lat)) ** 2)
+  ax.plot(x, y, 'k-', lw = 1)
+  l = ax.annotate(r'$\phi$', xy = (-r * np.cos(lat), a), ha = 'center', va = 'top', xytext = (-24, 20), 
+                  textcoords = 'offset points', fontsize = 18)
   
   # Appearance
   ax.set_aspect('equal')
@@ -206,10 +219,7 @@ def Top(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
               ha = 'center', va = 'center', annotation_clip = False, color = 'k',  fontsize = 16,
               textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
   
-  ax.annotate(r'$r\cos$', xy = (-0.32, -0.18), ha = 'center', va = 'center', xytext = (2, -2), textcoords = 'offset points', fontsize = 16)
-  ax.annotate(r'l', xy = (-0.32 + 0.13, -0.18), ha = 'center', va = 'center', xytext = (2, -2), 
-                   textcoords = 'offset points', fontsize = 20, family='PilGi')
-  
+  ax.annotate(r'$r\cos\phi$', xy = (-0.32, -0.18), ha = 'center', va = 'center', xytext = (12, -2), textcoords = 'offset points', fontsize = 16)  
   ax.annotate(r'$x_0$', xy = (x0 / 2, 0), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points', fontsize = 16)
   ax.annotate(r'$b$', xy = (x0 + b / 2, -0.32), ha = 'center', va = 'center', xytext = (0, -2), textcoords = 'offset points', fontsize = 16)
   ax.annotate(r'$x_\mathrm{limb}$', xy = (-0.707, 0.043), ha = 'center', va = 'center', xytext = (0, 5), textcoords = 'offset points', fontsize = 14, color = 'r')
@@ -293,4 +303,4 @@ Observer(ax[0]); ax[0].set_title('Observer View', fontweight = 'bold', fontsize 
 Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
 Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
 
-fig.savefig('geometry.pdf', bbox_inches = 'tight')
+fig.savefig('../img/geometry.pdf', bbox_inches = 'tight')
