@@ -655,7 +655,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
                   double irrad, double tnight, double teff, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices,
-                  int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], 
+                  int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu * nlam], double lambda[nlam], 
                   double flux[nlam], int quiet, int *iErr) {
   /*
   
@@ -855,7 +855,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double polyeps1, 
                     double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, 
-                    int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet, int *iErr) {
+                    int nu, int nlat, int nlam, double u[nu * nlam], double lambda[nlam], double flux[nlam], int quiet, int *iErr) {
   /*
   
   */

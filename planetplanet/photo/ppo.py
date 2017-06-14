@@ -36,6 +36,7 @@ CLIGHT = 2.998e8
 KBOLTZ = 1.38064852e-23
 MDFAST = 0
 NEWTON = 1
+MINUTE = 1. / 1440.
 
 __all__ = ['Star', 'Planet', 'System']
 
@@ -68,6 +69,7 @@ class Settings(ctypes.Structure):
          treated as vertical lines. Default `1.`
   :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
+  :param int exppts: Number of oversamplings per exposure. Default `10`
   
   '''
   
@@ -83,7 +85,8 @@ class Settings(ctypes.Structure):
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
-              ("maxfunctions", ctypes.c_int)]
+              ("maxfunctions", ctypes.c_int),
+              ("exppts", ctypes.c_int)]
   
   def __init__(self, **kwargs):
     self.nbody = kwargs.pop('nbody', False)
@@ -99,12 +102,13 @@ class Settings(ctypes.Structure):
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
     self.maxfunctions = kwargs.pop('maxfunctions', 999)
+    self.exppts = max(1, kwargs.pop('exppts', 10))
   
   @property
   def params(self):
     return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
             'maxpolyiter', 'dt', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
-            'maxfunctions']
+            'maxfunctions', 'exppts']
   
   @property
   def mintheta(self):
@@ -409,6 +413,7 @@ class System(object):
          treated as vertical lines. Default `1.`
   :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
+  :param int exppts: Number of oversamplings per exposure. Default `10`
   
   ** Observational settings **
   

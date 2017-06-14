@@ -72,6 +72,7 @@ typedef struct {
   double mintheta;
   int maxvertices;
   int maxfunctions;
+  int exppts;
 } SETTINGS;
 
 typedef struct {
