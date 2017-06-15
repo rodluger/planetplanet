@@ -11,7 +11,6 @@ from .ppo import Star, Planet, System
 import numpy as np
 import matplotlib.pyplot as pl
 import os
-import emcee, corner
 from tqdm import tqdm
 MSUN = 1.988416e30
 LSUN = 3.846e26

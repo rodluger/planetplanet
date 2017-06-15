@@ -54,11 +54,11 @@ if compute:
       hist[k].extend(h[k])
 
   # Save
-  np.savez('hist.npz', hist = hist, count = count)
+  np.savez('../img/hist.npz', hist = hist, count = count)
 
 else:
 
-  data = np.load('hist.npz')
+  data = np.load('../img/hist.npz')
   hist = data['hist']
   count = data['count']
 
@@ -78,7 +78,7 @@ for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
   fig.axes[8].set_xticklabels([1, 10, 100, 1000])
   fig.axes[6].set_yticks([0, 1, 2, 3])
   fig.axes[6].set_yticklabels([1, 10, 100, 1000])
-  fig.savefig('%s.corner.png' % planet, bbox_inches = 'tight')
+  fig.savefig('../img/%s.corner.png' % planet, bbox_inches = 'tight')
   pl.close()
   
 # Frequency histogram
@@ -91,5 +91,5 @@ leg = ax.legend(loc = 'upper right', title = "Planet")
 ax.get_legend().get_title().set_fontweight('bold')
 ax.set_xlabel('Occultations per year', fontsize = 12, fontweight = 'bold')
 ax.set_ylabel('Probability', fontsize = 12, fontweight = 'bold')
-fig.savefig('hist.png', bbox_inches = 'tight')
+fig.savefig('../img/hist.png', bbox_inches = 'tight')
 pl.close()

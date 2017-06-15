@@ -4,7 +4,7 @@
 integration.py
 --------------
 
-Not yet ready!
+Plots a diagram showing how the occultation integration scheme works.
 
 '''
 
@@ -55,15 +55,15 @@ inds = np.where((x >= x1) & (x <= x2))
 ax.plot(x[inds], y[inds], 'b-', zorder = 999, lw = 2)
 ax.plot(x[inds], -y[inds], '-', zorder = 999, lw = 2, color = '#aaaaee')
 
-# Plot the latitude ellipses
-for lat in np.linspace(0, np.pi, nl + 2)[1:-1]:
+# Plot the zenith angle ellipses
+for za in np.linspace(0, np.pi, nl + 2)[1:-1]:
 
   # The ellipse
-  a = r * np.abs(np.sin(lat))
+  a = r * np.abs(np.sin(za))
   b = a * np.abs(np.sin(theta))
-  xE = -r * np.cos(lat) * np.cos(theta)
+  xE = -r * np.cos(za) * np.cos(theta)
   yE = 0
-  xlimb = r * np.cos(lat) * np.sin(theta) * np.tan(theta)
+  xlimb = r * np.cos(za) * np.sin(theta) * np.tan(theta)
   if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
     xmin = xE - b
   else:
@@ -82,7 +82,7 @@ for lat in np.linspace(0, np.pi, nl + 2)[1:-1]:
   A = b ** 2 - (x - xE) ** 2
   A[A < 0] = 0
   y = (a / b) * np.sqrt(A)
-  if np.abs(np.cos(lat)) < 1e-5:
+  if np.abs(np.cos(za)) < 1e-5:
     style = dict(color = 'k', ls = '--', lw = 1)
   else:
     style = dict(color = 'k', ls = '-', lw = 1)
@@ -95,11 +95,11 @@ for lat in np.linspace(0, np.pi, nl + 2)[1:-1]:
   ax.plot(x[inds], -y[inds], '-', zorder = 999, lw = 2, color = '#aaaaee')
   
   # Fill
-  color = cmap(0.3 + 0.3 * (np.cos(lat) + 1))
-  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * lat))
+  color = cmap(0.3 + 0.3 * (np.cos(za) + 1))
+  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * za))
   x = np.linspace(-r, xE - xlimb, 1000)
   y = np.sqrt(r ** 2 - x ** 2)
-  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * lat))
+  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * za))
 
 # Plot the vertices that are inside the occultor
 for x, y in vertices:
@@ -116,8 +116,8 @@ y = np.sqrt(ro ** 2 - (x - xo) ** 2)
 ax.fill_between(x, yo - y, yo + y, 
                 color = 'lightgray', zorder = 99, lw = 1,
                 alpha = 0.1)
-ax.plot(x, yo - y, 'k-')
-ax.plot(x, yo + y, 'k-')
+ax.plot(x, yo - y, 'k-', lw = 1)
+ax.plot(x, yo + y, 'k-', lw = 1)
 
 # Integration bounds
 inds = np.where((x >= x1) & (x <= x2))
@@ -127,12 +127,20 @@ ax.plot(x[inds], yo + y[inds], '-', zorder = 999, lw = 2,  color = '#aaaaee')
 # Label regions
 ax.annotate(r'$A_1$', xy = (-0.54, 0), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14)
 ax.annotate(r'$A_2$', xy = (-0.54, 0.64), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14)
-ax.annotate(r'$A_3$', xy = (-0.54, 0.85), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14,
-            xytext = (0, 40), textcoords = 'offset points', arrowprops = dict(arrowstyle = '-|>', color = 'b'))
-ax.annotate(r'$v_n$', xy = (-0.70711, 0.70711), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
+ax.annotate(r'$A_3$', xy = (-0.4, 0.87), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 14,
+            xytext = (-20, 40), textcoords = 'offset points', arrowprops = dict(arrowstyle = '-', color = 'b'))
+ax.annotate(r'$x_n$', xy = (-0.70711, 0.70711), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
             xytext = (-14, 8), textcoords = 'offset points', fontsize = 14)
-ax.annotate(r'$v_{n+1}$', xy = (-0.334832, -0.309744), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
+ax.annotate(r'$x_{n+1}$', xy = (-0.334832, -0.309744), xycoords = 'data', ha = 'center', va = 'center', color = 'r', 
             xytext = (20, -8), textcoords = 'offset points', fontsize = 14)
+
+ax.annotate(r'$f_0$', xy = (-0.54, -0.44), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+ax.annotate(r'$f_1$', xy = (-0.54, 0.42), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+ax.annotate(r'$f_2$', xy = (-0.54, 0.76), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+ax.annotate(r'$f_3$', xy = (-0.54, 0.9), xycoords = 'data', ha = 'center', va = 'center', color = 'b', fontsize = 8)
+
+ax.annotate(r'$\mathcal{O}$', xy = (-1.54, 1.41), xycoords = 'data', ha = 'center', va = 'center', color = 'k', fontsize = 20)
+ax.annotate(r'$\mathcal{P}$', xy = (0.76, -0.85), xycoords = 'data', ha = 'center', va = 'center', color = 'k', fontsize = 20)
 
 # Appearance
 ax.set_aspect('equal')

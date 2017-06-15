@@ -1,5 +1,7 @@
 old/
 *.npz
+.DS_Store
+*.o
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

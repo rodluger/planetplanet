@@ -28,15 +28,15 @@ int funcomp( const void* a, const void* b) {
   else return 1;
 }
 
-double EyeballTemperature(double lat, double irrad, double albedo, double tnight) {
+double EyeballTemperature(double za, double irrad, double albedo, double tnight) {
   /*
   
   */
   
   double temp;
   
-  if (lat < PI / 2) {
-    temp = pow((irrad * cos(lat) * (1 - albedo)) / SBOLTZ, 0.25);
+  if (za < PI / 2) {
+    temp = pow((irrad * cos(za) * (1 - albedo)) / SBOLTZ, 0.25);
     if (temp > tnight)
       return temp;
     else
@@ -111,7 +111,7 @@ void GetRoots(double a, double b, double xE, double yE, double xC, double yC, do
 
 }
 
-double Latitude(double x, double y, double r, double theta) {
+double ZenithAngle(double x, double y, double r, double theta) {
   /*
   
   */
@@ -144,8 +144,8 @@ double Latitude(double x, double y, double r, double theta) {
   costheta = cos(theta);
   cotantheta = costheta / sintheta;
   
-  // Compute the latitude. We will solve
-  // a quadratic equation for z = sin(lat) **  2  
+  // Compute the zenith_angle. We will solve
+  // a quadratic equation for z = sin(za) **  2  
   alpha = x / (r * sintheta);
   beta = cotantheta;
   gamma = y / r;
@@ -209,44 +209,44 @@ double Latitude(double x, double y, double r, double theta) {
   
 }
 
-void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nlat, double latgrid[nlat], int nlam, double lambda[nlam], int nu, double u[nu * nlam], double B[nlat + 1][nlam]) {
+void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
   /*
-  Returns the blackbody intensity at the center of each latitude slice 
+  Returns the blackbody intensity at the center of each zenith_angle slice 
   evaluated at a given array of wavelengths.
   
   */
   
   int i, j, k;
-  double latitude, coslat;
+  double zenith_angle, cosza;
   double T = 0.;
-  double I1[nlam];
+  double I1[nw];
   double x;
   
   // Loop over each slice
-  for (i = 0; i < nlat + 1; i++) {
+  for (i = 0; i < nz + 1; i++) {
     
-    // Get the latitude halfway between the `latgrid` points.
+    // Get the zenith_angle halfway between the `zenithgrid` points.
     // In the regular grid, B[0] is the intensity of the region between the 
-    // sub-stellar point and latgrid[0] (the location of the first latitude ellipse); 
-    // B[1] is the intensity between latgrid[1] and latgrid[2], and so forth.
-    // B[nlat] is the intensity between latgrid[nlat - 1] and the anti-stellar point.
+    // sub-stellar point and zenithgrid[0] (the location of the first zenith_angle ellipse); 
+    // B[1] is the intensity between zenithgrid[1] and zenithgrid[2], and so forth.
+    // B[nz] is the intensity between zenithgrid[nz - 1] and the anti-stellar point.
     if (i == 0) {
-      latitude = latgrid[0] - 0.5 * (latgrid[1] - latgrid[0]);
-      if (latitude < 0) latitude = 0;
-    } else if (i == nlat) {
-      latitude = latgrid[nlat - 1] + 0.5 * (latgrid[nlat - 1] - latgrid[nlat - 2]);
-      if (latitude > PI) latitude = PI;
+      zenith_angle = zenithgrid[0] - 0.5 * (zenithgrid[1] - zenithgrid[0]);
+      if (zenith_angle < 0) zenith_angle = 0;
+    } else if (i == nz) {
+      zenith_angle = zenithgrid[nz - 1] + 0.5 * (zenithgrid[nz - 1] - zenithgrid[nz - 2]);
+      if (zenith_angle > PI) zenith_angle = PI;
     } else
-      latitude = 0.5 * (latgrid[i] + latgrid[i - 1]);
+      zenith_angle = 0.5 * (zenithgrid[i] + zenithgrid[i - 1]);
 
     // Get its blackbody temperature
     if (teff == 0) {
       
       // No limb darkening
-      T = EyeballTemperature(latitude, irrad, albedo, tnight);
+      T = EyeballTemperature(zenith_angle, irrad, albedo, tnight);
 
       // Loop over each wavelength bin
-      for (j = 0; j < nlam; j++) {
+      for (j = 0; j < nw; j++) {
         
         // Get the blackbody intensity (W / m^2 / m / sr)
         B[i][j] = Blackbody(lambda[j], T);
@@ -262,23 +262,23 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
       // temperature. This is not strictly true, but probably OK
       // for modest limb darkening. We should eventually find the
       // correct normalization.
-      for (j = 0; j < nlam; j++) {
+      for (j = 0; j < nw; j++) {
         I1[j] = Blackbody(lambda[j], teff);
         B[i][j] = I1[j];
       }
       
       // Pre-compute mu
-      coslat = cos(latitude);
+      cosza = cos(zenith_angle);
       
       // Loop over the coefficient order
       for (k = 0; k < nu; k++) {
       
         // The Taylor expansion is in (1 - mu)
-        x = pow(1 - coslat, k + 1);
+        x = pow(1 - cosza, k + 1);
         
         // Compute the wavelength-dependent intensity
-        for (j = 0; j < nlam; j++) {
-          B[i][j] -= u[nlam * k + j] * I1[j] * x;
+        for (j = 0; j < nw; j++) {
+          B[i][j] -= u[nw * k + j] * I1[j] * x;
         } 
       } 
     }
@@ -385,7 +385,7 @@ double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   return FR - FL;
 }
 
-void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y0[no], double ro[no], 
+void AddZenithAngleSlice(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], 
                       double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices,
                       int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
   /*
@@ -405,14 +405,14 @@ void AddLatitudeSlice(double latitude, double r, int no, double x0[no], double y
   
   // Construct the ellipse
   ellipse->circle = 0;
-  ellipse->a = r * fabs(sin(latitude));
+  ellipse->a = r * fabs(sin(zenith_angle));
   ellipse->b = ellipse->a * fabs(sin(theta));
-  ellipse->x0 = -r * cos(latitude) * cos(theta);
+  ellipse->x0 = -r * cos(zenith_angle) * cos(theta);
   ellipse->y0 = 0;
   
   // The x position of the intersection with the occulted planet
   // limb, relative to the ellipse center
-  xlimb = r * cos(latitude) * sin(theta) * tan(theta);
+  xlimb = r * cos(zenith_angle) * sin(theta) * tan(theta);
 
   // Ellipse x minimum
   if (((theta > 0) && (ellipse->b < xlimb)) || ((theta <= 0) && (ellipse->b > xlimb))) {
@@ -654,9 +654,9 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 }
 
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
-                  double irrad, double tnight, double teff, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices,
-                  int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu], double lambda[nlam], 
-                  double flux[nlam], int quiet, int *iErr) {
+                  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, 
+                  double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nz, int nw, 
+                  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
   */
@@ -667,7 +667,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   int v = 0;
   int f = 0;
   int good;
-  double lmin, lmax, lat;
+  double lmin, lmax, za;
   double xL, xR, x, y, area;
   double r2 = r * r;
   r2 += SMALL * r2;
@@ -680,8 +680,9 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   double vertices[maxvertices];
   FUNCTION functions[maxfunctions];
   FUNCTION boundaries[maxfunctions];
-  double B[nlat * no + 1][nlam];
-  double latgrid[nlat * no];
+  double B[nz * no + 1][nw];
+  double zenithgrid[nz * no];
+  double d2 = distance * distance * PARSEC * PARSEC;
   *iErr = ERR_NONE;
   
   // Avoid the singular point
@@ -689,7 +690,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     theta = mintheta;
 
   // Zero out the flux
-  for (m = 0; m < nlam; m++) 
+  for (m = 0; m < nw; m++) 
     flux[m] = 0.;
   
   // If we're doing limb darkening, theta must be pi/2 (full phase)
@@ -700,10 +701,10 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);     
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
-  // Compute the latitude grid
+  // Compute the zenith_angle grid
   if (adaptive && (teff > 0)) {
   
-    // Adaptive latitude grid
+    // Adaptive zenith_angle grid
     // Loop over each occultor
     for (i = 0; i < no; i++) {
     
@@ -720,37 +721,37 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       if (dmin <= SMALL) dmin = 0;
       lmin = asin(dmin);
 
-      // Add to latitude grid
-      for (j = 0; j < nlat; j++) {
-        latgrid[nlat * i + j] = (j + 1.) / (nlat + 1.) * (lmax - lmin) + lmin;
+      // Add to zenith_angle grid
+      for (j = 0; j < nz; j++) {
+        zenithgrid[nz * i + j] = (j + 1.) / (nz + 1.) * (lmax - lmin) + lmin;
       }
       
       // Adjust the boundaries
-      latgrid[nlat * i] = lmin;
-      latgrid[nlat * (i + 1) - 1] = lmax;
+      zenithgrid[nz * i] = lmin;
+      zenithgrid[nz * (i + 1) - 1] = lmax;
       
     }
 
     // Sort the grid
-    qsort(latgrid, nlat * no, sizeof(double), dblcomp);
+    qsort(zenithgrid, nz * no, sizeof(double), dblcomp);
     
   } else {
   
-    // Linearly spaced latitude grid
+    // Linearly spaced zenith_angle grid
     lmin = 0 - SMALL;
     lmax = PI + SMALL;
-    for (i = 0; i < nlat * no; i++) {
-      latgrid[i] = (i + 1.) / (nlat * no + 1.) * (lmax - lmin) + lmin;
+    for (i = 0; i < nz * no; i++) {
+      zenithgrid[i] = (i + 1.) / (nz * no + 1.) * (lmax - lmin) + lmin;
     }
     
   }
 
   // Add the ellipses  
-  for (i = 0; i < nlat * no; i++) {
-    AddLatitudeSlice(latgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
+  for (i = 0; i < nz * no; i++) {
+    AddZenithAngleSlice(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
   }
-  // Pre-compute the surface intensity in each latitude slice
-  SurfaceIntensity(albedo, irrad, tnight, teff, nlat * no, latgrid, nlam, lambda, nu, u, B);
+  // Pre-compute the surface intensity in each zenith_angle slice
+  SurfaceIntensity(albedo, irrad, tnight, teff, nz * no, zenithgrid, nw, lambda, nu, u, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
@@ -825,26 +826,27 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       area = integral(xL, xR, boundaries[j + 1], &oob) - integral(xL, xR, boundaries[j], &oob);      
       if (oob) *iErr = ERR_OOB;
       
-      // Get the latitude of the midpoint
-      lat = Latitude(x, y, r, theta);
+      // Get the zenith_angle of the midpoint
+      za = ZenithAngle(x, y, r, theta);
       
-      // Get the index `k` of the latitude grid *above* this latitude.
+      // Get the index `k` of the zenith_angle grid *above* this zenith_angle.
       // B[k] is the intensity of this region.
-      for (k = 0; k < nlat * no; k++) {
-        if (latgrid[k] > lat)
+      for (k = 0; k < nz * no; k++) {
+        if (zenithgrid[k] > za)
           break;
       }
       
-      // Multiply by the area of the latitude slice to get the flux at each wavelength
-      for (m = 0; m < nlam; m++)
+      // Multiply by the area of the zenith_angle slice to get the flux at each wavelength
+      for (m = 0; m < nw; m++)
         flux[m] += B[k][m] * area;
     } 
     
   }
   
-  // Scale flux by REARTH**2 and convert to W m^2 / m^2 / um / sr
-  for (m = 0; m < nlam; m++) 
-    flux[m] *= REARTH * REARTH * MICRON;
+  // Scale flux by REARTH**2, convert from m^-1 to micron^-1, and
+  // divide by the square of the distance to get a radiance (W / m^2 / um)
+  for (m = 0; m < nw; m++) 
+    flux[m] *= REARTH * REARTH * MICRON / d2;
   
   // Free all of the ellipse instances
   for (j = 0; j < f; j+=2) {
@@ -853,9 +855,9 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double polyeps1, 
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, 
                     double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, 
-                    int nu, int nlat, int nlam, double u[nu], double lambda[nlam], double flux[nlam], int quiet, int *iErr) {
+                    int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
   */
@@ -865,6 +867,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nlat, nlam, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nz, nw, u, lambda, flux, quiet, iErr);
     
 }
