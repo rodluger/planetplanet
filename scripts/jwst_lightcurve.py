@@ -12,7 +12,7 @@ import numpy as np
 #np.random.seed(1213)
 np.random.seed(1234)
 
-cadence = 5.0 # mins
+cadence = 10.0 # mins
 d = 12.2      # pc
 saveplot = False
 savetxt = False
@@ -23,7 +23,7 @@ system = Trappist1(sample = True, ttvs = False, phasecurve = True, adaptive = Tr
 
 # Get the occultation light curves for the first 10 days
 time = np.linspace(0., 10., 10000)
-time = np.linspace(1.0, 2.0, 2000)
+#time = np.linspace(1.0, 2.0, 2000)
 system.compute(time, lambda1 = 4, lambda2 = 30, R = 3000)
 
 # Calculate flux at a distance, d
@@ -57,8 +57,6 @@ for filt in wheel:
     else:
         fig.subplots_adjust(bottom=0.2)
 
-plt.show()
-
     # Save data file
     if savetxt:
         # Compose data array to save
@@ -67,3 +65,5 @@ plt.show()
         # Save txt file
         np.savetxt("jwst_lc_%s_%imin.txt" %(filt.name, cadence), data, fmt=str("%.6e"),
                    header="time [days]      flux         error", comments="")
+
+plt.show()
