@@ -42,19 +42,7 @@ __all__ = ['Star', 'Planet', 'System']
 
 # Load the library
 try:
-  # This is a bit of a hack. The `librebound.so` shared library must be in the CWD
-  # in order for `libppo.so` to find it. Let's copy it over if necessary, load the
-  # library, then delete it.
-  '''
-  cwd = os.getcwd()
-  if cwd != os.path.dirname(os.path.abspath(__file__)):
-    shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'librebound.so'), cwd)
-  '''
   libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
-  '''
-  if cwd != os.path.dirname(os.path.abspath(__file__)):
-    os.remove(os.path.join(cwd, 'librebound.so'))
-  '''
 except:
   raise Exception("Can't find `libppo.so`; please run `make` to compile it.")
 

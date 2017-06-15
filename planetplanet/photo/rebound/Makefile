@@ -29,4 +29,3 @@ clean:
 	@echo "Removing coverage files ..."
 	@-rm -f *.gcda
 	@-rm -f *.gcno
-	
