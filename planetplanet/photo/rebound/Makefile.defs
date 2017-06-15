@@ -6,11 +6,15 @@ endif
 ifeq ($(OS), Linux)
 	OPT+= -Wall -g
 	LIB+= -lm -lrt
+	FLAGS1+= -fPIC -Wl,-Bsymbolic-functions -c -O3
+	FLAGS2+= -shared -O3 -Wl,-Bsymbolic-functions,-soname,
 endif
 ifeq ($(OS), Darwin)
 	OPT+= -I/usr/local/include -Wall -g #-Wsign-compare
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
+	FLAGS1+= -fPIC -c
+	FLAGS2+= -shared -Wl,-install_name,
 endif
 
 ifeq ($(MPI), 1)
