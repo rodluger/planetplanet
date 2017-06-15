@@ -1,11 +1,11 @@
 # -*- makefile -*-
 export OPENGL=0
-include ../../rebound/src/Makefile.defs
+include rebound/Makefile.defs
 
 all: librebound
 	@echo ""
 	@echo "[planetplanet] Compiling C source..."
-	$(CC) -fPIC -I../../rebound/src/ $(OPT) $(PREDEF) -c orbit.c complex.c roots.c eyeball.c ppo.c progress.c
+	$(CC) -fPIC -Irebound/ $(OPT) $(PREDEF) -c orbit.c complex.c roots.c eyeball.c ppo.c progress.c
 	@echo "[planetplanet] Generating shared library..."
 	$(CC) -shared -Wl,-install_name,libppo.so -o libppo.so orbit.o complex.o roots.o eyeball.o ppo.o progress.o -L. -lrebound librebound.so
 	@-rm orbit.o
@@ -19,13 +19,13 @@ all: librebound
 
 librebound: 
 	@echo "[planetplanet] Compiling REBOUND..."
-	$(MAKE) -C ../../rebound/src/
+	$(MAKE) -C rebound/
 	@-rm -f librebound.so
-	@ln -s ../../rebound/src/librebound.so .
+	@ln -s rebound/librebound.so .
 
 clean:
 	@echo "[planetplanet] Cleaning up shared library librebound.so ..."
 	@-rm -f librebound.so
-	$(MAKE) -C ../../rebound/src/ clean
+	$(MAKE) -C rebound/ clean
 	@echo "[planetplanet] Cleaning up shared library libppo.so ..."
 	@-rm -vf libppo.so
