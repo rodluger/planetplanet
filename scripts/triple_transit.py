@@ -76,7 +76,7 @@ axlc.legend(loc = 'lower right', fontsize = 8)
 axim = [pl.subplot2grid((5, 5), (0, n), colspan = 1, rowspan = 1) for n in range(5)]
 t = [300, 400, 500, 600, 700]
 for n in range(5):
-  system.plot_image(t[n], star, [1,2,3], ax = axim[n], pad = 2.5)
+  system.plot_image(t[n], star, occultors = [1,2,3], ax = axim[n])
   axim[n].axis('off')
   axim[n].set_aspect('equal')
   axim[n].annotate('%d' % (n + 1), xy = (0, 12), xycoords = 'data', ha = 'center', va = 'bottom', fontweight = 'bold', fontsize = 8, clip_on = False)

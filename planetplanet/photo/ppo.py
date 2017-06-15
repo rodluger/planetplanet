@@ -906,7 +906,9 @@ class System(object):
     '''
     
     from ..detect import jwst
-    self.observation = 0 # Call Jake's code
+    
+    # Call Jake's code
+    self.observation = 0
   
   def plot_occultation(self, body, time, interval = 50, gifname = None):
     '''
@@ -1051,16 +1053,24 @@ class System(object):
 
     return fig, axlc, axxz, axim
       
-  def plot_image(self, t, occulted, occultors, ax = None, pad = 2.5, occultor_alpha = 1, **kwargs):
+  def plot_image(self, t, occulted, occultors = None, ax = None, pad = 2.5, occultor_alpha = 1, **kwargs):
     '''
-    Plots an image of the `occulted` body and the `occultor` at a given `time`.
+    Plots an image of the `occulted` body and its occultors at a given index of the time array `t`.
   
     '''
   
     # Set up the plot
     if ax is None:
       fig, ax = pl.subplots(1, figsize = (6,6))
-  
+    
+    # Get the occultors
+    if occultors is None:
+      occultors = []
+      for b in range(len(self.bodies)):
+        if (occulted.occultor[t] & 2 ** b):
+          occultors.append(b)
+      occultors = list(set(occultors))
+    
     # Plot the occulted body
     r = occulted._r
     x0 = occulted.x[t]
