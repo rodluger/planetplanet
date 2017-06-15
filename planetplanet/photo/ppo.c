@@ -155,9 +155,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   }
     
   // Compute the stellar flux
-  UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., body[0]->teff, settings.polyeps1, settings.polyeps2, 
+  UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., body[0]->teff, settings.distance, settings.polyeps1, settings.polyeps2, 
                  settings.maxpolyiter, settings.mintheta, settings.maxvertices, settings.maxfunctions,
-                 settings.adaptive, body[0]->nu, body[0]->nl, nw, body[0]->u, 
+                 settings.adaptive, body[0]->nu, body[0]->nz, nw, body[0]->u, 
                  wavelength, tmp, settings.quiet, &iErr);
   for (t = 0; t < nt; t++) {
     for (w = 0; w < nw; w++)
@@ -197,9 +197,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
-                       settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
+                       settings.distance, settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
                        settings.mintheta, settings.maxvertices, settings.maxfunctions, 
-                       settings.adaptive, body[p]->nu, body[p]->nl, nw, body[p]->u, wavelength, 
+                       settings.adaptive, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
                        tmp, settings.quiet, &iErr);
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] = tmp[w];
@@ -219,17 +219,17 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         tmpflux[w] = 0;
 
       // Oversample the light curve
-      for (i = 0; i < settings.exppts; i++) { 
+      for (i = 0; i < settings.oversample; i++) { 
           
         // Reset the number of occultors
         no = 0;
         
         // Quadratically interpolate to get the xyz coordinates of the occulted body
         // at this oversampled time grid point
-        if (settings.exppts > 1) {
-          xp = QuadInterp(nt, body[p]->x, t, ((float) i) / (settings.exppts - 1.));
-          yp = QuadInterp(nt, body[p]->y, t, ((float) i) / (settings.exppts - 1.));
-          zp = QuadInterp(nt, body[p]->z, t, ((float) i) / (settings.exppts - 1.));
+        if (settings.oversample > 1) {
+          xp = QuadInterp(nt, body[p]->x, t, ((float) i) / (settings.oversample - 1.));
+          yp = QuadInterp(nt, body[p]->y, t, ((float) i) / (settings.oversample - 1.));
+          zp = QuadInterp(nt, body[p]->z, t, ((float) i) / (settings.oversample - 1.));
         } else {
           xp = body[p]->x[t];
           yp = body[p]->y[t];
@@ -244,14 +244,14 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           if (o == p) continue;
     
           // Compute the body-body separation between body `o` and body `p` by quadratic interpolation
-          if (settings.exppts > 1) {
-            dx = QuadInterp(nt, body[o]->x, t, ((float) i) / (settings.exppts - 1.)) - xp;
-            dy = QuadInterp(nt, body[o]->y, t, ((float) i) / (settings.exppts - 1.)) - yp;
-            dz = QuadInterp(nt, body[o]->z, t, ((float) i) / (settings.exppts - 1.)) - zp;
+          if (settings.oversample > 1) {
+            dx = QuadInterp(nt, body[o]->x, t, ((float) i) / (settings.oversample - 1.)) - xp;
+            dy = QuadInterp(nt, body[o]->y, t, ((float) i) / (settings.oversample - 1.)) - yp;
+            dz = QuadInterp(nt, body[o]->z, t, ((float) i) / (settings.oversample - 1.)) - zp;
           } else {
             dx = body[o]->x[t] - xp;
             dy = body[o]->y[t] - yp;
-            dz = body[o]->z[t] - xp;
+            dz = body[o]->z[t] - zp;
           }
           d = sqrt(dx * dx + dy * dy);
           
@@ -302,9 +302,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       
           // Call the eyeball routine
           OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
-                       irrad, body[p]->tnight,  body[p]->teff, settings.polyeps1, settings.polyeps2, 
+                       irrad, body[p]->tnight,  body[p]->teff, settings.distance, settings.polyeps1, settings.polyeps2, 
                        settings.maxpolyiter, settings.mintheta, settings.maxvertices,
-                       settings.maxfunctions, settings.adaptive, body[p]->nu, body[p]->nl, nw, 
+                       settings.maxfunctions, settings.adaptive, body[p]->nu, body[p]->nz, nw, 
                        body[p]->u, wavelength, tmp, settings.quiet, &iErr);
               
           // Update the body light curve
@@ -316,7 +316,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       
       // Finally, take the average of the oversampled flux
       for (w = 0; w < nw; w++)
-        body[p]->flux[nw * t + w] += tmpflux[w] / settings.exppts;
+        body[p]->flux[nw * t + w] += tmpflux[w] / settings.oversample;
       
     }    
   

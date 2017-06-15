@@ -22,6 +22,7 @@
 #define CLIGHT                  2.998e8                                               // m / 2
 #define REARTH                  6371000.                                              // m
 #define MICRON                  1e-6
+#define PARSEC                  3.086e16
 
 // Settings
 #define MAXIM                   1.e-2
@@ -45,7 +46,7 @@ typedef struct {
   int phasecurve;
   int blackbody;
   int nu;
-  int nl;
+  int nz;
   int nt;
   int nw;
   double *u;
@@ -72,7 +73,8 @@ typedef struct {
   double mintheta;
   int maxvertices;
   int maxfunctions;
-  int exppts;
+  int oversample;
+  double distance;
 } SETTINGS;
 
 typedef struct {
@@ -100,7 +102,7 @@ typedef struct {
 // Functions
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu * nlam], double lambda[nlam], double flux[nlam], int quiet, int *iErr);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nlat, int nlam, double u[nu * nlam], double lambda[nlam], double flux[nlam], int quiet, int *iErr);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);

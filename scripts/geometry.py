@@ -4,7 +4,7 @@
 geometry.py
 -----------
 
-Not yet ready!
+Plots the geometry of the ellipses of constant zenith angle.
 
 '''
 
@@ -15,7 +15,7 @@ from planetplanet.photo import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 
-def Observer(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
+def Observer(ax, r = 1, theta = np.pi / 8, za = np.pi / 4):
   '''
   Observer view
   
@@ -28,11 +28,11 @@ def Observer(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.plot(x, -y, color = 'k', lw = 1, zorder = 100)
 
   # Compute the ellipse
-  a = r * np.abs(np.sin(lat))
+  a = r * np.abs(np.sin(za))
   b = a * np.abs(np.sin(theta))
-  x0 = -r * np.cos(lat) * np.cos(theta)
+  x0 = -r * np.cos(za) * np.cos(theta)
   y0 = 0
-  xlimb = r * np.cos(lat) * np.sin(theta) * np.tan(theta)
+  xlimb = r * np.cos(za) * np.sin(theta) * np.tan(theta)
   if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
     xmin = x0 - b
   else:
@@ -91,7 +91,7 @@ def Observer(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.set_xticks([])
   ax.set_yticks([])
 
-def Side(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
+def Side(ax, r = 1, theta = np.pi / 8, za = np.pi / 4):
   '''
   Side view
   
@@ -104,8 +104,8 @@ def Side(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.plot(x, -y, color = 'k', lw = 1, zorder = 100)
 
   # Plot the ellipse
-  d = r * np.cos(lat)
-  a = r * np.sin(lat)
+  d = r * np.cos(za)
+  a = r * np.sin(za)
   
   x = np.linspace(-r, -d, 1000)
   y = np.sqrt(r ** 2 - x ** 2)
@@ -130,18 +130,18 @@ def Side(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
               textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
   
   
-  ax.annotate("To star", xy = (-r * np.cos(lat), a), xytext = (-122, 0), fontsize = 16,
+  ax.annotate("To star", xy = (-r * np.cos(za), a), xytext = (-122, 0), fontsize = 16,
               ha = 'center', va = 'center', annotation_clip = False, color = 'k',
               textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
   
-  ax.annotate("Zenith", xy = (-r * np.cos(lat), a), xytext = (-80, 80 * r * np.cos(lat) / a), fontsize = 16,
+  ax.annotate("Zenith", xy = (-r * np.cos(za), a), xytext = (-80, 80 * r * np.cos(za) / a), fontsize = 16,
               ha = 'center', va = 'center', annotation_clip = False, color = 'k',
               textcoords = "offset points", arrowprops=dict(arrowstyle = "<|-", color = 'k'))
               
-  x = np.linspace(-r * np.cos(lat) - 0.2, -r * np.cos(lat) - 0.143, 10000)
-  y = a + np.sqrt(0.04 - (x + r * np.cos(lat)) ** 2)
+  x = np.linspace(-r * np.cos(za) - 0.2, -r * np.cos(za) - 0.143, 10000)
+  y = a + np.sqrt(0.04 - (x + r * np.cos(za)) ** 2)
   ax.plot(x, y, 'k-', lw = 1)
-  l = ax.annotate(r'$\phi$', xy = (-r * np.cos(lat), a), ha = 'center', va = 'top', xytext = (-24, 20), 
+  l = ax.annotate(r'$\phi$', xy = (-r * np.cos(za), a), ha = 'center', va = 'top', xytext = (-24, 20), 
                   textcoords = 'offset points', fontsize = 18)
   
   # Appearance
@@ -150,7 +150,7 @@ def Side(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.set_xticks([])
   ax.set_yticks([])
 
-def Top(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
+def Top(ax, r = 1, theta = np.pi / 8, za = np.pi / 4):
   '''
   Top view
   
@@ -163,12 +163,12 @@ def Top(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.plot(x, -y, color = 'k', lw = 1, zorder = 100)
 
   # Compute the ellipse
-  a = r * np.abs(np.sin(lat))
+  a = r * np.abs(np.sin(za))
   b = a * np.abs(np.sin(theta))
-  d = r * np.cos(lat)
-  x0 = -r * np.cos(lat) * np.cos(theta)
+  d = r * np.cos(za)
+  x0 = -r * np.cos(za) * np.cos(theta)
   y0 = 0
-  xlimb = r * np.cos(lat) * np.sin(theta) * np.tan(theta)
+  xlimb = r * np.cos(za) * np.sin(theta) * np.tan(theta)
   
   # The ellipse (a line from this vantage point)
   ax.plot([x0 - b, x0 - xlimb], [np.sqrt(r ** 2 - (x0 - b) ** 2), 0], 'k--', lw = 1)
@@ -200,15 +200,15 @@ def Top(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   
   # x0
   ax.plot([x0, 0], [0, 0], 'k-', lw = 1)
-  ax.plot([x0, x0], [0, -r * np.cos(lat) * np.sin(theta)], 'k-', lw = 1)
+  ax.plot([x0, x0], [0, -r * np.cos(za) * np.sin(theta)], 'k-', lw = 1)
   
   # limb
   ax.plot([x0 - xlimb, x0], [0, 0], 'r-', lw = 1)
   ax.plot(x0 - xlimb, 0, 'ro')
   
   # a, b
-  ax.plot([x0 + b, x0 + b], [-r * np.cos(lat) * np.sin(theta), -np.sqrt(r ** 2 - (x0 + b) ** 2)], 'k-', lw = 1)
-  ax.plot([x0, x0 + b], [-r * np.cos(lat) * np.sin(theta), -r * np.cos(lat) * np.sin(theta)], 'k-', lw = 1)
+  ax.plot([x0 + b, x0 + b], [-r * np.cos(za) * np.sin(theta), -np.sqrt(r ** 2 - (x0 + b) ** 2)], 'k-', lw = 1)
+  ax.plot([x0, x0 + b], [-r * np.cos(za) * np.sin(theta), -r * np.cos(za) * np.sin(theta)], 'k-', lw = 1)
   
   # Labels  
   ax.annotate("To observer", xy = (0, -0.99 * r), xytext = (0, -50),  fontsize = 16,
@@ -252,8 +252,8 @@ def Top(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.plot([x0 - 0.03, x0], [-0.03, -0.03], 'r-', lw = 1) 
   ax.plot([x0 - 0.03, x0 - 0.03], [-0.03, 0], 'r-', lw = 1) 
   
-  ax.plot([x0 + b - 0.03, x0 + b], [-r * np.cos(lat) * np.sin(theta) - 0.03, -r * np.cos(lat) * np.sin(theta) - 0.03], 'k-', lw = 1) 
-  ax.plot([x0 + b - 0.03, x0 + b - 0.03], [-r * np.cos(lat) * np.sin(theta) - 0.03, -r * np.cos(lat) * np.sin(theta)], 'k-', lw = 1) 
+  ax.plot([x0 + b - 0.03, x0 + b], [-r * np.cos(za) * np.sin(theta) - 0.03, -r * np.cos(za) * np.sin(theta) - 0.03], 'k-', lw = 1) 
+  ax.plot([x0 + b - 0.03, x0 + b - 0.03], [-r * np.cos(za) * np.sin(theta) - 0.03, -r * np.cos(za) * np.sin(theta)], 'k-', lw = 1) 
     
   # Appearance
   ax.set_aspect('equal')
@@ -261,7 +261,7 @@ def Top(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.set_xticks([])
   ax.set_yticks([])
 
-def Front(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
+def Front(ax, r = 1, theta = np.pi / 8, za = np.pi / 4):
   '''
   Front view
   
@@ -274,7 +274,7 @@ def Front(ax, r = 1, theta = np.pi / 8, lat = np.pi / 4):
   ax.plot(x, -y, color = 'k', lw = 1, zorder = 100)
 
   # Compute the ellipse
-  a = r * np.abs(np.sin(lat))
+  a = r * np.abs(np.sin(za))
   b = a * np.abs(np.sin(theta))
   
   # Plot it

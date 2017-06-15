@@ -4,6 +4,9 @@
 mutual_transit.py
 -----------------
 
+Computes and plots a hypothetical triple mutual transit event, where three large 
+planets transit the star and occult each other simultaneously:
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
@@ -30,19 +33,19 @@ def u1(lam):
   return result
   
 # Instantiate the star
-star = Star('Star', m = 0.1, r = 0.1, nl = 31, color = 'k', limbdark = [u1])
+star = Star('Star', m = 0.1, r = 0.1, nz = 31, color = 'k', limbdark = [u1])
 
 # Planet b
 b = Planet('b', m = 1, per = 2, inc = 90.4, r = 2., trn0 = 0, 
-           nl = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
+           nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # Planet c
 c = Planet('c', m = 1, per = 8, inc = 90., r = 2., trn0 = 0.0005, 
-           nl = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
+           nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # Planet d
 d = Planet('d', m = 1, per = 32, inc = 89.94, r = 2., trn0 = 0.002, 
-           nl = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
+           nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # System
 system = System(star, b, c, d)
@@ -90,3 +93,4 @@ pl.close()
 
 # Animate!
 fig, axlc, axxz, axim = system.plot_occultation('A', 0.) #, gifname = 'triple')
+pl.show()

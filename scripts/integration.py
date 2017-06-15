@@ -4,7 +4,7 @@
 integration.py
 --------------
 
-Not yet ready!
+Plots a diagram showing how the occultation integration scheme works.
 
 '''
 
@@ -55,15 +55,15 @@ inds = np.where((x >= x1) & (x <= x2))
 ax.plot(x[inds], y[inds], 'b-', zorder = 999, lw = 2)
 ax.plot(x[inds], -y[inds], '-', zorder = 999, lw = 2, color = '#aaaaee')
 
-# Plot the latitude ellipses
-for lat in np.linspace(0, np.pi, nl + 2)[1:-1]:
+# Plot the zenith angle ellipses
+for za in np.linspace(0, np.pi, nl + 2)[1:-1]:
 
   # The ellipse
-  a = r * np.abs(np.sin(lat))
+  a = r * np.abs(np.sin(za))
   b = a * np.abs(np.sin(theta))
-  xE = -r * np.cos(lat) * np.cos(theta)
+  xE = -r * np.cos(za) * np.cos(theta)
   yE = 0
-  xlimb = r * np.cos(lat) * np.sin(theta) * np.tan(theta)
+  xlimb = r * np.cos(za) * np.sin(theta) * np.tan(theta)
   if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
     xmin = xE - b
   else:
@@ -82,7 +82,7 @@ for lat in np.linspace(0, np.pi, nl + 2)[1:-1]:
   A = b ** 2 - (x - xE) ** 2
   A[A < 0] = 0
   y = (a / b) * np.sqrt(A)
-  if np.abs(np.cos(lat)) < 1e-5:
+  if np.abs(np.cos(za)) < 1e-5:
     style = dict(color = 'k', ls = '--', lw = 1)
   else:
     style = dict(color = 'k', ls = '-', lw = 1)
@@ -95,11 +95,11 @@ for lat in np.linspace(0, np.pi, nl + 2)[1:-1]:
   ax.plot(x[inds], -y[inds], '-', zorder = 999, lw = 2, color = '#aaaaee')
   
   # Fill
-  color = cmap(0.3 + 0.3 * (np.cos(lat) + 1))
-  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * lat))
+  color = cmap(0.3 + 0.3 * (np.cos(za) + 1))
+  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * za))
   x = np.linspace(-r, xE - xlimb, 1000)
   y = np.sqrt(r ** 2 - x ** 2)
-  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * lat))
+  ax.fill_between(x, -y, y, color = color, zorder = int(-100 * za))
 
 # Plot the vertices that are inside the occultor
 for x, y in vertices:

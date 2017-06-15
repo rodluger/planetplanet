@@ -69,7 +69,8 @@ class Settings(ctypes.Structure):
          treated as vertical lines. Default `1.`
   :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
-  :param int exppts: Number of oversamplings per exposure. Default `10`
+  :param int oversample: Oversampling factor for each exposure. Default `1`
+  :param float distance: Distance to the system in parsecs. Default `10.`
   
   '''
   
@@ -86,7 +87,8 @@ class Settings(ctypes.Structure):
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
               ("maxfunctions", ctypes.c_int),
-              ("exppts", ctypes.c_int)]
+              ("oversample", ctypes.c_int),
+              ("distance", ctypes.c_double)]
   
   def __init__(self, **kwargs):
     self.nbody = kwargs.pop('nbody', False)
@@ -102,13 +104,14 @@ class Settings(ctypes.Structure):
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
     self.maxfunctions = kwargs.pop('maxfunctions', 999)
-    self.exppts = max(1, kwargs.pop('exppts', 10))
+    self.oversample = max(1, kwargs.pop('oversample', 1))
+    self.distance = kwargs.pop('distance', 10.)
   
   @property
   def params(self):
     return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
             'maxpolyiter', 'dt', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
-            'maxfunctions', 'exppts']
+            'maxfunctions', 'oversample', 'distance']
   
   @property
   def mintheta(self):
@@ -171,7 +174,7 @@ def Star(name, **kwargs):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param int nl: Number of latitude slices. Default `31`
+  :param int nz: Number of zenith angle slices. Default `31`
   :param str color: Object color (for plotting). Default `k`
   
   '''
@@ -195,7 +198,7 @@ def Planet(name, **kwargs):
   :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
   :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
          in the instant re-radiation limit, where the surface brightness is proportional \
-         to the cosine of the effective latitude (the angle between the line connecting \
+         to the cosine of the zenith angle (the angle between the line connecting \
          the centers of the planet and the star and the line connecting the center of the \
          planet and a given point on its surface. A fixed nightside temperature may be specified \
          via the `tnight` kwarg. If `False`, treats the planet as a limb-darkened blackbody. \
@@ -208,7 +211,7 @@ def Planet(name, **kwargs):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param int nl: Number of latitude slices. Default `11`
+  :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
   
   '''
@@ -236,7 +239,7 @@ class Body(ctypes.Structure):
               ("_phasecurve", ctypes.c_int),
               ("_blackbody", ctypes.c_int),
               ("nu", ctypes.c_int),
-              ("nl", ctypes.c_int),
+              ("nz", ctypes.c_int),
               ("nt", ctypes.c_int),
               ("nw", ctypes.c_int),
               ("_u", ctypes.POINTER(ctypes.c_double)),
@@ -267,7 +270,7 @@ class Body(ctypes.Structure):
     # These defaults are different depending on body type
     if self.body_type == 'planet':
       self.airless = kwargs.pop('airless', True)
-      self.nl = kwargs.pop('nl', 11)
+      self.nz = kwargs.pop('nz', 11)
       self.per = kwargs.pop('per', 3.)
       self.albedo = kwargs.pop('albedo', 0.3)
       self.teff = 0
@@ -281,7 +284,7 @@ class Body(ctypes.Structure):
       self.color = kwargs.pop('color', 'r')
     elif self.body_type == 'star':
       self.airless = False
-      self.nl = kwargs.pop('nl', 31)
+      self.nz = kwargs.pop('nz', 31)
       self.per = kwargs.pop('per', 0.)
       self.albedo = 0.
       self.tnight = 0.
@@ -413,12 +416,9 @@ class System(object):
          treated as vertical lines. Default `1.`
   :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
-  :param int exppts: Number of oversamplings per exposure. Default `10`
-  
-  ** Observational settings **
-  
-  :param float distance: Distance to the system in parsecs. Default `10`
-  
+  :param int oversample: Oversampling factor for each exposure. Default `1`
+  :param float distance: Distance to the system in parsecs. Default `10.`
+
   '''
   
   def __init__(self, *bodies, **kwargs):
@@ -427,7 +427,6 @@ class System(object):
     '''
     
     self.bodies = bodies
-    self.distance = kwargs.pop('distance', 10.)
     self.settings = Settings(**kwargs)
     self.reset()
     
@@ -1075,13 +1074,13 @@ class System(object):
     ax.plot(x, y, color = 'k', zorder = 98, lw = 1)
     ax.plot(x, -y, color = 'k', zorder = 98, lw = 1)
   
-    # Plot the latitude ellipses
-    for lat in np.linspace(0, np.pi, occulted.nl + 2)[1:-1]:
-      a = occulted._r * np.abs(np.sin(lat))
+    # Plot the zenith angle ellipses
+    for za in np.linspace(0, np.pi, occulted.nz + 2)[1:-1]:
+      a = occulted._r * np.abs(np.sin(za))
       b = a * np.abs(np.sin(theta))
-      xE = -occulted._r * np.cos(lat) * np.cos(theta)
+      xE = -occulted._r * np.cos(za) * np.cos(theta)
       yE = 0
-      xlimb = occulted._r * np.cos(lat) * np.sin(theta) * np.tan(theta)
+      xlimb = occulted._r * np.cos(za) * np.sin(theta) * np.tan(theta)
       if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
         xmin = xE - b
       else:
@@ -1098,10 +1097,10 @@ class System(object):
       A = b ** 2 - (x - xE) ** 2
       A[A<0] = 0
       y = (a / b) * np.sqrt(A)
-      if np.abs(np.cos(lat)) < 1e-5:
+      if np.abs(np.cos(za)) < 1e-5:
         style = dict(color = 'k', ls = '--', lw = 1, alpha = 0.5)
       else:
-        style = dict(color = rdbu(0.5 * (np.cos(lat) + 1)), ls = '-', lw = 1, alpha = 0.5)
+        style = dict(color = rdbu(0.5 * (np.cos(za) + 1)), ls = '-', lw = 1, alpha = 0.5)
       if (occulted.x[t] < 0):
         ax.plot(-x, y, **style)
         ax.plot(-x, -y, **style)

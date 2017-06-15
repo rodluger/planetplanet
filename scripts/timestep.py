@@ -4,7 +4,7 @@
 timestep.py
 -----------
 
-Testing the minimum timestep we need in the N-body code.
+Tests the minimum timestep we need in the N-body code.
 We integrate for one year and look at the errors as a fraction
 of the planet radius. Looks like a timestep of 1 hour leads to
 negligible (< 1 percent) error over 1 year.
@@ -32,8 +32,15 @@ system2 = Trappist1(nbody = True, dt = 1. / 24)
 system2.compute(time)
 
 for body1, body2 in zip(system1.bodies[1:], system2.bodies[1:]):
-  ax[0].plot(system1.time, (body1.x - body2.x) / body1._r)
-  ax[1].plot(system1.time, (body1.y - body2.y) / body1._r)
-  ax[2].plot(system1.time, (body1.z - body2.z) / body1._r)
+  ax[0].plot(system1.time, 100 * (body1.x - body2.x) / body1._r, color = body1.color)
+  ax[1].plot(system1.time, 100 * (body1.y - body2.y) / body1._r, color = body1.color)
+  ax[2].plot(system1.time, 100 * (body1.z - body2.z) / body1._r, color = body1.color)
+
+ax[0].set_xticklabels([])
+ax[1].set_xticklabels([])
+ax[2].set_xlabel('Time [days]', fontsize = 16, fontweight = 'bold')
+ax[0].set_ylabel('x error (% of radius)', fontsize = 10, fontweight = 'bold')
+ax[1].set_ylabel('y error (% of radius)', fontsize = 10, fontweight = 'bold')
+ax[2].set_ylabel('z error (% of radius)', fontsize = 10, fontweight = 'bold')
 
 pl.show()

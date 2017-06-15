@@ -30,5 +30,3 @@ system.compute(time)
 # Plot all of the occultations
 system.plot_lightcurve()
 pl.show()
-
-import pdb; pdb.set_trace()
