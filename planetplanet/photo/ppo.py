@@ -41,10 +41,7 @@ MINUTE = 1. / 1440.
 __all__ = ['Star', 'Planet', 'System']
 
 # Load the library
-#try:
 libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
-#except:
-#raise Exception("Can't find `libppo.so`; please run `make` to compile it.")
 
 class Settings(ctypes.Structure):
   '''

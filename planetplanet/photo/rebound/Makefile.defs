@@ -8,6 +8,7 @@ ifeq ($(OS), Linux)
 	LIB+= -lm -lrt
 	FLAGS1+= -fPIC -Wl,-Bsymbolic-functions -c -O3
 	FLAGS2+= -shared -O3 -Wl,-Bsymbolic-functions,-soname,
+	REALTIME+= -lrt
 endif
 ifeq ($(OS), Darwin)
 	OPT+= -I/usr/local/include -Wall -g #-Wsign-compare
