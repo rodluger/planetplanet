@@ -39,7 +39,8 @@ setup(name = 'planetplanet',
       install_requires = [
                           'numpy>=1.8',
                           'scipy',
-                          'matplotlib'
+                          'matplotlib',
+                          'tqdm',
                          ],
       include_package_data = True,
       zip_safe = False,
