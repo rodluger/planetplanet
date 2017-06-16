@@ -116,96 +116,29 @@ double ZenithAngle(double x, double y, double r, double theta) {
   
   */
     
-  int i;
-  double alpha, beta, gamma, c1, c2, c3, a, b, c;
-  double xE;
-  double z[2];
-  double l[2];
-  double d;
-  double la, lb, da, db;
-  double tmp, tmp1, tmp2;
-  double sintheta, costheta, cotantheta;
-  double solution;
-
+  // Normalize
+  x = x / r;
+  y = y / r;
+  double x2 = x * x;
+  double y2 = y * y;
+  double xterm, z;
+  
+  
   // Are we dealing with circles?
   if ((fabs(fabs(theta) - PI / 2)) < SMALL) {
-    
-    // Trivial!
-    d = sqrt(x * x + y * y);
-    solution = asin(d / r);
-    if (theta < 0)
-      solution = PI - solution;
-    return solution;
-    
+    if (theta > 0)
+      return asin(sqrt(x2 + y2));
+    else
+      return PI - asin(sqrt(x2 + y2));
   }
   
-  // A little trig
-  sintheta = sin(theta);
-  costheta = cos(theta);
-  cotantheta = costheta / sintheta;
-  
-  // Compute the zenith_angle. We will solve
-  // a quadratic equation for z = sin(za) **  2  
-  alpha = x / (r * sintheta);
-  beta = cotantheta;
-  gamma = y / r;
-  c1 = 4 * alpha * alpha * beta * beta;
-  c2 = 1 + beta * beta;
-  c3 = alpha * alpha + gamma * gamma + beta * beta;
-  b = (c1 - 2 * c2 * c3) / (c2 * c2);
-  c = (c3 * c3 - c1) / (c2 * c2);
-  tmp = b * b - 4 * c;
-  if (tmp < 0) tmp = 0;
-  z[0] = (-b + sqrt(tmp)) / 2;
-  z[1] = (-b - sqrt(tmp)) / 2;
-  
-  // Find the two solutions that thread the point
-  for (i = 0; i < 2; i++) {
-    
-    // A: Compute the distance to the desired (x,y) point
-    la = asin(sqrt(z[i]));
-    a = r * fabs(sin(la));
-    b = a * fabs(sintheta);
-    xE = -r * cos(la) * costheta;
-    tmp = (a / b) * sqrt(fabs(b * b - (x - xE) * (x - xE)));
-    tmp1 = fabs(y + tmp);
-    tmp2 = fabs(y - tmp);
-    if (tmp1 < tmp2) da = tmp1;
-    else da = tmp2;
-    
-    // B: Compute the distance to the desired (x,y) point
-    lb = PI - la;
-    a = r * fabs(sin(lb));
-    b = a * fabs(sintheta);
-    xE = -r * cos(lb) * costheta;
-    tmp = (a / b) * sqrt(fabs(b * b - (x - xE) * (x - xE)));
-    tmp1 = fabs(y + tmp);
-    tmp2 = fabs(y - tmp);
-    if (tmp1 < tmp2) db = tmp1;
-    else db = tmp2;
-    
-    // Get the closest solution
-    if (da < db)
-      l[i] = la;
-    else
-      l[i] = lb;
-    
-  }
-    
-  // Only one of these solutions is on the observer's side
-  if (theta < 0) {
-    if (l[0] > l[1])
-      solution = l[0];
-    else
-      solution = l[1];
-  } else {
-    if (l[0] < l[1])
-      solution = l[0];
-    else
-      solution = l[1];
-  }
-  
-  return solution;
+  // This is a solution to a quadratic equation in z = sin(za) **  2 
+  z = 0.5 * ((1 - 2 * x2 - y2) * cos(2 * theta) + 2 * x * sqrt(1 - x2 - y2) * sin(2 * theta) + y2 + 1);
+  xterm = sin(theta) * sqrt(fabs(1 - y2));
+  if (x <= xterm)
+    return asin(sqrt(z));
+  else
+    return PI - asin(sqrt(z));
   
 }
 

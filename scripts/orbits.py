@@ -16,11 +16,11 @@ import matplotlib.pyplot as pl
 
 AUREARTH = 23454.9271
 rstar = 12.758 / AUREARTH
-semis = np.array([11.11, 15.21, 21.44, 28.17, 37.1, 45.1, 60]) * 1e-3
+semis = np.array([11.11, 15.21, 21.44, 28.17, 37.1, 45.1, 59.3]) * 1e-3
 radii = np.array([1.086, 1.056, 0.772, 0.918, 1.045, 1.127, 0.755])
 incs = np.array([89.65, 89.67, 89.75, 89.86, 89.680, 89.710, 89.80]) * np.pi / 180
 colors = ['#92C6FF', '#97F0AA', '#FF9F9A', '#D0BBFF', '#FFFEA3', '#B0E0E6', '#999999']
-
+labels = ['b', 'c', 'd', 'e', 'f' , 'g', 'h']
 fig = pl.figure(figsize = (12,5))
 
 # Plot the star
@@ -40,10 +40,14 @@ for i in range(7):
   pl.plot(x, y, lw = 1, color = colors[i])
   pl.plot(x, -y, lw = 1, color = colors[i])
   
+  # Dummy line for legend
+  pl.plot(x, y + 999, lw = 2, color = colors[i], label = labels[i])
+  
   pl.fill_between(x, y - radii[i], y + radii[i], color = colors[i], alpha = 0.5)
   pl.fill_between(x, -y - radii[i], -y + radii[i], color = colors[i], alpha = 0.5)
 
 pl.xlabel('x [AU]', fontsize = 16, fontweight = 'bold')
 pl.ylabel(r'y [R$_\oplus$]', fontsize = 16, fontweight = 'bold')
-pl.ylim(-0.0003 * AUREARTH, 0.0003 * AUREARTH)
-pl.show()
+pl.ylim(-14, 14)
+pl.legend(ncol = 2, loc = 'lower left', frameon = False)
+fig.savefig('../img/orbits.pdf', bbox_inches = 'tight')
