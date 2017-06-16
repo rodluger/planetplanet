@@ -5,10 +5,6 @@ import matplotlib.pyplot as plt
 import os
 import astropy.units as u
 
-mpl.rc('font',**{'family':'serif','serif':['Computer Modern']})
-mpl.rcParams['font.size'] = 25.0
-rc('text', usetex=True)
-
 __all__ = [
     "Filter",
     "estimate_eclipse_snr",
@@ -175,7 +171,7 @@ class Filter(object):
 
         return F
 
-    def compute_lightcurve(self, flux, time, lam, obscad=5.0):
+    def compute_lightcurve(self, flux, time, lam, obscad=5.0, oversample=True):
         """
         Computes an observed lightcurve in the `Filter`
 
@@ -204,22 +200,30 @@ class Filter(object):
         # High-res time cadence
         cadencehr = np.mean(time[1:] - time[:-1]) * 24 # convert from days to hours
 
-        # factor by which to bin neighboring times
-        Ncad = cadence / cadencehr
+        if oversample:
+            # New for oversampling: input grid is what we want
+            tlo = time
+            dtlo = time[1:] - time[:-1]
+            dtlo = np.hstack([dtlo, dtlo[-1]])
+            data = flux
+        else:
+            # Unnecessary now that ppo oversamples lightcurve
+            # factor by which to bin neighboring times
+            Ncad = cadence / cadencehr
 
-        # Number of new time points
-        Ntlo = np.floor(Ntime / Ncad)
+            # Number of new time points
+            Ntlo = np.floor(Ntime / Ncad)
 
-        # New time grid at observational cadence
-        tlo, dtlo = gen_lr_grid(tmin, tmax, Ntlo)
+            # New time grid at observational cadence
+            tlo, dtlo = gen_lr_grid(tmin, tmax, Ntlo)
 
-        # Rebin high spectral res lightcurves to observational grid
-        data = []
-        for i in range(Nlam):
-            data.append(
-                downbin_series(flux[:,i], time, tlo, dxlr=dtlo)
-            )
-        data = np.array(data).T
+            # Rebin high spectral res lightcurves to observational grid
+            data = []
+            for i in range(Nlam):
+                data.append(
+                    downbin_series(flux[:,i], time, tlo, dxlr=dtlo)
+                )
+            data = np.array(data).T
 
         # Calculate jwst background flux
         Fback = jwst_background(lam)
