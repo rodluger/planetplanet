@@ -19,7 +19,7 @@ import corner
 from tqdm import tqdm
 
 # Number of prior samples
-nsamp = 3
+nsamp = 3000
 
 # Minimum duration (minutes)
 mind = 10.
