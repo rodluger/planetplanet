@@ -16,6 +16,7 @@ import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
 from scipy.integrate import quad
+from tqdm import tqdm
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
@@ -551,9 +552,9 @@ class System(object):
             duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)          
 
             # Compute the minimum impact parameter
-            inds = range(i - duration, i + 1)
-            impact = np.min(np.sqrt((self.bodies[occ].x[inds] - body.x[inds]) ** 2 + 
-                                    (self.bodies[occ].y[inds] - body.y[inds]) ** 2)) / (self.bodies[occ]._r + body._r)
+            idx = range(i - duration, i + 1)
+            impact = np.min(np.sqrt((self.bodies[occ].x[idx] - body.x[idx]) ** 2 + 
+                                    (self.bodies[occ].y[idx] - body.y[idx]) ** 2)) / (self.bodies[occ]._r + body._r)
 
             # Transparency proportional to the impact parameter
             alpha = 0.8 * (1 - impact) + 0.01
@@ -719,9 +720,9 @@ class System(object):
               phase = np.arctan2(body.x[i], -body.z[i]) * 180 / np.pi
             
               # Compute the minimum impact parameter
-              inds = range(i - duration, i + 1)
-              impact = np.min(np.sqrt((self.bodies[occ].x[inds] - body.x[inds]) ** 2 + 
-                                      (self.bodies[occ].y[inds] - body.y[inds]) ** 2)) / (self.bodies[occ]._r + body._r)
+              idx = range(i - duration, i + 1)
+              impact = np.min(np.sqrt((self.bodies[occ].x[idx] - body.x[idx]) ** 2 + 
+                                      (self.bodies[occ].y[idx] - body.y[idx]) ** 2)) / (self.bodies[occ]._r + body._r)
             
               # Convert duration to log
               duration = np.log10(duration * self.settings.dt * 1440)
@@ -892,6 +893,68 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
   
+  def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100):
+    '''
+    
+    '''
+    
+    # Quiet?
+    quiet = self.settings.quiet
+    self.settings.quiet = True
+    if quiet:
+      iterator = lambda x: range(x)
+    else:
+      iterator = lambda x: tqdm(range(x))
+      
+    # Convert occultors to indices if necessary
+    if occultor is None:
+      occultor = list(range(1, len(self.bodies)))
+    elif not hasattr(occultor, '__len__'):
+      occultor = [occultor]
+    for i, occ in enumerate(occultor):
+      if occ in self.bodies:
+        occultor[i] = np.argmax([b == occ for b in self.bodies])
+
+    # Loop until we find one
+    for n in iterator(maxruns):
+      
+      # Compute the orbits, 100 days at a time
+      time = np.arange(tstart + n * 100., tstart + (n + 1) * 100., self.settings.dt)
+      self.compute_orbits(time)
+      
+      # Identify the different planet-planet events
+      inds = np.where(occulted.occultor > 0)[0]
+      difs = np.where(np.diff(inds) > 1)[0]
+      
+      # Loop over individual ones
+      for i in inds[difs]:
+        
+        # Loop over possible planet occultors
+        for occ in occultor:
+          
+          # Is body `occ` occulting (but not behind the star)?
+          if (occulted.occultor[i] & 2 ** occ) and ((occ == 0) or (occulted.occultor[i] & 1 == 0)):
+
+            # Note that `i` is the last index of the occultation
+            duration = np.argmax(occulted.occultor[:i][::-1] & 2 ** occ == 0)
+            if duration * self.settings.dt * 1440 >= min_duration:
+            
+              # Compute the minimum impact parameter
+              idx = range(i - duration, i + 1)
+              b = np.sqrt((self.bodies[occ].x[idx] - occulted.x[idx]) ** 2 + (self.bodies[occ].y[idx] - occulted.y[idx]) ** 2) / (self.bodies[occ]._r + occulted._r)
+              ind = np.argmin(b)
+              if b[ind] <= max_impact:
+                if not quiet:
+                  print("Next occultation of %s by %s is at t = %.2f days." % (occulted.name, self.bodies[occ].name, time[idx[ind]]))
+                self.settings.quiet = quiet
+                return time[idx[ind]]
+    
+    # Nothing found...
+    if not quiet:
+      print("No occultation %s by %s found." % (occulted.name, self.bodies[occ].name))
+    self.settings.quiet = quiet
+    return np.nan
+    
   def observe(self):
     '''
     TODO: Jake
