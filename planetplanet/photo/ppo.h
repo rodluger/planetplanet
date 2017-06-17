@@ -67,7 +67,7 @@ typedef struct {
   double polyeps1;
   double polyeps2;
   int maxpolyiter;
-  double dt;
+  double timestep;
   int adaptive;
   int quiet;
   double mintheta;

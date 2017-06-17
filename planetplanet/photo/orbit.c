@@ -205,7 +205,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   }
   
 	// Set the timestep
-	r->dt = settings.dt;
+	r->dt = settings.timestep;
 
 	// G in REARTH^3 / MEARTH / day^2
 	r->G = 11466.9811868;
@@ -257,7 +257,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	for (t = 1; t < body[0]->nt; t++) {
     
     // Do we need to synchronize this time step?
-    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.dt) || (t == body[0]->nt - 1)) {
+    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.timestep) || (t == body[0]->nt - 1)) {
     
       // Yes: take one step
       reb_integrate(r, body[0]->time[t] - body[0]->time[0]);

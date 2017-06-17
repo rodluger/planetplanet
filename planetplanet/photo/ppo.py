@@ -55,7 +55,7 @@ class Settings(ctypes.Structure):
   :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
-  :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
+  :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
   :param bool quiet: Suppress output? Default `False`
   :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
@@ -75,7 +75,7 @@ class Settings(ctypes.Structure):
               ("polyeps1", ctypes.c_double),
               ("polyeps2", ctypes.c_double),
               ("maxpolyiter", ctypes.c_int),
-              ("dt", ctypes.c_double),
+              ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
@@ -92,7 +92,7 @@ class Settings(ctypes.Structure):
     self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
     self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
-    self.dt = kwargs.pop('dt', 0.01)
+    self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
@@ -104,7 +104,7 @@ class Settings(ctypes.Structure):
   @property
   def params(self):
     return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
-            'maxpolyiter', 'dt', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
+            'maxpolyiter', 'timestep', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
             'maxfunctions', 'oversample', 'distance']
   
   @property
@@ -402,7 +402,7 @@ class System(object):
   :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
-  :param float dt: Maximum timestep in days for the N-body solver. Default `0.01`
+  :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
   :param bool quiet: Suppress output? Default `False`
   :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
@@ -462,7 +462,7 @@ class System(object):
     # Reset animations
     self._animations = []
        
-  def scatter_plot(self, tstart, tend):
+  def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
     
     '''
@@ -472,7 +472,7 @@ class System(object):
   
     # Dimensions
     n = len(self.bodies)
-    time = np.arange(tstart, tend, self.settings.dt)
+    time = np.arange(tstart, tend, dt)
     nt = len(time)
     nw = 1
 
@@ -560,7 +560,7 @@ class System(object):
             alpha = 0.8 * (1 - impact) + 0.01
         
             # Size = duration in minutes / 3
-            ms = duration * self.settings.dt * 1440 / 3
+            ms = duration * dt * 1440 / 3
         
             # If the occultor is the star, plot it only once
             if (occ == 0):
@@ -725,7 +725,7 @@ class System(object):
                                       (self.bodies[occ].y[idx] - body.y[idx]) ** 2)) / (self.bodies[occ]._r + body._r)
             
               # Convert duration to log
-              duration = np.log10(duration * self.settings.dt * 1440)
+              duration = np.log10(duration * dt * 1440)
             
               # Running list
               hist[k].append((phase, impact, duration))
@@ -893,7 +893,7 @@ class System(object):
     # Call the light curve routine
     Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
   
-  def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100):
+  def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''
     
     '''
@@ -919,7 +919,7 @@ class System(object):
     for n in iterator(maxruns):
       
       # Compute the orbits, 100 days at a time
-      time = np.arange(tstart + n * 100., tstart + (n + 1) * 100., self.settings.dt)
+      time = np.arange(tstart + n * 100., tstart + (n + 1) * 100., dt)
       self.compute_orbits(time)
       
       # Identify the different planet-planet events
@@ -937,7 +937,7 @@ class System(object):
 
             # Note that `i` is the last index of the occultation
             duration = np.argmax(occulted.occultor[:i][::-1] & 2 ** occ == 0)
-            if duration * self.settings.dt * 1440 >= min_duration:
+            if duration * dt * 1440 >= min_duration:
             
               # Compute the minimum impact parameter
               idx = range(i - duration, i + 1)

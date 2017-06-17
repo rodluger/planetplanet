@@ -21,6 +21,5 @@ import numpy as np
 
 # Instantiate the Trappist-1 system
 system = Trappist1(sample = True, nbody = False)
-system.settings.dt = 0.001
 system.scatter_plot(0, 365 * 3)
 pl.show()
