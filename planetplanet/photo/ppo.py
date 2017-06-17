@@ -639,7 +639,7 @@ class System(object):
   
     return figp
       
-  def histogram(self, tstart, tend):
+  def histogram(self, tstart, tend, dt = 0.0001):
     '''
     
     '''
@@ -649,7 +649,7 @@ class System(object):
   
     # Dimensions
     n = len(self.bodies)
-    time = np.arange(tstart, tend, self.settings.dt)
+    time = np.arange(tstart, tend, dt)
     nt = len(time)
     nw = 1
 

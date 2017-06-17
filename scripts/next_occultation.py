@@ -4,6 +4,8 @@
 next_occultation.py
 -------------------
 
+NOTE: Still working on this.
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
