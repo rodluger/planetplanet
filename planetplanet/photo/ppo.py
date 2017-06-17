@@ -996,7 +996,7 @@ class System(object):
     normr = np.nanmedian(self.bodies[0].flux[:,-1])
     
     # Set up the figure
-    fig = pl.figure(figsize = (5, 8))
+    fig = pl.figure(figsize = (7, 8))
     fig.subplots_adjust(left = 0.175)
 
     # Plot three different wavelengths (first, mid, and last)
@@ -1012,6 +1012,10 @@ class System(object):
     for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
       tick.set_fontsize(8)
     axlc.legend(loc = 'lower right', fontsize = 8)
+    axlc.ticklabel_format(useOffset = False)
+    if body.time[t[0]] > 1e4:
+      for label in axlc.get_xmajorticklabels():
+        label.set_rotation(30)
     
     # Get the times of ingress, midpoint, and egress
     tstart = t[0] + np.argmax(body.occultor[t] > 0)
@@ -1207,11 +1211,12 @@ class System(object):
     
     # Appearance
     ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
-    ax.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
+    ax.set_ylabel(r'Normalized Flux @ %.1f$\mathbf{\mu}$m' % wavelength, fontweight = 'bold', fontsize = 10)
     ax.get_yaxis().set_major_locator(MaxNLocator(4))
     ax.get_xaxis().set_major_locator(MaxNLocator(4))
     for tick in ax.get_xticklabels() + ax.get_yticklabels():
       tick.set_fontsize(8)
+    ax.ticklabel_format(useOffset = False)
     
     # Limits
     ymax = np.nanmax(flux)
@@ -1233,10 +1238,12 @@ class System(object):
               occultors.append(b)
         occultors = list(set(occultors))
         time = body.time[tmid]
+        tmin = body.time[t][np.argmin(flux[t])]
+        fmin = np.min(flux[t])
         for n, occultor in enumerate([self.bodies[o] for o in occultors]):
-          ax.annotate("%s" % body.name, xy = (time, ymax + (0.1 + 0.05 * n) * yrng), ha = 'center',
+          ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
                       va = 'center', color = occultor.color, fontweight = 'bold',
-                      fontsize = 8)
+                      fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
     
     return fig, ax
   

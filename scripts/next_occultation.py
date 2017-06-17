@@ -4,7 +4,8 @@
 next_occultation.py
 -------------------
 
-NOTE: Still working on this.
+Compute the time of the next occultation of a given planet
+and plot the light curve.
 
 '''
 
@@ -20,10 +21,10 @@ np.random.seed(1234)
 system = Trappist1(sample = True)
 
 # Get the next occultation of b
-t = system.next_occultation(100, system.c, occultor = system.b)
+t = system.next_occultation(10000, system.d, occultor = system.b)
 
 # Get the light curve around that point
-time = np.linspace(t - 0.1, t + 0.1, 1000)
+time = np.linspace(t - 0.05, t + 0.05, 1000)
 system.compute(time)
 system.plot_lightcurve()
 pl.show()
