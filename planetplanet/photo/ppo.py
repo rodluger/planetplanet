@@ -516,7 +516,8 @@ class System(object):
     ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
-    Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    assert err == 0, "Error in C routine `Orbits` (%d)." % err 
     
     # Loop over all bodies and plot each occultation event as a circle
     figp, axp = pl.subplots(1, figsize = (8,8))
@@ -693,7 +694,8 @@ class System(object):
     ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
-    Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    assert err == 0, "Error in C routine `Orbits` (%d)." % err      
 
     # A histogram of the distribution of phases, impact parameters, and durations
     hist = [[] for body in self.bodies[1:]]
@@ -810,7 +812,8 @@ class System(object):
     ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
-    Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
+    err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
+    assert err == 0, "Error in C routine `Flux` (%d)." % err 
 
     # Loop over all bodies and store each occultation event as a separate attribute
     for body in self.bodies:
@@ -891,7 +894,8 @@ class System(object):
     ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
-    Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    assert err == 0, "Error in C routine `Orbits` (%d)." % err 
   
   def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''

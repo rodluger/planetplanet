@@ -19,7 +19,7 @@ import corner
 from tqdm import tqdm
 
 # Number of prior samples
-nsamp = 5000
+nsamp = 3
 
 # Minimum duration (minutes)
 mind = 10.
@@ -40,8 +40,11 @@ if compute:
     # Instantiate the Trappist-1 system
     system = Trappist1(sample = True, nbody = True, quiet = True)
     system.settings.dt = 1. / 24.
-    h = system.histogram(0, 365)
-  
+    try:
+      h = system.histogram(0, 365)
+    except:
+      continue
+      
     # Loop over the planets
     for k in range(7):
   

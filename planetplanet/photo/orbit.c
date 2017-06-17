@@ -93,11 +93,19 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
   */
   
   double E = M, eps = tol;                                                            // Kreidberg: eps = 1.0e-7;
+  int iter;
   
   if (e == 0.) return M;                                                              // The trivial circular case
   
-	while(fabs(E - e*sin(E) - M) > eps) E = E - (E - e*sin(E) - M)/(1.0 - e*cos(E));
-	return E;
+  for (iter = 1; iter <= maxiter; iter++) {
+    E = E - (E - e*sin(E) - M)/(1.0 - e*cos(E));
+    if (fabs(E - e*sin(E) - M) <= eps) break;
+  }
+  
+  if (iter >= maxiter) 
+    return -1.;                                                                       // Solver didn't converge
+  else
+	  return E;
 	
 }
 
