@@ -1,3 +1,4 @@
+from __future__ import division, print_function, absolute_import, unicode_literals
 import numpy as np
 import matplotlib as mpl
 from matplotlib import rc
@@ -187,7 +188,7 @@ class Filter(object):
             Observation cadence [mins]
         """
 
-        print "Computing observed light curve in %s filter..." %self.name
+        print("Computing observed light curve in %s filter..." % self.name)
 
         Ntime = len(time)
         Nlam = len(lam)
@@ -482,12 +483,12 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
 
         # Optionally print
         if verbose:
-            print "Filter: ",wheel[i].name," Wavelength: ",wheel[i].eff_wl
-            print "Photons from star: %.3e" %(Nphot_star)
-            print "Photons from planet: %.3e" %(Nphot_planet)
-            print "Photons from background: %.3e" %(Nphot_bg)
-            print "S/N: %.3f" %(SNR)
-            print "------------"
+            print("Filter: ",wheel[i].name," Wavelength: ",wheel[i].eff_wl)
+            print("Photons from star: %.3e" %(Nphot_star))
+            print("Photons from planet: %.3e" %(Nphot_planet))
+            print("Photons from background: %.3e" %(Nphot_bg))
+            print("S/N: %.3f" %(SNR))
+            print("------------")
 
         # Optionally plot
         if plot:
