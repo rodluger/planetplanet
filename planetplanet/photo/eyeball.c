@@ -613,22 +613,35 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   double vertices[maxvertices];
   FUNCTION functions[maxfunctions];
   FUNCTION boundaries[maxfunctions];
+  
+  // Initial theta checks
+  if (teff > 0) {
+  
+    // If we're doing limb darkening, theta must be pi/2 (full phase)
+    theta = PI / 2.;
+    
+  } else if (theta < MINCRESCENT) {
+  
+    // Numerical issues pop up when the crescent is too thin and
+    // the nightside is dark, so let's increase the number of grid slices
+    if (nz < CRESCENTNZ)
+      nz = CRESCENTNZ;
+      
+  } else if (fabs(theta) < mintheta) {
+  
+    // Avoid the singular point
+    theta = mintheta;
+    
+  }
+  
   double B[nz * no + 1][nw];
   double zenithgrid[nz * no];
   double d2 = distance * distance * PARSEC * PARSEC;
   *iErr = ERR_NONE;
-  
-  // Avoid the singular point
-  if (fabs(theta) < mintheta)
-    theta = mintheta;
-
+      
   // Zero out the flux
   for (m = 0; m < nw; m++) 
     flux[m] = 0.;
-  
-  // If we're doing limb darkening, theta must be pi/2 (full phase)
-  if (teff > 0)
-    theta = PI / 2.;
   
   // Generate all the shapes and get their vertices and curves
   AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);     

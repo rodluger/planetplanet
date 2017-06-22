@@ -326,6 +326,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   if (!settings.quiet) {
     if (iErr == ERR_OOB)
       printf("WARNING: Precision loss detected in integration.\n");
+      printf("Consider increasing `nz` or increasing `mintheta`.\n");
     printf("Done!\n");
   }
   

@@ -523,7 +523,7 @@ class System(object):
 
     # Call the light curve routine
     err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
-    assert err == 0, "Error in C routine `Orbits` (%d)." % err 
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
     
     # Loop over all bodies and plot each occultation event as a circle
     figp, axp = pl.subplots(1, figsize = (8,8))
@@ -701,7 +701,7 @@ class System(object):
 
     # Call the light curve routine
     err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
-    assert err == 0, "Error in C routine `Orbits` (%d)." % err      
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err      
 
     # A histogram of the distribution of phases, impact parameters, and durations
     hist = [[] for body in self.bodies[1:]]
@@ -819,7 +819,7 @@ class System(object):
 
     # Call the light curve routine
     err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
-    assert err == 0, "Error in C routine `Flux` (%d)." % err 
+    assert err <= 0, "Error in C routine `Flux` (%d)." % err 
     self._computed = True
      
     # Loop over all bodies and store each occultation event as a separate attribute
@@ -902,7 +902,7 @@ class System(object):
 
     # Call the light curve routine
     err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
-    assert err == 0, "Error in C routine `Orbits` (%d)." % err 
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
   
   def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''
@@ -956,7 +956,7 @@ class System(object):
               ind = np.argmin(b)
               if b[ind] <= max_impact:
                 if not quiet:
-                  print("Next occultation of %s by %s is at t = %.2f days." % (occulted.name, self.bodies[occ].name, time[idx[ind]]))
+                  print("The next occultation of %s by %s is at t = %.2f days." % (occulted.name, self.bodies[occ].name, time[idx[ind]]))
                 self.settings.quiet = quiet
                 return time[idx[ind]]
     
@@ -1189,7 +1189,7 @@ class System(object):
     y = np.sqrt(r ** 2 - x ** 2)
     ax.plot(x, y, color = 'k', zorder = 98, lw = 1)
     ax.plot(x, -y, color = 'k', zorder = 98, lw = 1)
-  
+    
     # Plot the zenith angle ellipses
     for za in np.linspace(0, np.pi, occulted.nz + 2)[1:-1]:
       a = occulted._r * np.abs(np.sin(za))

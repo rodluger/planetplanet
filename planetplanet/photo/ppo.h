@@ -10,7 +10,7 @@
 #define ERR_NOT_IMPLEMENTED     1                                                     // Function/option not yet implemented
 #define ERR_KEPLER              2                                                     // Error in the Kepler solver; probably didn't converge
 #define ERR_INPUT               3                                                     // Bad input value
-#define ERR_OOB                 4                                                     // Out of bounds
+#define ERR_OOB                 -1                                                    // [Warning] Out of bounds
 
 // Constants
 #define PI                      acos(-1.)
@@ -28,6 +28,8 @@
 #define MAXIM                   1.e-2
 #define SMALL                   1.e-10
 #define TINY                    1.e-15
+#define MINCRESCENT            (-70. * PI / 180)
+#define CRESCENTNZ              31
 
 // Structs
 typedef struct {
