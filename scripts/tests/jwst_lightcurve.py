@@ -3,7 +3,7 @@
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from planetplanet.photo import Trappist1
 from planetplanet.detect import jwst
 import matplotlib.pyplot as plt
@@ -58,7 +58,7 @@ wheel = jwst.get_miri_filter_wheel()
 for filt in wheel:
 
     # Compute lightcurve in filter
-    filt.compute_lightcurve(flux, time, lam, obscad=cadence, oversample=oversample)
+    filt.compute_lightcurve(flux, time, lam) #, obscad=cadence, oversample=oversample)
 
     # Setup plot
     fig, ax = plt.subplots(figsize=(16,6))

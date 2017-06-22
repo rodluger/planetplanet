@@ -24,7 +24,7 @@ SBOLTZ = 5.670367e-8
 
 __all__ = ['Trappist1']
 
-def Trappist1(sample = True, airless = True, **kwargs):
+def Trappist1(sample = True, airless = True, distance = 12, **kwargs):
   '''
   
   '''
@@ -157,4 +157,4 @@ def Trappist1(sample = True, airless = True, **kwargs):
                         airless = airless, **kwargs)
 
   # Return the system
-  return System(star, *planets, **kwargs)
+  return System(star, distance = distance, *planets, **kwargs)

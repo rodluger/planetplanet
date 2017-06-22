@@ -7,6 +7,7 @@
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
+from ..detect import jwst
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
@@ -446,7 +447,9 @@ class System(object):
     # Compute the semi-major axis for each planet (in Earth radii)
     # and the time of pericenter passage 
     for body in self.bodies:
-    
+      
+      body._computed = False
+      
       # From Kepler's law
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
     
@@ -461,6 +464,9 @@ class System(object):
     
     # Reset animations
     self._animations = []
+    
+    # Reset flag
+    self._computed = False
        
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
@@ -814,7 +820,8 @@ class System(object):
     # Call the light curve routine
     err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
     assert err == 0, "Error in C routine `Flux` (%d)." % err 
-
+    self._computed = True
+     
     # Loop over all bodies and store each occultation event as a separate attribute
     for body in self.bodies:
     
@@ -959,17 +966,52 @@ class System(object):
     self.settings.quiet = quiet
     return np.nan
     
-  def observe(self):
+  def observe(self, saveplot = False, savetxt = False, filter = 'f1500w'):
     '''
-    TODO: Jake
+    TODO: Still working on this.
     
     '''
     
-    from ..detect import jwst
+    # Have we computed the light curves?
+    assert self._computed, "Please run `compute()` first."
     
-    # Call Jake's code
-    self.observation = 0
-  
+    # Get MIRI Filter "wheel"
+    wheel = jwst.get_miri_filter_wheel()
+    
+    # Get the filter
+    filt = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
+    
+    # Compute lightcurve in filter
+    filt.compute_lightcurve(self.flux, self.time, self.wavelength)
+
+    # Setup plot
+    fig, ax = pl.subplots(figsize=(16,6))
+    ax.set_title(r"%s" %filt.name)
+    ax.set_ylabel("Relative Flux")
+    ax.set_xlabel("Time [days]")
+
+    # Plot lightcurve
+    filt.lightcurve.plot(ax0 = ax)
+
+    # Save or show plot
+    if saveplot:
+      fig.savefig("../img/jwst_lc_%s.png" % filt.name, bbox_inches="tight")
+    else:
+      fig.subplots_adjust(bottom=0.2)
+
+    # Save data file
+    if savetxt:
+    
+      # Compose data array to save
+      data = np.array([filt.lightcurve.time, filt.lightcurve.obs, filt.lightcurve.sig]).T
+
+      # Save txt file
+      np.savetxt("jwst_lc_%s_%imin.txt" %(filt.name, cadence), data, fmt=str("%.6e"),
+                 header="time [days]      flux         error", comments="")
+    
+    if not saveplot:
+      pl.show()
+    
   def plot_occultation(self, body, time, interval = 50, gifname = None):
     '''
     

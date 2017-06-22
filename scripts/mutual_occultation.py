@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-next_occultation.py
--------------------
+mutual_occultation.py
+---------------------
 
-Compute the time of the next occultation of a given planet
-and plot the light curve.
+An actual mutual planet-planet occultation in Trappist-1!
 
 '''
 
@@ -15,7 +14,7 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
-np.random.seed(42)
+np.random.seed(1)
 
 # Instantiate the Trappist-1 system
 system = Trappist1(sample = True)
@@ -25,7 +24,6 @@ t = system.next_occultation(100, system.c, occultor = system.b)
 
 # Get the light curve around that point
 time = np.linspace(t - 0.1, t + 0.1, 1000)
-
 system.compute(time)
 system.plot_lightcurve()
 pl.show()

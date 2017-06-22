@@ -283,35 +283,47 @@ int NBody(int np, BODY **body, SETTINGS settings) {
         struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary);
 
         for (i = last_t + 1; i < t; i++) {
-        
-          // Mean anomaly
-          M = modulus(orbit.M + orbit.n * (body[0]->time[i] - body[0]->time[t]), 2 * PI);
           
-          // Eccentric anomaly
-          if (settings.kepsolver == MDFAST)
-            E = EccentricAnomalyFast(M, orbit.e, settings.keptol, settings.maxkepiter);
-          else
-            E = EccentricAnomaly(M, orbit.e, settings.keptol, settings.maxkepiter);
-          if (E == -1) return ERR_KEPLER;
+          // Is this the star? If so, assume it hasn't moved
+          if (p == 0) {
+            
+            // Sky coordinates
+            body[p]->x[i] = body[p]->x[t];
+            body[p]->y[i] = body[p]->y[t];
+            body[p]->z[i] = body[p]->z[t];
+            
+          } else {
           
-          // True anomaly
-          f = TrueAnomaly(E, orbit.e);
+            // Mean anomaly
+            M = modulus(orbit.M + orbit.n * (body[0]->time[i] - body[0]->time[t]), 2 * PI);
           
-          // Radial distance                                        
-          d = orbit.a * (1. - orbit.e * orbit.e) / (1. + orbit.e * cos(f));
+            // Eccentric anomaly
+            if (settings.kepsolver == MDFAST)
+              E = EccentricAnomalyFast(M, orbit.e, settings.keptol, settings.maxkepiter);
+            else
+              E = EccentricAnomaly(M, orbit.e, settings.keptol, settings.maxkepiter);
+            if (E == -1) return ERR_KEPLER;
           
-          // Murray and Dermott, p. 51
-          cwf = cos(orbit.omega + f);
-          swf = sin(orbit.omega + f);
-          co = cos(orbit.Omega); 
-          so = sin(orbit.Omega);
-          ci = cos(orbit.inc);
-          si = sin(orbit.inc);
+            // True anomaly
+            f = TrueAnomaly(E, orbit.e);
           
-          // Sky coordinates
-          body[p]->x[i] = d * (co * cwf - so * swf * ci);
-          body[p]->y[i] = d * (so * cwf + co * swf * ci);
-          body[p]->z[i] = d * swf * si;
+            // Radial distance                                        
+            d = orbit.a * (1. - orbit.e * orbit.e) / (1. + orbit.e * cos(f));
+          
+            // Murray and Dermott, p. 51
+            cwf = cos(orbit.omega + f);
+            swf = sin(orbit.omega + f);
+            co = cos(orbit.Omega); 
+            so = sin(orbit.Omega);
+            ci = cos(orbit.inc);
+            si = sin(orbit.inc);
+          
+            // Sky coordinates
+            body[p]->x[i] = d * (co * cwf - so * swf * ci);
+            body[p]->y[i] = d * (so * cwf + co * swf * ci);
+            body[p]->z[i] = d * swf * si;
+          
+          }
           
         }
         

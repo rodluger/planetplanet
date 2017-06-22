@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-next_occultation.py
--------------------
-
-Compute the time of the next occultation of a given planet
-and plot the light curve.
+jwst_example.py
+---------------
 
 '''
 
@@ -15,17 +12,16 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
-np.random.seed(42)
+np.random.seed(1234)
 
 # Instantiate the Trappist-1 system
-system = Trappist1(sample = True)
+system = Trappist1(sample = True, oversample = 1, airless = True)
 
-# Get the next occultation of b
-t = system.next_occultation(100, system.c, occultor = system.b)
-
-# Get the light curve around that point
-time = np.linspace(t - 0.1, t + 0.1, 1000)
-
+# Get the next occultation
+t = system.next_occultation(1000, system.c, occultor = system.b)
+time = np.arange(t - 0.1, t + 0.1, 5 / 1440.)
 system.compute(time)
-system.plot_lightcurve()
+
+system.plot_lightcurve(15.)
+system.observe()
 pl.show()

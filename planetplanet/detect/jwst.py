@@ -172,7 +172,7 @@ class Filter(object):
 
         return F
 
-    def compute_lightcurve(self, flux, time, lam, obscad=5.0, oversample=True):
+    def compute_lightcurve(self, flux, time, lam):
         """
         Computes an observed lightcurve in the `Filter`
 
@@ -184,8 +184,6 @@ class Filter(object):
             Time grid [days]
         lam : numpy.ndarray
             Wavelength [um]
-        obscad : float, optional
-            Observation cadence [mins]
         """
 
         print("Computing observed light curve in %s filter..." % self.name)
@@ -195,36 +193,10 @@ class Filter(object):
         tmin = np.min(time)
         tmax = np.max(time)
 
-        # Convert cadence from mins to hours
-        cadence = obscad / 60. # hours
-
-        # High-res time cadence
-        cadencehr = np.mean(time[1:] - time[:-1]) * 24 # convert from days to hours
-
-        if oversample:
-            # New for oversampling: input grid is what we want
-            tlo = time
-            dtlo = time[1:] - time[:-1]
-            dtlo = np.hstack([dtlo, dtlo[-1]])
-            data = flux
-        else:
-            # Unnecessary now that ppo oversamples lightcurve
-            # factor by which to bin neighboring times
-            Ncad = cadence / cadencehr
-
-            # Number of new time points
-            Ntlo = np.floor(Ntime / Ncad)
-
-            # New time grid at observational cadence
-            tlo, dtlo = gen_lr_grid(tmin, tmax, Ntlo)
-
-            # Rebin high spectral res lightcurves to observational grid
-            data = []
-            for i in range(Nlam):
-                data.append(
-                    downbin_series(flux[:,i], time, tlo, dxlr=dtlo)
-                )
-            data = np.array(data).T
+        tlo = time
+        dtlo = time[1:] - time[:-1]
+        dtlo = np.hstack([dtlo, dtlo[-1]])
+        data = flux
 
         # Calculate jwst background flux
         Fback = jwst_background(lam)
@@ -686,7 +658,9 @@ def lightcurves(wheel, flux, time, lam, obscad=5.0, plot=None):
     Returns
     -------
     """
-
+    
+    raise NotImplementedError("TODO: Fix this routine; no need to oversample light curve any more.")
+    
     Ntime = len(time)
     Nlam = len(lam)
     tmin = np.min(time)
