@@ -15,13 +15,13 @@ import numpy as np
 np.random.seed(1234)
 
 # Instantiate the Trappist-1 system
-system = Trappist1(sample = True, oversample = 1, airless = True)
+system = Trappist1(sample = False, oversample = 1, airless = False)
 
 # Get the next occultation
-t = system.next_occultation(1000, system.c, occultor = system.b)
-time = np.arange(t - 0.1, t + 0.1, 5 / 1440.)
+t = system.next_occultation(100, system.c, occultor = system.A)
+system.c.limbdark = [0.]
+time = np.arange(t - 0.1, t + 0.1, 10 / 1440.)
 system.compute(time)
-
 system.plot_lightcurve(15.)
 system.observe()
 pl.show()

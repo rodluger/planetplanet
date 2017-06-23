@@ -133,6 +133,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   double theta;
   int i, t, p, o, w;
   int iErr = ERR_NONE;
+  double norm, sflx;
   
   // Initialize the arrays for each body
   for (p = 0; p < np; p++) {
@@ -154,16 +155,14 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     abort();
   }
     
-  // Compute the stellar flux
-  UnoccultedFlux(body[0]->r, PI / 2., 0., 0., 0., body[0]->teff, settings.distance, settings.polyeps1, settings.polyeps2, 
-                 settings.maxpolyiter, settings.mintheta, settings.maxvertices, settings.maxfunctions,
-                 settings.adaptive, body[0]->nu, body[0]->nz, nw, body[0]->u, 
-                 wavelength, tmp, settings.quiet, &iErr);
-  for (t = 0; t < nt; t++) {
-    for (w = 0; w < nw; w++)
-      body[0]->flux[nw * t + w] = tmp[w];
+  // Compute the stellar radiance from Planck's law
+  norm = PI * body[0]->r * REARTH * body[0]->r * REARTH * MICRON / (settings.distance * settings.distance * PARSEC * PARSEC);
+  for (w = 0; w < nw; w++) {
+    sflx = Blackbody(wavelength[w], body[0]->teff) * norm;
+    for (t = 0; t < nt; t++)
+      body[0]->flux[nw * t + w] = sflx;
   }
-  
+    
   // Pre-compute the stellar luminosity per solid angle
   lum = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff);
   

@@ -203,7 +203,7 @@ class Filter(object):
 
         # Exposure time [s]
         tint = dtlo * 3600. * 24
-
+        
         # Calculate SYSTEM photons
         Nphot = tint * self.photon_rate(lam, data[:,:])
 
