@@ -1024,11 +1024,14 @@ class System(object):
     if gifname is not None:
       if gifname.endswith(".gif"):
         gifname = gifname[:-4]    
-    
+
     # Get the occulted body
-    p = np.argmax(self._names == body)
-    body = self.bodies[p]
-    
+    if type(body) is str:
+      p = np.argmax(self._names == body)
+      body = self.bodies[p]
+    else:
+      p = np.argmax(self.bodies == body)
+      
     # Get the indices of the occultation
     tind = np.argmin(np.abs(body.time - time))
     iind = np.argmax([tind in inds for inds in body._inds])
@@ -1181,7 +1184,7 @@ class System(object):
     r = occulted._r
     x0 = occulted.x[t]
     y0 = occulted.y[t]
-    if occulted.nu == 0:
+    if (occulted.nu == 0) and not (occulted.body_type == 'planet' and occulted.airless == False):
       theta = np.arctan(occulted.z[t] / np.abs(occulted.x[t]))
     else:
       theta = np.pi / 2
