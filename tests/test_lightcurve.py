@@ -16,7 +16,7 @@ def test_mutual():
   '''
   
   '''
-  
+
   def u1(lam):
     '''
     A really silly linear limb darkening law with a linear
@@ -48,8 +48,14 @@ def test_mutual():
   time = np.linspace(-0.06, 0.06, 1000)
   system.compute(time)
   
-  # Check some benchmarked values
-  assert np.abs(system.flux[500,0] - 5.11448257092e-15) / 5.11448257092e-15 < TOL, "Incorrect flux."
-  assert np.abs(system.flux[500,-1] - 9.55103324782e-17) / 9.55103324782e-17 < TOL, "Incorrect flux."
-  assert np.abs(np.sum(system.flux[:,0]) - 5.7110429019e-12) / 5.7110429019e-12 < TOL, "Incorrect average flux."
-  assert np.abs(np.sum(system.flux[:,-1]) - 1.03675617599e-13) / 1.03675617599e-13 < TOL, "Incorrect average flux."
+  # Benchmarked values
+  VALUES = [8.11162012264e-15,
+            1.17196337337e-16,
+            8.70818045895e-12,
+            1.2536162322e-13]
+  
+  # Check against them
+  assert np.abs(system.flux[500,0] - VALUES[0]) / VALUES[0] < TOL, "Incorrect flux."
+  assert np.abs(system.flux[500,-1] - VALUES[1]) / VALUES[1] < TOL, "Incorrect flux."
+  assert np.abs(np.sum(system.flux[:,0]) - VALUES[2]) / VALUES[2] < TOL, "Incorrect average flux."
+  assert np.abs(np.sum(system.flux[:,-1]) - VALUES[3]) / VALUES[3] < TOL, "Incorrect average flux."
