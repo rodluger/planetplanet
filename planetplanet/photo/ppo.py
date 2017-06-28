@@ -966,9 +966,11 @@ class System(object):
     self.settings.quiet = quiet
     return np.nan
     
-  def observe(self, saveplot = False, savetxt = False, filter = 'f1500w'):
+  def observe(self, saveplot = False, savetxt = False, filter = 'f1500w', stack = 1):
     '''
     TODO: Still working on this.
+    
+    :param int stack: Number of exposures to stack. Default `1`
     
     '''
     
@@ -982,7 +984,7 @@ class System(object):
     filt = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
     
     # Compute lightcurve in filter
-    filt.compute_lightcurve(self.flux, self.time, self.wavelength)
+    filt.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack)
 
     # Setup plot
     fig, ax = pl.subplots(figsize=(16,6))

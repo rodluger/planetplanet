@@ -172,7 +172,7 @@ class Filter(object):
 
         return F
 
-    def compute_lightcurve(self, flux, time, lam):
+    def compute_lightcurve(self, flux, time, lam, stack = 1):
         """
         Computes an observed lightcurve in the `Filter`
 
@@ -184,6 +184,8 @@ class Filter(object):
             Time grid [days]
         lam : numpy.ndarray
             Wavelength [um]
+        stack: int
+            Number of exposures to stack. Default `1`
         """
 
         print("Computing observed light curve in %s filter..." % self.name)
@@ -205,10 +207,10 @@ class Filter(object):
         tint = dtlo * 3600. * 24
         
         # Calculate SYSTEM photons
-        Nphot = tint * self.photon_rate(lam, data[:,:])
+        Nphot = stack * tint * self.photon_rate(lam, data[:,:])
 
         # Calculate BACKGROUND photons
-        Nback = tint * self.photon_rate(lam, Fback)
+        Nback = stack * tint * self.photon_rate(lam, Fback)
 
         # Signal-to-noise
         SNR = Nphot / np.sqrt(Nphot + Nback)
@@ -226,7 +228,8 @@ class Filter(object):
                                      obs = obs,
                                      sig = sig,
                                      norm = norm,
-                                     tint = tint)
+                                     tint = tint,
+                                     stack = stack)
 
         return
 
@@ -256,7 +259,7 @@ class Lightcurve(object):
         Integration time [mins]
     """
     def __init__(self, time = None, Nphot = None, Nback = None, SNR = None,
-                 obs = None, sig = None, norm = None, tint = None):
+                 obs = None, sig = None, norm = None, tint = None, stack = None):
         self.time = time
         self.Nphot = Nphot
         self.Nback = Nback
@@ -265,6 +268,7 @@ class Lightcurve(object):
         self.sig = sig
         self.norm = norm
         self.tint = tint
+        self.stack = stack
 
     def plot(self, ax0=None, title=""):
 
@@ -280,7 +284,7 @@ class Lightcurve(object):
         # Plot
         ax.plot(self.time, self.Nphot/self.norm, label=title, zorder=11, alpha=0.75)
         ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.75, zorder=10)
-        ax.text(0.01, 0.02, r"$\Delta t = %.1f$ mins" %(self.tint[0]/60.),
+        ax.text(0.01, 0.02, r"$\Delta t = %.1f$ mins ($\times$ %d)" %(self.tint[0]/60., self.stack),
                 ha="left", va="bottom", transform=ax.transAxes,
                 fontsize=16)
 

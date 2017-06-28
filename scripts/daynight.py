@@ -26,7 +26,7 @@ class Animation(object):
   '''
   
   def __init__(self, t, fig, axim, axlc, pto, ptb, body, bodies, occultors, 
-               time, flux, interval = 50, gifname = None, quiet = False):
+               time, flux, interval = 50, color = 'r', gifname = None, quiet = False):
     '''
     
     '''
@@ -41,7 +41,7 @@ class Animation(object):
     self.occultors = occultors
     self.time = time
     self.flux = flux
-    self.curve, = axlc.plot([], [], 'r-')
+    self.curve, = axlc.plot([], [], '-', color = color)
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
                                              interval = interval, repeat = True)
@@ -112,7 +112,9 @@ system = System(star, b, c)
 time = np.linspace(2.35, 2.4, 1000)
 
 # Airless body
-system.c.airless = True
+color = 'b'
+gifname = '../img/occultation_limbdark.gif'
+system.c.airless = False
 system.compute(time, lambda2 = 15)
 flux_airless = np.array(c.flux[:,-1])
 
@@ -126,7 +128,7 @@ fig.subplots_adjust(left = 0.175)
 
 # Plot the light curves
 axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-axlc.plot(time, (norm + flux_airless) / norm, 'r-', label = 'Airless', alpha = 0.1)
+axlc.plot(time, (norm + flux_airless) / norm, '-', color = color, label = 'Airless', alpha = 0.1)
 axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
 axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
 axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -177,6 +179,6 @@ axim.axis('off')
 axim.set_aspect('equal')
 
 # Animate!
-system._animations.append(Animation(range(len(time)), fig, axim, axlc, pto, ptb, c, system.bodies, [b], time, (norm + flux_airless) / norm))
-
+animation = Animation(range(len(time)), fig, axim, axlc, pto, ptb, c, system.bodies, [b], time, (norm + flux_airless) / norm, gifname = gifname, color = color)
+system._animations.append(animation)
 pl.show()

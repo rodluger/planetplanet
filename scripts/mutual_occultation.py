@@ -25,5 +25,8 @@ t = system.next_occultation(100, system.c, occultor = system.b)
 # Get the light curve around that point
 time = np.linspace(t - 0.1, t + 0.1, 1000)
 system.compute(time)
-system.plot_lightcurve()
-pl.show()
+
+#system.plot_lightcurve()
+#pl.show()
+
+system.plot_occultation('f', t, gifname = 'threeplanets')
