@@ -21,7 +21,7 @@ np.random.seed(1234)
 star = Star('A', m = 0.1, r = 0.1, nz = 31, color = 'k', limbdark = [1.])
 
 # Planet b
-b = Planet('b', m = 1, per = 3, inc = 90., r = 3., trn0 = 0, 
+b = Planet('b', m = 1, per = 3, inc = 90., r = 3., t0 = 0, 
            nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
 
 # System

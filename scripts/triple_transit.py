@@ -36,15 +36,15 @@ def u1(lam):
 star = Star('Star', m = 0.1, r = 0.1, nz = 31, color = 'k', limbdark = [u1])
 
 # Planet b
-b = Planet('b', m = 1, per = 2, inc = 90.4, r = 2., trn0 = 0, 
+b = Planet('b', m = 1, per = 2, inc = 90.4, r = 2., t0 = 0, 
            nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # Planet c
-c = Planet('c', m = 1, per = 8, inc = 90., r = 2., trn0 = 0.0005, 
+c = Planet('c', m = 1, per = 8, inc = 90., r = 2., t0 = 0.0005, 
            nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # Planet d
-d = Planet('d', m = 1, per = 32, inc = 89.94, r = 2., trn0 = 0.002, 
+d = Planet('d', m = 1, per = 32, inc = 89.94, r = 2., t0 = 0.002, 
            nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # System

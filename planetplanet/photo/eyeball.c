@@ -152,8 +152,9 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
   int i, j, k;
   double zenith_angle, cosza;
   double T = 0.;
-  double I1[nw];
+  double B0[nw];
   double x;
+  double norm;
   
   // Loop over each slice
   for (i = 0; i < nz + 1; i++) {
@@ -188,16 +189,19 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
     
     } else {
     
-      // Polynomial limb darkening
-      
-      // TODO: We are assuming that the intensity at the center
-      // of the body is the blackbody intensity at its effective
-      // temperature. This is not strictly true, but probably OK
-      // for modest limb darkening. We should eventually find the
-      // correct normalization.
+      // Normalized polynomial limb darkening
+      // Equation (15) in Luger et al. (2017)
       for (j = 0; j < nw; j++) {
-        I1[j] = Blackbody(lambda[j], teff);
-        B[i][j] = I1[j];
+        
+        // Compute the normalization term, Equation (E5)
+        norm = 0;
+        for (k = 0; k < nu; k++) {
+          norm += u[nw * k + j] / ((k + 2) * (k + 3));
+        }
+        norm = 1 - 2 * norm;
+        B0[j] = Blackbody(lambda[j], teff) / norm;
+        B[i][j] = B0[j];
+      
       }
       
       // Pre-compute mu
@@ -211,7 +215,7 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
         
         // Compute the wavelength-dependent intensity
         for (j = 0; j < nw; j++) {
-          B[i][j] -= u[nw * k + j] * I1[j] * x;
+          B[i][j] -= u[nw * k + j] * B0[j] * x;
         } 
       } 
     }

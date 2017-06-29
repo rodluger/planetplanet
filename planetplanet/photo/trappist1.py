@@ -24,10 +24,14 @@ SBOLTZ = 5.670367e-8
 
 __all__ = ['Trappist1']
 
-def Trappist1(sample = True, airless = True, distance = 12, **kwargs):
+def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwargs):
   '''
   
   '''
+  
+  # Randomizer seed
+  if seed is not None:
+    np.random.seed(seed)
   
   # Account for the uncertainty?
   if not sample:
@@ -109,7 +113,7 @@ def Trappist1(sample = True, airless = True, distance = 12, **kwargs):
   
     # Period and time of transit
     per = N(*periods[i])
-    trn0 = N(*transits[i])
+    t0 = N(*transits[i])
   
     # Positive mass
     m = 0
@@ -151,10 +155,12 @@ def Trappist1(sample = True, airless = True, distance = 12, **kwargs):
     tnight = N(*tnights[i])
   
     # Instantiate!
-    planets[i] = Planet(names[i], m = m, per = per, inc = inc, r = r, trn0 = trn0, 
+    planets[i] = Planet(names[i], m = m, per = per, inc = inc, r = r, t0 = t0, 
                         Omega = Omega, w = w, ecc = ecc, color = colors[i], 
                         tnight = tnight, albedo = albedo, 
                         airless = airless, **kwargs)
 
   # Return the system
-  return System(star, distance = distance, *planets, **kwargs)
+  system = System(star, distance = distance, *planets, **kwargs)
+  system._reset()
+  return system

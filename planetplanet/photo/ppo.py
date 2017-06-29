@@ -45,6 +45,81 @@ __all__ = ['Star', 'Planet', 'System']
 # Load the library
 libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
 
+class Animation(object):
+  '''
+  An animation class for occultation movies.
+  
+  '''
+  
+  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors, 
+               interval = 50, gifname = None, quiet = False):
+    '''
+    
+    '''
+    
+    self.t = t
+    self.fig = fig
+    self.axim = axim
+    self.tracker = tracker
+    self.pto = pto
+    self.ptb = ptb
+    self.body = body
+    self.bodies = bodies
+    self.occultors = occultors
+    self.pause = True
+    self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
+                                             interval = interval, repeat = True)
+    self.fig.canvas.mpl_connect('button_press_event', self.toggle)
+    
+    # Save?
+    if gifname is not None:
+      self.pause = False
+      if not gifname.endswith('.gif'):
+        gifname += '.gif'
+      if not quiet:
+        print("Saving %s..." % gifname)
+      self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
+      self.pause = True
+      
+  def toggle(self, event):
+    '''
+    
+    '''
+    
+    self.pause ^= True
+    
+  def animate(self, j):
+    '''
+    
+    '''
+    
+    if not self.pause:
+      
+      # Normalize the time index
+      j = int(j * len(self.t) / 100.)
+      
+      # Time tracker
+      self.tracker.set_xdata(self.bodies[0].time[self.t[j]])
+      
+      # Occultor images
+      x0 = self.body.x[self.t[j]]
+      y0 = self.body.y[self.t[j]]
+      for k, occultor in enumerate(self.occultors): 
+        r = occultor._r
+        x = np.linspace(occultor.x[self.t[j]] - r, occultor.x[self.t[j]] + r, 1000)
+        y = np.sqrt(r ** 2 - (x - occultor.x[self.t[j]]) ** 2)
+        try:
+          self.pto[k].remove()
+        except:
+          pass
+        self.pto[k] = self.axim.fill_between(x - x0, occultor.y[self.t[j]] - y - y0, occultor.y[self.t[j]] + y - y0, color = 'lightgray', zorder = 99 + k, lw = 1)
+        self.pto[k].set_edgecolor('k')
+      
+      # Body orbits
+      for k, b in enumerate(self.bodies):
+        self.ptb[k].set_xdata(b.x[self.t[j]])
+        self.ptb[k].set_ydata(b.z[self.t[j]])
+
 class Settings(ctypes.Structure):
   '''
   The class that contains the model settings. This class is used internally.
@@ -189,7 +264,7 @@ def Planet(name, **kwargs):
   :param float ecc: Orbital eccentricity. Default `0.`
   :param float w: Longitude of pericenter in degrees. `0.`
   :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of primary eclipse in days. Default `0.`
+  :param float t0: Time of transit in days. Default `0.`
   :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
   :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
          in the instant re-radiation limit, where the surface brightness is proportional \
@@ -220,13 +295,13 @@ class Body(ctypes.Structure):
   '''
   
   _fields_ = [("_m", ctypes.c_double),
-              ("per", ctypes.c_double),
+              ("_per", ctypes.c_double),
               ("_inc", ctypes.c_double),
-              ("ecc", ctypes.c_double),
+              ("_ecc", ctypes.c_double),
               ("_w", ctypes.c_double),
               ("_Omega", ctypes.c_double),
               ("a", ctypes.c_double),
-              ("t0", ctypes.c_double),
+              ("tperi0", ctypes.c_double),
               ("_r", ctypes.c_double),
               ("albedo", ctypes.c_double),
               ("_teff", ctypes.c_double),
@@ -245,7 +320,7 @@ class Body(ctypes.Structure):
               ("_z", ctypes.POINTER(ctypes.c_double)),
               ("_occultor", ctypes.POINTER(ctypes.c_int)),
               ("_flux", ctypes.POINTER(ctypes.c_double))]
-              
+  
   def __init__(self, name, body_type, **kwargs):
     
     # Check
@@ -256,11 +331,11 @@ class Body(ctypes.Structure):
     # User
     self.m = kwargs.pop('m', 1.)
     self.r = kwargs.pop('r', 1.)
+    self.t0 = kwargs.pop('t0', 0.)
     self.ecc = kwargs.pop('ecc', 0.)
     self.w = kwargs.pop('w', 0.)
     self.Omega = kwargs.pop('Omega', 0.)
     self.inc = kwargs.pop('inc', 90.)
-    self.trn0 = kwargs.pop('trn0', 0.)
     
     # These defaults are different depending on body type
     if self.body_type == 'planet':
@@ -292,7 +367,7 @@ class Body(ctypes.Structure):
     self.nt = 0
     self.nw = 0
     self.nu = 0
-    self.t0 = 0.
+    self.tperi0 = 0.
     self.a = 0.
     
     # Python stuff
@@ -367,6 +442,8 @@ class Body(ctypes.Structure):
   @w.setter
   def w(self, val):
     self._w = val * np.pi / 180.
+    # Force an update to the time of pericenter passage
+    self.ecc = self._ecc
 
   @property
   def Omega(self):
@@ -385,6 +462,53 @@ class Body(ctypes.Structure):
     self._teff = val
     if self._teff == 0:
       self.u = []
+  
+  @property
+  def t0(self):
+    return self._t0
+  
+  @t0.setter
+  def t0(self, val):
+    self._t0 = val
+    # Force an update to the time of pericenter passage
+    self.ecc = self._ecc
+
+  @property
+  def per(self):
+    return self._per
+  
+  @per.setter
+  def per(self, val):
+    self._per = val
+    # Force an update to the time of pericenter passage
+    self.ecc = self._ecc
+  
+  @property
+  def ecc(self):
+    return self._ecc
+  
+  @ecc.setter
+  def ecc(self, val):
+    '''
+    We need to update the time of pericenter passage whenever the eccentricty,
+    longitude of pericenter, period, or time of transit changes. See the appendix in
+    Shields et al. (2016).
+    
+    '''
+    
+    self._ecc = val
+    fi = (3 * np.pi / 2.) - self._w
+    self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) / (2. * np.pi) * (self.ecc * np.sin(fi) / 
+             (1. + self.ecc * np.cos(fi)) - 2. / np.sqrt(1. - self.ecc * self.ecc) * 
+             np.arctan2(np.sqrt(1. - self.ecc * self.ecc) * np.tan(fi/2.), 1. + self.ecc)))
+  
+  def M(self, t):
+    '''
+    The mean anomaly at a time `t`.
+    
+    '''
+    
+    return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
   
 class System(object):
   '''
@@ -421,16 +545,16 @@ class System(object):
 
     '''
     
-    self.bodies = bodies
+    # Initialize
+    self.bodies = bodies    
     self.settings = Settings(**kwargs)
-    self.reset()
+    self._reset()
     
-  def reset(self):
-    '''
-    Resets the system and recomputes some orbital properties passed to the integrator.
-    
+  def _reset(self):
     '''
     
+    '''
+        
     # Move params set by the user over to the settings class
     for param in self.settings.params:
       if hasattr(self, param):
@@ -441,40 +565,239 @@ class System(object):
     self.primary = self.bodies[0]
     for body in self.bodies:
       setattr(self, body.name, body)
+      # Force an update of `tperi0`
+      body.ecc = body._ecc
     self._names = np.array([p.name for p in self.bodies])
     self.colors = [b.color for b in self.bodies]
     
     # Compute the semi-major axis for each planet (in Earth radii)
-    # and the time of pericenter passage 
     for body in self.bodies:
-      
       body._computed = False
-      
-      # From Kepler's law
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-    
-      # See, e.g., Shields et al. 2015
-      fi = (3 * np.pi / 2.) - body._w
-      tperi0 = (body.per * np.sqrt(1. - body.ecc * body.ecc) / (2. * np.pi) * (body.ecc * np.sin(fi) / 
-               (1. + body.ecc * np.cos(fi)) - 2. / np.sqrt(1. - body.ecc * body.ecc) * 
-               np.arctan2(np.sqrt(1. - body.ecc * body.ecc) * np.tan(fi/2.), 1. + body.ecc)))
-    
-      # We define the mean anomaly to be zero at t = t0 = trn0 + tperi0
-      body.t0 = body.trn0 + tperi0
-    
+      
     # Reset animations
     self._animations = []
     
     # Reset flag
     self._computed = False
-       
+  
+  def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
+    '''
+    
+    '''
+    
+    # Reset
+    self._reset()
+
+    # Compute the wavelength grid
+    wav = [lambda1]
+    while(wav[-1] < lambda2):
+      wav.append(wav[-1] + wav[-1] / R) 
+    wavelength = np.array(wav)
+    
+    # Compute all limb darkening coefficients
+    for body in self.bodies:
+      body.u = [None for ld in body.limbdark]
+      for n, ld in enumerate(body.limbdark):
+        if callable(ld):
+          body.u[n] = ld(wavelength)
+        elif not hasattr(ld, '__len__'):
+          body.u[n] = ld * np.ones_like(wavelength)
+        else:
+          raise Exception("Limb darkening coefficients must be provided as a list of scalars or as a list of functions.")
+      body.u = np.array(body.u)
+
+    # Convert from microns to meters
+    wavelength *= 1e-6
+    
+    # Dimensions
+    n = len(self.bodies)
+    nt = len(time)
+    nw = len(wavelength)
+
+    # Initialize the C interface
+    Flux = libppo.Flux
+    Flux.restype = ctypes.c_int
+    Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                     ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
+                     ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
+                     Settings]
+  
+    # Allocate memory for all the arrays
+    for body in self.bodies:
+      body.time = np.zeros(nt)
+      body._time = np.ctypeslib.as_ctypes(body.time)
+      body.wavelength = np.zeros(nw)
+      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
+      body.x = np.zeros(nt)
+      body._x = np.ctypeslib.as_ctypes(body.x)
+      body.y = np.zeros(nt)
+      body._y = np.ctypeslib.as_ctypes(body.y)
+      body.z = np.zeros(nt)
+      body._z = np.ctypeslib.as_ctypes(body.z)
+      body.occultor = np.zeros(nt, dtype = 'int32')
+      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
+      body.flux = np.zeros((nt, nw))
+      body._flux1d = body.flux.reshape(nt * nw)
+      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+      # HACK: Same for the limb darkening coefficients
+      body._u1d = body.u.reshape(-1)
+      body._u = np.ctypeslib.as_ctypes(body._u1d)
+      # Dimensions
+      body.nu = len(body.u)
+      body.nt = nt
+      body.nw = nw
+
+    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # passed by reference. The contents can all be accessed through `bodies`
+    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+
+    # Call the light curve routine
+    err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
+    assert err <= 0, "Error in C routine `Flux` (%d)." % err 
+    self._computed = True
+     
+    # Loop over all bodies and store each occultation event as a separate attribute
+    for body in self.bodies:
+    
+      # Set the flag
+      body._computed = True
+    
+      # Identify the different events
+      inds = np.where(body.occultor > 0)[0]
+      
+      si = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [nt]))
+
+      # Loop over the events
+      for i in range(len(si) - 1):
+  
+        # Split the light curve, trim it, and add a little padding
+        t = time[si[i]:si[i+1]]
+        f = body.flux[si[i]:si[i+1]]
+        o = body.occultor[si[i]:si[i+1]]
+        inds = np.where(o > 0)[0]
+        if len(inds):        
+          t = t[inds]
+          tdur = t[-1] - t[0]
+          a = np.argmin(np.abs(time - (t[0] - 0.25 * tdur)))
+          b = np.argmin(np.abs(time - (t[-1] + 0.25 * tdur)))
+          if b > a:
+            body._inds.append(list(range(a,b)))
+
+  def compute_orbits(self, time):
+    '''
+    
+    '''
+    
+    # Reset
+    self._reset()
+    
+    # Dimensions
+    n = len(self.bodies)
+    nt = len(time)
+    nw = 1
+
+    # Initialize the C interface
+    Orbits = libppo.Orbits
+    Orbits.restype = ctypes.c_int
+    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
+                       Settings]
+  
+    # Allocate memory for all the arrays
+    for body in self.bodies:
+      body.time = np.zeros(nt)
+      body._time = np.ctypeslib.as_ctypes(body.time)
+      body.wavelength = np.zeros(nw)
+      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
+      body.x = np.zeros(nt)
+      body._x = np.ctypeslib.as_ctypes(body.x)
+      body.y = np.zeros(nt)
+      body._y = np.ctypeslib.as_ctypes(body.y)
+      body.z = np.zeros(nt)
+      body._z = np.ctypeslib.as_ctypes(body.z)
+      body.occultor = np.zeros(nt, dtype = 'int32')
+      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
+      body.flux = np.zeros((nt, nw))
+      body._flux1d = body.flux.reshape(nt * nw)
+      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+      # HACK: Same for the limb darkening coefficients
+      body._u1d = np.array([], dtype = float)
+      body._u = np.ctypeslib.as_ctypes(body._u1d)
+      # Dimensions
+      body.nu = 0
+      body.nt = nt
+      body.nw = nw
+
+    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # passed by reference. The contents can all be accessed through `bodies`
+    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+
+    # Call the light curve routine
+    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
+  
+  def observe(self, saveplot = False, savetxt = False, filter = 'f1500w', stack = 1):
+    '''
+    TODO: Still working on this.
+    
+    :param int stack: Number of exposures to stack. Default `1`
+    
+    '''
+    
+    # Have we computed the light curves?
+    assert self._computed, "Please run `compute()` first."
+    
+    # Get MIRI Filter "wheel"
+    wheel = jwst.get_miri_filter_wheel()
+    
+    # Get the filter
+    filt = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
+    
+    # Compute lightcurve in filter
+    filt.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack)
+
+    # Setup plot
+    fig, ax = pl.subplots(figsize=(16,6))
+    ax.set_title(r"%s" %filt.name)
+    ax.set_ylabel("Relative Flux")
+    ax.set_xlabel("Time [days]")
+
+    # Plot lightcurve
+    filt.lightcurve.plot(ax0 = ax)
+
+    # Save or show plot
+    if saveplot:
+      fig.savefig("../img/jwst_lc_%s.png" % filt.name, bbox_inches="tight")
+    else:
+      fig.subplots_adjust(bottom=0.2)
+
+    # Save data file
+    if savetxt:
+    
+      # Compose data array to save
+      data = np.array([filt.lightcurve.time, filt.lightcurve.obs, filt.lightcurve.sig]).T
+
+      # Save txt file
+      np.savetxt("jwst_lc_%s_%imin.txt" %(filt.name, cadence), data, fmt=str("%.6e"),
+                 header="time [days]      flux         error", comments="")
+    
+    if not saveplot:
+      pl.show()
+      
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
     
     '''
   
     # Reset
-    self.reset()
+    self._reset()
   
     # Dimensions
     n = len(self.bodies)
@@ -652,7 +975,7 @@ class System(object):
     '''
   
     # Reset
-    self.reset()
+    self._reset()
   
     # Dimensions
     n = len(self.bodies)
@@ -742,167 +1065,6 @@ class System(object):
       hist[k] = np.array(hist[k])
     
     return hist
-        
-  def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
-    '''
-    
-    '''
-    
-    # Reset
-    self.reset()
-
-    # Compute the wavelength grid
-    wav = [lambda1]
-    while(wav[-1] < lambda2):
-      wav.append(wav[-1] + wav[-1] / R) 
-    wavelength = np.array(wav)
-    
-    # Compute all limb darkening coefficients
-    for body in self.bodies:
-      body.u = [None for ld in body.limbdark]
-      for n, ld in enumerate(body.limbdark):
-        if callable(ld):
-          body.u[n] = ld(wavelength)
-        elif not hasattr(ld, '__len__'):
-          body.u[n] = ld * np.ones_like(wavelength)
-        else:
-          raise Exception("Limb darkening coefficients must be provided as a list of scalars or as a list of functions.")
-      body.u = np.array(body.u)
-
-    # Convert from microns to meters
-    wavelength *= 1e-6
-    
-    # Dimensions
-    n = len(self.bodies)
-    nt = len(time)
-    nw = len(wavelength)
-
-    # Initialize the C interface
-    Flux = libppo.Flux
-    Flux.restype = ctypes.c_int
-    Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                     ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
-                     ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
-                     Settings]
-  
-    # Allocate memory for all the arrays
-    for body in self.bodies:
-      body.time = np.zeros(nt)
-      body._time = np.ctypeslib.as_ctypes(body.time)
-      body.wavelength = np.zeros(nw)
-      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
-      body.x = np.zeros(nt)
-      body._x = np.ctypeslib.as_ctypes(body.x)
-      body.y = np.zeros(nt)
-      body._y = np.ctypeslib.as_ctypes(body.y)
-      body.z = np.zeros(nt)
-      body._z = np.ctypeslib.as_ctypes(body.z)
-      body.occultor = np.zeros(nt, dtype = 'int32')
-      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
-      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
-      # treat it as a 1d array within C and keep track of the row/column
-      # indices by hand...
-      body.flux = np.zeros((nt, nw))
-      body._flux1d = body.flux.reshape(nt * nw)
-      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-      # HACK: Same for the limb darkening coefficients
-      body._u1d = body.u.reshape(-1)
-      body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # Dimensions
-      body.nu = len(body.u)
-      body.nt = nt
-      body.nw = nw
-
-    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
-    # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
-
-    # Call the light curve routine
-    err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Flux` (%d)." % err 
-    self._computed = True
-     
-    # Loop over all bodies and store each occultation event as a separate attribute
-    for body in self.bodies:
-    
-      # Set the flag
-      body._computed = True
-    
-      # Identify the different events
-      inds = np.where(body.occultor > 0)[0]
-      si = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [nt]))
-      
-      # Loop over the events
-      for i in range(len(si) - 1):
-  
-        # Split the light curve, trim it, and add a little padding
-        t = time[si[i]:si[i+1]]
-        f = body.flux[si[i]:si[i+1]]
-        o = body.occultor[si[i]:si[i+1]]
-        inds = np.where(o > 0)[0]
-        if len(inds):        
-          t = t[inds]
-          tdur = t[-1] - t[0]
-          a = np.argmin(np.abs(time - (t[0] - 0.25 * tdur)))
-          b = np.argmin(np.abs(time - (t[-1] + 0.25 * tdur)))
-          if b > a:
-            body._inds.append(list(range(a,b)))
-  
-  def compute_orbits(self, time):
-    '''
-    
-    '''
-    
-    # Reset
-    self.reset()
-    
-    # Dimensions
-    n = len(self.bodies)
-    nt = len(time)
-    nw = 1
-
-    # Initialize the C interface
-    Orbits = libppo.Orbits
-    Orbits.restype = ctypes.c_int
-    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
-                       Settings]
-  
-    # Allocate memory for all the arrays
-    for body in self.bodies:
-      body.time = np.zeros(nt)
-      body._time = np.ctypeslib.as_ctypes(body.time)
-      body.wavelength = np.zeros(nw)
-      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
-      body.x = np.zeros(nt)
-      body._x = np.ctypeslib.as_ctypes(body.x)
-      body.y = np.zeros(nt)
-      body._y = np.ctypeslib.as_ctypes(body.y)
-      body.z = np.zeros(nt)
-      body._z = np.ctypeslib.as_ctypes(body.z)
-      body.occultor = np.zeros(nt, dtype = 'int32')
-      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
-      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
-      # treat it as a 1d array within C and keep track of the row/column
-      # indices by hand...
-      body.flux = np.zeros((nt, nw))
-      body._flux1d = body.flux.reshape(nt * nw)
-      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-      # HACK: Same for the limb darkening coefficients
-      body._u1d = np.array([], dtype = float)
-      body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # Dimensions
-      body.nu = 0
-      body.nt = nt
-      body.nw = nw
-
-    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
-    # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
-
-    # Call the light curve routine
-    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
   
   def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''
@@ -962,65 +1124,14 @@ class System(object):
     
     # Nothing found...
     if not quiet:
-      print("No occultation %s by %s found." % (occulted.name, self.bodies[occ].name))
+      print("No occultation of %s by %s found." % (occulted.name, self.bodies[occ].name))
     self.settings.quiet = quiet
     return np.nan
-    
-  def observe(self, saveplot = False, savetxt = False, filter = 'f1500w', stack = 1):
-    '''
-    TODO: Still working on this.
-    
-    :param int stack: Number of exposures to stack. Default `1`
-    
-    '''
-    
-    # Have we computed the light curves?
-    assert self._computed, "Please run `compute()` first."
-    
-    # Get MIRI Filter "wheel"
-    wheel = jwst.get_miri_filter_wheel()
-    
-    # Get the filter
-    filt = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
-    
-    # Compute lightcurve in filter
-    filt.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack)
-
-    # Setup plot
-    fig, ax = pl.subplots(figsize=(16,6))
-    ax.set_title(r"%s" %filt.name)
-    ax.set_ylabel("Relative Flux")
-    ax.set_xlabel("Time [days]")
-
-    # Plot lightcurve
-    filt.lightcurve.plot(ax0 = ax)
-
-    # Save or show plot
-    if saveplot:
-      fig.savefig("../img/jwst_lc_%s.png" % filt.name, bbox_inches="tight")
-    else:
-      fig.subplots_adjust(bottom=0.2)
-
-    # Save data file
-    if savetxt:
-    
-      # Compose data array to save
-      data = np.array([filt.lightcurve.time, filt.lightcurve.obs, filt.lightcurve.sig]).T
-
-      # Save txt file
-      np.savetxt("jwst_lc_%s_%imin.txt" %(filt.name, cadence), data, fmt=str("%.6e"),
-                 header="time [days]      flux         error", comments="")
-    
-    if not saveplot:
-      pl.show()
-    
+        
   def plot_occultation(self, body, time, interval = 50, gifname = None):
     '''
     
     '''
-    
-    if not self.settings.quiet:
-      print("Plotting the occultation...")
     
     # Check file name
     if gifname is not None:
@@ -1036,10 +1147,19 @@ class System(object):
       
     # Get the indices of the occultation
     tind = np.argmin(np.abs(body.time - time))
+    if len(body._inds) == 0:
+      if not self.settings.quiet:
+        print("No occultation occurs at the given time.")
+      return None
     iind = np.argmax([tind in inds for inds in body._inds])
     if (iind == 0) and not (tind in body._inds[0]):
+      if not self.settings.quiet:
+        print("No occultation occurs at the given time.")
       return None
     t = body._inds[iind]
+    
+    if not self.settings.quiet:
+      print("Plotting the occultation...")
     
     # Stellar flux (baseline)
     normb = np.nanmedian(self.bodies[0].flux[:,0])
@@ -1336,78 +1456,3 @@ class System(object):
     '''
     
     return self.bodies[0].wavelength * 1.e6
-
-class Animation(object):
-  '''
-  An animation class for occultation movies.
-  
-  '''
-  
-  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors, 
-               interval = 50, gifname = None, quiet = False):
-    '''
-    
-    '''
-    
-    self.t = t
-    self.fig = fig
-    self.axim = axim
-    self.tracker = tracker
-    self.pto = pto
-    self.ptb = ptb
-    self.body = body
-    self.bodies = bodies
-    self.occultors = occultors
-    self.pause = True
-    self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
-                                             interval = interval, repeat = True)
-    self.fig.canvas.mpl_connect('button_press_event', self.toggle)
-    
-    # Save?
-    if gifname is not None:
-      self.pause = False
-      if not gifname.endswith('.gif'):
-        gifname += '.gif'
-      if not quiet:
-        print("Saving %s..." % gifname)
-      self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
-      self.pause = True
-      
-  def toggle(self, event):
-    '''
-    
-    '''
-    
-    self.pause ^= True
-    
-  def animate(self, j):
-    '''
-    
-    '''
-    
-    if not self.pause:
-      
-      # Normalize the time index
-      j = int(j * len(self.t) / 100.)
-      
-      # Time tracker
-      self.tracker.set_xdata(self.bodies[0].time[self.t[j]])
-      
-      # Occultor images
-      x0 = self.body.x[self.t[j]]
-      y0 = self.body.y[self.t[j]]
-      for k, occultor in enumerate(self.occultors): 
-        r = occultor._r
-        x = np.linspace(occultor.x[self.t[j]] - r, occultor.x[self.t[j]] + r, 1000)
-        y = np.sqrt(r ** 2 - (x - occultor.x[self.t[j]]) ** 2)
-        try:
-          self.pto[k].remove()
-        except:
-          pass
-        self.pto[k] = self.axim.fill_between(x - x0, occultor.y[self.t[j]] - y - y0, occultor.y[self.t[j]] + y - y0, color = 'lightgray', zorder = 99 + k, lw = 1)
-        self.pto[k].set_edgecolor('k')
-      
-      # Body orbits
-      for k, b in enumerate(self.bodies):
-        self.ptb[k].set_xdata(b.x[self.t[j]])
-        self.ptb[k].set_ydata(b.z[self.t[j]])

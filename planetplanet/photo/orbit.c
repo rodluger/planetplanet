@@ -141,7 +141,7 @@ int Kepler(int np, BODY **body, SETTINGS settings){
     for (p = 1; p < np; p++) {
       
       // Mean anomaly
-      M = 2. * PI / body[p]->per * modulus(body[p]->time[t] - body[p]->t0, body[p]->per);                  
+      M = 2. * PI / body[p]->per * modulus(body[p]->time[t] - body[p]->tperi0, body[p]->per);                  
 
       // Eccentric anomaly
       if (settings.kepsolver == MDFAST)
@@ -221,7 +221,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	// 11th order symplectic corrector
 	r->ri_whfast.safe_mode 	= 0;
 	r->ri_whfast.corrector 	= 11;		
-	r->integrator = REB_INTEGRATOR_WHFAST;
+	r->integrator = REB_INTEGRATOR_WHFAST; // REB_INTEGRATOR_IAS15
 	r->heartbeat = heartbeat;
 	r->exact_finish_time = 1;
 
@@ -234,7 +234,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	for (p = 1; p < np; p++) {
 	
 	  // Get the true anomaly at the first timestep
-    M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->t0, body[p]->per);                  
+    M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);                  
     if (settings.kepsolver == MDFAST)
       E = EccentricAnomalyFast(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
     else
@@ -342,6 +342,22 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 
   }
   
+
+  // Update the orbital elements of all the bodies
+  for (p = 0; p < np; p++) {
+    
+    struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[0]);
+    body[p]->a = orbit.a;
+    body[p]->ecc = orbit.e;
+    body[p]->inc = orbit.inc;
+    body[p]->w = orbit.omega;
+    body[p]->Omega = orbit.Omega;
+    body[p]->tperi0 = body[p]->time[body[p]->nt - 1] - body[p]->per * orbit.M / (2 * PI);
+    body[p]->per = orbit.P;
+    
+  } 
+
+    
   if (!settings.quiet)
     printf("\n");
   

@@ -34,18 +34,18 @@ def u1(lam):
 star = Star('A', m = 0.1, r = 0.1, nz = 31, color = 'k', limbdark = [u1])
 
 # Planet b
-b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., trn0 = 0, 
+b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., t0 = 0., 
            nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
 
 # Planet c
-c = Planet('c', m = 1, per = 30, inc = 90., r = 3., trn0 = 0., 
+c = Planet('c', m = 1, per = 30, inc = 90., r = 3., t0 = 0., 
            nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # System
 system = System(star, b, c)
 
 # Get the occultation light curves
-time = np.linspace(-0.06, 0.06, 1000)
+time = np.linspace(-0.6, 0.6, 10000)
 system.compute(time)
-system.plot_occultation('A', 0., gifname = 'mutual')
+system.plot_occultation('A', 0.) #, gifname = 'mutual')
 pl.show()

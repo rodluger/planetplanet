@@ -100,11 +100,11 @@ class Animation(object):
 star = Star('A', m = 0.1, r = 0.1, teff = 3000, nz = 31, color = 'k')
 
 # Planet b
-b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., trn0 = 1.5, 
+b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., t0 = 1.5, 
            nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
 
 # Planet c
-c = Planet('c', m = 1, per = 6, inc = 90., r = 3., trn0 = 0., 
+c = Planet('c', m = 1, per = 6, inc = 90., r = 3., t0 = 0., 
            nz = 51, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # System

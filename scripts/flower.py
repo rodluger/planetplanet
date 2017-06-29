@@ -34,19 +34,19 @@ def u1(lam):
 star = Star('A', m = 0.1, r = 0.1, nz = 21, color = 'k', limbdark = [u1])
 
 # Planet b
-b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., trn0 = 0, 
+b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., t0 = 0, 
            nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
 
 # Planet c
-c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., trn0 = 0, 
+c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., t0 = 0, 
            nz = 11, Omega = 90, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # Planet c
-d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., trn0 = 0, 
+d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., t0 = 0, 
            nz = 11, Omega = 180, w = 0., ecc = 0., phasecurve = False, color = 'b')
            
 # Planet c
-e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., trn0 = 0, 
+e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., t0 = 0, 
            nz = 11, Omega = 270, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
 # System

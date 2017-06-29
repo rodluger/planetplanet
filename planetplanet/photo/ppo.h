@@ -40,7 +40,7 @@ typedef struct {
   double w;
   double Omega;
   double a;
-  double t0;
+  double tperi0;
   double r;
   double albedo;
   double teff;

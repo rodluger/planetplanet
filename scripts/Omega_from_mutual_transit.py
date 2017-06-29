@@ -61,7 +61,7 @@ for n in tqdm(range(niter)):
   sig = 0.5 * 0.0088 / 100 / mu
   RpRs = N(mu, sig)
   r = RpRs * rstar * RSUN / REARTH
-  b = Planet('b', m = m, per = per, inc = inc, r = r, trn0 = 0., Omega = 0, w = w, ecc = ecc, color = 'r')
+  b = Planet('b', m = m, per = per, inc = inc, r = r, t0 = 0., Omega = 0, w = w, ecc = ecc, color = 'r')
 
   # Planet c
   per = N(2.4218233, 0.17e-5)
@@ -79,7 +79,7 @@ for n in tqdm(range(niter)):
   sig = 0.5 * 0.010 / 100 / mu
   RpRs = N(mu, sig)
   r = RpRs * rstar * RSUN / REARTH
-  c = Planet('c', m = m, per = per, inc = inc, r = r, trn0 = 0., Omega = 0, w = w, ecc = ecc, color = 'b')
+  c = Planet('c', m = m, per = per, inc = inc, r = r, t0 = 0., Omega = 0, w = w, ecc = ecc, color = 'b')
 
   # The system
   system = System(star, b, c, nbody = False, adaptive = True, quiet = True)
