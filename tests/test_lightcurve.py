@@ -14,6 +14,7 @@ TOL = 0.001
 RSUN = 6.957e8
 PARSEC = 3.086e16
 MICRON = 1.e-6
+SBOLTZ = 5.670367e-8
 
 def u1(lam):
   '''
@@ -68,3 +69,31 @@ def test_mutual():
   assert np.abs(values[1] - truths[1]) / truths[1] < TOL, "Incorrect flux."
   assert np.abs(values[2] - truths[2]) / truths[1] < TOL, "Incorrect average flux."
   assert np.abs(values[3] - truths[3]) / truths[1] < TOL, "Incorrect average flux."
+
+def test_limbdark():
+  '''
+  
+  '''
+  
+  # Instantiate the star
+  r = 0.1
+  teff = 3200
+  star = Star('A', m = 0.1, r = r, nz = 31, color = 'k', limbdark = [u1], teff = teff)
+
+  # True luminosity
+  truth = 4 * np.pi * (r * RSUN) ** 2 * SBOLTZ * teff ** 4
+
+  # System
+  system = System(star)
+  system.distance = 12.2
+  
+  # Compute the light curve
+  time = np.arange(0., 1., 10)
+  system.compute(time, lambda1 = 0.1, lambda2 = 100, R = 3000)
+  
+  # Luminosity
+  bol = np.trapz(system.flux[0], system.A.wavelength * 1e6)
+  lum = 4 * np.pi * bol * (12.2 * PARSEC) ** 2
+  
+  # Check!
+  assert np.abs(lum - truth) / truth < 0.01, "Incorrect bolometric flux."
