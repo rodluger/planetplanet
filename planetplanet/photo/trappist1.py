@@ -7,20 +7,12 @@
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
+from ..constants import *
 from .ppo import Star, Planet, System
 import numpy as np
 import matplotlib.pyplot as pl
 import os
 from tqdm import tqdm
-MSUN = 1.988416e30
-LSUN = 3.846e26
-RSUN = 6.957e8
-G = 6.67428e-11
-MEARTH = 5.9722e24
-REARTH = 6.3781e6
-DAYSEC = 86400.
-AUM = 1.49598e11
-SBOLTZ = 5.670367e-8
 
 __all__ = ['Trappist1']
 
@@ -128,7 +120,7 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
     # Longitude of ascending node in degrees
     # A standard deviation of 0.3 is what Eric Agol got
     # in his Monte Carlo runs
-    if i == 0:
+    if (i == 0) or (not sample):
       Omega = 0
     else:
       Omega = 0.3 * np.random.randn()
@@ -162,5 +154,4 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
 
   # Return the system
   system = System(star, distance = distance, *planets, **kwargs)
-  system._reset()
   return system

@@ -7,6 +7,7 @@
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
+from ..constants import *
 from ..detect import jwst
 import ctypes
 import numpy as np
@@ -21,31 +22,13 @@ from tqdm import tqdm
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
-AUREARTH = 23454.9271
-MSUNMEARTH = 332968.308
-RSUNREARTH = 109.045013
-SEARTH = 1.361e3
-MSUN = 1.988416e30
-RSUN = 6.957e8
-G = 6.67428e-11
-MEARTH = 5.9722e24
-REARTH = 6.3781e6
-DAYSEC = 86400.
-AUM = 1.49598e11
-G = 6.67428e-11
-HPLANCK = 6.62607004e-34
-CLIGHT = 2.998e8
-KBOLTZ = 1.38064852e-23
-MDFAST = 0
-NEWTON = 1
-MINUTE = 1. / 1440.
 
 __all__ = ['Star', 'Planet', 'System']
 
 # Load the library
 libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
 
-class Animation(object):
+class _Animation(object):
   '''
   An animation class for occultation movies.
   
@@ -115,180 +98,12 @@ class Animation(object):
         self.pto[k] = self.axim.fill_between(x - x0, occultor.y[self.t[j]] - y - y0, occultor.y[self.t[j]] + y - y0, color = 'lightgray', zorder = 99 + k, lw = 1)
         self.pto[k].set_edgecolor('k')
       
-      # Body orbits
+      # _Body orbits
       for k, b in enumerate(self.bodies):
         self.ptb[k].set_xdata(b.x[self.t[j]])
         self.ptb[k].set_ydata(b.z[self.t[j]])
 
-class Settings(ctypes.Structure):
-  '''
-  The class that contains the model settings. This class is used internally.
-  
-  :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
-  :param float keptol: Kepler solver tolerance. Default `1.e-15`
-  :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
-  :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
-  :param float timestep: Timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
-  :param bool quiet: Suppress output? Default `False`
-  :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
-         angle, elliptical boundaries of constant surface brightness on the planet surface are \
-         treated as vertical lines. Default `1.`
-  :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
-  :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
-  :param int oversample: Oversampling factor for each exposure. Default `1`
-  :param float distance: Distance to the system in parsecs. Default `10.`
-  
-  '''
-  
-  _fields_ = [("_nbody", ctypes.c_int),
-              ("keptol", ctypes.c_double),
-              ("maxkepiter", ctypes.c_int),
-              ("_kepsolver", ctypes.c_int),
-              ("polyeps1", ctypes.c_double),
-              ("polyeps2", ctypes.c_double),
-              ("maxpolyiter", ctypes.c_int),
-              ("timestep", ctypes.c_double),
-              ("_adaptive", ctypes.c_int),
-              ("_quiet", ctypes.c_int),
-              ("_mintheta", ctypes.c_double),
-              ("maxvertices", ctypes.c_int),
-              ("maxfunctions", ctypes.c_int),
-              ("oversample", ctypes.c_int),
-              ("distance", ctypes.c_double)]
-  
-  def __init__(self, **kwargs):
-    self.nbody = kwargs.pop('nbody', False)
-    self.keptol = kwargs.pop('keptol', 1.e-15)
-    self.maxkepiter = kwargs.pop('maxkepiter', 100)
-    self.kepsolver = kwargs.pop('kepsolver', 'newton')
-    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
-    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
-    self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
-    self.timestep = kwargs.pop('timestep', 0.01)
-    self.adaptive = kwargs.pop('adaptive', True)
-    self.quiet = kwargs.pop('quiet', False)
-    self.mintheta = kwargs.pop('mintheta', 1.)
-    self.maxvertices = kwargs.pop('maxvertices', 999)
-    self.maxfunctions = kwargs.pop('maxfunctions', 999)
-    self.oversample = max(1, kwargs.pop('oversample', 1))
-    self.distance = kwargs.pop('distance', 10.)
-  
-  @property
-  def params(self):
-    return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
-            'maxpolyiter', 'timestep', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
-            'maxfunctions', 'oversample', 'distance']
-  
-  @property
-  def mintheta(self):
-    return self._mintheta * 180 / np.pi
-  
-  @mintheta.setter
-  def mintheta(self, val):
-    self._mintheta = val * np.pi / 180.
-
-  @property
-  def nbody(self):
-    return bool(self._nbody)
-  
-  @nbody.setter
-  def nbody(self, val):
-    self._nbody = int(val)
-
-  @property
-  def adaptive(self):
-    return bool(self._adaptive)
-  
-  @adaptive.setter
-  def adaptive(self, val):
-    self._adaptive = int(val)
-
-  @property
-  def quiet(self):
-    return bool(self._quiet)
-  
-  @quiet.setter
-  def quiet(self, val):
-    self._quiet = int(val)
-
-  @property
-  def kepsolver(self):
-    return self._kepsolver
-  
-  @kepsolver.setter
-  def kepsolver(self, val):
-    self._kepsolver = eval(val.upper())
-
-def Star(name, **kwargs):
-  '''
-  
-  Returns a `Body` instance of type `star`.
-  
-  :param str name: A unique identifier for this star
-  :param float m: Mass in solar masses. Default `1.`
-  :param float r: Radius in solar radii. Default `1.`
-  :param float per: Orbital period in days. Default `0.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of primary eclipse in days. Default `0.`
-  :param float teff: The effective temperature of the star in Kelvin. Default `5577.`
-  :param array_like limbdark: The limb darkening coefficients. These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param int nz: Number of zenith angle slices. Default `31`
-  :param str color: Object color (for plotting). Default `k`
-  
-  '''
-  
-  return Body(name, 'star', **kwargs)
-
-def Planet(name, **kwargs):
-  '''
-  
-  Returns a `Body` instance of type `planet`.
-  
-  :param str name: A unique identifier for this planet
-  :param float m: Mass in Earth masses. Default `1.`
-  :param float r: Radius in Earth radii. Default `1.`
-  :param float per: Orbital period in days. Default `3.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
-  :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
-         in the instant re-radiation limit, where the surface brightness is proportional \
-         to the cosine of the zenith angle (the angle between the line connecting \
-         the centers of the planet and the star and the line connecting the center of the \
-         planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If `False`, treats the planet as a limb-darkened blackbody. \
-         Default `True`
-  :param float albedo: Planetary albedo (airless limit). Default `0.3`
-  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
-  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param int nz: Number of zenith angle slices. Default `11`
-  :param str color: Object color (for plotting). Default `r`
-  
-  '''
-  
-  return Body(name, 'planet', **kwargs)
-
-class Body(ctypes.Structure):
+class _Body(ctypes.Structure):
   '''
   The class containing all the input planet/star parameters.
 
@@ -509,7 +324,175 @@ class Body(ctypes.Structure):
     '''
     
     return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
+
+class _Settings(ctypes.Structure):
+  '''
+  The class that contains the model settings. This class is used internally.
   
+  :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
+  :param float keptol: Kepler solver tolerance. Default `1.e-15`
+  :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
+  :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
+  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
+  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
+  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
+  :param float timestep: Timestep in days for the N-body solver. Default `0.01`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
+  :param bool quiet: Suppress output? Default `False`
+  :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
+         angle, elliptical boundaries of constant surface brightness on the planet surface are \
+         treated as vertical lines. Default `1.`
+  :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
+  :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
+  :param int oversample: Oversampling factor for each exposure. Default `1`
+  :param float distance: Distance to the system in parsecs. Default `10.`
+  
+  '''
+  
+  _fields_ = [("_nbody", ctypes.c_int),
+              ("keptol", ctypes.c_double),
+              ("maxkepiter", ctypes.c_int),
+              ("_kepsolver", ctypes.c_int),
+              ("polyeps1", ctypes.c_double),
+              ("polyeps2", ctypes.c_double),
+              ("maxpolyiter", ctypes.c_int),
+              ("timestep", ctypes.c_double),
+              ("_adaptive", ctypes.c_int),
+              ("_quiet", ctypes.c_int),
+              ("_mintheta", ctypes.c_double),
+              ("maxvertices", ctypes.c_int),
+              ("maxfunctions", ctypes.c_int),
+              ("oversample", ctypes.c_int),
+              ("distance", ctypes.c_double)]
+  
+  def __init__(self, **kwargs):
+    self.nbody = kwargs.pop('nbody', False)
+    self.keptol = kwargs.pop('keptol', 1.e-15)
+    self.maxkepiter = kwargs.pop('maxkepiter', 100)
+    self.kepsolver = kwargs.pop('kepsolver', 'newton')
+    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
+    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
+    self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
+    self.timestep = kwargs.pop('timestep', 0.01)
+    self.adaptive = kwargs.pop('adaptive', True)
+    self.quiet = kwargs.pop('quiet', False)
+    self.mintheta = kwargs.pop('mintheta', 1.)
+    self.maxvertices = kwargs.pop('maxvertices', 999)
+    self.maxfunctions = kwargs.pop('maxfunctions', 999)
+    self.oversample = max(1, kwargs.pop('oversample', 1))
+    self.distance = kwargs.pop('distance', 10.)
+  
+  @property
+  def params(self):
+    return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
+            'maxpolyiter', 'timestep', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
+            'maxfunctions', 'oversample', 'distance']
+  
+  @property
+  def mintheta(self):
+    return self._mintheta * 180 / np.pi
+  
+  @mintheta.setter
+  def mintheta(self, val):
+    self._mintheta = val * np.pi / 180.
+
+  @property
+  def nbody(self):
+    return bool(self._nbody)
+  
+  @nbody.setter
+  def nbody(self, val):
+    self._nbody = int(val)
+
+  @property
+  def adaptive(self):
+    return bool(self._adaptive)
+  
+  @adaptive.setter
+  def adaptive(self, val):
+    self._adaptive = int(val)
+
+  @property
+  def quiet(self):
+    return bool(self._quiet)
+  
+  @quiet.setter
+  def quiet(self, val):
+    self._quiet = int(val)
+
+  @property
+  def kepsolver(self):
+    return self._kepsolver
+  
+  @kepsolver.setter
+  def kepsolver(self, val):
+    self._kepsolver = eval(val.upper())
+
+def Star(name, **kwargs):
+  '''
+  
+  Returns a `_Body` instance of type `star`.
+  
+  :param str name: A unique identifier for this star
+  :param float m: Mass in solar masses. Default `1.`
+  :param float r: Radius in solar radii. Default `1.`
+  :param float per: Orbital period in days. Default `0.`
+  :param float inc: Orbital inclination in degrees. Default `90.`
+  :param float ecc: Orbital eccentricity. Default `0.`
+  :param float w: Longitude of pericenter in degrees. `0.`
+  :param float Omega: Longitude of ascending node in degrees. `0.`
+  :param float t0: Time of primary eclipse in days. Default `0.`
+  :param float teff: The effective temperature of the star in Kelvin. Default `5577.`
+  :param array_like limbdark: The limb darkening coefficients. These are the coefficients \
+         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
+         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
+         the star. Each coefficient may either be a scalar, in which case limb darkening is \
+         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
+         is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param int nz: Number of zenith angle slices. Default `31`
+  :param str color: Object color (for plotting). Default `k`
+  
+  '''
+  
+  return _Body(name, 'star', **kwargs)
+
+def Planet(name, **kwargs):
+  '''
+  
+  Returns a `_Body` instance of type `planet`.
+  
+  :param str name: A unique identifier for this planet
+  :param float m: Mass in Earth masses. Default `1.`
+  :param float r: Radius in Earth radii. Default `1.`
+  :param float per: Orbital period in days. Default `3.`
+  :param float inc: Orbital inclination in degrees. Default `90.`
+  :param float ecc: Orbital eccentricity. Default `0.`
+  :param float w: Longitude of pericenter in degrees. `0.`
+  :param float Omega: Longitude of ascending node in degrees. `0.`
+  :param float t0: Time of transit in days. Default `0.`
+  :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
+  :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
+         in the instant re-radiation limit, where the surface brightness is proportional \
+         to the cosine of the zenith angle (the angle between the line connecting \
+         the centers of the planet and the star and the line connecting the center of the \
+         planet and a given point on its surface. A fixed nightside temperature may be specified \
+         via the `tnight` kwarg. If `False`, treats the planet as a limb-darkened blackbody. \
+         Default `True`
+  :param float albedo: Planetary albedo (airless limit). Default `0.3`
+  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
+  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
+         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
+         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
+         the star. Each coefficient may either be a scalar, in which case limb darkening is \
+         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
+         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param int nz: Number of zenith angle slices. Default `11`
+  :param str color: Object color (for plotting). Default `r`
+  
+  '''
+  
+  return _Body(name, 'planet', **kwargs)
+
 class System(object):
   '''
   
@@ -547,7 +530,7 @@ class System(object):
     
     # Initialize
     self.bodies = bodies    
-    self.settings = Settings(**kwargs)
+    self.settings = _Settings(**kwargs)
     self._reset()
     
   def _reset(self):
@@ -620,8 +603,8 @@ class System(object):
     Flux.restype = ctypes.c_int
     Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
                      ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
-                     ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
-                     Settings]
+                     ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
+                     _Settings]
   
     # Allocate memory for all the arrays
     for body in self.bodies:
@@ -651,9 +634,9 @@ class System(object):
       body.nt = nt
       body.nw = nw
 
-    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
     # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
     err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
@@ -704,8 +687,8 @@ class System(object):
     Orbits = libppo.Orbits
     Orbits.restype = ctypes.c_int
     Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
-                       Settings]
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
+                       _Settings]
   
     # Allocate memory for all the arrays
     for body in self.bodies:
@@ -735,9 +718,9 @@ class System(object):
       body.nt = nt
       body.nw = nw
 
-    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
     # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
     err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
@@ -809,8 +792,8 @@ class System(object):
     Orbits = libppo.Orbits
     Orbits.restype = ctypes.c_int
     Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
-                       Settings]
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
+                       _Settings]
   
     # Allocate memory for all the arrays
     for body in self.bodies:
@@ -840,9 +823,9 @@ class System(object):
       body.nt = nt
       body.nw = nw
 
-    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
     # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
     err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
@@ -987,8 +970,8 @@ class System(object):
     Orbits = libppo.Orbits
     Orbits.restype = ctypes.c_int
     Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(Body)),
-                       Settings]
+                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
+                       _Settings]
   
     # Allocate memory for all the arrays
     for body in self.bodies:
@@ -1018,9 +1001,9 @@ class System(object):
       body.nt = nt
       body.nw = nw
       
-    # A pointer to a pointer to `Body`. This is an array of `n` `Body` instances, 
+    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
     # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
 
     # Call the light curve routine
     err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
@@ -1132,6 +1115,9 @@ class System(object):
     '''
     
     '''
+    
+    # Have we computed the light curves?
+    assert self._computed, "Please run `compute()` first."
     
     # Check file name
     if gifname is not None:
@@ -1278,7 +1264,7 @@ class System(object):
       tmp = '%s.%03d.gif' % (gifname, len(self._animations) + 1)
     else:
       tmp = None
-    self._animations.append(Animation(t, fig, axim, tracker, pto, ptb, body, 
+    self._animations.append(_Animation(t, fig, axim, tracker, pto, ptb, body, 
                             self.bodies, [self.bodies[o] for o in occultors],
                             interval = interval, gifname = tmp, quiet = self.settings.quiet))
 
@@ -1289,7 +1275,7 @@ class System(object):
     Plots an image of the `occulted` body and its occultors at a given index of the time array `t`.
   
     '''
-  
+        
     # Set up the plot
     if ax is None:
       fig, ax = pl.subplots(1, figsize = (6,6))
@@ -1366,6 +1352,9 @@ class System(object):
     '''
     
     '''
+    
+    # Have we computed the light curves?
+    assert self._computed, "Please run `compute()` first."
     
     if not self.settings.quiet:
       print("Plotting the light curve...")
