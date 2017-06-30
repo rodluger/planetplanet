@@ -47,24 +47,31 @@ RpRs = np.sqrt(0.7266 / 100)
 r = RpRs * rstar * RSUN / REARTH    
 b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0, 
            Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., albedo = 0.3, 
-           airless = True)
+           airless = True, phasecurve = True)
 
 # Instantiate `c`
 RpRs = np.sqrt(0.687 / 100)
 r = RpRs * rstar * RSUN / REARTH
 c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0, 
            Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., albedo = 0.3, 
-           airless = True)
+           airless = True, phasecurve = True)
 
 # Instantiate the system
-system = System(star, b, c, distance = 12)
+system = System(star, b, c, distance = 12, oversample = 10)
 
 #
-time = np.arange(252.75, 253.50, 10 * MINUTE)
+time = np.arange(252.75, 253.50, 1 * MINUTE)
 
 # Compute and plot the light curve
 system.compute(time)
 system.plot_lightcurve(15.)
+
+# debug
+pl.close()
+pl.plot(system.time, system.c.flux[:,-1])
+pl.plot(system.c.hr_time, system.c.hr_flux[:,-1])
+pl.show()
+quit()
 
 # Observe it (one exposure)
 system.observe(stack = 1)

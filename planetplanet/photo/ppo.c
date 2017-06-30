@@ -123,7 +123,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   
   */
 
-  double d, dx, dy, dz, d2;
+  double d, dx, dy, dz, d2, dt;
   double xp, yp, zp;
   double lum, irrad;
   int no;
@@ -141,8 +141,16 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     for (w = 0; w < nw; w++)
       body[p]->wavelength[w] = wavelength[w];
     body[p]->nt = nt;
-    for (t = 0; t < nt; t++)
+    for (t = 0; t < nt; t++) {
       body[p]->time[t] = time[t];
+      for (i = 0; i < settings.oversample; i++) {
+        if (t < nt - 1)
+          dt = time[t + 1] - time[t];
+        else
+          dt = time[t] - time[t - 1];
+        body[p]->hr_time[t * settings.oversample + i] = time[t] + (float) i / settings.oversample * dt;
+      }
+    }    
   }
     
   // Solve for the orbits
@@ -159,8 +167,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   norm = PI * body[0]->r * REARTH * body[0]->r * REARTH * MICRON / (settings.distance * settings.distance * PARSEC * PARSEC);
   for (w = 0; w < nw; w++) {
     sflx = Blackbody(wavelength[w], body[0]->teff) * norm;
-    for (t = 0; t < nt; t++)
+    for (t = 0; t < nt; t++) {
       body[0]->flux[nw * t + w] = sflx;
+      for (i = 0; i < settings.oversample; i++) { 
+        body[0]->hr_flux[nw * (t * settings.oversample + i) + w] = sflx;
+      }
+    }
   }
     
   // Pre-compute the stellar luminosity per solid angle
@@ -200,14 +212,24 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                        settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
                        tmp, settings.quiet, &iErr);
-        for (w = 0; w < nw; w++)
+        for (w = 0; w < nw; w++) {
           body[p]->flux[nw * t + w] = tmp[w];
-      
+          
+          // TODO: Quadratically interpolate the phase curve
+          for (i = 0; i < settings.oversample; i++) { 
+            body[p]->hr_flux[nw * (t * settings.oversample + i) + w] = tmp[w];
+          }
+          
+        }
+        
       } else if (p > 0) {
         
         // Initialize to zero at all wavelengths
         for (w = 0; w < nw; w++) {
           body[p]->flux[nw * t + w] = 0;
+          for (i = 0; i < settings.oversample; i++) { 
+            body[p]->hr_flux[nw * (t * settings.oversample + i) + w] = 0;
+          }
         }
         
       }
@@ -307,9 +329,15 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                        body[p]->u, wavelength, tmp, settings.quiet, &iErr);
               
           // Update the body light curve
-          for (w = 0; w < nw; w++)
+          for (w = 0; w < nw; w++) {
+            
+            // Cumulative flux
             tmpflux[w] -= tmp[w];
-    
+            
+            // Oversampled flux
+            body[p]->hr_flux[nw * (t * settings.oversample + i) + w] -= tmp[w];
+            
+          }
         }
       }
       

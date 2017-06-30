@@ -134,7 +134,10 @@ class _Body(ctypes.Structure):
               ("_y", ctypes.POINTER(ctypes.c_double)),
               ("_z", ctypes.POINTER(ctypes.c_double)),
               ("_occultor", ctypes.POINTER(ctypes.c_int)),
-              ("_flux", ctypes.POINTER(ctypes.c_double))]
+              ("_flux", ctypes.POINTER(ctypes.c_double)),
+              ("_hr_time", ctypes.POINTER(ctypes.c_double)),
+              ("_hr_flux", ctypes.POINTER(ctypes.c_double)),
+              ]
   
   def __init__(self, name, body_type, **kwargs):
     
@@ -564,6 +567,63 @@ class System(object):
     # Reset flag
     self._computed = False
   
+  def _malloc(self, nt, nw):
+    '''
+    
+    '''
+    
+    # Initialize the C interface
+    self._Orbits = libppo.Orbits
+    self._Orbits.restype = ctypes.c_int
+    self._Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                             ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
+                             _Settings]
+    
+    self._Flux = libppo.Flux
+    self._Flux.restype = ctypes.c_int
+    self._Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                           ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
+                           ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
+                           _Settings]
+      
+    # Allocate memory for all the arrays
+    for body in self.bodies:
+      body.time = np.zeros(nt)
+      body._time = np.ctypeslib.as_ctypes(body.time)
+      body.wavelength = np.zeros(nw)
+      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
+      body.x = np.zeros(nt)
+      body._x = np.ctypeslib.as_ctypes(body.x)
+      body.y = np.zeros(nt)
+      body._y = np.ctypeslib.as_ctypes(body.y)
+      body.z = np.zeros(nt)
+      body._z = np.ctypeslib.as_ctypes(body.z)
+      body.occultor = np.zeros(nt, dtype = 'int32')
+      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
+      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
+      # treat it as a 1d array within C and keep track of the row/column
+      # indices by hand...
+      body.flux = np.zeros((nt, nw))
+      body._flux1d = body.flux.reshape(-1)
+      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+      # HACK: Same for the limb darkening coefficients
+      body._u1d = body.u.reshape(-1)
+      body._u = np.ctypeslib.as_ctypes(body._u1d)
+      # High resolution time and flux grid
+      body.hr_time = np.zeros(nt * self.settings.oversample)
+      body._hr_time = np.ctypeslib.as_ctypes(body.hr_time)
+      body.hr_flux = np.zeros((nt * self.settings.oversample, nw))
+      body._hr_flux1d = body.hr_flux.reshape(-1)
+      body._hr_flux = np.ctypeslib.as_ctypes(body._hr_flux1d)
+      # Dimensions
+      body.nu = len(body.u)
+      body.nt = nt
+      body.nw = nw
+    
+    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
+    # passed by reference. The contents can all be accessed through `bodies`
+    self._ptr_bodies = (ctypes.POINTER(_Body) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
+  
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
     
@@ -593,53 +653,13 @@ class System(object):
     # Convert from microns to meters
     wavelength *= 1e-6
     
-    # Dimensions
-    n = len(self.bodies)
-    nt = len(time)
-    nw = len(wavelength)
-
-    # Initialize the C interface
-    Flux = libppo.Flux
-    Flux.restype = ctypes.c_int
-    Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                     ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
-                     ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                     _Settings]
-  
-    # Allocate memory for all the arrays
-    for body in self.bodies:
-      body.time = np.zeros(nt)
-      body._time = np.ctypeslib.as_ctypes(body.time)
-      body.wavelength = np.zeros(nw)
-      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
-      body.x = np.zeros(nt)
-      body._x = np.ctypeslib.as_ctypes(body.x)
-      body.y = np.zeros(nt)
-      body._y = np.ctypeslib.as_ctypes(body.y)
-      body.z = np.zeros(nt)
-      body._z = np.ctypeslib.as_ctypes(body.z)
-      body.occultor = np.zeros(nt, dtype = 'int32')
-      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
-      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
-      # treat it as a 1d array within C and keep track of the row/column
-      # indices by hand...
-      body.flux = np.zeros((nt, nw))
-      body._flux1d = body.flux.reshape(nt * nw)
-      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-      # HACK: Same for the limb darkening coefficients
-      body._u1d = body.u.reshape(-1)
-      body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # Dimensions
-      body.nu = len(body.u)
-      body.nt = nt
-      body.nw = nw
-
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
-    # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
-
+    # Allocate memory
+    self._malloc(len(time), len(wavelength))
+    
     # Call the light curve routine
-    err = Flux(nt, np.ctypeslib.as_ctypes(time), nw, np.ctypeslib.as_ctypes(wavelength), n, ptr_bodies, self.settings)
+    err = self._Flux(len(time), np.ctypeslib.as_ctypes(time), len(wavelength), 
+                     np.ctypeslib.as_ctypes(wavelength), len(self.bodies), 
+                     self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Flux` (%d)." % err 
     self._computed = True
      
@@ -651,8 +671,7 @@ class System(object):
     
       # Identify the different events
       inds = np.where(body.occultor > 0)[0]
-      
-      si = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [nt]))
+      si = np.concatenate(([0], inds[np.where(np.diff(inds) > 1)] + 1, [len(time)]))
 
       # Loop over the events
       for i in range(len(si) - 1):
@@ -665,8 +684,8 @@ class System(object):
         if len(inds):        
           t = t[inds]
           tdur = t[-1] - t[0]
-          a = np.argmin(np.abs(time - (t[0] - 0.25 * tdur)))
-          b = np.argmin(np.abs(time - (t[-1] + 0.25 * tdur)))
+          a = np.argmin(np.abs(time - (t[0] - 0.5 * tdur)))
+          b = np.argmin(np.abs(time - (t[-1] + 0.5 * tdur)))
           if b > a:
             body._inds.append(list(range(a,b)))
 
@@ -677,53 +696,11 @@ class System(object):
     
     # Reset
     self._reset()
-    
-    # Dimensions
-    n = len(self.bodies)
-    nt = len(time)
-    nw = 1
-
-    # Initialize the C interface
-    Orbits = libppo.Orbits
-    Orbits.restype = ctypes.c_int
-    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                       _Settings]
-  
-    # Allocate memory for all the arrays
-    for body in self.bodies:
-      body.time = np.zeros(nt)
-      body._time = np.ctypeslib.as_ctypes(body.time)
-      body.wavelength = np.zeros(nw)
-      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
-      body.x = np.zeros(nt)
-      body._x = np.ctypeslib.as_ctypes(body.x)
-      body.y = np.zeros(nt)
-      body._y = np.ctypeslib.as_ctypes(body.y)
-      body.z = np.zeros(nt)
-      body._z = np.ctypeslib.as_ctypes(body.z)
-      body.occultor = np.zeros(nt, dtype = 'int32')
-      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
-      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
-      # treat it as a 1d array within C and keep track of the row/column
-      # indices by hand...
-      body.flux = np.zeros((nt, nw))
-      body._flux1d = body.flux.reshape(nt * nw)
-      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-      # HACK: Same for the limb darkening coefficients
-      body._u1d = np.array([], dtype = float)
-      body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # Dimensions
-      body.nu = 0
-      body.nt = nt
-      body.nw = nw
-
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
-    # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
+    self._malloc(len(time), 1)
 
     # Call the light curve routine
-    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies), 
+                       self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
   
   def observe(self, saveplot = False, savetxt = False, filter = 'f1500w', stack = 1):
@@ -773,7 +750,7 @@ class System(object):
     
     if not saveplot:
       pl.show()
-      
+    
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
     
@@ -781,54 +758,12 @@ class System(object):
   
     # Reset
     self._reset()
-  
-    # Dimensions
-    n = len(self.bodies)
     time = np.arange(tstart, tend, dt)
-    nt = len(time)
-    nw = 1
-
-    # Initialize the C interface
-    Orbits = libppo.Orbits
-    Orbits.restype = ctypes.c_int
-    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                       _Settings]
-  
-    # Allocate memory for all the arrays
-    for body in self.bodies:
-      body.time = np.zeros(nt)
-      body._time = np.ctypeslib.as_ctypes(body.time)
-      body.wavelength = np.zeros(nw)
-      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
-      body.x = np.zeros(nt)
-      body._x = np.ctypeslib.as_ctypes(body.x)
-      body.y = np.zeros(nt)
-      body._y = np.ctypeslib.as_ctypes(body.y)
-      body.z = np.zeros(nt)
-      body._z = np.ctypeslib.as_ctypes(body.z)
-      body.occultor = np.zeros(nt, dtype = 'int32')
-      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
-      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
-      # treat it as a 1d array within C and keep track of the row/column
-      # indices by hand...
-      body.flux = np.zeros((nt, nw))
-      body._flux1d = body.flux.reshape(nt * nw)
-      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-      # HACK: Same for the limb darkening coefficients
-      body._u1d = np.array([], dtype = float)
-      body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # Dimensions
-      body.nu = 0
-      body.nt = nt
-      body.nw = nw
-
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
-    # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
-
-    # Call the light curve routine
-    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
+    self._malloc(len(time), 1)
+    
+    # Call the orbit routine
+    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies), 
+                       self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
     
     # Loop over all bodies and plot each occultation event as a circle
@@ -900,7 +835,6 @@ class System(object):
                          color = self.colors[occ2], alpha = 1, zorder = 100, 
                          ms = 20)
                 
-          
     # Legend 1: Occultor names/colors
     axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
     axl1.axis('off')
@@ -959,55 +893,13 @@ class System(object):
   
     # Reset
     self._reset()
-  
-    # Dimensions
-    n = len(self.bodies)
     time = np.arange(tstart, tend, dt)
-    nt = len(time)
-    nw = 1
-
-    # Initialize the C interface
-    Orbits = libppo.Orbits
-    Orbits.restype = ctypes.c_int
-    Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                       ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                       _Settings]
-  
-    # Allocate memory for all the arrays
-    for body in self.bodies:
-      body.time = np.zeros(nt)
-      body._time = np.ctypeslib.as_ctypes(body.time)
-      body.wavelength = np.zeros(nw)
-      body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
-      body.x = np.zeros(nt)
-      body._x = np.ctypeslib.as_ctypes(body.x)
-      body.y = np.zeros(nt)
-      body._y = np.ctypeslib.as_ctypes(body.y)
-      body.z = np.zeros(nt)
-      body._z = np.ctypeslib.as_ctypes(body.z)
-      body.occultor = np.zeros(nt, dtype = 'int32')
-      body._occultor = np.ctypeslib.as_ctypes(body.occultor)
-      # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
-      # treat it as a 1d array within C and keep track of the row/column
-      # indices by hand...
-      body.flux = np.zeros((nt, nw))
-      body._flux1d = body.flux.reshape(nt * nw)
-      body._flux = np.ctypeslib.as_ctypes(body._flux1d)
-      # HACK: Same for the limb darkening coefficients
-      body._u1d = np.array([], dtype = float)
-      body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # Dimensions
-      body.nu = 0
-      body.nt = nt
-      body.nw = nw
-      
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
-    # passed by reference. The contents can all be accessed through `bodies`
-    ptr_bodies = (ctypes.POINTER(_Body) * n)(*[ctypes.pointer(p) for p in self.bodies])
-
-    # Call the light curve routine
-    err = Orbits(nt, np.ctypeslib.as_ctypes(time), n, ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Orbits` (%d)." % err      
+    self._malloc(len(time), 1)
+    
+    # Call the orbit routine
+    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies), 
+                       self._ptr_bodies, self.settings)
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err   
 
     # A histogram of the distribution of phases, impact parameters, and durations
     hist = [[] for body in self.bodies[1:]]

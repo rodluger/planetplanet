@@ -59,6 +59,8 @@ typedef struct {
   double *z;
   int *occultor;
   double *flux;
+  double *hr_time;
+  double *hr_flux;
 } BODY;
 
 typedef struct {
