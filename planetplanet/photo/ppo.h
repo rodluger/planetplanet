@@ -59,8 +59,6 @@ typedef struct {
   double *z;
   int *occultor;
   double *flux;
-  double *hr_time;
-  double *hr_flux;
 } BODY;
 
 typedef struct {
@@ -77,7 +75,6 @@ typedef struct {
   double mintheta;
   int maxvertices;
   int maxfunctions;
-  int oversample;
   double distance;
 } SETTINGS;
 

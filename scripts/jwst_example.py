@@ -60,18 +60,11 @@ c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
 system = System(star, b, c, distance = 12, oversample = 10)
 
 #
-time = np.arange(252.75, 253.50, 1 * MINUTE)
+time = np.arange(252.75, 253.50, 10 * MINUTE)
 
 # Compute and plot the light curve
 system.compute(time)
 system.plot_lightcurve(15.)
-
-# debug
-pl.close()
-pl.plot(system.time, system.c.flux[:,-1])
-pl.plot(system.c.hr_time, system.c.hr_flux[:,-1])
-pl.show()
-quit()
 
 # Observe it (one exposure)
 system.observe(stack = 1)

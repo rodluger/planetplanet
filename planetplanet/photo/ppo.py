@@ -135,8 +135,6 @@ class _Body(ctypes.Structure):
               ("_z", ctypes.POINTER(ctypes.c_double)),
               ("_occultor", ctypes.POINTER(ctypes.c_int)),
               ("_flux", ctypes.POINTER(ctypes.c_double)),
-              ("_hr_time", ctypes.POINTER(ctypes.c_double)),
-              ("_hr_flux", ctypes.POINTER(ctypes.c_double)),
               ]
   
   def __init__(self, name, body_type, **kwargs):
@@ -365,7 +363,6 @@ class _Settings(ctypes.Structure):
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
               ("maxfunctions", ctypes.c_int),
-              ("oversample", ctypes.c_int),
               ("distance", ctypes.c_double)]
   
   def __init__(self, **kwargs):
@@ -609,12 +606,6 @@ class System(object):
       # HACK: Same for the limb darkening coefficients
       body._u1d = body.u.reshape(-1)
       body._u = np.ctypeslib.as_ctypes(body._u1d)
-      # High resolution time and flux grid
-      body.hr_time = np.zeros(nt * self.settings.oversample)
-      body._hr_time = np.ctypeslib.as_ctypes(body.hr_time)
-      body.hr_flux = np.zeros((nt * self.settings.oversample, nw))
-      body._hr_flux1d = body.hr_flux.reshape(-1)
-      body._hr_flux = np.ctypeslib.as_ctypes(body._hr_flux1d)
       # Dimensions
       body.nu = len(body.u)
       body.nt = nt
