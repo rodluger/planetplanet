@@ -24,7 +24,7 @@ longitudes of ascending node at right angles to each other:
 Plots the geometry of the ellipses of constant zenith angle used
 to compute the occultation light curves of airless planets.
 
-<p align='center'><img src="../img/geometry.png" width="400"/></p>
+<p align='center'><img src="../img/geometry.png" width="2 00"/></p>
 
 ## hist
 
@@ -47,7 +47,7 @@ Plots a diagram showing how the occultation integration scheme works.
 Simulate an observation of a triple occultation of TRAPPIST-1 **c** by **b**
 with JWST MIRI at 15 microns.
 
-<p align='center'><img src="../img/jwst_lc_F1500W.png" width="400"/></p>
+<p align='center'><img src="../img/jwst_lc_F1500W.png" width="800"/></p>
 
 ## lightcurve
 
@@ -102,7 +102,7 @@ Planet-planet occultations may occur anywhere where two orbits cross.
 Tests the oversampling functionality of the code. Oversampling the transit/occultation 
 is necessary when the exposure time is a non-negligible fraction of the event duration.
 
-<p align='center'><img src="../img/oversample.gif" width="400"/></p>
+<p align='center'><img src="../img/oversample.png" width="400"/></p>
 
 ## scatter
 
