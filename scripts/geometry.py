@@ -4,7 +4,8 @@
 geometry.py
 -----------
 
-Plots the geometry of the ellipses of constant zenith angle.
+Plots the geometry of the ellipses of constant zenith angle used
+to compute the occultation light curves of airless planets.
 
 '''
 
@@ -304,3 +305,5 @@ Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
 Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
 
 fig.savefig('../img/geometry.pdf', bbox_inches = 'tight')
+fig.savefig('../img/geometry.png', bbox_inches = 'tight')
+pl.close()

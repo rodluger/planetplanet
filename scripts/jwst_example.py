@@ -4,6 +4,9 @@
 jwst_example.py
 ---------------
 
+Simulate an observation of a triple occultation of TRAPPIST-1 `c` by `b` 
+with JWST MIRI at 15 microns.
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
@@ -13,28 +16,6 @@ from planetplanet.constants import *
 from planetplanet.photo import Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
-
-def retrograde_bc():
-  '''
-  A retrograde `c` occults `b` for 180 minutes.
-  
-  '''
-  
-  # Instantiate the Trappist-1 system
-  system = Trappist1(sample = False, oversample = 10, airless = True, seed = 1234)
-
-  # Get the next occultation
-  t = system.next_occultation(2000, system.b, occultor = system.c)
-  system.b.limbdark = [0]
-  time = np.arange(t - 0.15, t + 0.15, 5. / 1440.)
-
-  # Compute and plot the light curve
-  system.compute(time)
-  system.plot_lightcurve(15.)
-
-  # Observe it (one exposure)
-  system.observe(stack = 1)
-  pl.show()
 
 # Instantiate the star
 mstar = 0.0802
@@ -59,7 +40,7 @@ c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
 # Instantiate the system
 system = System(star, b, c, distance = 12, oversample = 10)
 
-#
+# There's a triple occultation of `c` at this time
 time = np.arange(252.75, 253.50, 10 * MINUTE)
 
 # Compute and plot the light curve
@@ -67,5 +48,5 @@ system.compute(time)
 system.plot_lightcurve(15.)
 
 # Observe it (one exposure)
-system.observe(stack = 1)
+system.observe(stack = 1, filter = 'f1500w')
 pl.show()

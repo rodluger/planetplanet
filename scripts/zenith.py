@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+zenith.py
+---------
+
+Plots an interactive heatmap of the zenith angle for a given point on a sphere
+oriented at an angle `theta` away from the observer. This is used
+to calculate the radiance map of occulted planets.
+
+'''
+
+from __future__ import division, print_function, absolute_import, unicode_literals
 import numpy as np
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider

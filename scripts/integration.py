@@ -150,3 +150,5 @@ ax.set_yticks([])
 
 # Save!
 fig.savefig('../img/integration.pdf', bbox_inches = 'tight')
+fig.savefig('../img/integration.png', bbox_inches = 'tight')
+pl.close()

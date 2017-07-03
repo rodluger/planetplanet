@@ -282,11 +282,11 @@ class Lightcurve(object):
             ax = ax0
 
         # Plot
-        ax.plot(self.time, self.Nphot/self.norm, label=title, zorder=11, alpha=0.75)
-        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.75, zorder=10)
+        ax.plot(self.time, self.Nphot/self.norm, label=title, zorder=11, alpha=0.75, lw = 1)
+        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.7, zorder=10)
         ax.text(0.01, 0.02, r"$\Delta t = %.1f$ mins ($\times$ %d)" %(self.tint[0]/60., self.stack),
                 ha="left", va="bottom", transform=ax.transAxes,
-                fontsize=16)
+                fontsize=12)
 
         if ax0 is None:
             fig.subplots_adjust(bottom=0.2)

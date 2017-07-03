@@ -132,6 +132,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   norm = PI * body[0]->r * REARTH * body[0]->r * REARTH * MICRON / (settings.distance * settings.distance * PARSEC * PARSEC);
   for (w = 0; w < nw; w++) {
     sflx = Blackbody(wavelength[w], body[0]->teff) * norm;
+    body[0]->total_flux[w] = sflx;
     for (t = 0; t < nt; t++) {
       body[0]->flux[nw * t + w] = sflx;
     }
@@ -139,6 +140,35 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     
   // Pre-compute the stellar luminosity per solid angle
   lum = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff);
+  
+  // Compute the total flux from each of the planets
+  for (p = 1; p < np; p++) {
+    
+    // Full phase
+    theta = PI / 2;
+    
+    // The irradiation
+    dx = (body[0]->x[0] - body[p]->x[0]);
+    dy = (body[0]->y[0] - body[p]->y[0]);
+    dz = (body[0]->z[0] - body[p]->z[0]);
+    d2 = dx * dx + dy * dy + dz * dz;
+    irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
+    
+    // The planet effective temperature from radiation balance
+    if (body[p]->blackbody) {
+      body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
+    }
+    
+    // Call the eyeball routine
+    UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
+                   settings.distance, settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
+                   settings.mintheta, settings.maxvertices, settings.maxfunctions, 
+                   settings.adaptive, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
+                   tmp, settings.quiet, &iErr);
+    for (w = 0; w < nw; w++) {
+      body[p]->total_flux[w] = tmp[w];          
+    }    
+  }
   
   // Log
   if (!settings.quiet)

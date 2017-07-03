@@ -4,8 +4,8 @@
 binning.py
 ----------
 
-Demonstrates how oversampling the transit/occultation is necessary
-when the exposure time is a non-negligible fraction of the event duration.
+Tests the oversampling functionality of the code. Oversampling the transit/occultation 
+is necessary when the exposure time is a non-negligible fraction of the event duration.
 
 '''
 

@@ -23,12 +23,12 @@ time = np.linspace(0, 365, 10000)
 
 # Tiny timestep (1 minute)
 np.random.seed(1234)
-system1 = Trappist1(nbody = True, dt = 1. / 1440)
+system1 = Trappist1(nbody = True, timestep = 1. / 1440)
 system1.compute(time)
 
 # Large timestep (1 hour)
 np.random.seed(1234)
-system2 = Trappist1(nbody = True, dt = 1. / 24)
+system2 = Trappist1(nbody = True, timestep = 1. / 24)
 system2.compute(time)
 
 for body1, body2 in zip(system1.bodies[1:], system2.bodies[1:]):

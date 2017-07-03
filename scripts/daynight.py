@@ -4,8 +4,10 @@
 daynight.py
 -----------
 
-Computes and plots a hypothetical mutual transit event, where two large 
-planets transit the star and occult each other simultaneously.
+Plots an occultation event in two different limits: the airless limit
+and the thick atmosphere limit. The asymmetry of the light curve in the 
+former case betrays a strong day/night temperature contrast on the occulted
+planet.
 
 '''
 
@@ -56,7 +58,7 @@ class Animation(object):
         print("Saving %s..." % gifname)
       self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
       self.pause = True
-      
+    
   def toggle(self, event):
     '''
     
@@ -111,74 +113,77 @@ c = Planet('c', m = 1, per = 6, inc = 90., r = 3., t0 = 0.,
 system = System(star, b, c)
 time = np.linspace(2.35, 2.4, 1000)
 
-# Airless body
-color = 'b'
-gifname = '../img/occultation_limbdark.gif'
-system.c.airless = False
-system.compute(time, lambda2 = 15)
-flux_airless = np.array(c.flux[:,-1])
-
-# Stellar baseline
-norm = np.nanmedian(star.flux[:,-1])
-tmid = len(time) // 2
-
-# Set up the figure
-fig = pl.figure(figsize = (7, 8))
-fig.subplots_adjust(left = 0.175)
-
-# Plot the light curves
-axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-axlc.plot(time, (norm + flux_airless) / norm, '-', color = color, label = 'Airless', alpha = 0.1)
-axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
-axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
-axlc.get_yaxis().set_major_locator(MaxNLocator(4))
-axlc.get_xaxis().set_major_locator(MaxNLocator(4))
-for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
-  tick.set_fontsize(8)
-axlc.ticklabel_format(useOffset = False)
-if system.time[0] > 1e4:
-  for label in axlc.get_xmajorticklabels():
-    label.set_rotation(30)
-
-# Plot the orbits of all bodies
-axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
-f = np.linspace(0, 2 * np.pi, 1000)
-for j, body in enumerate(system.bodies):
-  if body == c:
-    style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
-  elif body == b:
-    style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
-  else:
-    style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
-  r = body.a * (1 - body.ecc ** 2) / (1 + body.ecc * np.cos(f))
-  x = r * np.cos(body._w + f) - r * np.sin(body._w + f) * np.cos(body._inc) * np.sin(body._Omega)
-  z = r * np.sin(body._w + f) * np.sin(body._inc)
-  axxz.plot(x, z, **style)
-
-# Plot the locations of the bodies
-ptb = [None for body in system.bodies]
-for bi, body in enumerate(system.bodies):
-  if body == c:
-    ptb[bi], = axxz.plot(body.x[0], body.z[0], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
-  elif body == b:
-    ptb[bi], = axxz.plot(body.x[0], body.z[0], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
-  else:
-    ptb[bi], = axxz.plot(body.x[0], body.z[0], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
+# Plot both an airless and a limb-darkened planet
+for color, airless, gifname in zip(['b', 'r'], [False, True], ['../img/occultation_limbdark.gif', '../img/occultation_airless.gif']):
   
-# Appearance
-axxz.set_ylim(-max(np.abs(axxz.get_ylim())), max(np.abs(axxz.get_ylim())))
-axxz.set_xlim(-max(np.abs(axxz.get_xlim())), max(np.abs(axxz.get_xlim())))
-axxz.set_aspect('equal')
-axxz.axis('off')
+  # Airless body
+  system.c.airless = airless
+  system.compute(time, lambda2 = 15)
+  flux = np.array(c.flux[:,-1])
 
-# Plot the image
-axim = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1)
-_, pto = system.plot_image(0, c, ax = axim, occultors = [1])
-axim.set_xlim(-15, 15)
-axim.axis('off')
-axim.set_aspect('equal')
+  # Stellar baseline
+  norm = np.nanmedian(star.flux[:,-1])
+  tmid = len(time) // 2
 
-# Animate!
-animation = Animation(range(len(time)), fig, axim, axlc, pto, ptb, c, system.bodies, [b], time, (norm + flux_airless) / norm, gifname = gifname, color = color)
-system._animations.append(animation)
+  # Set up the figure
+  fig = pl.figure(figsize = (7, 8))
+  fig.subplots_adjust(left = 0.175)
+
+  # Plot the light curves
+  axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
+  axlc.plot(time, (norm + flux) / norm, '-', color = color, label = 'Airless', alpha = 0.1)
+  axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
+  axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
+  axlc.get_yaxis().set_major_locator(MaxNLocator(4))
+  axlc.get_xaxis().set_major_locator(MaxNLocator(4))
+  for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
+    tick.set_fontsize(8)
+  axlc.ticklabel_format(useOffset = False)
+  if system.time[0] > 1e4:
+    for label in axlc.get_xmajorticklabels():
+      label.set_rotation(30)
+
+  # Plot the orbits of all bodies
+  axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
+  f = np.linspace(0, 2 * np.pi, 1000)
+  for j, body in enumerate(system.bodies):
+    if body == c:
+      style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
+    elif body == b:
+      style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
+    else:
+      style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
+    r = body.a * (1 - body.ecc ** 2) / (1 + body.ecc * np.cos(f))
+    x = r * np.cos(body._w + f) - r * np.sin(body._w + f) * np.cos(body._inc) * np.sin(body._Omega)
+    z = r * np.sin(body._w + f) * np.sin(body._inc)
+    axxz.plot(x, z, **style)
+
+  # Plot the locations of the bodies
+  ptb = [None for body in system.bodies]
+  for bi, body in enumerate(system.bodies):
+    if body == c:
+      ptb[bi], = axxz.plot(body.x[0], body.z[0], 'o', color = 'r', alpha = 1, markeredgecolor = 'k', zorder = 99)
+    elif body == b:
+      ptb[bi], = axxz.plot(body.x[0], body.z[0], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
+    else:
+      ptb[bi], = axxz.plot(body.x[0], body.z[0], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
+  
+  # Appearance
+  axxz.set_ylim(-max(np.abs(axxz.get_ylim())), max(np.abs(axxz.get_ylim())))
+  axxz.set_xlim(-max(np.abs(axxz.get_xlim())), max(np.abs(axxz.get_xlim())))
+  axxz.set_aspect('equal')
+  axxz.axis('off')
+
+  # Plot the image
+  axim = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1)
+  _, pto = system.plot_image(0, c, ax = axim, occultors = [1])
+  axim.set_xlim(-15, 15)
+  axim.axis('off')
+  axim.set_aspect('equal')
+
+  # Animate!
+  ani = Animation(range(len(time)), fig, axim, axlc, pto, ptb, c, system.bodies, [b], time, (norm + flux) / norm, gifname = gifname, color = color)
+  system._animations.append(ani)
+
+# Show
 pl.show()

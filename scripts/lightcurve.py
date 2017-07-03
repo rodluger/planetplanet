@@ -20,7 +20,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 # Instantiate the Trappist-1 system
-system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, oversample = 3)
+system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True)
 
 # Get the occultation light curves over 10 random days
 tstart = np.random.random() * 10000
