@@ -34,20 +34,20 @@ system.compute(time_u)
 flux_u = np.array(system.flux[:,0])
 flux_u /= flux_u[0]
 
-# 5 min exposure, 10x binning
-time_b = np.arange(-0.03, 0.03, 5. / 1440.)
+# 15 min exposure, 10x binning
+time_b = np.arange(-0.03, 0.03, 15. / 1440.)
 system.oversample = 10
 system.compute(time_b)
 flux_b10 = np.array(system.flux[:,0])
 flux_b10 /= flux_b10[0]
 
-# 5 min exposure, 30x binning
+# 15 min exposure, 30x binning
 system.oversample = 30
 system.compute(time_b)
 flux_b30 = np.array(system.flux[:,0])
 flux_b30 /= flux_b30[0]
 
-# 5 min exposure, 100x binning
+# 15 min exposure, 100x binning
 system.oversample = 100
 system.compute(time_b)
 flux_b100 = np.array(system.flux[:,0])
@@ -57,7 +57,7 @@ flux_b100 /= flux_b100[0]
 pl.plot(time_u, flux_u, label = 'unbinned')
 pl.plot(time_b, flux_b10, '.', label = '10x binning')
 pl.plot(time_b, flux_b30, '.', label = '30x binning')
-pl.plot(time_b, flux_b100, '.', label = '100x binning')
+pl.plot(system.A.time, flux_b100, '.', label = '100x binning')
 pl.legend()
 pl.xlabel('Time [days]', fontweight = 'bold', fontsize = 16)
 pl.ylabel('Normalized Flux', fontweight = 'bold', fontsize = 16)

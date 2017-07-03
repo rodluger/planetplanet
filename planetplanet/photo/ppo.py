@@ -672,6 +672,10 @@ class System(object):
     if oversample > 1:
       for body in self.bodies:
         
+        # Store the oversampled light curve
+        body.time_hr = np.array(time_hr)
+        body.flux_hr = np.array(body.flux)
+        
         # Revert to original time array
         body.time = time
         
@@ -684,6 +688,7 @@ class System(object):
         body.z = body.z[oversample // 2::oversample]
         
         # Get all bodies that occult at some point over the exposure
+        # The operation `bitwise_or.reduce` is *magical*
         body.occultor = np.bitwise_or.reduce(body.occultor.reshape(-1, oversample), axis = 1)
         
     # Loop over all bodies and store each occultation event as a separate attribute
