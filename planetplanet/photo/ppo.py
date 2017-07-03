@@ -644,16 +644,48 @@ class System(object):
     # Convert from microns to meters
     wavelength *= 1e-6
     
+    # Oversample the time array to generate light curves observed w/ finite exposure time.
+    # Ensure `oversample` is odd.
+    if self.settings.oversample % 2 == 0:
+      oversample = self.settings.oversample + 1
+    else:
+      oversample = self.settings.oversample
+    if oversample == 1:
+      time_hr = np.array(time)
+    else:
+      tmid = (time[:-1] + time[1:]) / 2.
+      tmid = np.concatenate(([tmid[0] - (tmid[1] - tmid[0])], tmid, [tmid[-1] + (tmid[-1] - tmid[-2])]))
+      time_hr = [np.linspace(tmid[i], tmid[i + 1], oversample) for i in range(len(tmid) - 1)]
+      time_hr = np.concatenate(time_hr)
+    
     # Allocate memory
-    self._malloc(len(time), len(wavelength))
+    self._malloc(len(time_hr), len(wavelength))
     
     # Call the light curve routine
-    err = self._Flux(len(time), np.ctypeslib.as_ctypes(time), len(wavelength), 
+    err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength), 
                      np.ctypeslib.as_ctypes(wavelength), len(self.bodies), 
                      self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Flux` (%d)." % err 
     self._computed = True
-     
+    
+    # Downbin to original time array
+    if oversample > 1:
+      for body in self.bodies:
+        
+        # Revert to original time array
+        body.time = time
+        
+        # Average the flux over the exposure
+        body.flux = np.mean(body.flux.reshape(-1, oversample, len(wavelength)), axis = 1)
+        
+        # Take the XYZ position at the bin center
+        body.x = body.x[oversample // 2::oversample]
+        body.y = body.y[oversample // 2::oversample]
+        body.z = body.z[oversample // 2::oversample]
+        
+        # Get all bodies that occult at some point over the exposure
+        body.occultor = np.bitwise_or.reduce(body.occultor.reshape(-1, oversample), axis = 1)
+        
     # Loop over all bodies and store each occultation event as a separate attribute
     for body in self.bodies:
     

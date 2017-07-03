@@ -153,6 +153,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       // Compute the phase curve for this body?
       if ((p > 0) && (body[p]->phasecurve)) {
         
+        // TODO: Interpolate to save time!
+        
         // The orbital phase (edge-on limit!)
         theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
         
