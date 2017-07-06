@@ -768,7 +768,8 @@ class System(object):
       raise ValueError("Invalid filter.")
       
     # Compute lightcurve in this filter
-    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack)
+    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack, 
+                                   time_hr = self.time_hr, flux_hr = self.flux_hr)
 
     # Setup plot
     fig, ax = pl.subplots(figsize = (12,4))
@@ -806,6 +807,8 @@ class System(object):
 
     # Adjust for on-screen viewing
     fig.subplots_adjust(bottom = 0.2)
+    
+    return fig, ax
     
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''

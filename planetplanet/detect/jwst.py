@@ -172,7 +172,7 @@ class Filter(object):
 
         return F
 
-    def compute_lightcurve(self, flux, time, lam, stack = 1):
+    def compute_lightcurve(self, flux, time, lam, stack = 1, time_hr = None, flux_hr = None):
         """
         Computes an observed lightcurve in the `Filter`
 
@@ -194,21 +194,34 @@ class Filter(object):
         Nlam = len(lam)
         tmin = np.min(time)
         tmax = np.max(time)
+        
+        # Low-res exposure time array
+        dtlr = time[1:] - time[:-1]
+        dtlr = np.hstack([dtlr, dtlr[-1]])
 
-        tlo = time
-        dtlo = time[1:] - time[:-1]
-        dtlo = np.hstack([dtlo, dtlo[-1]])
-        data = flux
-
+        # Hi-res exposure time array
+        if time_hr is not None:
+          zeros = np.where(np.diff(time_hr) == 0)[0]
+          time_hr = np.delete(time_hr, zeros)
+          flux_hr = np.delete(flux_hr, zeros, axis = 0)
+          dthr = time_hr[1:] - time_hr[:-1]
+          dthr = np.hstack([dthr, dthr[-1]])
+  
         # Calculate jwst background flux
         Fback = jwst_background(lam)
 
         # Exposure time [s]
-        tint = dtlo * 3600. * 24
+        tint = dtlr * 3600. * 24
         
         # Calculate SYSTEM photons
-        Nphot = stack * tint * self.photon_rate(lam, data[:,:])
-
+        Nphot = stack * tint * self.photon_rate(lam, flux[:,:])
+        
+        # Hi-res light curve
+        if flux_hr is not None:
+          tint_hr = dthr * 3600. * 24
+          Nphot_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:])
+          norm_hr = np.median(Nphot_hr)
+        
         # Calculate BACKGROUND photons
         Nback = stack * tint * self.photon_rate(lam, Fback)
 
@@ -221,7 +234,7 @@ class Filter(object):
         obs = random_draw(Nphot / norm, sig)
 
         # Create lightcurve object to hold observed quantities
-        self.lightcurve = Lightcurve(time = tlo,
+        self.lightcurve = Lightcurve(time = time,
                                      Nphot = Nphot,
                                      Nback = Nback,
                                      SNR = SNR,
@@ -229,7 +242,10 @@ class Filter(object):
                                      sig = sig,
                                      norm = norm,
                                      tint = tint,
-                                     stack = stack)
+                                     stack = stack,
+                                     time_hr = time_hr,
+                                     Nphot_hr = Nphot_hr,
+                                     norm_hr = norm_hr)
 
         return
 
@@ -259,7 +275,8 @@ class Lightcurve(object):
         Integration time [mins]
     """
     def __init__(self, time = None, Nphot = None, Nback = None, SNR = None,
-                 obs = None, sig = None, norm = None, tint = None, stack = None):
+                 obs = None, sig = None, norm = None, tint = None, stack = None,
+                 time_hr = None, Nphot_hr = None, norm_hr = None):
         self.time = time
         self.Nphot = Nphot
         self.Nback = Nback
@@ -269,6 +286,9 @@ class Lightcurve(object):
         self.norm = norm
         self.tint = tint
         self.stack = stack
+        self.time_hr = time_hr
+        self.Nphot_hr = Nphot_hr
+        self.norm_hr = norm_hr
 
     def plot(self, ax0=None, title=""):
 
@@ -282,15 +302,24 @@ class Lightcurve(object):
             ax = ax0
 
         # Plot
-        ax.plot(self.time, self.Nphot/self.norm, label=title, zorder=11, alpha=0.75, lw = 1)
-        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.7, zorder=10)
-        ax.text(0.01, 0.02, r"$\Delta t = %.1f$ mins ($\times$ %d)" %(self.tint[0]/60., self.stack),
-                ha="left", va="bottom", transform=ax.transAxes,
+        ax.plot(self.time, self.Nphot/self.norm, label='Binned', zorder=11, alpha=0.75, lw = 1.5, color = 'b')
+        
+        if (self.time_hr is not None) and (self.Nphot_hr is not None):
+          ax.plot(self.time_hr, self.Nphot_hr /  self.norm_hr, zorder=11, alpha=0.75, lw = 1, label = 'Unbinned', color = 'g')
+        
+        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.7, zorder=10, lw = 1)
+        ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins ($\times$ %d)" %(self.tint[0]/60., self.stack),
+                ha="left", va="top", transform=ax.transAxes,
                 fontsize=12)
-
+        ax.legend(loc = 'upper right')
+        ax.ticklabel_format(useOffset = False)
+        ax.margins(0, 0.15)
+        
         if ax0 is None:
             fig.subplots_adjust(bottom=0.2)
-
+        
+        return ax0
+        
 ################################################################################
 
 def planck(temp, wav):

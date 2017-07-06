@@ -7,6 +7,10 @@ hist.py
 Histograms of the occultation events as a function of phase, duration, and
 impact parameter for each of the seven TRAPPIST-1 planets.
 
+```
+screen -dm python -c "import hist; hist.Compute(nsamp = 100)"
+```
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
