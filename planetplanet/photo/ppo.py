@@ -31,15 +31,15 @@ libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'l
 class _Animation(object):
   '''
   An animation class for occultation movies.
-  
+
   '''
-  
-  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors, 
+
+  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors,
                interval = 50, gifname = None, quiet = False):
     '''
-    
+
     '''
-    
+
     self.t = t
     self.fig = fig
     self.axim = axim
@@ -50,10 +50,10 @@ class _Animation(object):
     self.bodies = bodies
     self.occultors = occultors
     self.pause = True
-    self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100, 
+    self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100,
                                              interval = interval, repeat = True)
     self.fig.canvas.mpl_connect('button_press_event', self.toggle)
-    
+
     # Save?
     if gifname is not None:
       self.pause = False
@@ -63,31 +63,31 @@ class _Animation(object):
         print("Saving %s..." % gifname)
       self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
       self.pause = True
-      
+
   def toggle(self, event):
     '''
-    
+
     '''
-    
+
     self.pause ^= True
-    
+
   def animate(self, j):
     '''
-    
+
     '''
-    
+
     if not self.pause:
-      
+
       # Normalize the time index
       j = int(j * len(self.t) / 100.)
-      
+
       # Time tracker
       self.tracker.set_xdata(self.bodies[0].time_hr[self.t[j]])
-      
+
       # Occultor images
       x0 = self.body.x_hr[self.t[j]]
       y0 = self.body.y_hr[self.t[j]]
-      for k, occultor in enumerate(self.occultors): 
+      for k, occultor in enumerate(self.occultors):
         r = occultor._r
         x = np.linspace(occultor.x_hr[self.t[j]] - r, occultor.x_hr[self.t[j]] + r, 1000)
         y = np.sqrt(r ** 2 - (x - occultor.x_hr[self.t[j]]) ** 2)
@@ -97,7 +97,7 @@ class _Animation(object):
           pass
         self.pto[k] = self.axim.fill_between(x - x0, occultor.y_hr[self.t[j]] - y - y0, occultor.y_hr[self.t[j]] + y - y0, color = 'lightgray', zorder = 99 + k, lw = 1)
         self.pto[k].set_edgecolor('k')
-      
+
       # _Body orbits
       for k, b in enumerate(self.bodies):
         self.ptb[k].set_xdata(b.x_hr[self.t[j]])
@@ -108,7 +108,7 @@ class _Body(ctypes.Structure):
   The class containing all the input planet/star parameters.
 
   '''
-  
+
   _fields_ = [("_m", ctypes.c_double),
               ("_per", ctypes.c_double),
               ("_inc", ctypes.c_double),
@@ -137,14 +137,14 @@ class _Body(ctypes.Structure):
               ("_flux", ctypes.POINTER(ctypes.c_double)),
               ("_total_flux", ctypes.POINTER(ctypes.c_double)),
               ]
-  
+
   def __init__(self, name, body_type, **kwargs):
-    
+
     # Check
     self.name = name
     self.body_type = body_type
     assert body_type in ['planet', 'star'], "Argument `body_type` must be either `planet` or `star`."
-    
+
     # User
     self.m = kwargs.pop('m', 1.)
     self.r = kwargs.pop('r', 1.)
@@ -153,7 +153,7 @@ class _Body(ctypes.Structure):
     self.w = kwargs.pop('w', 0.)
     self.Omega = kwargs.pop('Omega', 0.)
     self.inc = kwargs.pop('inc', 90.)
-    
+
     # These defaults are different depending on body type
     if self.body_type == 'planet':
       self.airless = kwargs.pop('airless', True)
@@ -186,18 +186,18 @@ class _Body(ctypes.Structure):
     self.nu = 0
     self.tperi0 = 0.
     self.a = 0.
-    
+
     # Python stuff
     self._inds = []
     self._computed = False
-  
+
   @property
   def m(self):
     if self.body_type == 'planet':
       return self._m
     elif self.body_type == 'star':
       return self._m / MSUNMEARTH
-      
+
   @m.setter
   def m(self, val):
     if self.body_type == 'planet':
@@ -211,27 +211,27 @@ class _Body(ctypes.Structure):
       return self._r
     elif self.body_type == 'star':
       return self._r / RSUNREARTH
-      
+
   @r.setter
   def r(self, val):
     if self.body_type == 'planet':
       self._r = val
     elif self.body_type == 'star':
-      self._r = val * RSUNREARTH  
-      
+      self._r = val * RSUNREARTH
+
   @property
   def limbdark(self):
     return self._limbdark
-  
+
   @limbdark.setter
   def limbdark(self, val):
     assert hasattr(val, '__len__'), "Limb darkening coefficients must be provided as a list of scalars or as a list of functions."
     self._limbdark = val
-    
+
   @property
   def phasecurve(self):
     return bool(self._phasecurve)
-  
+
   @phasecurve.setter
   def phasecurve(self, val):
     self._phasecurve = int(val)
@@ -239,15 +239,15 @@ class _Body(ctypes.Structure):
   @property
   def airless(self):
     return not bool(self._blackbody)
-  
+
   @airless.setter
   def airless(self, val):
     self._blackbody = int(not bool(val))
-  
+
   @property
   def inc(self):
     return self._inc * 180 / np.pi
-  
+
   @inc.setter
   def inc(self, val):
     self._inc = val * np.pi / 180.
@@ -255,7 +255,7 @@ class _Body(ctypes.Structure):
   @property
   def w(self):
     return self._w * 180 / np.pi
-  
+
   @w.setter
   def w(self, val):
     self._w = val * np.pi / 180.
@@ -265,25 +265,25 @@ class _Body(ctypes.Structure):
   @property
   def Omega(self):
     return self._Omega * 180 / np.pi
-  
+
   @Omega.setter
   def Omega(self, val):
     self._Omega = val * np.pi / 180.
-  
+
   @property
   def teff(self):
     return self._teff
-  
+
   @teff.setter
   def teff(self, val):
     self._teff = val
     if self._teff == 0:
       self.u = []
-  
+
   @property
   def t0(self):
     return self._t0
-  
+
   @t0.setter
   def t0(self, val):
     self._t0 = val
@@ -293,44 +293,44 @@ class _Body(ctypes.Structure):
   @property
   def per(self):
     return self._per
-  
+
   @per.setter
   def per(self, val):
     self._per = val
     # Force an update to the time of pericenter passage
     self.ecc = self._ecc
-  
+
   @property
   def ecc(self):
     return self._ecc
-  
+
   @ecc.setter
   def ecc(self, val):
     '''
     We need to update the time of pericenter passage whenever the eccentricty,
     longitude of pericenter, period, or time of transit changes. See the appendix in
     Shields et al. (2016).
-    
+
     '''
-    
+
     self._ecc = val
     fi = (3 * np.pi / 2.) - self._w
-    self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) / (2. * np.pi) * (self.ecc * np.sin(fi) / 
-             (1. + self.ecc * np.cos(fi)) - 2. / np.sqrt(1. - self.ecc * self.ecc) * 
+    self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) / (2. * np.pi) * (self.ecc * np.sin(fi) /
+             (1. + self.ecc * np.cos(fi)) - 2. / np.sqrt(1. - self.ecc * self.ecc) *
              np.arctan2(np.sqrt(1. - self.ecc * self.ecc) * np.tan(fi/2.), 1. + self.ecc)))
-  
+
   def M(self, t):
     '''
     The mean anomaly at a time `t`.
-    
+
     '''
-    
+
     return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
 
 class _Settings(ctypes.Structure):
   '''
   The class that contains the model settings. This class is used internally.
-  
+
   :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
@@ -348,9 +348,9 @@ class _Settings(ctypes.Structure):
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
   :param int oversample: Oversampling factor for each exposure. Default `1`
   :param float distance: Distance to the system in parsecs. Default `10.`
-  
+
   '''
-  
+
   _fields_ = [("_nbody", ctypes.c_int),
               ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
@@ -365,7 +365,7 @@ class _Settings(ctypes.Structure):
               ("maxvertices", ctypes.c_int),
               ("maxfunctions", ctypes.c_int),
               ("distance", ctypes.c_double)]
-  
+
   def __init__(self, **kwargs):
     self.nbody = kwargs.pop('nbody', False)
     self.keptol = kwargs.pop('keptol', 1.e-15)
@@ -382,17 +382,17 @@ class _Settings(ctypes.Structure):
     self.maxfunctions = kwargs.pop('maxfunctions', 999)
     self.oversample = max(1, kwargs.pop('oversample', 1))
     self.distance = kwargs.pop('distance', 10.)
-  
+
   @property
   def params(self):
     return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
             'maxpolyiter', 'timestep', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
             'maxfunctions', 'oversample', 'distance']
-  
+
   @property
   def mintheta(self):
     return self._mintheta * 180 / np.pi
-  
+
   @mintheta.setter
   def mintheta(self, val):
     self._mintheta = val * np.pi / 180.
@@ -400,7 +400,7 @@ class _Settings(ctypes.Structure):
   @property
   def nbody(self):
     return bool(self._nbody)
-  
+
   @nbody.setter
   def nbody(self, val):
     self._nbody = int(val)
@@ -408,7 +408,7 @@ class _Settings(ctypes.Structure):
   @property
   def adaptive(self):
     return bool(self._adaptive)
-  
+
   @adaptive.setter
   def adaptive(self, val):
     self._adaptive = int(val)
@@ -416,7 +416,7 @@ class _Settings(ctypes.Structure):
   @property
   def quiet(self):
     return bool(self._quiet)
-  
+
   @quiet.setter
   def quiet(self, val):
     self._quiet = int(val)
@@ -424,16 +424,16 @@ class _Settings(ctypes.Structure):
   @property
   def kepsolver(self):
     return self._kepsolver
-  
+
   @kepsolver.setter
   def kepsolver(self, val):
     self._kepsolver = eval(val.upper())
 
 def Star(name, **kwargs):
   '''
-  
+
   Returns a `_Body` instance of type `star`.
-  
+
   :param str name: A unique identifier for this star
   :param float m: Mass in solar masses. Default `1.`
   :param float r: Radius in solar radii. Default `1.`
@@ -452,16 +452,16 @@ def Star(name, **kwargs):
          is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
   :param int nz: Number of zenith angle slices. Default `31`
   :param str color: Object color (for plotting). Default `k`
-  
+
   '''
-  
+
   return _Body(name, 'star', **kwargs)
 
 def Planet(name, **kwargs):
   '''
-  
+
   Returns a `_Body` instance of type `planet`.
-  
+
   :param str name: A unique identifier for this planet
   :param float m: Mass in Earth masses. Default `1.`
   :param float r: Radius in Earth radii. Default `1.`
@@ -489,19 +489,19 @@ def Planet(name, **kwargs):
          is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
-  
+
   '''
-  
+
   return _Body(name, 'planet', **kwargs)
 
 class System(object):
   '''
-  
+
   A planetary system class. Instantiate with all bodies in the system
   and the desired settings, passed as kwargs.
-  
+
   ** Calculation settings **
-  
+
   :param *bodies: Any number of `Planet` or `Star` instances \
          comprising all the bodies in the system. The first body is assumed to be the primary.
   :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
@@ -523,28 +523,28 @@ class System(object):
   :param float distance: Distance to the system in parsecs. Default `10.`
 
   '''
-  
+
   def __init__(self, *bodies, **kwargs):
     '''
 
     '''
-    
+
     # Initialize
-    self.bodies = bodies    
+    self.bodies = bodies
     self.settings = _Settings(**kwargs)
     self._reset()
-    
+
   def _reset(self):
     '''
-    
+
     '''
-        
+
     # Move params set by the user over to the settings class
     for param in self.settings.params:
       if hasattr(self, param):
         setattr(self.settings, param, getattr(self, param))
         delattr(self, param)
-        
+
     # Make planets accessible as properties
     self.primary = self.bodies[0]
     for body in self.bodies:
@@ -553,37 +553,37 @@ class System(object):
       body.ecc = body._ecc
     self._names = np.array([p.name for p in self.bodies])
     self.colors = [b.color for b in self.bodies]
-    
+
     # Compute the semi-major axis for each planet (in Earth radii)
     for body in self.bodies:
       body._computed = False
       body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-      
+
     # Reset animations
     self._animations = []
-    
+
     # Reset flag
     self._computed = False
-  
+
   def _malloc(self, nt, nw):
     '''
-    
+
     '''
-    
+
     # Initialize the C interface
     self._Orbits = libppo.Orbits
     self._Orbits.restype = ctypes.c_int
     self._Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
                              ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
                              _Settings]
-    
+
     self._Flux = libppo.Flux
     self._Flux.restype = ctypes.c_int
     self._Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
                            ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
                            ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
                            _Settings]
-      
+
     # Allocate memory for all the arrays
     for body in self.bodies:
       body.time = np.zeros(nt)
@@ -613,25 +613,25 @@ class System(object):
       body.nu = len(body.u)
       body.nt = nt
       body.nw = nw
-    
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances, 
+
+    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances,
     # passed by reference. The contents can all be accessed through `bodies`
     self._ptr_bodies = (ctypes.POINTER(_Body) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
-  
+
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
-    
+
     '''
-    
+
     # Reset
     self._reset()
 
     # Compute the wavelength grid
     wav = [lambda1]
     while(wav[-1] < lambda2):
-      wav.append(wav[-1] + wav[-1] / R) 
+      wav.append(wav[-1] + wav[-1] / R)
     wavelength = np.array(wav)
-    
+
     # Compute all limb darkening coefficients
     for body in self.bodies:
       body.u = [None for ld in body.limbdark]
@@ -646,7 +646,7 @@ class System(object):
 
     # Convert from microns to meters
     wavelength *= 1e-6
-    
+
     # Oversample the time array to generate light curves observed w/ finite exposure time.
     # Ensure `oversample` is odd.
     if self.settings.oversample % 2 == 0:
@@ -660,20 +660,20 @@ class System(object):
       tmid = np.concatenate(([tmid[0] - (tmid[1] - tmid[0])], tmid, [tmid[-1] + (tmid[-1] - tmid[-2])]))
       time_hr = [np.linspace(tmid[i], tmid[i + 1], oversample) for i in range(len(tmid) - 1)]
       time_hr = np.concatenate(time_hr)
-    
+
     # Allocate memory
     self._malloc(len(time_hr), len(wavelength))
-    
+
     # Call the light curve routine
-    err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength), 
-                     np.ctypeslib.as_ctypes(wavelength), len(self.bodies), 
+    err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength),
+                     np.ctypeslib.as_ctypes(wavelength), len(self.bodies),
                      self._ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Flux` (%d)." % err 
+    assert err <= 0, "Error in C routine `Flux` (%d)." % err
     self._computed = True
-    
+
     # Downbin to original time array
     for body in self.bodies:
-      
+
       # Store the oversampled light curve
       body.time_hr = np.array(body.time)
       body.flux_hr = np.array(body.flux)
@@ -681,94 +681,104 @@ class System(object):
       body.x_hr = np.array(body.x)
       body.y_hr = np.array(body.y)
       body.z_hr = np.array(body.z)
-      
+
       # Store the binned light curve
       if self.settings.oversample > 1:
-      
+
         # Revert to original time array
         body.time = time
-      
+
         # Average the flux over the exposure
         body.flux = np.mean(body.flux.reshape(-1, oversample, len(wavelength)), axis = 1)
-      
+
         # Take the XYZ position at the bin center
         body.x = body.x[oversample // 2::oversample]
         body.y = body.y[oversample // 2::oversample]
         body.z = body.z[oversample // 2::oversample]
-      
+
         # Get all bodies that occult at some point over the exposure
         # The operation `bitwise_or.reduce` is *magical*
         body.occultor = np.bitwise_or.reduce(body.occultor.reshape(-1, oversample), axis = 1)
-        
+
     # Loop over all bodies to check for occultations
     for body in self.bodies:
-    
+
       # Set the flag
       body._computed = True
-    
-      # Loop over all possible occultors   
+
+      # Loop over all possible occultors
       for occ in range(len(self.bodies)):
-      
+
         # Indices of occultation
         inds = np.where(body.occultor_hr & 2 ** occ)[0]
-        
+
         # Store each one individually
         if len(inds):
           inds = np.split(inds, 1 + np.where(np.diff(inds) > 1)[0])
-          
+
           # Loop over each occultation event
           for i in inds:
-          
+
             # Add a little padding
             di = (i[-1] - i[0]) // 2
             ia = max(0, i[0] - di)
             ib = min(len(body.time_hr), i[-1] + di + 1)
             i = np.array(list(range(ia, i[0])) + list(i) + list(range(i[-1] + 1, ib)))
-            
+
             # Store it
             body._inds.append(i)
 
   def compute_orbits(self, time):
     '''
-    
+
     '''
-    
+
     # Reset
     self._reset()
     for body in self.bodies:
       body.u = np.array([], dtype = float)
-    
+
     self._malloc(len(time), 1)
 
     # Call the light curve routine
-    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies), 
+    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies),
                        self._ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
-  
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err
+
   def observe(self, save = None, filter = 'f1500w', stack = 1, instrument = 'jwst'):
     '''
 
     :param int stack: Number of exposures to stack. Default `1`
-    
+
     '''
-    
+
     # Have we computed the light curves?
     assert self._computed, "Please run `compute()` first."
-    
+
     # Get the filter "wheel"
     if instrument.lower() == 'jwst':
       wheel = jwst.get_miri_filter_wheel()
+      atel  = 25.0
+      thermal = True
+    elif instrument.lower() == 'ost':
+      # Using JWST filters for OST for now
+      wheel = jwst.get_miri_filter_wheel()
+      # Will have mirror between 8-15m, let's say: 12m
+      atel = 144.0
+      # No thermal noise
+      thermal = False
     else:
       raise ValueError("Invalid instrument.")
-      
+
     # Get the filter
     if filter.lower() in [f.name.lower() for f in wheel]:
       self.filter = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
     else:
       raise ValueError("Invalid filter.")
-      
+
     # Compute lightcurve in this filter
-    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack)
+    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack,
+                                   atel = atel, thermal = thermal)
 
     # Setup plot
     fig, ax = pl.subplots(figsize = (12,4))
@@ -781,59 +791,59 @@ class System(object):
 
     # Save to disk?
     if save is not None:
-      
+
       # Compose data array to save
       data = np.array([self.filter.lightcurve.time, self.filter.lightcurve.obs, self.filter.lightcurve.sig]).T
-      
+
       # Did the user provide a file name?
       if save is True:
-        
+
         # No
-        np.savetxt("jwst_lc_%s.txt" % self.filter.name, 
+        np.savetxt("jwst_lc_%s.txt" % self.filter.name,
                    data, fmt = str("%.6e"),
-                   header = "time [days]      flux         error", 
+                   header = "time [days]      flux         error",
                    comments = "")
         fig.savefig("jwst_lc_%s.png" % self.filter.name, bbox_inches="tight")
-      
+
       else:
-        
+
         # Yes
-        np.savetxt("%s.txt" % save, 
+        np.savetxt("%s.txt" % save,
                    data, fmt = str("%.6e"),
-                   header = "time [days]      flux         error", 
+                   header = "time [days]      flux         error",
                    comments = "")
         fig.savefig("%s.png" % save, bbox_inches="tight")
 
     # Adjust for on-screen viewing
     fig.subplots_adjust(bottom = 0.2)
-    
+
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
-    
+
     '''
-  
+
     # Reset
     self._reset()
     for body in self.bodies:
       body.u = np.array([], dtype = float)
     time = np.arange(tstart, tend, dt)
     self._malloc(len(time), 1)
-    
+
     # Call the orbit routine
-    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies), 
+    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies),
                        self._ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Orbits` (%d)." % err 
-    
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err
+
     # Loop over all bodies and plot each occultation event as a circle
     figp, axp = pl.subplots(1, figsize = (8,8))
     figp.subplots_adjust(left = 0.1, right = 0.9, bottom = 0.1, top = 0.9)
     axp.axis('off')
     for body in self.bodies[1:]:
-  
+
       # Identify the different events
       inds = np.where(body.occultor > 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
-    
+
       # Plot the orbit outline
       f = np.linspace(0, 2 * np.pi, 1000)
       r = body.a * (1 - body.ecc ** 2) / (1 + body.ecc * np.cos(f))
@@ -843,31 +853,31 @@ class System(object):
       n = np.argmin(1e10 * (x < 0) + np.abs(z))
       axp.annotate(body.name, xy = (x[n], z[n]), color = 'k', alpha = 0.2, fontweight = 'bold',
                    fontsize = 8, zorder = -99, ha = 'center', va = 'center')
-      
+
       # Loop over individual ones
       plot_secondary = True
       for i in inds[difs]:
-        
+
         # Loop over all possible occultors
         for occ in range(len(self.bodies)):
-        
+
           # Is body `occ` occulting?
           if (body.occultor[i] & 2 ** occ):
-            
+
             # Note that `i` is the last index of the occultation
-            duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)          
+            duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)
 
             # Compute the minimum impact parameter
             idx = range(i - duration, i + 1)
-            impact = np.min(np.sqrt((self.bodies[occ].x[idx] - body.x[idx]) ** 2 + 
+            impact = np.min(np.sqrt((self.bodies[occ].x[idx] - body.x[idx]) ** 2 +
                                     (self.bodies[occ].y[idx] - body.y[idx]) ** 2)) / (self.bodies[occ]._r + body._r)
 
             # Transparency proportional to the impact parameter
             alpha = 0.8 * (1 - impact) + 0.01
-        
+
             # Size = duration in minutes / 3
             ms = duration * dt * 1440 / 3
-        
+
             # If the occultor is the star, plot it only once
             if (occ == 0):
               if plot_secondary:
@@ -875,24 +885,24 @@ class System(object):
                 plot_secondary = False
             else:
               axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
-          
+
         # Check for mutual transits
         if self.bodies[0].occultor[i]:
-          
+
           # Get all bodies currently occulting the star
           occultors = []
           for occ in range(1, len(self.bodies)):
             if (self.bodies[0].occultor[i] & 2 ** occ):
               occultors.append(occ)
-          
+
           # Check if any of these occult each other
           for occ1 in occultors:
             for occ2 in occultors:
               if self.bodies[occ1].occultor[i] & 2 ** occ2:
-                axp.plot(self.bodies[occ1].x[i], self.bodies[occ1].z[i], 'x', 
-                         color = self.colors[occ2], alpha = 1, zorder = 100, 
+                axp.plot(self.bodies[occ1].x[i], self.bodies[occ1].z[i], 'x',
+                         color = self.colors[occ2], alpha = 1, zorder = 100,
                          ms = 20)
-                
+
     # Legend 1: Occultor names/colors
     axl1 = pl.axes([0.025, 0.775, 0.2, 0.2])
     axl1.axis('off')
@@ -905,9 +915,9 @@ class System(object):
       else:
         x, y = (0.825, len(self.bodies) // 2 - j)
       axl1.plot(x, y, 'o', color = self.colors[j], ms = 6, alpha = 1, markeredgecolor = 'none')
-      axl1.annotate(body.name, xy = (x + 0.1, y), xycoords = 'data', 
+      axl1.annotate(body.name, xy = (x + 0.1, y), xycoords = 'data',
                     ha = 'left', va = 'center', color = self.colors[j])
-    
+
     # Legend 2: Size/duration
     axl2 = pl.axes([0.775, 0.775, 0.2, 0.2])
     axl2.axis('off')
@@ -917,7 +927,7 @@ class System(object):
     for j, duration in enumerate([10, 30, 60]):
       ms = duration / 3.
       axl2.plot(-0.65, -0.75 * j + 0.2, 'o', color = 'k', ms = ms, alpha = 0.65, markeredgecolor = 'none')
-      axl2.annotate('%d minutes' % duration, xy = (-0.3, -0.75 * j + 0.2), xycoords = 'data', 
+      axl2.annotate('%d minutes' % duration, xy = (-0.3, -0.75 * j + 0.2), xycoords = 'data',
                     ha = 'left', va = 'center', color = 'k')
 
     # Legend 3: Transparency/impact parameter
@@ -929,83 +939,83 @@ class System(object):
     for j, impact in enumerate([0, 0.2, 0.4]):
       alpha = 0.8 * (1 - impact) + 0.01
       axl3.plot(-0.15, -0.75 * j, 'o', color = 'k', ms = 8, alpha = alpha, markeredgecolor = 'none')
-      axl3.annotate('%.1f' % impact, xy = (-0.05, -0.75 * j), xycoords = 'data', 
+      axl3.annotate('%.1f' % impact, xy = (-0.05, -0.75 * j), xycoords = 'data',
                     ha = 'left', va = 'center', color = 'k')
     for j, impact in enumerate([0.6, 0.8, 1.]):
       alpha = 1 - impact
       axl3.plot(0.675, -0.75 * j, 'o', color = 'k', ms = 8, alpha = alpha, markeredgecolor = 'none')
-      axl3.annotate('%.1f' % impact, xy = (0.775, -0.75 * j), xycoords = 'data', 
-                    ha = 'left', va = 'center', color = 'k')                
-    
+      axl3.annotate('%.1f' % impact, xy = (0.775, -0.75 * j), xycoords = 'data',
+                    ha = 'left', va = 'center', color = 'k')
+
     # Observer direction
     axp.annotate("To observer", xy = (0.5, -0.1), xycoords = "axes fraction", xytext = (0, 30),
                  ha = 'center', va = 'center', annotation_clip = False, color = 'cornflowerblue',
                  textcoords = "offset points", arrowprops=dict(arrowstyle = "-|>", color = 'cornflowerblue'))
-  
+
     return figp
-      
+
   def histogram(self, tstart, tend, dt = 0.0001):
     '''
-    
+
     '''
-  
+
     # Reset
     self._reset()
     for body in self.bodies:
       body.u = np.array([], dtype = float)
     time = np.arange(tstart, tend, dt)
     self._malloc(len(time), 1)
-    
+
     # Call the orbit routine
-    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies), 
+    err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies),
                        self._ptr_bodies, self.settings)
-    assert err <= 0, "Error in C routine `Orbits` (%d)." % err   
+    assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     # A histogram of the distribution of phases, impact parameters, and durations
     hist = [[] for body in self.bodies[1:]]
     for k, body in enumerate(self.bodies[1:]):
-      
+
       # Identify the different planet-planet events
       inds = np.where(body.occultor > 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
-      
+
       # Loop over individual ones
       for i in inds[difs]:
-        
+
         # Loop over possible occultors
         for occ in range(1, len(self.bodies)):
-          
+
           # Is body `occ` occulting (but not behind the star)?
           if (body.occultor[i] & 2 ** occ) and (body.occultor[i] & 1 == 0):
 
             # Note that `i` is the last index of the occultation
             duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)
             if duration > 0:
-            
+
               # Orbital phase
               phase = np.arctan2(body.x[i], -body.z[i]) * 180 / np.pi
-            
+
               # Compute the minimum impact parameter
               idx = range(i - duration, i + 1)
-              impact = np.min(np.sqrt((self.bodies[occ].x[idx] - body.x[idx]) ** 2 + 
+              impact = np.min(np.sqrt((self.bodies[occ].x[idx] - body.x[idx]) ** 2 +
                                       (self.bodies[occ].y[idx] - body.y[idx]) ** 2)) / (self.bodies[occ]._r + body._r)
-            
+
               # Convert duration to log
               duration = np.log10(duration * dt * 1440)
-            
+
               # Running list
               hist[k].append((phase, impact, duration))
-      
-      # Make into array  
+
+      # Make into array
       hist[k] = np.array(hist[k])
-    
+
     return hist
-  
+
   def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''
-    
+
     '''
-    
+
     # Quiet?
     quiet = self.settings.quiet
     self.settings.quiet = True
@@ -1013,7 +1023,7 @@ class System(object):
       iterator = lambda x: range(x)
     else:
       iterator = lambda x: tqdm(range(x))
-      
+
     # Convert occultors to indices if necessary
     if occultor is None:
       occultor = list(range(1, len(self.bodies)))
@@ -1025,28 +1035,28 @@ class System(object):
 
     # Loop until we find one
     for n in iterator(maxruns):
-      
+
       # Compute the orbits, 100 days at a time
       time = np.arange(tstart + n * 100., tstart + (n + 1) * 100., dt)
       self.compute_orbits(time)
-      
+
       # Identify the different planet-planet events
       inds = np.where(occulted.occultor > 0)[0]
       difs = np.where(np.diff(inds) > 1)[0]
-      
+
       # Loop over individual ones
       for i in inds[difs]:
-        
+
         # Loop over possible planet occultors
         for occ in occultor:
-          
+
           # Is body `occ` occulting (but not behind the star)?
           if (occulted.occultor[i] & 2 ** occ) and ((occ == 0) or (occulted.occultor[i] & 1 == 0)):
 
             # Note that `i` is the last index of the occultation
             duration = np.argmax(occulted.occultor[:i][::-1] & 2 ** occ == 0)
             if duration * dt * 1440 >= min_duration:
-            
+
               # Compute the minimum impact parameter
               idx = range(i - duration, i + 1)
               b = np.sqrt((self.bodies[occ].x[idx] - occulted.x[idx]) ** 2 + (self.bodies[occ].y[idx] - occulted.y[idx]) ** 2) / (self.bodies[occ]._r + occulted._r)
@@ -1056,25 +1066,25 @@ class System(object):
                   print("The next occultation of %s by %s is at t = %.2f days." % (occulted.name, self.bodies[occ].name, time[idx[ind]]))
                 self.settings.quiet = quiet
                 return time[idx[ind]]
-    
+
     # Nothing found...
     if not quiet:
       print("No occultation of %s by %s found." % (occulted.name, self.bodies[occ].name))
     self.settings.quiet = quiet
     return np.nan
-        
+
   def plot_occultation(self, body, time, interval = 50, gifname = None):
     '''
-    
+
     '''
-    
+
     # Have we computed the light curves?
     assert self._computed, "Please run `compute()` first."
-    
+
     # Check file name
     if gifname is not None:
       if gifname.endswith(".gif"):
-        gifname = gifname[:-4]    
+        gifname = gifname[:-4]
 
     # Get the occulted body
     if type(body) is str:
@@ -1082,7 +1092,7 @@ class System(object):
       body = self.bodies[p]
     else:
       p = np.argmax(self.bodies == body)
-      
+
     # Get the indices of the occultation
     tind = np.argmin(np.abs(body.time_hr - time))
     if len(body._inds) == 0:
@@ -1095,10 +1105,10 @@ class System(object):
         print("No occultation occurs at the given time.")
       return None
     t = body._inds[iind]
-    
+
     if not self.settings.quiet:
       print("Plotting the occultation...")
-        
+
     # Set up the figure
     fig = pl.figure(figsize = (7, 8))
     fig.subplots_adjust(left = 0.175)
@@ -1106,17 +1116,17 @@ class System(object):
     # Plot three different wavelengths (first, mid, and last)
     axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
     ti = t[0]
-    tf = t[-1]    
+    tf = t[-1]
     fluxb = body.flux_hr[t, 0] / body.total_flux[0]
     fluxg = body.flux_hr[t, body.flux_hr.shape[-1] // 2] / body.total_flux[body.flux.shape[-1] // 2]
     fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
-    
+
     # Add a baseline?
     if not (body.phasecurve or body.body_type == 'star'):
       fluxb += 1
       fluxg += 1
       fluxr += 1
-    
+
     axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
     axlc.plot(body.time_hr[t], fluxg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
     axlc.plot(body.time_hr[t], fluxr, 'r-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[-1])) + r"\ \mu\mathrm{m}$")
@@ -1132,7 +1142,7 @@ class System(object):
     if body.time_hr[ti] > 1e4:
       for label in axlc.get_xmajorticklabels():
         label.set_rotation(30)
-        
+
     # Sort occultors by z-order (occultor closest to observer last)
     bits = np.bitwise_or.reduce(body.occultor_hr[t])
     occultors = []
@@ -1166,7 +1176,7 @@ class System(object):
         ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'lightgrey', alpha = 1, markeredgecolor = 'k', zorder = 99)
       else:
         ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = '#dddddd', alpha = 1, markeredgecolor = '#999999', zorder = 99)
-      
+
     # Appearance
     axxz.set_ylim(-max(np.abs(axxz.get_ylim())), max(np.abs(axxz.get_ylim())))
     axxz.set_xlim(-max(np.abs(axxz.get_xlim())), max(np.abs(axxz.get_xlim())))
@@ -1174,7 +1184,7 @@ class System(object):
     axxz.axis('off')
 
     # Plot the image
-    axim = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1) 
+    axim = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1)
     _, pto = self.plot_image(ti, body, occultors, ax = axim)
     bodies = [self.bodies[o] for o in occultors] + [body]
     xmin = min(np.concatenate([o.x_hr[t] - body.x_hr[t] - 1.1 * o._r for o in bodies]))
@@ -1186,43 +1196,43 @@ class System(object):
     axim.set_ylim(ymin, ymax)
     axim.axis('off')
     axim.set_aspect('equal')
-    
+
     # The title
     if len(occultors) == 1:
       axxz.annotate("%s occulted by %s" % (body.name, self.bodies[occultors[0]].name), xy = (0.5, 1.25),
                        xycoords = "axes fraction", ha = 'center', va = 'center',
                        fontweight = 'bold', fontsize = 12)
     else:
-      axxz.annotate("%s occulted by %s" % (body.name, 
-                      ", ".join([occultor.name for occultor in [self.bodies[o] for o in occultors]])), 
+      axxz.annotate("%s occulted by %s" % (body.name,
+                      ", ".join([occultor.name for occultor in [self.bodies[o] for o in occultors]])),
                        xy = (0.5, 1.25),
                        xycoords = "axes fraction", ha = 'center', va = 'center',
                        fontweight = 'bold', fontsize = 12)
     axxz.annotate("Duration: %.2f minutes" % ((body.time_hr[tf] - body.time_hr[ti]) * 1440.),
                      xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
                      fontsize = 10, style = 'italic')
-    
+
     # Animate!
     if gifname is not None:
       tmp = '%s.%03d.gif' % (gifname, len(self._animations) + 1)
     else:
       tmp = None
-    self._animations.append(_Animation(range(ti, tf), fig, axim, tracker, pto, ptb, body, 
+    self._animations.append(_Animation(range(ti, tf), fig, axim, tracker, pto, ptb, body,
                             self.bodies, [self.bodies[o] for o in occultors],
                             interval = interval, gifname = tmp, quiet = self.settings.quiet))
 
     return fig, axlc, axxz, axim
-      
+
   def plot_image(self, t, occulted, occultors = None, ax = None, pad = 2.5, occultor_alpha = 1, **kwargs):
     '''
     Plots an image of the `occulted` body and its occultors at a given index of the `time_hr` array `t`.
-  
+
     '''
-        
+
     # Set up the plot
     if ax is None:
       fig, ax = pl.subplots(1, figsize = (6,6))
-    
+
     # Get the occultors
     if occultors is None:
       occultors = []
@@ -1230,7 +1240,7 @@ class System(object):
         if (occulted.occultor[t] & 2 ** b):
           occultors.append(b)
       occultors = list(set(occultors))
-    
+
     # Plot the occulted body
     r = occulted._r
     x0 = occulted.x_hr[t]
@@ -1243,7 +1253,7 @@ class System(object):
     y = np.sqrt(r ** 2 - x ** 2)
     ax.plot(x, y, color = 'k', zorder = 98, lw = 1)
     ax.plot(x, -y, color = 'k', zorder = 98, lw = 1)
-    
+
     # Plot the zenith angle ellipses
     for za in np.linspace(0, np.pi, occulted.nz + 2)[1:-1]:
       a = occulted._r * np.abs(np.sin(za))
@@ -1277,43 +1287,43 @@ class System(object):
       else:
         ax.plot(x, y, **style)
         ax.plot(x, -y, **style)
-    
+
     # Plot the occultors
     pto = [None for o in occultors]
-    for i, occultor in enumerate([self.bodies[o] for o in occultors]): 
+    for i, occultor in enumerate([self.bodies[o] for o in occultors]):
       r = occultor._r
       x = np.linspace(occultor.x_hr[t] - r, occultor.x_hr[t] + r, 1000)
       y = np.sqrt(r ** 2 - (x - occultor.x_hr[t]) ** 2)
-      pto[i] = ax.fill_between(x - x0, occultor.y_hr[t] - y - y0, occultor.y_hr[t] + y - y0, 
+      pto[i] = ax.fill_between(x - x0, occultor.y_hr[t] - y - y0, occultor.y_hr[t] + y - y0,
                                color = 'lightgray', zorder = 99 + i, lw = 1,
                                alpha = occultor_alpha)
       pto[i].set_edgecolor('k')
-    
+
     return ax, pto
-  
+
   def plot_lightcurve(self, wavelength = 15.):
     '''
-    
+
     '''
-    
+
     # Have we computed the light curves?
     assert self._computed, "Please run `compute()` first."
-    
+
     if not self.settings.quiet:
       print("Plotting the light curve...")
-    
+
     # Plot
     fig, ax = pl.subplots(1, figsize = (12, 4))
     assert (wavelength >= self.bodies[0].wavelength[0]) and (wavelength >= self.bodies[0].wavelength[-1]), "Wavelength value outside of computed grid."
     w = np.argmax(1e-6 * wavelength <= self.bodies[0].wavelength)
     flux = self.flux[:,w] / np.nanmedian(self.flux[:,w])
     ax.plot(self.time, flux, 'k-', lw = 1)
-    
+
     # Plot the hi resolution light curve
     flux_hr = self.flux_hr[:,w] / np.nanmedian(self.flux_hr[:,w])
     ax.plot(self.time_hr, flux_hr, 'k-', lw = 1, alpha = 0.3, picker = 10)
     fig.canvas.mpl_connect('pick_event', self._onpick)
-    
+
     # Appearance
     ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
     ax.set_ylabel(r'Normalized Flux @ %.1f$\mathbf{\mu}$m' % wavelength, fontweight = 'bold', fontsize = 10)
@@ -1322,14 +1332,14 @@ class System(object):
     for tick in ax.get_xticklabels() + ax.get_yticklabels():
       tick.set_fontsize(8)
     ax.ticklabel_format(useOffset = False)
-    
+
     # Limits
     ymax = np.nanmax(flux)
     ymin = np.nanmin(flux)
     yrng = ymax - ymin
     ax.set_ylim(ymin - 0.2 * yrng, ymax + 0.2 * yrng)
     ax.margins(0, None)
-    
+
     # Label all of the events
     for body in self.bodies:
       for i, t in enumerate(body._inds):
@@ -1349,62 +1359,62 @@ class System(object):
           ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
                       va = 'center', color = occultor.color, fontweight = 'bold',
                       fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
-    
+
     return fig, ax
-  
+
   def _onpick(self, event):
     '''
-    
+
     '''
-    
+
     index = event.ind[len(event.ind) // 2]
     for body in self.bodies:
       for occultation in body._inds:
         if index in occultation:
           self.plot_occultation(body.name, body.time_hr[index])
     pl.show()
-  
+
   @property
   def flux(self):
     '''
     The total flux of the system computed on a grid of time and wavelength.
-    
+
     '''
-    
+
     return np.sum([b.flux for b in self.bodies], axis = 0)
-    
+
   @property
   def time(self):
     '''
     Time array in days.
-    
+
     '''
-    
+
     return self.bodies[0].time
-  
+
   @property
   def flux_hr(self):
     '''
     The total flux of the system computed on a grid of high resolution time and wavelength.
-    
+
     '''
-    
+
     return np.sum([b.flux_hr for b in self.bodies], axis = 0)
-    
+
   @property
   def time_hr(self):
     '''
     High-resolution time array in days.
-    
+
     '''
-    
+
     return self.bodies[0].time_hr
-  
+
   @property
   def wavelength(self):
     '''
     Wavelength array in microns.
-    
+
     '''
-    
+
     return self.bodies[0].wavelength * 1.e6
