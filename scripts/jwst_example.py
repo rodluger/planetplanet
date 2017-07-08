@@ -173,5 +173,5 @@ def Stacked_bc():
   # Save
   fig.savefig("../img/stacked_bc.pdf", bbox_inches = 'tight')
 
-#Triple_bc()
+Triple_bc()
 Stacked_bc()

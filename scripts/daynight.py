@@ -98,25 +98,25 @@ class Animation(object):
         self.ptb[k].set_xdata(b.x[self.t[j]])
         self.ptb[k].set_ydata(b.z[self.t[j]])
 
-# Instantiate the star
-star = Star('A', m = 0.1, r = 0.1, teff = 3000, nz = 31, color = 'k')
-
-# Planet b
-b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., t0 = 1.5, 
-           nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
-
-# Planet c
-c = Planet('c', m = 1, per = 6, inc = 90., r = 3., t0 = 0., 
-           nz = 51, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
-
-# System
-system = System(star, b, c)
-time = np.linspace(2.35, 2.4, 1000)
-
 # Plot both an airless and a limb-darkened planet
-for color, airless, gifname in zip(['b', 'r'], [False, True], ['../img/occultation_limbdark.gif', '../img/occultation_airless.gif']):
+for color, airless, gifname, label in zip(['b', 'r'], [False, True], ['../img/occultation_limbdark.gif', '../img/occultation_airless.gif'], ['Thick atmosphere', 'Airless']):
   
-  # Airless body
+  # Instantiate the star
+  star = Star('A', m = 0.1, r = 0.1, teff = 3000, nz = 31, color = 'k')
+
+  # Planet b
+  b = Planet('b', m = 1, per = 3, inc = 89.8, r = 3., t0 = 1.5, 
+             nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
+
+  # Planet c
+  c = Planet('c', m = 1, per = 6, inc = 90., r = 3., t0 = 0., 
+             nz = 51, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
+
+  # Time array
+  time = np.linspace(2.35, 2.4, 1000)
+  
+  # System
+  system = System(star, b, c)
   system.c.airless = airless
   system.compute(time, lambda2 = 15)
   flux = np.array(c.flux[:,-1])
@@ -129,9 +129,9 @@ for color, airless, gifname in zip(['b', 'r'], [False, True], ['../img/occultati
   fig = pl.figure(figsize = (7, 8))
   fig.subplots_adjust(left = 0.175)
 
-  # Plot the light curves
+  # Plot the animated light curves
   axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
-  axlc.plot(time, (norm + flux) / norm, '-', color = color, label = 'Airless', alpha = 0.1)
+  axlc.plot(time, (norm + flux) / norm, '-', color = color, label = label, alpha = 0.1)
   axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
   axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
   axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -142,7 +142,7 @@ for color, airless, gifname in zip(['b', 'r'], [False, True], ['../img/occultati
   if system.time[0] > 1e4:
     for label in axlc.get_xmajorticklabels():
       label.set_rotation(30)
-
+  
   # Plot the orbits of all bodies
   axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
   f = np.linspace(0, 2 * np.pi, 1000)
@@ -182,7 +182,7 @@ for color, airless, gifname in zip(['b', 'r'], [False, True], ['../img/occultati
   axim.set_aspect('equal')
 
   # Animate!
-  ani = Animation(range(len(time)), fig, axim, axlc, pto, ptb, c, system.bodies, [b], time, (norm + flux) / norm, gifname = gifname, color = color)
+  ani = Animation(range(len(time)), fig, axim, axlc, pto, ptb, c, system.bodies, [b], time, (norm + flux) / norm, gifname = None, color = color)
   system._animations.append(ani)
 
 # Show
