@@ -172,7 +172,7 @@ class Filter(object):
 
         return F
 
-    def compute_lightcurve(self, flux, time, lam, stack = 1, time_hr = None, flux_hr = None):
+    def compute_lightcurve(self, flux, time, lam, stack = 1, atel = 25., thermal = True, time_hr = None, flux_hr = None):
         """
         Computes an observed lightcurve in the `Filter`
 
@@ -186,6 +186,10 @@ class Filter(object):
             Wavelength [um]
         stack: int
             Number of exposures to stack. Default `1`
+        atel : float
+            Telescope collecting area [m$^2$]
+        thermal : bool
+            Compute thermal noise
         """
 
         print("Computing observed light curve in %s filter..." % self.name)
@@ -208,22 +212,25 @@ class Filter(object):
           dthr = np.hstack([dthr, dthr[-1]])
   
         # Calculate jwst background flux
-        Fback = jwst_background(lam)
+        if thermal:
+            Fback = jwst_background(lam)
+        else:
+            Fback = np.zeros_like(lam)
 
         # Exposure time [s]
         tint = dtlr * 3600. * 24
         
         # Calculate SYSTEM photons
-        Nphot = stack * tint * self.photon_rate(lam, flux[:,:])
+        Nphot = stack * tint * self.photon_rate(lam, flux[:,:], atel = atel)
         
         # Hi-res light curve
         if flux_hr is not None:
           tint_hr = dthr * 3600. * 24
-          Nphot_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:])
+          Nphot_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:], atel = atel)
           norm_hr = np.median(Nphot_hr)
-        
+
         # Calculate BACKGROUND photons
-        Nback = stack * tint * self.photon_rate(lam, Fback)
+        Nback = stack * tint * self.photon_rate(lam, Fback, atel = atel)
 
         # Signal-to-noise
         SNR = Nphot / np.sqrt(Nphot + Nback)
@@ -691,9 +698,9 @@ def lightcurves(wheel, flux, time, lam, obscad=5.0, plot=None):
     Returns
     -------
     """
-    
+
     raise NotImplementedError("TODO: Fix this routine; no need to oversample light curve any more.")
-    
+
     Ntime = len(time)
     Nlam = len(lam)
     tmin = np.min(time)
