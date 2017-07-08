@@ -22,7 +22,7 @@ import numpy as np
 np.random.seed(1234)
   
 # The figure for the paper
-fig, ax = pl.subplots(4, figsize = (8, 9)) #, sharex = True)
+fig, ax = pl.subplots(4, figsize = (8, 12)) #, sharex = True)
 fig.subplots_adjust(top = 0.8)
   
 # Plot both an airless and a limb-darkened planet
@@ -95,11 +95,11 @@ for i, t in enumerate([1333 - 600, 1333 - 300, 1333, 1333 + 300, 1333 + 600]):
   system.plot_image(t, c, ax = axim[i], occultors = [2])
 
 # Arrows
-axim[0].annotate("", xy = (0, -1.2), xytext = (83, -33), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[1].annotate("", xy = (0, -1.2), xytext = (44, -33), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[2].annotate("", xy = (0, -1.2), xytext = (0, -33), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -33), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -33), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[0].annotate("", xy = (0, -1.2), xytext = (83, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[1].annotate("", xy = (0, -1.2), xytext = (44, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[2].annotate("", xy = (0, -1.2), xytext = (0, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
 
 # Appeareance
 ax[0].legend(loc = 'lower left', fontsize = 10, frameon = False)

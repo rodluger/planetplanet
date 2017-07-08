@@ -55,7 +55,7 @@ time = np.linspace(-0.06, 0.06, 1000)
 system.compute(time)
 
 # Set up the figure
-fig = pl.figure(figsize = (8, 5))
+fig = pl.figure(figsize = (7, 7))
 fig.subplots_adjust(left = 0.175)
 
 # Plot three different wavelengths (first, mid, and last)
