@@ -9,6 +9,7 @@
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
 from .ppo import Star, Planet, System
+from . import theta
 import numpy as np
 import matplotlib.pyplot as pl
 import os
@@ -83,8 +84,9 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
             (0.782, 0.027), 
             (0.752, 0.032)]
   
-  # These are eyeballed from Supplementary Figure 6 in Luger et al. (2017).
-  # These are likely quite biased and model-specific. Need to re-think them.
+  # These are approximated from Supplementary Figure 6 in Luger et al. (2017).
+  # These can certainly be improved with better TTV data and more dynamical
+  # modeling.
   eccentricities = [(0.0005, 0.0001), 
                     (0.004, 0.001), 
                     (0.0004, 0.0003), 
@@ -118,12 +120,10 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
       inc = 180 - inc
     
     # Longitude of ascending node in degrees
-    # A standard deviation of 0.3 is what Eric Agol got
-    # in his Monte Carlo runs
     if (i == 0) or (not sample):
       Omega = 0
     else:
-      Omega = 0.3 * np.random.randn()
+      Omega = theta.sample()
     
     # Longitude of pericenter (uniform over [0-360 deg])
     if sample:
