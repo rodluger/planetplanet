@@ -102,6 +102,9 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
   # Colors for plotting
   colors = ['firebrick', 'coral', 'gold', 'mediumseagreen', 'turquoise', 'cornflowerblue', 'midnightblue']
   
+  # Compute the polar angle scatter
+  sig_theta = theta.sample()
+  
   # Instantiate the planets
   for i in range(7):
   
@@ -123,7 +126,7 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
     if (i == 0) or (not sample):
       Omega = 0
     else:
-      Omega = theta.sample()
+      Omega = N(0, sig_theta)
     
     # Longitude of pericenter (uniform over [0-360 deg])
     if sample:
