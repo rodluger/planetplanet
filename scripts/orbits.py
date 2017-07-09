@@ -19,16 +19,16 @@ rstar = 12.758 / AUREARTH
 semis = np.array([11.11, 15.21, 21.44, 28.17, 37.1, 45.1, 59.3]) * 1e-3
 radii = np.array([1.086, 1.056, 0.772, 0.918, 1.045, 1.127, 0.755])
 incs = np.array([89.65, 89.67, 89.75, 89.86, 89.680, 89.710, 89.80]) * np.pi / 180
-colors = ['#92C6FF', '#97F0AA', '#FF9F9A', '#D0BBFF', '#FFFEA3', '#B0E0E6', '#999999']
+colors = ['firebrick', 'coral', 'gold', 'mediumseagreen', 'turquoise', 'cornflowerblue', 'midnightblue']
 labels = ['b', 'c', 'd', 'e', 'f' , 'g', 'h']
 fig = pl.figure(figsize = (12,5))
 
 # Plot the star
 x = np.linspace(-rstar, rstar, 1000)
-pl.fill_between(x, -np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, np.zeros_like(x), color = 'orange')
-pl.plot(x, -np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, color = 'gray', lw = 0.5)
-pl.fill_between(x, np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, np.zeros_like(x), color = 'orange', zorder = 99)
-pl.plot(x, np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, color = 'gray', lw = 0.5, zorder = 99)
+pl.fill_between(x, -np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, np.zeros_like(x), color = 'sandybrown')
+pl.plot(x, -np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, color = 'k', lw = 0.5)
+pl.fill_between(x, np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, np.zeros_like(x), color = 'sandybrown', zorder = 99)
+pl.plot(x, np.sqrt(rstar ** 2 - x ** 2) * AUREARTH, color = 'k', lw = 0.5, zorder = 99)
 
 # Plot the planet orbits
 for i in range(7):
