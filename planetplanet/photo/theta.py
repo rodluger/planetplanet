@@ -35,8 +35,11 @@ CDF = cumtrapz(PDF, x)
 CDF /= np.max(CDF)
 
 # Interpolate the CDF
-f = interp1d(x[:-1], CDF, fill_value = 'extrapolate', bounds_error = False, kind = 'cubic')
-
+try:
+  f = interp1d(x[:-1], CDF, fill_value = 'extrapolate', bounds_error = False, kind = 'cubic')
+except ValueError:
+  f = interp1d(x[:-1], CDF, fill_value = 'extrapolate', bounds_error = False, kind = 'linear')
+  
 # Enforce bounds
 def CDF(x):
   res = f(np.atleast_1d(x))
