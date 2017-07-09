@@ -82,7 +82,7 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
             (0.519, 0.026), 
             (0.673, 0.023), 
             (0.782, 0.027), 
-            (0.752, 0.032)]
+            (0.346, 0.032)]
   
   # These are approximated from Supplementary Figure 6 in Luger et al. (2017).
   # These can certainly be improved with better TTV data and more dynamical
