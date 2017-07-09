@@ -7,6 +7,7 @@ theta.py
 '''
 
 import numpy as np
+import os
 import matplotlib.pyplot as pl
 from scipy.integrate import cumtrapz
 from scipy.interpolate import interp1d
@@ -15,7 +16,9 @@ from scipy.optimize import brentq
 __all__ = ['sample']
 
 # Load
-sig_theta, rho_star, sig_ecc, P = np.loadtxt("sigma_ecc_rho_theta_tremaine.txt", unpack = True, delimiter = ',')
+PATH = os.path.dirname(os.path.abspath(__file__))
+file = os.path.join(PATH, "sigma_ecc_rho_theta_tremaine.txt")
+sig_theta, rho_star, sig_ecc, P = np.loadtxt(file, unpack = True, delimiter = ',')
 
 # Get grid points
 x = np.array(sorted(list(set(sig_theta)))) * 180 / np.pi
