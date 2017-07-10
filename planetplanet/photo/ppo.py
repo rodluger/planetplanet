@@ -1350,6 +1350,7 @@ class System(object):
     ax.margins(0, None)
 
     # Label all of the events
+    ann = []
     for body in self.bodies:
       for i, t in enumerate(body._inds):
         tstart = t[0] + np.argmax(body.occultor_hr[t] > 0)
@@ -1365,11 +1366,11 @@ class System(object):
         tmin = body.time_hr[t][np.argmin(flux_hr[t])]
         fmin = np.min(flux_hr[t])
         for n, occultor in enumerate([self.bodies[o] for o in occultors]):
-          ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
-                      va = 'center', color = occultor.color, fontweight = 'bold',
-                      fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
+          ann.append(ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
+                     va = 'center', color = occultor.color, fontweight = 'bold',
+                     fontsize = 10, xytext = (0, -15), textcoords = 'offset points'))
 
-    return fig, ax
+    return fig, ax, ann
 
   def _onpick(self, event):
     '''
