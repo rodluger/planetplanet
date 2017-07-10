@@ -34,7 +34,7 @@ def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
 
     # Instantiate the Trappist-1 system
     system = Trappist1(sample = True, nbody = nbody, quiet = True)
-    system.settings.dt = 1. / 24.
+    system.settings.timestep = 1. / 24.
     try:
       h = system.histogram(0, 365)
     except:

@@ -838,6 +838,7 @@ class System(object):
     assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     # Loop over all bodies and plot each occultation event as a circle
+    nppo = 0
     figp, axp = pl.subplots(1, figsize = (8,8))
     figp.subplots_adjust(left = 0.1, right = 0.9, bottom = 0.1, top = 0.9)
     axp.axis('off')
@@ -888,7 +889,8 @@ class System(object):
                 plot_secondary = False
             else:
               axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
-
+              nppo += 1
+              
         # Check for mutual transits
         if self.bodies[0].occultor[i]:
 
@@ -954,7 +956,11 @@ class System(object):
     axp.annotate("To observer", xy = (0.5, -0.1), xycoords = "axes fraction", xytext = (0, 30),
                  ha = 'center', va = 'center', annotation_clip = False, color = 'cornflowerblue',
                  textcoords = "offset points", arrowprops=dict(arrowstyle = "-|>", color = 'cornflowerblue'))
-
+    
+    # Log
+    if not self.settings.quiet:
+      print("There were %d PPOs between t = %.2f and t = %.2f." % (nppo, tstart, tend))
+    
     return figp
 
   def histogram(self, tstart, tend, dt = 0.0001):

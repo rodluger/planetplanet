@@ -22,7 +22,7 @@ import numpy as np
 np.random.seed(1234)
   
 # The figure for the paper
-fig, ax = pl.subplots(4, figsize = (8, 12)) #, sharex = True)
+fig, ax = pl.subplots(4, figsize = (8, 18)) #, sharex = True)
 fig.subplots_adjust(top = 0.8)
   
 # Plot both an airless and a limb-darkened planet
@@ -95,11 +95,11 @@ for i, t in enumerate([1333 - 600, 1333 - 300, 1333, 1333 + 300, 1333 + 600]):
   system.plot_image(t, c, ax = axim[i], occultors = [2])
 
 # Arrows
-axim[0].annotate("", xy = (0, -1.2), xytext = (83, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[1].annotate("", xy = (0, -1.2), xytext = (44, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[2].annotate("", xy = (0, -1.2), xytext = (0, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -49), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[0].annotate("", xy = (0, -1.2), xytext = (83, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[1].annotate("", xy = (0, -1.2), xytext = (44, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[2].annotate("", xy = (0, -1.2), xytext = (0, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
 
 # Appeareance
 ax[0].legend(loc = 'lower left', fontsize = 10, frameon = False)
@@ -107,16 +107,15 @@ for axis in ax:
   axis.get_yaxis().set_major_locator(MaxNLocator(4))
   axis.get_xaxis().set_major_locator(MaxNLocator(8))
   for tick in axis.get_xticklabels() + axis.get_yticklabels():
-    tick.set_fontsize(10)
+    tick.set_fontsize(12)
   axis.ticklabel_format(useOffset = False)
-ax[0].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
-ax[1].set_ylabel(r'Residuals [ppm]', fontweight = 'bold', fontsize = 10)
-ax[2].set_ylabel(r'Shifted Flux', fontweight = 'bold', fontsize = 10)
-ax[3].set_ylabel(r'Residuals [ppm]', fontweight = 'bold', fontsize = 10)
+ax[0].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 16)
+ax[1].set_ylabel(r'Residuals [ppm]', fontweight = 'bold', fontsize = 16, labelpad = 29)
+ax[2].set_ylabel(r'Shifted Flux', fontweight = 'bold', fontsize = 16)
+ax[3].set_ylabel(r'Residuals [ppm]', fontweight = 'bold', fontsize = 16, labelpad = 38)
 ax[0].margins(None, 0.1)
 ax[1].set_ylim(-45,91)
 ax[2].margins(None, 0.1)
 ax[3].set_ylim(-3, 46)
-ax[3].set_xlabel('Time [minutes]', fontweight = 'bold', fontsize = 10)
-
+ax[3].set_xlabel('Time [minutes]', fontweight = 'bold', fontsize = 16, labelpad = 15)
 fig.savefig("../img/contrast.pdf", bbox_inches = 'tight')

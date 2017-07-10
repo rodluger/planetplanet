@@ -20,6 +20,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 # Instantiate the Trappist-1 system
-system = Trappist1(sample = True, nbody = False)
-system.scatter_plot(0, 365 * 3)
+system = Trappist1(sample = True, nbody = True)
+fig = system.scatter_plot(0, 365 * 3)
+fig.savefig("../img/scatter.pdf", bbox_inches = 'tight')
 pl.show()
