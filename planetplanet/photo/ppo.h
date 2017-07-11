@@ -14,15 +14,18 @@
 
 // Constants
 #define PI                      acos(-1.)
+#define BIGG                    6.67428e-11
 #define DAYSEC                  86400.
 #define KBOLTZ                  1.38064852e-23                                        // W s / K
 #define SBOLTZ                  5.670367e-8                                           // W / m^2 / K^4
 #define SEARTH                  1.361e3                                               // W / m^2
 #define HPLANCK                 6.62607004e-34                                        // m^2 kg / s
 #define CLIGHT                  2.998e8                                               // m / 2
-#define REARTH                  6371000.                                              // m
+#define REARTH                  6.3781e6                                              // m
 #define MICRON                  1e-6
 #define PARSEC                  3.086e16
+#define MEARTH                  5.9722e24
+#define GEARTH                  (BIGG * DAYSEC * DAYSEC * MEARTH / (REARTH * REARTH * REARTH))
 
 // Settings
 #define MAXIM                   1.e-2

@@ -17,6 +17,7 @@ import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import Trappist1
 import matplotlib.pyplot as pl
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 # Instantiate the Trappist-1 system
@@ -56,6 +57,7 @@ ax.set_xlabel("Time [days]", fontweight = 'bold', fontsize = 16)
 ax.set_ylabel("Normalized Flux", fontweight = 'bold', fontsize = 16)
 for tick in ax.get_xticklabels() + ax.get_yticklabels():
   tick.set_fontsize(12)
+ax.get_xaxis().set_major_locator(MaxNLocator(10))
 
 fig.savefig("../img/lightcurve.pdf", bbox_inches = 'tight')
 pl.show()

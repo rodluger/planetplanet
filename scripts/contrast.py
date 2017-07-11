@@ -51,7 +51,7 @@ for color, airless, label, dt, df in zip(['b', 'g'], [False, True], ['Thick atmo
   # Instantiate the system
   system = System(star, c, d, distance = 12, oversample = 1)
 
-  # There's a triple occultation of `c` at this time
+  # There's an occultation of `c` at this time
   time = np.arange(-259.684 + 2 * 0.00025, -259.665, 0.01 * MINUTE)
   minutes = (time - np.nanmedian(time)) / MINUTE
   

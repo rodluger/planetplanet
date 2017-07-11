@@ -216,7 +216,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	r->dt = settings.timestep;
 
 	// G in REARTH^3 / MEARTH / day^2
-	r->G = 11466.9811868;
+	r->G = GEARTH;
 	
 	// 11th order symplectic corrector
 	r->ri_whfast.safe_mode 	= 0;
