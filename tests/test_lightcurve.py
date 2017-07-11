@@ -53,17 +53,17 @@ def test_mutual():
   system.compute(time)
   
   # Benchmarked values
-  truths = [7.674090160063804e-15,
-            1.146260962228518e-16,
-            8.568930665152248e-12,
-            1.244244394616960e-13]
+  truths = [7.6963687220060673e-15,
+            1.1495664454458829e-16,
+            8.5930679511725155e-12,
+            1.247748695405246e-13]
   
   # Computed values
   values = [system.flux[500,0],
             system.flux[500,-1],
             np.sum(system.flux[:,0]),
             np.sum(system.flux[:,-1])]
-            
+    
   # Check!
   assert np.abs(values[0] - truths[0]) / truths[0] < TOL, "Incorrect flux."
   assert np.abs(values[1] - truths[1]) / truths[1] < TOL, "Incorrect flux."
@@ -96,4 +96,8 @@ def test_limbdark():
   lum = 4 * np.pi * bol * (12.2 * PARSEC) ** 2
   
   # Check!
-  assert np.abs(lum - truth) / truth < 0.01, "Incorrect bolometric flux."
+  assert np.abs(lum - truth) / truth < TOL, "Incorrect bolometric flux."
+
+if __name__ == '__main__':
+  test_mutual()
+  test_limbdark()

@@ -60,9 +60,11 @@ def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
   
   # Save
   n = 0
-  while os.path.exists('hist%03d.npz' % n): 
+  if not os.path.exists('data'):
+    os.makedirs('data')
+  while os.path.exists('data/hist%03d.npz' % n): 
     n += 1
-  np.savez('hist%03d.npz' % n, hist = hist, count = count)
+  np.savez('data/hist%03d.npz' % n, hist = hist, count = count)
 
 def Plot():
   '''
@@ -73,7 +75,7 @@ def Plot():
   print("Loading...")
   for n in tqdm(range(1000)):
     try:
-      data = np.load('hist%03d.npz' % n)
+      data = np.load('data/hist%03d.npz' % n)
       data['hist'][0]
     except FileNotFoundError:
       if n == 0:
@@ -93,7 +95,7 @@ def Plot():
   # Corner plot
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):  
     samples = np.array(hist[k])
-    fig = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Phase [deg]", "Impact parameter", "Duration [min]"])
+    fig = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Phase [deg]", "Impact parameter", "Duration [min]"], bins = 30)
     for i, ax in enumerate(fig.axes):
       ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
       ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
