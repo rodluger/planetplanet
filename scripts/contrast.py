@@ -47,7 +47,7 @@ for color, airless, label, dt, df in zip(['b', 'g'], [False, True], ['Thick atmo
   d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75 + 0.16, r = r, t0 = 0, 
              Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., albedo = 0.3, 
              airless = True, phasecurve = False)
-
+  
   # Instantiate the system
   system = System(star, c, d, distance = 12, oversample = 1)
 
