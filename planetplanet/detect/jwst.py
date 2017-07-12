@@ -10,6 +10,7 @@ __all__ = [
     "Filter",
     "estimate_eclipse_snr",
     "lightcurves",
+    "create_tophat_filter"
 ]
 
 HERE = os.path.abspath(os.path.split(__file__)[0])
@@ -198,7 +199,7 @@ class Filter(object):
         Nlam = len(lam)
         tmin = np.min(time)
         tmax = np.max(time)
-        
+
         # Low-res exposure time array
         dtlr = time[1:] - time[:-1]
         dtlr = np.hstack([dtlr, dtlr[-1]])
@@ -210,7 +211,7 @@ class Filter(object):
           flux_hr = np.delete(flux_hr, zeros, axis = 0)
           dthr = time_hr[1:] - time_hr[:-1]
           dthr = np.hstack([dthr, dthr[-1]])
-  
+
         # Calculate jwst background flux
         if thermal:
             Fback = jwst_background(lam)
@@ -219,10 +220,10 @@ class Filter(object):
 
         # Exposure time [s]
         tint = dtlr * 3600. * 24
-        
+
         # Calculate SYSTEM photons
         Nphot = stack * tint * self.photon_rate(lam, flux[:,:], atel = atel)
-        
+
         # Hi-res light curve
         if flux_hr is not None:
           tint_hr = dthr * 3600. * 24
@@ -310,10 +311,10 @@ class Lightcurve(object):
 
         # Plot
         ax.plot(self.time, self.Nphot/self.norm, label='Binned', zorder=11, alpha=0.75, lw = 1.5, color = 'b')
-        
+
         if (self.time_hr is not None) and (self.Nphot_hr is not None):
           ax.plot(self.time_hr, self.Nphot_hr /  self.norm_hr, zorder=11, alpha=0.75, lw = 1, label = 'Unbinned', color = 'g')
-        
+
         ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.7, zorder=10, lw = 1)
         ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins ($\times$ %d)" %(self.tint[0]/60., self.stack),
                 ha="left", va="top", transform=ax.transAxes,
@@ -321,12 +322,12 @@ class Lightcurve(object):
         ax.legend(loc = 'upper right')
         ax.ticklabel_format(useOffset = False)
         ax.margins(0, 0.15)
-        
+
         if ax0 is None:
             fig.subplots_adjust(bottom=0.2)
-        
+
         return ax0
-        
+
 ################################################################################
 
 def planck(temp, wav):
@@ -796,3 +797,35 @@ def get_miri_filter_wheel():
             ]
 
     return wheel
+
+def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
+    """
+    Create a tophat `Filter`
+
+    Parameters
+    ----------
+    lammin : float
+        Wavelength minimum [um]
+    lammax : float
+        Wavelength maximum [um]
+    dlam : float, optional
+        Wavelength resolution [um]
+    Tput : float, optional
+        Filter throughput
+    name : string, optional
+        Name of filter
+    """
+
+    # Number of wavelength points
+    N = int(round((lammax - lammin) / dlam))
+
+    # Create wavelength grid
+    lam = np.linspace(lammin, lammax, N)
+
+    # Create throughput curve
+    Tputs = np.ones_like(lam) * Tput
+
+    # Construct filter
+    filt = Filter(name=name, wl=lam, throughput=Tputs)
+
+    return filt

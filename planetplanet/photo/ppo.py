@@ -763,6 +763,8 @@ class System(object):
     elif instrument.lower() == 'ost':
       # Using JWST filters for OST for now
       wheel = jwst.get_miri_filter_wheel()
+      # create new filter for 50 microns
+      filt50 = jwst.create_tophat_filter(47.5, 52.5, dlam=0.1, Tput=0.3, name="OST50")
       # Will have mirror between 8-15m, let's say: 12m
       atel = 144.0
       # No thermal noise
@@ -771,13 +773,15 @@ class System(object):
       raise ValueError("Invalid instrument.")
 
     # Get the filter
-    if filter.lower() in [f.name.lower() for f in wheel]:
+    if type(filter).__name__ == "Filter":
+      self.filter = filter
+    elif filter.lower() in [f.name.lower() for f in wheel]:
       self.filter = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
     else:
       raise ValueError("Invalid filter.")
 
     # Compute lightcurve in this filter
-    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack, 
+    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack,
                                    time_hr = self.time_hr, flux_hr = self.flux_hr,
                                    atel = atel, thermal = thermal)
 
@@ -819,7 +823,7 @@ class System(object):
     fig.subplots_adjust(bottom = 0.2)
 
     return fig, ax
-    
+
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
 
@@ -890,7 +894,7 @@ class System(object):
             else:
               axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
               nppo += 1
-              
+
         # Check for mutual transits
         if self.bodies[0].occultor[i]:
 
@@ -956,11 +960,11 @@ class System(object):
     axp.annotate("To observer", xy = (0.5, -0.1), xycoords = "axes fraction", xytext = (0, 30),
                  ha = 'center', va = 'center', annotation_clip = False, color = 'cornflowerblue',
                  textcoords = "offset points", arrowprops=dict(arrowstyle = "-|>", color = 'cornflowerblue'))
-    
+
     # Log
     if not self.settings.quiet:
       print("There were %d PPOs between t = %.2f and t = %.2f." % (nppo, tstart, tend))
-    
+
     return figp
 
   def histogram(self, tstart, tend, dt = 0.0001):
