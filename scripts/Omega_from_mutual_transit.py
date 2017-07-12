@@ -22,16 +22,19 @@ from planetplanet.photo import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 from tqdm import tqdm
+import corner
 np.random.seed(1234)
 RSUN = 6.957e8
 REARTH = 6.3781e6
 
 # Draw from prior several times and plot
-niter = 100
+niter = 10000
 time = np.linspace(-0.05, 0.05, 1000)
 dt = (time[1] - time[0]) * 1440.
 Omega = np.linspace(0, 180, 100)
+Omega_zoom = np.linspace(0, 3, 100)
 duration = np.zeros((niter, len(Omega)))
+duration_zoom = np.zeros((niter, len(Omega)))
 for n in tqdm(range(niter)):
   
   # First run is the mean model
@@ -82,22 +85,47 @@ for n in tqdm(range(niter)):
   c = Planet('c', m = m, per = per, inc = inc, r = r, t0 = 0., Omega = 0, w = w, ecc = ecc, color = 'b')
 
   # The system
-  system = System(star, b, c, nbody = False, adaptive = True, quiet = True)
+  system = System(star, b, c, nbody = True, adaptive = True, quiet = True)
 
   # Compute
   for i in range(len(Omega)):
     system.bodies[2].Omega = Omega[i]
     system.compute_orbits(time)
     duration[n,i] = dt * len(np.where(system.bodies[1].occultor == 4)[0])
-    
-# Plot duration
-fig = pl.figure()
-for n in range(niter):
-  pl.plot(duration[n], Omega, alpha = 0.1, color = 'k')
-pl.plot(duration[0], Omega, 'r')
-pl.xlabel('Duration of mutual transit [minutes]', fontsize = 12, fontweight = 'bold')
-pl.ylabel(r'$\mathbf{\Delta\Omega}$ [degrees]', fontsize = 14, fontweight = 'bold')
-pl.ylim(0, 180)
-pl.xlim(0.1, 50)
+  
+  # Compute (zoom)
+  for i in range(len(Omega_zoom)):
+    system.bodies[2].Omega = Omega_zoom[i]
+    system.compute_orbits(time)
+    duration_zoom[n,i] = dt * len(np.where(system.bodies[1].occultor == 4)[0])
+  
+# Plot the heatmap
+fig = pl.figure(figsize = (6, 8))
+ax = [pl.subplot2grid((3,1), (0,0), rowspan = 2),
+      pl.subplot2grid((3,1), (2,0))]
 
+# Top plot
+duration = duration.reshape(-1)
+Omega = np.concatenate([Omega for i in range(niter)])
+iszero = np.where(duration == 0)
+duration = np.delete(duration, iszero)
+Omega = np.delete(Omega, iszero)
+corner.hist2d(duration, Omega, bins = 100, ax = ax[0])
+
+# Zoom inset
+duration_zoom = duration_zoom.reshape(-1)
+Omega_zoom = np.concatenate([Omega_zoom for i in range(niter)])
+iszero = np.where(duration_zoom == 0)
+duration_zoom = np.delete(duration_zoom, iszero)
+Omega_zoom = np.delete(Omega_zoom, iszero)
+corner.hist2d(duration_zoom, Omega_zoom, bins = 100, ax = ax[1])
+
+# Appearance
+ax[0].set_ylabel(r'$\mathbf{\Delta\Omega}$ [degrees]', fontsize = 14, fontweight = 'bold')
+ax[1].set_ylabel(r'$\mathbf{\Delta\Omega}$ [degrees]', fontsize = 14, fontweight = 'bold')
+ax[1].set_xlabel('Duration of mutual transit [minutes]', fontsize = 14, fontweight = 'bold')
+ax[0].set_ylim(0, 180)
+ax[1].set_ylim(0, 3)
+
+fig.savefig("../img/Omega.pdf")
 pl.show()
