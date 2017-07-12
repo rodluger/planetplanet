@@ -22,11 +22,15 @@ import numpy as np
 np.random.seed(1234)
   
 # The figure for the paper
-fig, ax = pl.subplots(4, figsize = (8, 18)) #, sharex = True)
+fig = pl.figure(figsize = (8, 14))
+ax = [pl.subplot2grid((6, 1), (0, 0), colspan = 1, rowspan = 2),
+      pl.subplot2grid((6, 1), (2, 0), colspan = 1, rowspan = 1),
+      pl.subplot2grid((6, 1), (3, 0), colspan = 1, rowspan = 2),
+      pl.subplot2grid((6, 1), (5, 0), colspan = 1, rowspan = 1)]
 fig.subplots_adjust(top = 0.8)
   
 # Plot both an airless and a limb-darkened planet
-for color, airless, label, dt, df in zip(['b', 'g'], [False, True], ['Thick atmosphere', 'Airless'], [0, -0.0015], [1, 1.1728478216578166]):
+for color, airless, label, dt, df in zip(['b', 'g'], [False, True], ['Thick atmosphere', 'Airless'], [0, -0.00165], [1, 1.015 * 1.1728478216578166]):
   
   # Instantiate the star
   mstar = 0.0802
@@ -69,9 +73,14 @@ for color, airless, label, dt, df in zip(['b', 'g'], [False, True], ['Thick atmo
   ax[0].plot(minutes, (norm + flux) / norm, '-', color = color, label = label)
   
   # Compute the shifted, normalized airless light curve
+  # I eyeballed the scaled depth and duration to get the best match
+  # to egress. We can probably do a little better, but it's still going
+  # to be a ~20 ppm signal in the residuals -- there's no way around the
+  # asymmetry!
   if airless:
     fairless1 = (norm + flux) / norm
     fairless2 = np.interp(time, time + dt, 1 - df * (1 - (norm + flux) / norm))
+    fairless3 = np.interp(minutes, 1.5 * minutes, fairless2)
   else:
     fthickatm = (norm + flux) / norm
 
@@ -80,10 +89,10 @@ ax[1].plot(minutes, 1e6 * (fairless1 - fthickatm), '-', color = 'k', label = 'Re
 
 # Plot the shifted, normalized airless light curve and the thick atmosphere light curve for comparison
 ax[2].plot(minutes, fthickatm, '-', color = 'b', label = 'Thick atmosphere')
-ax[2].plot(minutes, fairless2, '-', color = 'g', label = 'Airless')
+ax[2].plot(minutes, fairless3, '-', color = 'g', label = 'Airless')
   
 # Plot the residuals
-ax[3].plot(minutes, 1e6 * (fairless2 - fthickatm), '-', color = 'k', label = 'Residuals')
+ax[3].plot(minutes, 1e6 * (fairless3 - fthickatm), '-', color = 'k', label = 'Residuals')
 
 # Plot the images
 axim = [None for i in range(5)]
@@ -95,27 +104,30 @@ for i, t in enumerate([1333 - 600, 1333 - 300, 1333, 1333 + 300, 1333 + 600]):
   system.plot_image(t, c, ax = axim[i], occultors = [2])
 
 # Arrows
-axim[0].annotate("", xy = (0, -1.2), xytext = (83, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[1].annotate("", xy = (0, -1.2), xytext = (44, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[2].annotate("", xy = (0, -1.2), xytext = (0, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -79), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[0].annotate("", xy = (0, -1.2), xytext = (83, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[1].annotate("", xy = (0, -1.2), xytext = (44, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[2].annotate("", xy = (0, -1.2), xytext = (0, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
 
 # Appeareance
 ax[0].legend(loc = 'lower left', fontsize = 10, frameon = False)
-for axis in ax:
+for i, axis in enumerate(ax):
   axis.get_yaxis().set_major_locator(MaxNLocator(4))
   axis.get_xaxis().set_major_locator(MaxNLocator(8))
   for tick in axis.get_xticklabels() + axis.get_yticklabels():
     tick.set_fontsize(12)
   axis.ticklabel_format(useOffset = False)
-ax[0].set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 16)
-ax[1].set_ylabel(r'Residuals [ppm]', fontweight = 'bold', fontsize = 16, labelpad = 29)
-ax[2].set_ylabel(r'Shifted Flux', fontweight = 'bold', fontsize = 16)
-ax[3].set_ylabel(r'Residuals [ppm]', fontweight = 'bold', fontsize = 16, labelpad = 38)
+  if i < 3:
+    axis.set_xticklabels([])
+ax[0].set_ylabel(r'Flux', fontweight = 'bold', fontsize = 16)
+ax[1].set_ylabel(r'$\Delta$ [ppm]', fontweight = 'bold', fontsize = 16, labelpad = 29)
+ax[2].set_ylabel(r'Scaled Flux', fontweight = 'bold', fontsize = 16)
+ax[3].set_ylabel(r'$\Delta$ [ppm]', fontweight = 'bold', fontsize = 16, labelpad = 29)
 ax[0].margins(None, 0.1)
 ax[1].set_ylim(-45,91)
 ax[2].margins(None, 0.1)
-ax[3].set_ylim(-3, 46)
-ax[3].set_xlabel('Time [minutes]', fontweight = 'bold', fontsize = 16, labelpad = 15)
+ax[3].set_ylim(-15, 15)
+ax[3].set_yticks([-10,0,10])
+ax[-1].set_xlabel('Time [minutes]', fontweight = 'bold', fontsize = 16, labelpad = 15)
 fig.savefig("../img/contrast.pdf", bbox_inches = 'tight')
