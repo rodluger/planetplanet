@@ -10,7 +10,8 @@ __all__ = [
     "Filter",
     "estimate_eclipse_snr",
     "lightcurves",
-    "create_tophat_filter"
+    "create_tophat_filter",
+    "event_snr"
 ]
 
 HERE = os.path.abspath(os.path.split(__file__)[0])
@@ -829,3 +830,31 @@ def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
     filt = Filter(name=name, wl=lam, throughput=Tputs)
 
     return filt
+
+def event_snr(cp, ccont, cb, iband, itime=10.):
+    """
+    Calc the exposure time necessary to get a given S/N on an event
+    following Eqn 7 from Robinson et al. 2016 for molecular band detection.
+
+    Parameters
+    ----------
+    cp :
+        Planet count rate
+    ccont :
+        Continuum count rate
+    cb :
+        Background count rate
+    iband :
+        Indicies of molecular band
+    itime :
+        Integration time [hours]
+
+    Returns
+    -------
+    SNR to detect band given exposure time
+    """
+
+    denominator = np.power(np.sum(cp[iband] + 2.*cb[iband]), 0.5)
+    numerator = np.sum(np.fabs(ccont - cp[iband]))
+
+    return np.power(itime*3600., 0.5) * numerator / denominator

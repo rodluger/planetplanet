@@ -49,7 +49,7 @@ system.compute(time, lambda1 = 10, lambda2 = 60)
 system.plot_lightcurve(50.)
 
 # Create custom filter
-f50 = create_tophat_filter(45., 55., dlam = 0.1, Tput = 0.3, name = "50 microns")
+f50 = create_tophat_filter(45., 55., dlam = 0.1, Tput = 0.3, name = r"50 $\pm$5 $\mu$m")
 
 # Observe it (one exposure)
 system.observe(stack = 1, filter = f50, instrument = 'ost')
