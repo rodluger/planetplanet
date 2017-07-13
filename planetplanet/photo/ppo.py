@@ -763,6 +763,8 @@ class System(object):
     elif instrument.lower() == 'ost':
       # Using JWST filters for OST for now
       wheel = jwst.get_miri_filter_wheel()
+      # create new filter for 50 microns
+      filt50 = jwst.create_tophat_filter(47.5, 52.5, dlam=0.1, Tput=0.3, name="OST50")
       # Will have mirror between 8-15m, let's say: 12m
       atel = 144.0
       # No thermal noise
@@ -771,13 +773,15 @@ class System(object):
       raise ValueError("Invalid instrument.")
 
     # Get the filter
-    if filter.lower() in [f.name.lower() for f in wheel]:
+    if type(filter).__name__ == "Filter":
+      self.filter = filter
+    elif filter.lower() in [f.name.lower() for f in wheel]:
       self.filter = wheel[np.argmax([f.name.lower() == filter.lower() for f in wheel])]
     else:
       raise ValueError("Invalid filter.")
 
     # Compute lightcurve in this filter
-    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack, 
+    self.filter.compute_lightcurve(self.flux, self.time, self.wavelength, stack = stack,
                                    time_hr = self.time_hr, flux_hr = self.flux_hr,
                                    atel = atel, thermal = thermal)
 
@@ -789,6 +793,82 @@ class System(object):
 
     # Plot lightcurve
     self.filter.lightcurve.plot(ax0 = ax)
+
+    """
+    Determine SNR on each event:
+    """
+    # Use polynomial fit to continuum
+    method = "poly"
+
+    # Mask in and out of occultation times
+    inmask = np.logical_or.reduce([planet.occultor > 0 for planet in self.bodies])
+    outmask = ~inmask
+    arr = np.arange(len(inmask))
+
+    # Determine continuum flux if there were no event
+    if method == "interp":
+        # Interpolation
+        x = self.filter.lightcurve.time[inmask]
+        xp = self.filter.lightcurve.time[outmask]
+        fp = self.filter.lightcurve.obs[outmask]
+        vals = np.interp(x, xp, fp)
+    elif method == "poly":
+        # Poly
+        deg = 3
+        # Compute for plot
+        x = self.filter.lightcurve.time[inmask]
+        xp = self.filter.lightcurve.time[outmask]
+        yp = self.filter.lightcurve.obs[outmask]
+        zp = np.polyfit(xp,yp,deg)
+        p1 = np.poly1d(zp)
+        vals = p1(x)
+        # Compute for photons
+        xp = self.filter.lightcurve.time[outmask]
+        yp = self.filter.lightcurve.Nphot[outmask]
+        zp = np.polyfit(xp,yp,deg)
+        p2 = np.poly1d(zp)
+
+    # Break lightcurve mask into event chunks
+    n = 0
+    prev = False
+    events = []
+    for i in range(len(inmask)):
+        if inmask[i]:
+            if not prev:
+                n += 1
+                events.append([i])
+            else:
+                events[n-1].append(i)
+        prev = inmask[i]
+
+    # Determine SNR on event detections
+    SNRs = []
+    for i in range(n):
+        mask = events[i]
+        # System photons over event
+        Nsys = self.filter.lightcurve.Nphot[mask]
+        # Background photons over event
+        Nback = self.filter.lightcurve.Nback[mask]
+        if method == "interp":
+            # Interpolated continuum photons over event
+            Ncont = np.interp(self.filter.lightcurve.time[mask],
+                                 self.filter.lightcurve.time[outmask],
+                                 self.filter.lightcurve.Nphot[outmask])
+        elif method == "poly":
+            # Polynomial fit to continuum over event
+            Ncont = p2(self.filter.lightcurve.time[mask])
+
+        SNR = np.sum(np.fabs(Ncont - Nsys)) / np.sqrt(np.sum(Nsys + Nback))
+        SNRs.append(SNR)
+
+    # Annotate event SNRs on each event
+    for i in range(n):
+        k = np.argmin(self.filter.lightcurve.obs[np.array(events[i])])
+        j = events[i][k]
+        ax.annotate(r"$%.1f \sigma$" %SNRs[i], xy = (self.filter.lightcurve.time[int(np.mean(events[i]))],
+                   self.filter.lightcurve.obs[j]-1*self.filter.lightcurve.sig[j]), ha = 'center',
+                   va = 'center', color = "black", fontweight = 'bold',
+                   fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
 
     # Save to disk?
     if save is not None:
@@ -819,7 +899,7 @@ class System(object):
     fig.subplots_adjust(bottom = 0.2)
 
     return fig, ax
-    
+
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
 
@@ -890,7 +970,7 @@ class System(object):
             else:
               axp.plot(body.x[i], body.z[i], 'o', color = self.colors[occ], alpha = alpha, ms = ms, markeredgecolor = 'none')
               nppo += 1
-              
+
         # Check for mutual transits
         if self.bodies[0].occultor[i]:
 
@@ -956,11 +1036,11 @@ class System(object):
     axp.annotate("To observer", xy = (0.5, -0.1), xycoords = "axes fraction", xytext = (0, 30),
                  ha = 'center', va = 'center', annotation_clip = False, color = 'cornflowerblue',
                  textcoords = "offset points", arrowprops=dict(arrowstyle = "-|>", color = 'cornflowerblue'))
-    
+
     # Log
     if not self.settings.quiet:
       print("There were %d PPOs between t = %.2f and t = %.2f." % (nppo, tstart, tend))
-    
+
     return figp
 
   def histogram(self, tstart, tend, dt = 0.0001):
