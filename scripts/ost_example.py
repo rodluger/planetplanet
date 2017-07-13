@@ -14,6 +14,7 @@ import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.constants import *
 from planetplanet.photo import Star, Planet, System
+from planetplanet.detect import create_tophat_filter
 import matplotlib.pyplot as pl
 import numpy as np
 
@@ -47,6 +48,9 @@ time = np.arange(252.75, 253.50, 10 * MINUTE)
 system.compute(time, lambda1 = 10, lambda2 = 60)
 system.plot_lightcurve(50.)
 
+# Create custom filter
+f50 = create_tophat_filter(45., 55., dlam = 0.1, Tput = 0.3, name = r"50 $\pm$5 $\mu$m")
+
 # Observe it (one exposure)
-system.observe(stack = 1, filter = 'F1500W', instrument = 'ost')
+system.observe(stack = 1, filter = f50, instrument = 'ost')
 pl.show()
