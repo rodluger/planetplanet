@@ -132,7 +132,9 @@ def Stacked_bc():
   system.b.flux[:a] = system.b.flux[0]
   system.c.flux[b:] = system.c.flux[0]
   system.b.flux[b:] = system.b.flux[0]
+  system.c.occultor[:a] = 0
   system.c.occultor[b:] = 0
+  system.b.occultor[:a] = 0
   system.b.occultor[b:] = 0
   a = np.argmax(system.time_hr > 253.013 - 0.025)
   b = np.argmax(system.time_hr > 253.013 + 0.025)
@@ -140,7 +142,9 @@ def Stacked_bc():
   system.b.flux_hr[:a] = system.b.flux_hr[0]
   system.c.flux_hr[b:] = system.c.flux_hr[0]
   system.b.flux_hr[b:] = system.b.flux_hr[0]
+  system.c.occultor_hr[:a] = 0
   system.c.occultor_hr[b:] = 0
+  system.b.occultor_hr[:a] = 0
   system.b.occultor_hr[b:] = 0
   
   # Let's re-center the time array for a prettier x axis
@@ -185,3 +189,4 @@ def Stacked_bc():
   fig.savefig("../img/stacked_bc_ost.pdf", bbox_inches = 'tight')
 
 Triple_bc()
+Stacked_bc()
