@@ -794,6 +794,10 @@ class System(object):
     # Plot lightcurve
     self.filter.lightcurve.plot(ax0 = ax)
 
+    # Determine average precision attained in lightcurve
+    ppm = np.mean(self.filter.lightcurve.sig/self.filter.lightcurve.obs) * 1e6
+    print("Average lightcurve precision: %.3f ppm" %ppm)
+
     """
     Determine SNR on each event:
     """
