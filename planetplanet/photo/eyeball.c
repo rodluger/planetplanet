@@ -322,9 +322,9 @@ double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   return FR - FL;
 }
 
-void AddZenithAngleSlice(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], 
-                      double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices,
-                      int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], 
+                           double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices,
+                           int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
   /*
   
   */    
@@ -433,6 +433,96 @@ void AddZenithAngleSlice(double zenith_angle, double r, int no, double x0[no], d
       }
     }
     
+  }
+  
+  // Finally, the boundary curves and their integrals
+  functions[*f].ellipse = ellipse;
+  functions[*f].curve = fupper;
+  functions[(*f)++].integral = iupper;
+  functions[*f].ellipse = ellipse;
+  functions[*f].curve = flower;
+  functions[(*f)++].integral = ilower;
+  if (*f > maxfunctions) {
+    printf("ERROR: Maximum number of functions exceeded.\n");
+    abort();
+  }
+  
+}
+
+void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], 
+                          int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
+  /*
+  
+  */    
+  
+  int i;
+  double ro2[no];
+  double d, A, x, y, cost, sint;
+  for (i = 0; i < no; i++) {
+    ro2[i] = ro[i] * ro[i];
+    ro2[i] += TINY * ro2[i];
+  }
+  ELLIPSE *ellipse;
+  ellipse = malloc(sizeof(ELLIPSE)); 
+  
+  // Initialize the circle
+  ellipse->circle = 1;
+  ellipse->r = r * fabs(sin(zenith_angle));
+  ellipse->x0 = 0;
+  ellipse->y0 = 0;
+  
+  // Circle x minimum
+  ellipse->xmin = ellipse->x0 - ellipse->r;
+  // Is this point inside __at least__ one occultor?
+  for (i = 0; i < no; i++) {
+    if ((ellipse->xmin - x0[i]) * (ellipse->xmin - x0[i]) + y0[i] * y0[i] < ro2[i]) {
+      vertices[(*v)++] = ellipse->xmin;
+      if (*v > maxvertices) {
+        printf("ERROR: Maximum number of vertices exceeded.\n");
+        abort();
+      }
+      break;    
+    }
+  }
+
+  // Circle x maximum
+  ellipse->xmax = ellipse->x0 + ellipse->r;
+  // Is this point inside __at least__ one occultor?
+  for (i = 0; i < no; i++) {
+    if ((ellipse->xmax - x0[i]) * (ellipse->xmax - x0[i]) + y0[i] * y0[i] < ro2[i]) {
+      vertices[(*v)++] = ellipse->xmax;
+      if (*v > maxvertices) {
+        printf("ERROR: Maximum number of vertices exceeded.\n");
+        abort();
+      }
+      break;    
+    }
+  }
+    
+  // Circle-occultor vertices
+  for (i = 0; i < no; i++) {
+    
+    // Is the occulted planet entirely within the occultor?
+    if (sqrt(x0[i] * x0[i] + y0[i] * y0[i]) + r + SMALL < ro[i]) continue;
+    
+    // Adapted from http://mathworld.wolfram.com/Circle-CircleIntersection.html
+    d = sqrt(x0[i] * x0[i] + y0[i] * y0[i]);
+    if (d < (ro[i] + ellipse->r)) {
+      A = (-d + ellipse->r - ro[i]) * (-d - ellipse->r + ro[i]) * (-d + ellipse->r + ro[i]) * (d + ellipse->r + ro[i]);
+      if (A >= 0) {
+        y = sqrt(A) / (2 * d);
+        x = (d * d - ellipse->r * ellipse->r + ro[i] * ro[i]) / (2 * d);
+        cost = -x0[i] / d;
+        sint = -y0[i] / d;
+        vertices[(*v)++] = -x * cost + y * sint;
+        vertices[(*v)++] = -x * cost - y * sint;
+        if (*v > maxvertices) {
+          printf("ERROR: Maximum number of vertices exceeded.\n");
+          abort();
+        }
+      }
+    }
+      
   }
   
   // Finally, the boundary curves and their integrals
@@ -698,7 +788,12 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 
   // Add the ellipses  
   for (i = 0; i < nz * no; i++) {
-    AddZenithAngleSlice(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
+  
+    if (0) // DEBUG!!! ((fabs(fabs(theta) - PI / 2)) < SMALL)
+      AddZenithAngleCircle(zenithgrid[i], r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);
+    else
+      AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
+  
   }
   // Pre-compute the surface intensity in each zenith_angle slice
   SurfaceIntensity(albedo, irrad, tnight, teff, nz * no, zenithgrid, nw, lambda, nu, u, B);

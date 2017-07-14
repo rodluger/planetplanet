@@ -17,6 +17,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import Trappist1
+from planetplanet.constants import *
 import matplotlib
 import matplotlib.pyplot as pl
 import numpy as np
@@ -91,7 +92,7 @@ def Plot():
       for k in range(7):
         hist[k] = np.vstack((hist[k], data['hist'][k]))
       count = np.hstack((count, data['count']))
-  
+    
   # Corner plot
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):  
     samples = np.array(hist[k])
@@ -138,7 +139,73 @@ def Plot():
     tick.set_fontsize(12)
   fig.savefig('../img/hist.pdf', bbox_inches = 'tight')
   pl.close()
+
+def ObservationWindow():
+  '''
   
+  '''
+  
+  # Load
+  print("Loading...")
+  for n in tqdm(range(1000)):
+    try:
+      data = np.load('data/hist%03d.npz' % n)
+      data['hist'][0]
+    except FileNotFoundError:
+      if n == 0:
+        raise Exception("Please run `Compute()` first.")
+      break
+    except BadZipFile:
+      print("Bad zip file: %d." % n)
+      continue
+    if n == 0:
+      hist = data['hist']
+      count = data['count']
+    else:
+      for k in range(7):
+        hist[k] = np.vstack((hist[k], data['hist'][k]))
+      count = np.hstack((count, data['count']))
+  
+  # Instantiate the system
+  system = Trappist1(sample = False)
+  Pb = system.b.per
+  Pc = system.c.per
+  total_time = 365 * count.shape[1]
+  
+  # Occultations of `b`
+  theta = 100
+  theta_arr = hist[0].T[0]
+  total_time = 365 * count.shape[1]
+  def avg_sep(dtime):
+    dtheta = 360 * dtime / system.b.per
+    events = len(np.where((np.abs(theta_arr - theta) <= dtheta / 2) | (np.abs(360 + theta_arr - theta) <= dtheta / 2))[0])
+    return total_time / events
+  time_arr = np.logspace(0, np.log10(8 * system.b.per / MINUTE), 500)
+  sep_arr = [avg_sep(t * MINUTE) for t in time_arr]
+  pl.plot(time_arr, sep_arr, label = 'b')
+  
+  # Occultations of `c`
+  theta = 180 - np.arcsin((Pb / Pc) ** (2 / 3)) * 180 / np.pi
+  theta_arr = hist[1].T[0]
+  def avg_sep(dtime):
+    dtheta = 360 * dtime / system.c.per
+    events = len(np.where((np.abs(theta_arr - theta) <= dtheta / 2) | (np.abs(360 + theta_arr - theta) <= dtheta / 2))[0])
+    return total_time / events
+  time_arr = np.logspace(0, np.log10(8 * system.b.per / MINUTE), 500)
+  sep_arr = [avg_sep(t * MINUTE) for t in time_arr]
+  pl.plot(time_arr, sep_arr, label = 'c')
+  
+  # Appearance
+  pl.yscale('log')
+  pl.xscale('log')
+  pl.xlabel('Observation window [minutes]')
+  pl.ylabel('Time between events [days]')
+  pl.legend()
+  pl.show()
+  
+  # Enter debug
+  import pdb; pdb.set_trace()
+
 if __name__ == '__main__':
   Compute()
   Plot()
