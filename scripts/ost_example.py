@@ -42,7 +42,7 @@ c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
 system = System(star, b, c, distance = 12, oversample = 10)
 
 # There's a triple occultation of `c` at this time
-time = np.arange(252.75, 253.50, 10 * MINUTE)
+time = np.arange(252.75, 253.50, 5 * MINUTE)
 
 # Compute and plot the light curve
 system.compute(time, lambda1 = 10, lambda2 = 60)
@@ -52,5 +52,5 @@ system.plot_lightcurve(50.)
 f50 = create_tophat_filter(45., 55., dlam = 0.1, Tput = 0.3, name = r"50 $\pm$5 $\mu$m")
 
 # Observe it (one exposure)
-system.observe(stack = 1, filter = f50, instrument = 'ost')
+system.observe(stack = 11, filter = f50, instrument = 'ost')
 pl.show()
