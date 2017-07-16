@@ -874,6 +874,9 @@ class System(object):
                    va = 'center', color = "black", fontweight = 'bold',
                    fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
 
+    #
+    self.filter.lightcurve.event_SNRs = SNRs
+
     # Save to disk?
     if save is not None:
 
