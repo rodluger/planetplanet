@@ -847,6 +847,8 @@ class System(object):
 
     # Determine SNR on event detections
     SNRs = []
+    signal = []
+    noise = []
     for i in range(n):
         mask = events[i]
         # System photons over event
@@ -861,7 +863,12 @@ class System(object):
         elif method == "poly":
             # Polynomial fit to continuum over event
             Ncont = p2(self.filter.lightcurve.time[mask])
-
+        # Compute signal of and noise on the event
+        signal.append(np.sum(np.fabs(Ncont - Nsys))/np.sum(Nsys) * 1e6)
+        noise.append(np.sqrt(np.sum(Nsys + Nback))/np.sum(Nsys) * 1e6)
+        #imax = np.argmax(Ncont - Nsys)
+        #amp.append(np.sum(Ncont - Nsys)/np.sum(Ncont)*1e6)
+        # Compute SNR on event
         SNR = np.sum(np.fabs(Ncont - Nsys)) / np.sqrt(np.sum(Nsys + Nback))
         SNRs.append(SNR)
 
@@ -874,8 +881,10 @@ class System(object):
                    va = 'center', color = "black", fontweight = 'bold',
                    fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
 
-    #
+    # Save SNR and ampl as attributes in Lightcurve
     self.filter.lightcurve.event_SNRs = SNRs
+    self.filter.lightcurve.event_signal = signal
+    self.filter.lightcurve.event_noise = noise
 
     # Save to disk?
     if save is not None:

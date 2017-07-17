@@ -49,11 +49,11 @@ def Triple_bc():
     time = np.arange(252.75, 253.50, 10 * MINUTE)
 
     # Compute and plot the light curve
-    system.compute(time, lambda1 = 10, lambda2 = 60)
-    system.plot_lightcurve(50.)
+    system.compute(time, lambda1 = 5, lambda2 = 35)
+    #system.plot_lightcurve(50.)
 
     # Create custom filter
-    f50 = create_tophat_filter(45., 55., dlam = 0.1, Tput = 0.3, name = r"50 $\pm$5 $\mu$m")
+    f50 = create_tophat_filter(10., 30., dlam = 0.1, Tput = 0.3, name = r"20 $\pm$5 $\mu$m")
 
     # Observe it (one exposure)
     system.observe(stack = 1, filter = f50, instrument = 'ost')
@@ -89,13 +89,16 @@ def SNR_v_wavelength():
     time = np.arange(252.98, 253.05, 5 * MINUTE)
 
     # Compute and plot the light curve
-    system.compute(time, lambda1 = 5, lambda2 = 100)
+    system.compute(time, lambda1 = 1, lambda2 = 100, R=1000)
     #system.plot_lightcurve(50.)
 
     Tput = 0.3
-    lams = np.linspace(5,80,30)
+    lams = np.linspace(5,80,100)
     dlam = 5.0
+
     SNRs = np.zeros_like(lams)
+    signal = np.zeros_like(lams)
+    noise = np.zeros_like(lams)
 
     for i in range(len(lams)):
 
@@ -108,14 +111,31 @@ def SNR_v_wavelength():
         # get SNR on feature
         SNRs[i] = system.filter.lightcurve.event_SNRs[0]
 
+        # get ppm noise on lc
+        noise[i] = system.filter.lightcurve.event_noise[0]
+
+        # get ppm amplitude on event
+        signal[i] = system.filter.lightcurve.event_signal[0]
+
+        # let's not have all these plots show up
         pl.clf()
         pl.close()
 
     fig, ax = pl.subplots(figsize=(12,6))
-    ax.set_xlabel(r"Wavelength [$\mu$m]")
-    ax.set_ylabel("SNR")
-    ax.plot(lams, SNRs, "o-", color="k")
+    ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold', fontsize = 10)
+    ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 10)
+    ax.plot(lams, SNRs, ls="-", color="k")
+
+    #""" Plot the noise and signal amplitude as a function of wavelength
+    ax2 = ax.twinx()
+    #ax2.semilogy()
+    ax2.set_ylabel("Signal [ppm]", fontweight = 'bold', fontsize = 10)
+    ax2.plot(lams, signal, ls="--", color="C0", label="signal")
+    ax2.plot(lams, noise, ls="--", color="C3", label="noise")
+    ax2.legend()
+    #"""
+
     pl.show()
 
 Triple_bc()
-SNR_v_wavelength()
+#SNR_v_wavelength()
