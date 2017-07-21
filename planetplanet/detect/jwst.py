@@ -821,10 +821,16 @@ def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
     N = int(round((lammax - lammin) / dlam))
 
     # Create wavelength grid
-    lam = np.linspace(lammin, lammax, N)
+    lam = np.arange(lammin-2*dlam, lammax+2*dlam, dlam)
 
     # Create throughput curve
     Tputs = np.ones_like(lam) * Tput
+
+    # Set the first and last 2 elements to zero
+    Tputs[0] = 0.0
+    Tputs[1] = 0.0
+    Tputs[-1] = 0.0
+    Tputs[-2] = 0.0
 
     # Construct filter
     filt = Filter(name=name, wl=lam, throughput=Tputs)
