@@ -794,6 +794,10 @@ class System(object):
     # Plot lightcurve
     self.filter.lightcurve.plot(ax0 = ax)
 
+    # Determine average precision attained in lightcurve
+    ppm = np.mean(self.filter.lightcurve.sig/self.filter.lightcurve.obs) * 1e6
+    print("Average lightcurve precision: %.3f ppm" %ppm)
+
     """
     Determine SNR on each event:
     """
@@ -843,6 +847,8 @@ class System(object):
 
     # Determine SNR on event detections
     SNRs = []
+    signal = []
+    noise = []
     for i in range(n):
         mask = events[i]
         # System photons over event
@@ -857,7 +863,12 @@ class System(object):
         elif method == "poly":
             # Polynomial fit to continuum over event
             Ncont = p2(self.filter.lightcurve.time[mask])
-
+        # Compute signal of and noise on the event
+        signal.append(np.sum(np.fabs(Ncont - Nsys))/np.sum(Nsys) * 1e6)
+        noise.append(np.sqrt(np.sum(Nsys + Nback))/np.sum(Nsys) * 1e6)
+        #imax = np.argmax(Ncont - Nsys)
+        #amp.append(np.sum(Ncont - Nsys)/np.sum(Ncont)*1e6)
+        # Compute SNR on event
         SNR = np.sum(np.fabs(Ncont - Nsys)) / np.sqrt(np.sum(Nsys + Nback))
         SNRs.append(SNR)
 
@@ -869,6 +880,11 @@ class System(object):
                    self.filter.lightcurve.obs[j]-1*self.filter.lightcurve.sig[j]), ha = 'center',
                    va = 'center', color = "black", fontweight = 'bold',
                    fontsize = 10, xytext = (0, -15), textcoords = 'offset points')
+
+    # Save SNR and ampl as attributes in Lightcurve
+    self.filter.lightcurve.event_SNRs = SNRs
+    self.filter.lightcurve.event_signal = signal
+    self.filter.lightcurve.event_noise = noise
 
     # Save to disk?
     if save is not None:
