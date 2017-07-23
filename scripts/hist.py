@@ -92,6 +92,11 @@ def Plot():
       for k in range(7):
         hist[k] = np.vstack((hist[k], data['hist'][k]))
       count = np.hstack((count, data['count']))
+  
+  # For reference, the average number of occultations *per day* is
+  occ_day = np.sum([hist[n].shape[0] for n in range(7)]) / count.shape[1] / 365
+  # I get 1.1 (!) These are occultations at all impact parameters and durations,
+  # so most are grazing / not really detectable.
     
   # Corner plot
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):  
