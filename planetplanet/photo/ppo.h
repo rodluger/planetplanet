@@ -50,6 +50,8 @@ typedef struct {
   double tnight;
   int phasecurve;
   int blackbody;
+  double dpsi;
+  double dlambda;
   int nu;
   int nz;
   int nt;

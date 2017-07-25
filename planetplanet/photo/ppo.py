@@ -9,6 +9,7 @@
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
 from ..detect import jwst
+from .eyeball import Draw
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
@@ -34,8 +35,8 @@ class _Animation(object):
 
   '''
 
-  def __init__(self, t, fig, axim, tracker, pto, ptb, body, bodies, occultors,
-               interval = 50, gifname = None, quiet = False):
+  def __init__(self, t, fig, axim, tracker, occ, ptb, body, bodies, occultors,
+               interval = 50, gifname = None, xy = None, quiet = False):
     '''
 
     '''
@@ -44,11 +45,12 @@ class _Animation(object):
     self.fig = fig
     self.axim = axim
     self.tracker = tracker
-    self.pto = pto
+    self.occ = occ
     self.ptb = ptb
     self.body = body
     self.bodies = bodies
     self.occultors = occultors
+    self.xy = xy
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100,
                                              interval = interval, repeat = True)
@@ -89,15 +91,14 @@ class _Animation(object):
       y0 = self.body.y_hr[self.t[j]]
       for k, occultor in enumerate(self.occultors):
         r = occultor._r
-        x = np.linspace(occultor.x_hr[self.t[j]] - r, occultor.x_hr[self.t[j]] + r, 1000)
-        y = np.sqrt(r ** 2 - (x - occultor.x_hr[self.t[j]]) ** 2)
-        try:
-          self.pto[k].remove()
-        except:
-          pass
-        self.pto[k] = self.axim.fill_between(x - x0, occultor.y_hr[self.t[j]] - y - y0, occultor.y_hr[self.t[j]] + y - y0, color = 'lightgray', zorder = 99 + k, lw = 1)
-        self.pto[k].set_edgecolor('k')
-
+        
+        if self.xy is None:
+          xo, yo = occultor.x_hr[self.t[j]] - x0, occultor.y_hr[self.t[j]] - y0
+        else:
+          xo, yo = self.xy(occultor.x_hr[self.t[j]] - x0, occultor.y_hr[self.t[j]] - y0)
+        
+        self.occ[k].center = (xo, yo)
+        
       # _Body orbits
       for k, b in enumerate(self.bodies):
         self.ptb[k].set_xdata(b.x_hr[self.t[j]])
@@ -123,6 +124,8 @@ class _Body(ctypes.Structure):
               ("tnight", ctypes.c_double),
               ("_phasecurve", ctypes.c_int),
               ("_blackbody", ctypes.c_int),
+              ("_dpsi", ctypes.c_double),
+              ("_dlambda", ctypes.c_double),
               ("nu", ctypes.c_int),
               ("nz", ctypes.c_int),
               ("nt", ctypes.c_int),
@@ -164,9 +167,13 @@ class _Body(ctypes.Structure):
       if self.airless:
         self.tnight = kwargs.pop('tnight', 40.)
         self.limbdark = []
+        self.dpsi = kwargs.pop('dpsi', 0)
+        self.dlambda = kwargs.pop('dlambda', 0)
       else:
         self.tnight = 0
         self.limbdark = kwargs.pop('limbdark', [])
+        self.dpsi = 0
+        self.dlambda = 0
       self.phasecurve = kwargs.pop('phasecurve', False)
       self.color = kwargs.pop('color', 'r')
     elif self.body_type == 'star':
@@ -178,6 +185,8 @@ class _Body(ctypes.Structure):
       self.teff = kwargs.pop('teff', 5577.)
       self.limbdark = kwargs.pop('limbdark', [1.])
       self.phasecurve = False
+      self.dpsi = 0
+      self.dlambda = 0
       self.color = kwargs.pop('color', 'k')
 
     # C stuff, computed in `System` class
@@ -269,6 +278,22 @@ class _Body(ctypes.Structure):
   @Omega.setter
   def Omega(self, val):
     self._Omega = val * np.pi / 180.
+
+  @property
+  def dpsi(self):
+    return self._dpsi * 180 / np.pi
+
+  @dpsi.setter
+  def dpsi(self, val):
+    self._dpsi = val * np.pi / 180.
+
+  @property
+  def dlambda(self):
+    return self._dlambda * 180 / np.pi
+
+  @dlambda.setter
+  def dlambda(self, val):
+    self._dlambda = val * np.pi / 180.
 
   @property
   def teff(self):
@@ -1289,14 +1314,12 @@ class System(object):
     axxz.axis('off')
 
     # Plot the image
-    axim = pl.subplot2grid((5, 3), (2, 0), colspan = 3, rowspan = 1)
-    _, pto = self.plot_image(ti, body, occultors, ax = axim)
+    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig)
     bodies = [self.bodies[o] for o in occultors] + [body]
     xmin = min(np.concatenate([o.x_hr[t] - body.x_hr[t] - 1.1 * o._r for o in bodies]))
     xmax = max(np.concatenate([o.x_hr[t] - body.x_hr[t] + 1.1 * o._r for o in bodies]))
     ymin = min(np.concatenate([o.y_hr[t] - body.y_hr[t] - 1.1 * o._r for o in bodies]))
     ymax = max(np.concatenate([o.y_hr[t] - body.y_hr[t] + 1.1 * o._r for o in bodies]))
-
     axim.set_xlim(xmin, xmax)
     axim.set_ylim(ymin, ymax)
     axim.axis('off')
@@ -1322,31 +1345,24 @@ class System(object):
       tmp = '%s.%03d.gif' % (gifname, len(self._animations) + 1)
     else:
       tmp = None
-    self._animations.append(_Animation(range(ti, tf), fig, axim, tracker, pto, ptb, body,
+    self._animations.append(_Animation(range(ti, tf), fig, axim, tracker, occ, ptb, body,
                             self.bodies, [self.bodies[o] for o in occultors],
-                            interval = interval, gifname = tmp, quiet = self.settings.quiet))
+                            interval = interval, gifname = tmp, quiet = self.settings.quiet,
+                            xy = xy))
 
     return fig, axlc, axxz, axim
 
-  def plot_image(self, t, occulted, occultors = None, ax = None, pad = 2.5, occultor_alpha = 1, **kwargs):
+  def plot_image(self, t, occulted, occultors = None, fig = None, pad = 2.5, occultor_alpha = 1, **kwargs):
     '''
     Plots an image of the `occulted` body and its occultors at a given index of the `time_hr` array `t`.
 
     '''
 
     # Set up the plot
-    if ax is None:
-      fig, ax = pl.subplots(1, figsize = (6,6))
-
-    # Get the occultors
-    if occultors is None:
-      occultors = []
-      for b in range(len(self.bodies)):
-        if (occulted.occultor[t] & 2 ** b):
-          occultors.append(b)
-      occultors = list(set(occultors))
-
-    # Plot the occulted body
+    if fig is None:
+      fig = pl.gcf()
+      
+    # Get the occulted body
     r = occulted._r
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
@@ -1354,57 +1370,26 @@ class System(object):
       theta = np.arctan(occulted.z_hr[t] / np.abs(occulted.x_hr[t]))
     else:
       theta = np.pi / 2
-    x = np.linspace(-r, r, 1000)
-    y = np.sqrt(r ** 2 - x ** 2)
-    ax.plot(x, y, color = 'k', zorder = 98, lw = 1)
-    ax.plot(x, -y, color = 'k', zorder = 98, lw = 1)
+    
+    # Get the occultors
+    if occultors is None:
+      occultors = []
+      for b in range(len(self.bodies)):
+        if (occulted.occultor[t] & 2 ** b):
+          occultors.append(b)
+    
+    # Convert them into a list of dicts
+    occ_dict = []
+    for i, occultor in enumerate(occultors):
+      occultor = self.bodies[occultor]
+      occ_dict.append(dict(x = occultor.x_hr[t] - x0, y = occultor.y_hr[t] - y0, r = occultor._r, zorder = i + 1, alpha = 1))
+    
+    # Draw the eyeball planet and the occultors
+    fig, ax, occ, xy = Draw(x0 = 0, y0 = 0, r = r, theta = theta, nz = 11, dpsi = occulted._dpsi, dlambda = occulted._dlambda, 
+                            occultors = occ_dict, cmap = 'inferno', fig = fig, 
+                            pos = [0.49, 0.45, 0.1, 0.1])
 
-    # Plot the zenith angle ellipses
-    for za in np.linspace(0, np.pi, occulted.nz + 2)[1:-1]:
-      a = occulted._r * np.abs(np.sin(za))
-      b = a * np.abs(np.sin(theta))
-      xE = -occulted._r * np.cos(za) * np.cos(theta)
-      yE = 0
-      xlimb = occulted._r * np.cos(za) * np.sin(theta) * np.tan(theta)
-      if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
-        xmin = xE - b
-      else:
-        xmin = xE - xlimb
-      if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
-        xmax = xE + b
-      else:
-        xmax = xE - xlimb
-      x = np.linspace(xE - b, xE + b, 1000)
-      if theta > 0:
-        x[x < xE - xlimb] = np.nan
-      else:
-        x[x > xE - xlimb] = np.nan
-      A = b ** 2 - (x - xE) ** 2
-      A[A<0] = 0
-      y = (a / b) * np.sqrt(A)
-      if np.abs(np.cos(za)) < 1e-5:
-        style = dict(color = 'k', ls = '--', lw = 1, alpha = 0.5)
-      else:
-        style = dict(color = rdbu(0.5 * (np.cos(za) + 1)), ls = '-', lw = 1, alpha = 0.5)
-      if (occulted.x_hr[t] < 0):
-        ax.plot(-x, y, **style)
-        ax.plot(-x, -y, **style)
-      else:
-        ax.plot(x, y, **style)
-        ax.plot(x, -y, **style)
-
-    # Plot the occultors
-    pto = [None for o in occultors]
-    for i, occultor in enumerate([self.bodies[o] for o in occultors]):
-      r = occultor._r
-      x = np.linspace(occultor.x_hr[t] - r, occultor.x_hr[t] + r, 1000)
-      y = np.sqrt(r ** 2 - (x - occultor.x_hr[t]) ** 2)
-      pto[i] = ax.fill_between(x - x0, occultor.y_hr[t] - y - y0, occultor.y_hr[t] + y - y0,
-                               color = 'lightgray', zorder = 99 + i, lw = 1,
-                               alpha = occultor_alpha)
-      pto[i].set_edgecolor('k')
-
-    return ax, pto
+    return ax, occ, xy
 
   def plot_lightcurve(self, wavelength = 15.):
     '''
