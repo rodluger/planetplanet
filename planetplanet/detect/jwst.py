@@ -440,9 +440,9 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
     """
 
     # Integration time is eclipse duration for planet b (assume same duration as transit):
-    tint = 36.4 * 60. # sec
+    #tint = 36.4 * 60. # sec
     # Number of out-of-eclipse transit durations observed (with planet + star):
-    nout = 4.0
+    #nout = 4.0
 
     # Generate high-res wavelength grid
     lam = np.linspace(lammin, lammax, Nlam)
