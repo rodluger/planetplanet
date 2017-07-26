@@ -457,7 +457,7 @@ void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], 
   
   int i;
   double ro2[no];
-  double d, A, x, y, cost, sint;
+  double d, A, x, y, frac, cost, sint;
   for (i = 0; i < no; i++) {
     ro2[i] = ro[i] * ro[i];
     ro2[i] += TINY * ro2[i];
@@ -511,11 +511,16 @@ void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], 
       A = (-d + ellipse->r - ro[i]) * (-d - ellipse->r + ro[i]) * (-d + ellipse->r + ro[i]) * (d + ellipse->r + ro[i]);
       if (A >= 0) {
         y = sqrt(A) / (2 * d);
-        x = (d * d - ellipse->r * ellipse->r + ro[i] * ro[i]) / (2 * d);
-        cost = -x0[i] / d;
-        sint = -y0[i] / d;
-        vertices[(*v)++] = -x * cost + y * sint;
-        vertices[(*v)++] = -x * cost - y * sint;
+        x = sqrt(ellipse->r * ellipse->r - y * y);
+        frac = y0[i] / x0[i];
+        cost = 1 / sqrt(frac * frac + 1);
+        sint = frac * cost;
+        if (x0[i] < 0) {
+          cost *= -1;
+          sint *= -1;
+        }
+        vertices[(*v)++] = x * cost + y * sint;
+        vertices[(*v)++] = x * cost - y * sint;
         if (*v > maxvertices) {
           printf("ERROR: Maximum number of vertices exceeded.\n");
           abort();
@@ -607,7 +612,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
     ro2[i] = ro[i] * ro[i];
     ro2[i] += TINY * ro2[i];
   }
-  double d, A, x, y, cost, sint;
+  double d, A, x, y, frac, cost, sint;
   ELLIPSE *occulted;
   occulted = malloc(sizeof(ELLIPSE));
   
@@ -653,11 +658,16 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
       A = (-d + r - ro[i]) * (-d - r + ro[i]) * (-d + r + ro[i]) * (d + r + ro[i]);
       if (A >= 0) {
         y = sqrt(A) / (2 * d);
-        x = (d * d - r * r + ro[i] * ro[i]) / (2 * d);
-        cost = -x0[i] / d;
-        sint = -y0[i] / d;
-        vertices[(*v)++] = -x * cost + y * sint;
-        vertices[(*v)++] = -x * cost - y * sint;
+        x = sqrt(r * r - y * y);
+        frac = y0[i] / x0[i];
+        cost = 1 / sqrt(frac * frac + 1);
+        sint = frac * cost;
+        if (x0[i] < 0) {
+          cost *= -1;
+          sint *= -1;
+        }
+        vertices[(*v)++] = x * cost + y * sint;
+        vertices[(*v)++] = x * cost - y * sint;        
         if (*v > maxvertices) {
           printf("ERROR: Maximum number of vertices exceeded.\n");
           abort();
@@ -795,6 +805,11 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
   
   }
+  
+  // DEBUG!!!
+  //return;
+  
+  
   // Pre-compute the surface intensity in each zenith_angle slice
   SurfaceIntensity(albedo, irrad, tnight, teff, nz * no, zenithgrid, nw, lambda, nu, u, B);
   
