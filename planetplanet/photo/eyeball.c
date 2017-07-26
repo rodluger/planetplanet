@@ -682,7 +682,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
                   double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, 
-                  double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nz, int nw, 
+                  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int nu, int nz, int nw, 
                   double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
@@ -789,7 +789,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   // Add the ellipses  
   for (i = 0; i < nz * no; i++) {
   
-    if (0) // DEBUG!!! ((fabs(fabs(theta) - PI / 2)) < SMALL)
+    if (circleopt && (fabs(fabs(theta) - PI / 2)) < SMALL)
       AddZenithAngleCircle(zenithgrid[i], r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);
     else
       AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
@@ -901,7 +901,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 }
 
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, 
-                    double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, 
+                    double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, 
                     int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
@@ -912,6 +912,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, nu, nz, nw, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, circleopt, nu, nz, nw, u, lambda, flux, quiet, iErr);
     
 }

@@ -385,6 +385,7 @@ class _Settings(ctypes.Structure):
               ("maxpolyiter", ctypes.c_int),
               ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
+              ("_circleopt", ctypes.c_int),
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
@@ -401,6 +402,7 @@ class _Settings(ctypes.Structure):
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
+    self.circleopt = kwargs.pop('circleopt', True)
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
@@ -437,6 +439,14 @@ class _Settings(ctypes.Structure):
   @adaptive.setter
   def adaptive(self, val):
     self._adaptive = int(val)
+
+  @property
+  def circleopt(self):
+    return bool(self._circleopt)
+
+  @circleopt.setter
+  def circleopt(self, val):
+    self._circleopt = int(val)
 
   @property
   def quiet(self):

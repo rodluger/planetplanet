@@ -17,6 +17,7 @@ SEARTH = 1.361e3
 
 # Time
 DAYSEC = 86400.
+SECOND = 1. / DAYSEC
 MINUTE = 1. / 1440.
 
 # Scalings
