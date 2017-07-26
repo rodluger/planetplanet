@@ -30,18 +30,26 @@ def u1(lam):
   return result
   
 # Instantiate the star
-star = Star('A', m = 0.1, r = 0.1, nz = 5, color = 'k', limbdark = [u1])
+star = Star('A', m = 0.1, r = 0.1, nz = 11, color = 'k', limbdark = [u1])
 
 # Planet b
 b = Planet('b', m = 1, per = 2, inc = 90.4, r = 2., t0 = 0, 
            nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
-# Compute the light curve
-system = System(star, b)
+# Compute the light curve, no optimization
+system = System(star, b, batmanopt = False)
 time = np.arange(-0.025, 0.025, 1 * SECOND)
 system.compute(time)
+flux1 = system.A.flux[:,0] / system.A.flux[0,0]
+
+# Compute the light curve w/ batman optimization
+system = System(star, b, batmanopt = True)
+time = np.arange(-0.025, 0.025, 1 * SECOND)
+system.compute(time)
+flux2 = system.A.flux[:,0] / system.A.flux[0,0]
 
 # Plot it
-fig, ax = pl.subplots(1)
-ax.plot(system.A.time, system.A.flux[:,0] / system.A.flux[0,0])
+pl.plot(system.A.time, flux1, label = 'Standard')
+pl.plot(system.A.time, flux2, label = 'Batman')
+pl.legend()
 pl.show()

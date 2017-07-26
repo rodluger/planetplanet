@@ -4,6 +4,110 @@
 #include "ppo.h"
 #include "complex.h"
 
+void BatmanFlux(double r, double x0, double y0, double ro, double teff, double distance, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw]) {
+  /*
+  
+  */
+  
+  int i, j, k;  
+  double d, d2, ro2, x2;
+  double U, V, W;
+  double x[nz], A[nz];
+  double xavg;
+  double area, norm, cosza, y;
+  double z, zmin, zmax;
+  double B[nw], B0[nw];
+  double distance2 = distance * distance * PARSEC * PARSEC;
+  
+  // Normalize distances by the occulted planet's radius
+  x0 /= r;
+  y0 /= r;
+  ro /= r;
+  
+  // Pre-compute some stuff
+  ro2 = ro * ro;
+  d2 = x0 * x0 + y0 * y0;
+  d = sqrt(d2);
+  
+  // Pre-normalize the polynomial limb darkening
+  // Equation (E5) in Luger et al. (2017)
+  for (j = 0; j < nw; j++) {
+    norm = 0;
+    for (k = 0; k < nu; k++)
+      norm += u[nw * k + j] / ((k + 2) * (k + 3));
+    norm = 1 - 2 * norm;
+    B0[j] = Blackbody(lambda[j], teff) / norm;
+  }
+  
+  // Integration grid, constant in zenith angle
+  if (d - ro < 0) zmin = 0;
+  else zmin = asin(d - ro);
+  if (d + ro > 1) zmax = PI / 2;
+  else zmax = asin(d + ro);
+  for (i = 0; i < nz; i++) {
+    z = i / (nz - 1) * (zmax - SMALL - zmin) + zmin + SMALL;
+    x[i] = sin(z);
+  }
+  
+  // Iterate over each zenith angle slice
+  for (i = 0; i < nz; i++) {
+      
+    // Compute the area below
+    if (x[i] <= ro - d) {
+      x2 = x[i] * x[i];
+      A[i] = PI * x2;
+    } else if (x[i] >= ro + d) {
+      A[i] = PI * ro2;
+    } else {
+      x2 = x[i] * x[i];
+      U = (d2 + x2 - ro2) / (2 * d * x[i]);
+      V = (d2 + ro2 - x2) / (2 * d * ro);
+      W = (-d + x[i] + ro) * (d + x[i] - ro) * (d - x[i] + ro) * (d + x[i] + ro); 
+      A[i] = x2 * acos(U) + ro2 * acos(V) - 0.5 * sqrt(W);
+    }
+    
+  }
+
+  // Integrate to compute the flux
+  for (i = 1; i < nz; i++) {
+  
+    // The area of the current segment
+    area = (A[i] - A[i - 1]) * r * r;
+        
+    // Pre-compute mu, the cosine of the zenith angle
+    // Note that cos(arcsin(x)) = sqrt(1 - x^2)
+    xavg = 0.5 * (x[i] + x[i - 1]);
+    cosza = sqrt(1 - xavg * xavg);
+    
+    // Initialize the intensity grid
+    for (j = 0; j < nw; j++)
+      B[j] = B0[j];
+    
+    // Loop over the coefficient order
+    for (k = 0; k < nu; k++) {
+    
+      // The Taylor expansion is in y = 1 - mu
+      y = pow(1 - cosza, k + 1);
+      
+      // Compute the wavelength-dependent intensity
+      for (j = 0; j < nw; j++) {
+        B[j] -= u[nw * k + j] * B0[j] * y;
+      } 
+    }
+    
+    // Finally, flux is radiance times area
+    for (j = 0; j < nw; j++)
+      flux[j] += B[j] * area;
+      
+  }
+  
+  // Scale flux by REARTH**2, convert from m^-1 to micron^-1, and
+  // divide by the square of the distance to get a radiance (W / m^2 / um)
+  for (j = 0; j < nw; j++) 
+    flux[j] *= REARTH * REARTH * MICRON / distance2;
+  
+}
+
 int dblcomp( const void* a, const void* b) {
   /*
   
@@ -692,7 +796,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
 
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
                   double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, 
-                  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int nu, int nz, int nw, 
+                  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw, 
                   double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
@@ -718,11 +822,23 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   FUNCTION functions[maxfunctions];
   FUNCTION boundaries[maxfunctions];
   
+  // Zero out the flux
+  for (m = 0; m < nw; m++) 
+    flux[m] = 0.;
+  
   // Initial theta checks
   if (teff > 0) {
   
     // If we're doing limb darkening, theta must be pi/2 (full phase)
     theta = PI / 2.;
+    
+    // Can we optimize this with the *batman* algorithm?
+    if ((no == 1) && (batmanopt)) {
+      
+      BatmanFlux(r, x0[0], y0[0], ro[0], teff, distance, nu, nz, nw, u, lambda, flux);
+      return;
+      
+    }
     
   } else if (theta < MINCRESCENT) {
   
@@ -742,11 +858,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   double zenithgrid[nz * no];
   double d2 = distance * distance * PARSEC * PARSEC;
   *iErr = ERR_NONE;
-      
-  // Zero out the flux
-  for (m = 0; m < nw; m++) 
-    flux[m] = 0.;
-  
+
   // Generate all the shapes and get their vertices and curves
   AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);     
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
@@ -805,10 +917,6 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
   
   }
-  
-  // DEBUG!!!
-  //return;
-  
   
   // Pre-compute the surface intensity in each zenith_angle slice
   SurfaceIntensity(albedo, irrad, tnight, teff, nz * no, zenithgrid, nw, lambda, nu, u, B);
@@ -917,7 +1025,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, 
                     double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, 
-                    int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+                    int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
   */
@@ -927,6 +1035,6 @@ void UnoccultedFlux(double r, double theta, double albedo, double irrad, double 
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, circleopt, nu, nz, nw, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, nu, nz, nw, u, lambda, flux, quiet, iErr);
     
 }

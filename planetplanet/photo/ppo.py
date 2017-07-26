@@ -386,6 +386,7 @@ class _Settings(ctypes.Structure):
               ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
               ("_circleopt", ctypes.c_int),
+              ("_batmanopt", ctypes.c_int),
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
@@ -403,6 +404,7 @@ class _Settings(ctypes.Structure):
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
     self.circleopt = kwargs.pop('circleopt', True)
+    self.batmanopt = kwargs.pop('batmanopt', True)
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
@@ -447,6 +449,14 @@ class _Settings(ctypes.Structure):
   @circleopt.setter
   def circleopt(self, val):
     self._circleopt = int(val)
+
+  @property
+  def batmanopt(self):
+    return bool(self._batmanopt)
+
+  @batmanopt.setter
+  def batmanopt(self, val):
+    self._batmanopt = int(val)
 
   @property
   def quiet(self):

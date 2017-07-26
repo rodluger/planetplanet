@@ -163,7 +163,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
                    settings.distance, settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
                    settings.mintheta, settings.maxvertices, settings.maxfunctions, 
-                   settings.adaptive, settings.circleopt, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
+                   settings.adaptive, settings.circleopt, settings.batmanopt, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
                    tmp, settings.quiet, &iErr);
     for (w = 0; w < nw; w++) {
       body[p]->total_flux[w] = tmp[w];          
@@ -204,7 +204,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
                        settings.distance, settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
                        settings.mintheta, settings.maxvertices, settings.maxfunctions, 
-                       settings.adaptive, settings.circleopt, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
+                       settings.adaptive, settings.circleopt, settings.batmanopt, body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
                        tmp, settings.quiet, &iErr);
         for (w = 0; w < nw; w++) {
           body[p]->flux[nw * t + w] = tmp[w];          
@@ -286,7 +286,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
                      irrad, body[p]->tnight,  body[p]->teff, settings.distance, settings.polyeps1, settings.polyeps2, 
                      settings.maxpolyiter, settings.mintheta, settings.maxvertices,
-                     settings.maxfunctions, settings.adaptive, settings.circleopt, body[p]->nu, body[p]->nz, nw, 
+                     settings.maxfunctions, settings.adaptive, settings.circleopt, settings.batmanopt, body[p]->nu, body[p]->nz, nw, 
                      body[p]->u, wavelength, tmp, settings.quiet, &iErr);
             
         // Update the body light curve
