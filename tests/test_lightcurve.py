@@ -63,12 +63,12 @@ def test_mutual():
             system.flux[500,-1],
             np.sum(system.flux[:,0]),
             np.sum(system.flux[:,-1])]
-    
+
   # Check!
   assert np.abs(values[0] - truths[0]) / truths[0] < TOL, "Incorrect flux."
   assert np.abs(values[1] - truths[1]) / truths[1] < TOL, "Incorrect flux."
-  assert np.abs(values[2] - truths[2]) / truths[1] < TOL, "Incorrect average flux."
-  assert np.abs(values[3] - truths[3]) / truths[1] < TOL, "Incorrect average flux."
+  assert np.abs(values[2] - truths[2]) / truths[2] < TOL, "Incorrect average flux."
+  assert np.abs(values[3] - truths[3]) / truths[3] < TOL, "Incorrect average flux."
 
 def test_limbdark():
   '''

@@ -404,7 +404,7 @@ class _Settings(ctypes.Structure):
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
     self.circleopt = kwargs.pop('circleopt', True)
-    self.batmanopt = kwargs.pop('batmanopt', False)
+    self.batmanopt = kwargs.pop('batmanopt', True)
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
