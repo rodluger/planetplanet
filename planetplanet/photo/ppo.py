@@ -24,7 +24,7 @@ rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
 
-__all__ = ['Star', 'Planet', 'System']
+__all__ = ['Star', 'Planet', 'Moon', 'System']
 
 # Load the library
 libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
@@ -126,6 +126,7 @@ class _Body(ctypes.Structure):
               ("_blackbody", ctypes.c_int),
               ("_dpsi", ctypes.c_double),
               ("_dlambda", ctypes.c_double),
+              ("_host", ctypes.c_int),
               ("nu", ctypes.c_int),
               ("nz", ctypes.c_int),
               ("nt", ctypes.c_int),
@@ -146,7 +147,7 @@ class _Body(ctypes.Structure):
     # Check
     self.name = name
     self.body_type = body_type
-    assert body_type in ['planet', 'star'], "Argument `body_type` must be either `planet` or `star`."
+    assert body_type in ['planet', 'star', 'moon'], "Argument `body_type` must be `planet`, `moon`, or `star`."
 
     # User
     self.m = kwargs.pop('m', 1.)
@@ -158,7 +159,7 @@ class _Body(ctypes.Structure):
     self.inc = kwargs.pop('inc', 90.)
 
     # These defaults are different depending on body type
-    if self.body_type == 'planet':
+    if self.body_type in ['planet', 'moon']:
       self.airless = kwargs.pop('airless', True)
       self.nz = kwargs.pop('nz', 11)
       self.per = kwargs.pop('per', 3.)
@@ -188,7 +189,15 @@ class _Body(ctypes.Structure):
       self.dpsi = 0
       self.dlambda = 0
       self.color = kwargs.pop('color', 'k')
-
+    
+    # Settings for moons
+    if self.body_type == 'moon':
+      self.host = kwargs.pop('host', None)
+      if not type(self.host) is str:
+        raise ValueError("Please specify the `host` kwarg for all moons.")
+    else:
+      self.host = 0
+    
     # C stuff, computed in `System` class
     self.nt = 0
     self.nw = 0
@@ -557,6 +566,44 @@ def Planet(name, **kwargs):
 
   return _Body(name, 'planet', **kwargs)
 
+def Moon(name, host, **kwargs):
+  '''
+
+  Returns a `_Body` instance of type `moon`.
+
+  :param str name: A unique identifier for this moon
+  :param str host: The name of the moon's host planet
+  :param float m: Mass in Earth masses. Default `1.`
+  :param float r: Radius in Earth radii. Default `1.`
+  :param float per: Orbital period in days. Default `3.`
+  :param float inc: Orbital inclination in degrees. Default `90.`
+  :param float ecc: Orbital eccentricity. Default `0.`
+  :param float w: Longitude of pericenter in degrees. `0.`
+  :param float Omega: Longitude of ascending node in degrees. `0.`
+  :param float t0: Time of transit in days. Default `0.`
+  :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
+  :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
+         in the instant re-radiation limit, where the surface brightness is proportional \
+         to the cosine of the zenith angle (the angle between the line connecting \
+         the centers of the planet and the star and the line connecting the center of the \
+         planet and a given point on its surface. A fixed nightside temperature may be specified \
+         via the `tnight` kwarg. If `False`, treats the planet as a limb-darkened blackbody. \
+         Default `True`
+  :param float albedo: Planetary albedo (airless limit). Default `0.3`
+  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
+  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
+         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
+         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
+         the star. Each coefficient may either be a scalar, in which case limb darkening is \
+         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
+         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param int nz: Number of zenith angle slices. Default `11`
+  :param str color: Object color (for plotting). Default `r`
+
+  '''
+
+  return _Body(name, 'moon', host = host, **kwargs)
+
 class System(object):
   '''
 
@@ -617,11 +664,18 @@ class System(object):
     self._names = np.array([p.name for p in self.bodies])
     self.colors = [b.color for b in self.bodies]
 
-    # Compute the semi-major axis for each planet (in Earth radii)
+    # Compute the semi-major axis for each planet/moon (in Earth radii)
     for body in self.bodies:
       body._computed = False
-      body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-
+      body._host = 0
+      if body.body_type == 'planet':
+        body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
+      elif body.body_type == 'moon':
+        if type(body.host) is str:
+          body.host = getattr(self, body.host)
+        body._host = np.argmax(self._names == body.host.name)
+        body.a = ((body.per * DAYSEC) ** 2 * G * (body.host._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
+          
     # Reset animations
     self._animations = []
 

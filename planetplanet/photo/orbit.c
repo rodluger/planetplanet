@@ -243,11 +243,11 @@ int NBody(int np, BODY **body, SETTINGS settings) {
     f = TrueAnomaly(E, body[p]->ecc);  
 	  
 	  // Create the particle in REBOUND
-	  struct reb_particle planet = reb_tools_orbit_to_particle(r->G, primary, body[p]->m,
-	                               body[p]->a, body[p]->ecc, body[p]->inc, 
-	                               body[p]->Omega, body[p]->w, f);
-		reb_add(r, planet);
-	 
+    struct reb_particle planet = reb_tools_orbit_to_particle(r->G, primary, body[p]->m, // TODO: Change to exomoon host
+                                 body[p]->a, body[p]->ecc, body[p]->inc, 
+                                 body[p]->Omega, body[p]->w, f);
+    reb_add(r, planet);
+
 	}
 	
 	// Move to center of mass frame
@@ -280,7 +280,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
         // Go back and compute the ones we skipped
         // with a Keplerian solver using the current
         // osculating elements
-        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary);
+        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary); // TODO: Change to exomoon host
 
         for (i = last_t + 1; i < t; i++) {
           
@@ -346,7 +346,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   // Update the orbital elements of all the bodies
   for (p = 0; p < np; p++) {
     
-    struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[0]);
+    struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[0]); // TODO: Change to exomoon host
     body[p]->a = orbit.a;
     body[p]->ecc = orbit.e;
     body[p]->inc = orbit.inc;
