@@ -4,6 +4,17 @@
 #include "ppo.h"
 #include "complex.h"
 
+double Blackbody(double lambda, double T) {
+  /*
+  
+  */
+  
+  // Planck's law
+  double a = 2 * HPLANCK * CLIGHT * CLIGHT / (lambda * lambda * lambda * lambda * lambda);
+  double b = HPLANCK * CLIGHT / (lambda * KBOLTZ * T);
+  return a / (exp(b) - 1);
+}
+
 void BatmanFlux(double r, double x0, double y0, double ro, double teff, double distance, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw]) {
   /*
   
@@ -63,6 +74,12 @@ void BatmanFlux(double r, double x0, double y0, double ro, double teff, double d
       U = (d2 + x2 - ro2) / (2 * d * x[i]);
       V = (d2 + ro2 - x2) / (2 * d * ro);
       W = (-d + x[i] + ro) * (d + x[i] - ro) * (d - x[i] + ro) * (d + x[i] + ro); 
+      // HACK: Prevent numerical issues
+      if (W < 0) W = 0;
+      if (U < -1) U = -1;
+      else if (U > 1) U = 1;
+      if (V < -1 ) V = -1;
+      else if (V > 1) V = 1;
       A[i] = x2 * acos(U) + ro2 * acos(V) - 0.5 * sqrt(W);
     }
 
@@ -149,17 +166,6 @@ double EyeballTemperature(double za, double irrad, double albedo, double tnight)
   } else {
     return tnight;
   }
-}
-
-double Blackbody(double lambda, double T) {
-  /*
-  
-  */
-  
-  // Planck's law
-  double a = 2 * HPLANCK * CLIGHT * CLIGHT / (lambda * lambda * lambda * lambda * lambda);
-  double b = HPLANCK * CLIGHT / (lambda * KBOLTZ * T);
-  return a / (exp(b) - 1);
 }
 
 void GetRoots(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[4]) {
@@ -293,6 +299,8 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
       }
     
     } else {
+    
+      // TODO: Do this outside of the *i* loop.
     
       // Normalized polynomial limb darkening
       // Equation (15) in Luger et al. (2017)
@@ -819,9 +827,8 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     ro2[i] = ro[i] * ro[i];
     ro2[i] += SMALL * ro2[i];
   }
-  double vertices[maxvertices];
-  FUNCTION functions[maxfunctions];
-  FUNCTION boundaries[maxfunctions];
+  double d2 = distance * distance * PARSEC * PARSEC;
+  *iErr = ERR_NONE;
   
   // Zero out the flux
   for (m = 0; m < nw; m++) 
@@ -855,10 +862,12 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     
   }
   
+  // Allocate the expensive stuff
+  double vertices[maxvertices];
+  FUNCTION functions[maxfunctions];
+  FUNCTION boundaries[maxfunctions];
   double B[nz * no + 1][nw];
   double zenithgrid[nz * no];
-  double d2 = distance * distance * PARSEC * PARSEC;
-  *iErr = ERR_NONE;
 
   // Generate all the shapes and get their vertices and curves
   AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);     

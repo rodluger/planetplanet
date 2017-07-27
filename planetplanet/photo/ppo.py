@@ -705,17 +705,17 @@ class System(object):
       tmid = np.concatenate(([tmid[0] - (tmid[1] - tmid[0])], tmid, [tmid[-1] + (tmid[-1] - tmid[-2])]))
       time_hr = [np.linspace(tmid[i], tmid[i + 1], oversample) for i in range(len(tmid) - 1)]
       time_hr = np.concatenate(time_hr)
-
+      
     # Allocate memory
     self._malloc(len(time_hr), len(wavelength))
-
+    
     # Call the light curve routine
     err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength),
                      np.ctypeslib.as_ctypes(wavelength), len(self.bodies),
                      self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Flux` (%d)." % err
     self._computed = True
-
+    
     # Downbin to original time array
     for body in self.bodies:
 
