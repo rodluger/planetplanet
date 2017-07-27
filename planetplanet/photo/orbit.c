@@ -218,10 +218,10 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	// G in REARTH^3 / MEARTH / day^2
 	r->G = GEARTH;
 	
-	// 11th order symplectic corrector
+	// Settings for WHFAST: 11th order symplectic corrector
 	r->ri_whfast.safe_mode 	= 0;
 	r->ri_whfast.corrector 	= 11;		
-	r->integrator = REB_INTEGRATOR_WHFAST; // REB_INTEGRATOR_IAS15
+	r->integrator = settings.integrator;
 	r->heartbeat = heartbeat;
 	r->exact_finish_time = 1;
 

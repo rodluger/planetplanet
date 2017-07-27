@@ -377,6 +377,7 @@ class _Settings(ctypes.Structure):
   '''
 
   _fields_ = [("_nbody", ctypes.c_int),
+              ("_integrator", ctypes.c_int),
               ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
               ("_kepsolver", ctypes.c_int),
@@ -385,6 +386,8 @@ class _Settings(ctypes.Structure):
               ("maxpolyiter", ctypes.c_int),
               ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
+              ("_circleopt", ctypes.c_int),
+              ("_batmanopt", ctypes.c_int),
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
@@ -393,6 +396,7 @@ class _Settings(ctypes.Structure):
 
   def __init__(self, **kwargs):
     self.nbody = kwargs.pop('nbody', False)
+    self.integrator = kwargs.pop('integrator', 'whfast')
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = kwargs.pop('kepsolver', 'newton')
@@ -401,6 +405,8 @@ class _Settings(ctypes.Structure):
     self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
+    self.circleopt = kwargs.pop('circleopt', True)
+    self.batmanopt = kwargs.pop('batmanopt', True)
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
@@ -437,6 +443,38 @@ class _Settings(ctypes.Structure):
   @adaptive.setter
   def adaptive(self, val):
     self._adaptive = int(val)
+
+  @property
+  def circleopt(self):
+    return bool(self._circleopt)
+
+  @circleopt.setter
+  def circleopt(self, val):
+    self._circleopt = int(val)
+
+  @property
+  def batmanopt(self):
+    return bool(self._batmanopt)
+
+  @batmanopt.setter
+  def batmanopt(self, val):
+    self._batmanopt = int(val)
+
+  @property
+  def integrator(self):
+    if self._integrator == REB_INTEGRATOR_WHFAST:
+      return 'whfast'
+    elif self._integrator == REB_INTEGRATOR_IAS15:
+      return 'ias15' 
+
+  @integrator.setter
+  def integrator(self, val):
+    if val.lower() == 'whfast':
+      self._integrator = REB_INTEGRATOR_WHFAST
+    elif val.lower() == 'ias15':
+      self._integrator = REB_INTEGRATOR_IAS15
+    else:
+      raise ValueError("Unsupported integrator.")
 
   @property
   def quiet(self):
@@ -685,17 +723,17 @@ class System(object):
       tmid = np.concatenate(([tmid[0] - (tmid[1] - tmid[0])], tmid, [tmid[-1] + (tmid[-1] - tmid[-2])]))
       time_hr = [np.linspace(tmid[i], tmid[i + 1], oversample) for i in range(len(tmid) - 1)]
       time_hr = np.concatenate(time_hr)
-
+      
     # Allocate memory
     self._malloc(len(time_hr), len(wavelength))
-
+    
     # Call the light curve routine
     err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength),
                      np.ctypeslib.as_ctypes(wavelength), len(self.bodies),
                      self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Flux` (%d)." % err
     self._computed = True
-
+    
     # Downbin to original time array
     for body in self.bodies:
 

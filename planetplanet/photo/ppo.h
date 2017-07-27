@@ -69,6 +69,7 @@ typedef struct {
 
 typedef struct {
   int nbody;
+  int integrator;
   double keptol;
   int maxkepiter;
   int kepsolver;
@@ -77,6 +78,8 @@ typedef struct {
   int maxpolyiter;
   double timestep;
   int adaptive;
+  int circleopt;
+  int batmanopt;
   int quiet;
   double mintheta;
   int maxvertices;
@@ -110,7 +113,7 @@ typedef struct {
 double Blackbody(double lambda, double T);
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);
