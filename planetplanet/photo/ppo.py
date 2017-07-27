@@ -377,6 +377,7 @@ class _Settings(ctypes.Structure):
   '''
 
   _fields_ = [("_nbody", ctypes.c_int),
+              ("_integrator", ctypes.c_int),
               ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
               ("_kepsolver", ctypes.c_int),
@@ -395,6 +396,7 @@ class _Settings(ctypes.Structure):
 
   def __init__(self, **kwargs):
     self.nbody = kwargs.pop('nbody', False)
+    self.integrator = kwargs.pop('integrator', 'whfast')
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = kwargs.pop('kepsolver', 'newton')
@@ -457,6 +459,22 @@ class _Settings(ctypes.Structure):
   @batmanopt.setter
   def batmanopt(self, val):
     self._batmanopt = int(val)
+
+  @property
+  def integrator(self):
+    if self._integrator == REB_INTEGRATOR_WHFAST:
+      return 'whfast'
+    elif self._integrator == REB_INTEGRATOR_IAS15:
+      return 'ias15' 
+
+  @integrator.setter
+  def integrator(self, val):
+    if val.lower() == 'whfast':
+      self._integrator = REB_INTEGRATOR_WHFAST
+    elif val.lower() == 'ias15':
+      self._integrator = REB_INTEGRATOR_IAS15
+    else:
+      raise ValueError("Unsupported integrator.")
 
   @property
   def quiet(self):

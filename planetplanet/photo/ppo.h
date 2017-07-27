@@ -69,6 +69,7 @@ typedef struct {
 
 typedef struct {
   int nbody;
+  int integrator;
   double keptol;
   int maxkepiter;
   int kepsolver;
