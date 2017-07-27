@@ -40,12 +40,12 @@ void BatmanFlux(double r, double x0, double y0, double ro, double teff, double d
   }
   
   // Integration grid, constant in zenith angle
-  if (d - ro < 0) zmin = 0;
+  if (d - ro <= 0) zmin = 0;
   else zmin = asin(d - ro);
-  if (d + ro > 1) zmax = PI / 2;
+  if (d + ro >= 1) zmax = PI / 2;
   else zmax = asin(d + ro);
   for (i = 0; i < nz; i++) {
-    z = i / (nz - 1) * (zmax - SMALL - zmin) + zmin + SMALL;
+    z = (i + 0.) / (nz - 1.) * (zmax - SMALL - zmin) + zmin + SMALL;
     x[i] = sin(z);
   }
   
@@ -65,7 +65,7 @@ void BatmanFlux(double r, double x0, double y0, double ro, double teff, double d
       W = (-d + x[i] + ro) * (d + x[i] - ro) * (d - x[i] + ro) * (d + x[i] + ro); 
       A[i] = x2 * acos(U) + ro2 * acos(V) - 0.5 * sqrt(W);
     }
-    
+
   }
 
   // Integrate to compute the flux
@@ -73,7 +73,7 @@ void BatmanFlux(double r, double x0, double y0, double ro, double teff, double d
   
     // The area of the current segment
     area = (A[i] - A[i - 1]) * r * r;
-        
+    
     // Pre-compute mu, the cosine of the zenith angle
     // Note that cos(arcsin(x)) = sqrt(1 - x^2)
     xavg = 0.5 * (x[i] + x[i - 1]);
@@ -93,6 +93,7 @@ void BatmanFlux(double r, double x0, double y0, double ro, double teff, double d
       for (j = 0; j < nw; j++) {
         B[j] -= u[nw * k + j] * B0[j] * y;
       } 
+      
     }
     
     // Finally, flux is radiance times area
