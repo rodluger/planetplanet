@@ -347,6 +347,9 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 
   }
   
+  
+  // BUG: The orbital elements for moons are screwed up.
+  
 
   // Update the orbital elements of all the bodies
   for (p = 0; p < np; p++) {

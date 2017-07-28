@@ -1374,10 +1374,12 @@ class System(object):
     zorders = [-self.bodies[o].z_hr[ti] for o in occultors]
     occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
 
-    # Plot the orbits of all bodies
+    # Plot the orbits of all bodies except moons
     axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
     f = np.linspace(0, 2 * np.pi, 1000)
     for j, b in enumerate(self.bodies):
+      if b.body_type == 'moon':
+        continue
       if j == p:
         style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
       elif j in occultors:
