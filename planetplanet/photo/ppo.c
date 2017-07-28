@@ -185,7 +185,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // TODO: Interpolate to save time!
         
         // The orbital phase (edge-on limit!)
-        theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
+        theta = atan2(body[p]->z[t], body[p]->x[t]);
         
         // The irradiation
         dx = (body[0]->x[t] - body[p]->x[t]);
@@ -244,13 +244,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           if (!(body[p]->occultor[t] & ipow(2, o)))
             body[p]->occultor[t] += ipow(2, o);
       
-          // If the body is in quadrants II or III, we need to mirror
-          // the problem, since `OccultedFlux` assumes the star is always
-          // to the *left* of the body.
-          if (body[p]->x[t] < 0) 
-            xo[no] = -dx;
-          else 
-            xo[no] = dx;
+          // Relative position of the occultor
+          xo[no] = dx;          
           yo[no] = dy;
           ro[no++] = body[o]->r;
 
@@ -262,8 +257,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       if (no > 0) {
 
         // The orbital phase (edge-on limit!)
-        theta = atan(body[p]->z[t] / fabs(body[p]->x[t]));
-  
+        theta = atan2(body[p]->z[t], body[p]->x[t]);
+
         // The irradiation on the planets
         if (p > 0) {
           dx = (body[0]->x[t] - body[p]->x[t]);

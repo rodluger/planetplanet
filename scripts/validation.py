@@ -33,10 +33,18 @@ def ZenithAngle(x, y, r, theta):
   
   # Where are we relative to the terminator?
   xterm = np.sin(theta) * np.sqrt(np.abs(1 - y2))
-  if (x <= xterm):
-    return np.arcsin(np.sqrt(z))
-  else:
-    return np.pi - np.arcsin(np.sqrt(z))
+  
+  # Solve for the zenith angle
+  if np.abs(theta) <= np.pi / 2:
+    if (x <= xterm):
+      return np.arcsin(np.sqrt(z)) 
+    else:
+      return np.pi - np.arcsin(np.sqrt(z))
+  else:  
+    if (x >= -xterm):
+      return np.arcsin(np.sqrt(z)) 
+    else:
+      return np.pi - np.arcsin(np.sqrt(z))
 
 def Radiance(z, irrad, lam = 15, albedo = 0.3, tnight = 40):
   '''
@@ -170,11 +178,10 @@ def ValidateOccultations():
           continue
 
         # Get the orbital phase
-        theta = np.arctan(c.z[t] / np.abs(c.x[t]))
+        theta = np.arctan2(c.z[t], c.x[t])
         
-        # Zenith angle. Note that we mirror the problem since
-        # planet `c` is to the left of the star!
-        z = ZenithAngle(-(x - c.x[t]), y - c.y[t], c.r, theta)
+        # Zenith angle
+        z = ZenithAngle(x - c.x[t], y - c.y[t], c.r, theta)
         
         # Get the irradiance on the planet
         d2 = c.x[t] ** 2 + c.y[t] ** 2 + c.z[t] ** 2

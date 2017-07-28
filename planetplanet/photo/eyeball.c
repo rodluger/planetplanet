@@ -234,7 +234,6 @@ double ZenithAngle(double x, double y, double r, double theta) {
   double y2 = y * y;
   double xterm, z;
   
-  
   // Are we dealing with circles?
   if ((fabs(fabs(theta) - PI / 2)) < SMALL) {
     if (theta > 0)
@@ -246,11 +245,18 @@ double ZenithAngle(double x, double y, double r, double theta) {
   // This is a solution to a quadratic equation in z = sin(za) **  2 
   z = 0.5 * ((1 - 2 * x2 - y2) * cos(2 * theta) + 2 * x * sqrt(1 - x2 - y2) * sin(2 * theta) + y2 + 1);
   xterm = sin(theta) * sqrt(fabs(1 - y2));
-  if (x <= xterm)
-    return asin(sqrt(z));
-  else
-    return PI - asin(sqrt(z));
-  
+  if (fabs(theta) <= PI / 2) {
+    if (x <= xterm)
+      return asin(sqrt(z));
+    else
+      return PI - asin(sqrt(z));
+  } else {
+    if (x >= -xterm)
+      return asin(sqrt(z));
+    else
+      return PI - asin(sqrt(z));
+  }
+
 }
 
 void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
@@ -435,9 +441,7 @@ double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   return FR - FL;
 }
 
-void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], 
-                           double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices,
-                           int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
   /*
   
   */    
@@ -450,10 +454,27 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
     ro2[i] = ro[i] * ro[i];
     ro2[i] += TINY * ro2[i];
   }
-  ELLIPSE *ellipse;
-  ellipse = malloc(sizeof(ELLIPSE)); 
+  
+  // Check if this ellipse is at all visible
+  double zmin, zmax;
+  if (theta <= 0) {
+    zmax = PI;
+    if (theta <= -PI / 2)
+      zmin = PI + theta;
+    else
+      zmin = -theta;
+  } else {
+    zmin = 0;
+    if (theta >= PI / 2)
+      zmax = theta;
+    else
+      zmax = PI - theta;
+  }
+  if ((zenith_angle < zmin) || (zenith_angle > zmax)) return;
   
   // Construct the ellipse
+  ELLIPSE *ellipse;
+  ellipse = malloc(sizeof(ELLIPSE)); 
   ellipse->circle = 0;
   ellipse->a = r * fabs(sin(zenith_angle));
   ellipse->b = ellipse->a * fabs(sin(theta));
@@ -462,10 +483,10 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
   
   // The x position of the intersection with the occulted planet
   // limb, relative to the ellipse center
-  xlimb = r * cos(zenith_angle) * sin(theta) * tan(theta);
+  xlimb = -r * cos(zenith_angle) * sin(theta) * tan(theta);
 
   // Ellipse x minimum
-  if (((theta > 0) && (ellipse->b < xlimb)) || ((theta <= 0) && (ellipse->b > xlimb))) {
+  if (((theta >= 0) && (zenith_angle <= theta)) || ((theta <= 0) && (zenith_angle >= -theta))) {
     ellipse->xmin = ellipse->x0 - ellipse->b;
     // Is this point inside __at least__ one occultor?
     for (i = 0; i < no; i++) {
@@ -475,15 +496,15 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
           printf("ERROR: Maximum number of vertices exceeded.\n");
           abort();
         }
-        break;    
+        break;
       }
     }
   } else {
-    ellipse->xmin = ellipse->x0 - xlimb;
+    ellipse->xmin = ellipse->x0 + xlimb;
   }
-  
+    
   // Ellipse x maximum
-  if (((theta > 0) && (ellipse->b > -xlimb)) || ((theta <= 0) && (ellipse->b < -xlimb))) {
+  if (((theta >= 0) && (zenith_angle <= PI - theta)) || ((theta <= 0) && (zenith_angle >= PI + theta))) {
     ellipse->xmax = ellipse->x0 + ellipse->b;
     // Is this point inside __at least__ one occultor?
     for (i = 0; i < no; i++) {
@@ -497,12 +518,12 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
       }
     }
   } else {
-    ellipse->xmax = ellipse->x0 - xlimb;
+    ellipse->xmax = ellipse->x0 + xlimb;
   }
   
   // Are the limb vertices inside __at least__ one occultor? 
   if (ellipse->b >= fabs(xlimb)) {
-    x = ellipse->x0 - xlimb;
+    x = ellipse->x0 + xlimb;
     y = fupper(x, ellipse);
     for (i = 0; i < no; i++) {
       if ((x - x0[i]) * (x - x0[i]) + (y - y0[i]) * (y - y0[i]) < ro2[i]) {
@@ -536,8 +557,9 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
     // Solve the quartic
     GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
     
+    // Keep only real roots within the visible bounds of the ellipse
     for (j = 0; j < 4; j++) {
-      if (!(isnan(roots[j])) && (((theta > 0) && (roots[j] > ellipse->x0 - xlimb)) || ((theta <= 0) && (roots[j] < ellipse->x0 - xlimb)))) {
+      if (!(isnan(roots[j])) && (roots[j] > ellipse->xmin) && (roots[j] < ellipse->xmax)) {
         vertices[(*v)++] = roots[j];
         if (*v > maxvertices) {
             printf("ERROR: Maximum number of vertices exceeded.\n");
@@ -562,8 +584,7 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
   
 }
 
-void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], 
-                          int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
   /*
   
   */    
@@ -803,10 +824,7 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   
 }
 
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, 
-                  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, 
-                  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw, 
-                  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter,  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
   */
@@ -1033,9 +1051,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
    
 }
 
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, 
-                    double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, 
-                    int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1,  double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   /*
   
   */

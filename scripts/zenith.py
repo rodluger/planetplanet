@@ -33,11 +33,19 @@ def ZenithAngle(x, y, r, theta):
   
   # Where are we relative to the terminator?
   xterm = np.sin(theta) * np.sqrt(np.abs(1 - y2))
-  if (x <= xterm):
-    return np.arcsin(np.sqrt(z))
-  else:
-    return np.pi - np.arcsin(np.sqrt(z))
-
+  
+  # Solve for the zenith angle
+  if np.abs(theta) <= np.pi / 2:
+    if (x <= xterm):
+      return np.arcsin(np.sqrt(z)) 
+    else:
+      return np.pi - np.arcsin(np.sqrt(z))
+  else:  
+    if (x >= -xterm):
+      return np.arcsin(np.sqrt(z)) 
+    else:
+      return np.pi - np.arcsin(np.sqrt(z))
+      
 fig, ax = pl.subplots(1)
 ax.axis('off')
 fig.subplots_adjust(bottom = 0.2)
@@ -51,7 +59,7 @@ ax.set_xlim(-1.1,1.1)
 ax.set_ylim(-1.1,1.1)
 
 axslider = pl.axes([0.3, 0.05, 0.44, 0.03])
-slider = Slider(axslider, r'$\theta$', -90., 90., valinit = 45.)
+slider = Slider(axslider, r'$\theta$', -180., 180., valinit = 45.)
 
 def update(val):
   theta = slider.val
