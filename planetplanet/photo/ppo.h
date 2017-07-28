@@ -52,6 +52,7 @@ typedef struct {
   int blackbody;
   double dpsi;
   double dlambda;
+  int host;
   int nu;
   int nz;
   int nt;
