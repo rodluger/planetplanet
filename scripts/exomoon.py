@@ -32,9 +32,6 @@ m = Moon('bI', 'b', m = 0., per = 0.1, inc = 90., r = 0.5, t0 = 0.5,
 # Compute the light curve
 system = System(star, b, m, nbody = True, integrator = 'ias15', timestep = MINUTE)
 time = np.arange(-1.1, 1.1, 0.1 * MINUTE)
-
-time = np.arange(-0.52, -0.48, 0.1 * MINUTE) # debug
-
 system.compute(time, lambda2 = 100)
 
 # Plot

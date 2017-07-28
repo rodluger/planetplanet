@@ -1221,7 +1221,8 @@ class System(object):
             duration = np.argmax(body.occultor[:i][::-1] & 2 ** occ == 0)
             if duration > 0:
 
-              # Orbital phase
+              # Orbital phase, **measured from transit**
+              # At transit, phase = 0; at secondary, phase = 180.
               phase = np.arctan2(body.x[i], -body.z[i]) * 180 / np.pi
 
               # Compute the minimum impact parameter
@@ -1468,10 +1469,10 @@ class System(object):
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
     if (occulted.nu == 0) and not (occulted.body_type in ['planet', 'moon'] and occulted.airless == False):
-      theta = np.arctan(occulted.z_hr[t] / np.abs(occulted.x_hr[t]))
+      theta = np.arctan2(occulted.z_hr[t], occulted.x_hr[t])
     else:
       theta = np.pi / 2
-    
+
     # Get the occultors
     if occultors is None:
       occultors = []
