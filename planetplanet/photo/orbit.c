@@ -203,6 +203,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   double M, E, f, d;
   double cwf, swf, co, so, ci, si;
   int last_t;
+  int moons = 0;
   struct reb_simulation* r = reb_create_simulation();
   progress_t *progress = progress_new(body[0]->nt, 50);
   
@@ -232,7 +233,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 
 	// Initialize the planets
 	for (p = 1; p < np; p++) {
-	
+	  
 	  // Get the true anomaly at the first timestep
     M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);                  
     if (settings.kepsolver == MDFAST)
@@ -243,11 +244,14 @@ int NBody(int np, BODY **body, SETTINGS settings) {
     f = TrueAnomaly(E, body[p]->ecc);  
 	  
 	  // Create the particle in REBOUND
-    struct reb_particle planet = reb_tools_orbit_to_particle(r->G, primary, body[p]->m, // TODO: Change to exomoon host
+    struct reb_particle planet = reb_tools_orbit_to_particle(r->G, r->particles[body[p]->host], body[p]->m,
                                  body[p]->a, body[p]->ecc, body[p]->inc, 
                                  body[p]->Omega, body[p]->w, f);
     reb_add(r, planet);
-
+    
+    // Is this a moon?
+    if (body[p]->host != 0) moons++;
+     
 	}
 	
 	// Move to center of mass frame
@@ -265,7 +269,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 	for (t = 1; t < body[0]->nt; t++) {
     
     // Do we need to synchronize this time step?
-    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.timestep) || (t == body[0]->nt - 1)) {
+    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.timestep) || (t == body[0]->nt - 1) || moons) {
     
       // Yes: take one step
       reb_integrate(r, body[0]->time[t] - body[0]->time[0]);
@@ -280,7 +284,8 @@ int NBody(int np, BODY **body, SETTINGS settings) {
         // Go back and compute the ones we skipped
         // with a Keplerian solver using the current
         // osculating elements
-        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary); // TODO: Change to exomoon host
+        // NOTE: I am unable to assign a planet as the primary here! Leads to terrible orbital errors. Need to investigate why.
+        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary);
 
         for (i = last_t + 1; i < t; i++) {
           
@@ -346,7 +351,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
   // Update the orbital elements of all the bodies
   for (p = 0; p < np; p++) {
     
-    struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[0]); // TODO: Change to exomoon host
+    struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[body[p]->host]);
     body[p]->a = orbit.a;
     body[p]->ecc = orbit.e;
     body[p]->inc = orbit.inc;

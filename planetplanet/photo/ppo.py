@@ -211,28 +211,28 @@ class _Body(ctypes.Structure):
 
   @property
   def m(self):
-    if self.body_type == 'planet':
+    if self.body_type in ['planet', 'moon']:
       return self._m
     elif self.body_type == 'star':
       return self._m / MSUNMEARTH
 
   @m.setter
   def m(self, val):
-    if self.body_type == 'planet':
+    if self.body_type in ['planet', 'moon']:
       self._m = val
     elif self.body_type == 'star':
       self._m = val * MSUNMEARTH
 
   @property
   def r(self):
-    if self.body_type == 'planet':
+    if self.body_type in ['planet', 'moon']:
       return self._r
     elif self.body_type == 'star':
       return self._r / RSUNREARTH
 
   @r.setter
   def r(self, val):
-    if self.body_type == 'planet':
+    if self.body_type in ['planet', 'moon']:
       self._r = val
     elif self.body_type == 'star':
       self._r = val * RSUNREARTH
@@ -1458,7 +1458,7 @@ class System(object):
     r = occulted._r
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
-    if (occulted.nu == 0) and not (occulted.body_type == 'planet' and occulted.airless == False):
+    if (occulted.nu == 0) and not (occulted.body_type in ['planet', 'moon'] and occulted.airless == False):
       theta = np.arctan(occulted.z_hr[t] / np.abs(occulted.x_hr[t]))
     else:
       theta = np.pi / 2
