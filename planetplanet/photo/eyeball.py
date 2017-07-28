@@ -77,7 +77,7 @@ def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 
     co = occultor.get('color', 'lightgray')
     ao = occultor.get('alpha', 1)
     xo, yo = xy(xo, yo)
-    occ[i] = pl.Circle((xo, yo), ro, color = co, ec = 'k', alpha = ao, clip_on = False)
+    occ[i] = pl.Circle((xo, yo), ro, color = co, ec = 'k', alpha = ao, zorder = zo, clip_on = False)
     ax.add_artist(occ[i])
     
   # Plot the occulted body

@@ -32,23 +32,11 @@ system.compute(time)
 for body in system.bodies:
   body.time -= body.time[0]
   body.time_hr -= body.time_hr[0]
-fig, ax, ann = system.plot_lightcurve()
-
-# Manually tweak the positions of some of the annotations for visibility
-ann[18].set_position((7, -5))
-ann[19].set_position((7, -5))
-ann[29].set_position((0, -20))
-ann[38].set_position((-3, -7))
-ann[43].set_position((0,-25))
-ann[48].set_position((5, -15))
-ann[49].set_position((-5, -15))
-ann[50].set_position((3, -15))
-ann[51].set_position((0, -32))
-ann[52].set_position((0, -32))
+fig, ax = system.plot_lightcurve()
 
 # Appearance
 ax.set_xlim(0, 10.)
-ax.set_ylim(0.9819, 1.005)
+ax.set_ylim(0.9815, 1.005)
 for body in system.bodies:
   ax.plot([-1.001e3, -1.000e3], [1, 1], color = body.color, label = body.name, lw = 4)
 ax.annotate("Occultations by", xy = (0.175, 0.92), ha = 'left', va = 'bottom', fontweight = 'bold', fontsize = 10, xycoords = "axes fraction")

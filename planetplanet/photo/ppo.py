@@ -18,6 +18,7 @@ from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
+from matplotlib.widgets import Button
 from scipy.integrate import quad
 from tqdm import tqdm
 rdbu = pl.get_cmap('RdBu_r')
@@ -54,7 +55,9 @@ class _Animation(object):
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100,
                                              interval = interval, repeat = True)
-    self.fig.canvas.mpl_connect('button_press_event', self.toggle)
+    self.axbutton = pl.axes([0.185, 0.12, 0.1, 0.03])
+    self.button = Button(self.axbutton, 'Play', color = 'lightgray')
+    self.button.on_clicked(self.toggle)
 
     # Save?
     if gifname is not None:
@@ -70,14 +73,18 @@ class _Animation(object):
     '''
 
     '''
-
+    
+    if self.pause:
+      self.button.label.set_text('Pause')
+    else:
+      self.button.label.set_text('Play')
     self.pause ^= True
 
   def animate(self, j):
     '''
 
     '''
-
+    
     if not self.pause:
 
       # Normalize the time index
@@ -1524,8 +1531,11 @@ class System(object):
     ax.set_ylim(ymin - 0.2 * yrng, ymax + 0.2 * yrng)
     ax.margins(0, None)
 
-    # Label all of the events
-    ann = []
+    # Label all of the events. Store the list of annotations
+    # if the user wants to tweak their positions
+    self._lc_annotations = []
+    nann = np.zeros(100)
+    events = []
     for body in self.bodies:
       for i, t in enumerate(body._inds):
         tstart = t[0] + np.argmax(body.occultor_hr[t] > 0)
@@ -1541,11 +1551,20 @@ class System(object):
         tmin = body.time_hr[t][np.argmin(flux_hr[t])]
         fmin = np.min(flux_hr[t])
         for n, occultor in enumerate([self.bodies[o] for o in occultors]):
-          ann.append(ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
-                     va = 'center', color = occultor.color, fontweight = 'bold',
-                     fontsize = 10, xytext = (0, -15), textcoords = 'offset points'))
-
-    return fig, ax, ann
+          # Keep track of events so we don't double count them
+          event_id = [body.name, occultor.name, tmid]
+          if event_id not in events:
+            # This keeps track of how many annotations we're trying to squeeze
+            # into the same time bin. Add a vertical shift to avoid overlaps
+            idx = int(100 * (tmin - body.time_hr[0]) / (body.time_hr[-1] - body.time_hr[0]))
+            dy = -15 * (1 + nann[idx])
+            nann[idx] += 1
+            self._lc_annotations.append(ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
+                                        va = 'center', color = occultor.color, fontweight = 'bold',
+                                        fontsize = 10, xytext = (0, dy), textcoords = 'offset points', clip_on = True))
+            events.append(event_id)
+          
+    return fig, ax
 
   def _onpick(self, event):
     '''
