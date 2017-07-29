@@ -22,7 +22,7 @@ def ZenithColor(z, cmap = 'inferno'):
   return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
 
 def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 0, 
-         occultors = [], cmap = 'inferno', fig = None, pos = None):
+         rotation = 0, occultors = [], cmap = 'inferno', fig = None, pos = None):
   '''
 
   '''
@@ -35,7 +35,7 @@ def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 
   alpha = np.arctan2(y_ss, -x_ss)
   
   # The rotation transformation
-  xy = lambda x, y: (x * np.cos(alpha) - y * np.sin(alpha), y * np.cos(alpha) + x * np.sin(alpha))
+  xy = lambda x, y: (x * np.cos(alpha + rotation) - y * np.sin(alpha + rotation), y * np.cos(alpha + rotation) + x * np.sin(alpha + rotation))
   
   # Compute the new effective theta 
   if theta + dpsi < -np.pi:
@@ -50,8 +50,8 @@ def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 
   # Set up the floating axis
   if fig is None:
     fig = pl.figure(figsize = (6,6))
-  tr = Affine2D().rotate_deg(-alpha * 180 / np.pi)
-  x = 1. / (np.abs(np.cos(alpha)) + np.abs(np.sin(alpha)))
+  tr = Affine2D().rotate_deg(-(alpha + rotation) * 180 / np.pi)
+  x = 1. / (np.abs(np.cos(alpha + rotation)) + np.abs(np.sin(alpha + rotation)))
   scale = max([r] + [occultor['r'] for occultor in occultors])
   x *= scale
   grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(-x, x, -x, x))
