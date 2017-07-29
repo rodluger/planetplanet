@@ -24,7 +24,6 @@ system.compute_orbits(time)
 
 # Plot the orbit
 fig, ax = pl.subplots(1, figsize = (8,8))
-fig.subplots_adjust(left = 0, top = 1, bottom = 0, right = 1)
 ax.plot(b.x, b.y, 'k-', alpha = 0.5)
 
 # Adjust the plot range
@@ -35,8 +34,7 @@ xmin -= 0.1 * dx
 xmax += 0.1 * dx
 ax.set_xlim(xmin, xmax)
 ax.set_ylim(xmin, xmax)
-x = (b.x - xmin) / (xmax - xmin)
-y = (b.y - xmin) / (xmax - xmin)
+ax.axis('off')
 
 # Get the indices of the images we'll plot, sorted by zorder
 inds = np.array(list(range(0, 1000, 50)), dtype = int)
@@ -66,9 +64,15 @@ for i in inds:
   else:
     theta = np.pi + np.arccos(xss_r / b._r)
   
-  
+  # Plot the radial vector
   ax.plot([0, b.x[i]], [0, b.y[i]], 'k-', alpha = 0.5, lw = 1)
-  eyeball.Draw(theta = theta, rotation = rotation, fig = fig, pos = [x[i] - 0.015, y[i] - 0.015, 0.03, 0.03])
+  
+  # Get the figure coordinates of the point
+  disp_coords = ax.transData.transform((b.x[i], b.y[i]))
+  x, y = fig.transFigure.inverted().transform(disp_coords)
+  
+  # Draw the planet
+  eyeball.Draw(theta = theta, rotation = rotation, fig = fig, pos = [x - 0.015, y - 0.015, 0.03, 0.03])
 
 # Show
 pl.show()
