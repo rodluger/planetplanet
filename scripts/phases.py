@@ -17,7 +17,7 @@ import matplotlib.pyplot as pl
 
 # Get orbital elements
 star = Star('A')
-b = Planet('b', per = 10., inc = 70., Omega = 30., t0 = 0, ecc = 0.5, w = 90., dlambda = 0, dpsi = 0)
+b = Planet('b', per = 10., inc = 80., Omega = 30., t0 = 0, ecc = 0., w = 0., dlambda = 0, dpsi = 30)
 system = System(star, b)
 time = np.linspace(-5, 5, 1000)
 system.compute_orbits(time)
@@ -67,8 +67,21 @@ for i in inds:
   Yh = 0
   Zh = Z - Z * (b._r / r)
   
-  # Add the offset
-  # TODO
+  # Get the coordinates relative to the planet center
+  dXh = Xh - X
+  dYh = Yh - Y
+  dZh = Zh - Z
+  
+  # Add the offset in longitude. This is a counterclockwise rotation
+  # in the xz plane by an angle `dpsi` about the planet center
+  dXh, dZh = dXh * np.cos(b._dpsi) - dZh * np.sin(b._dpsi), dZh * np.cos(b._dpsi) + dXh * np.sin(b._dpsi)
+  
+  # Add the offset in latitude. This is trickier. TODO
+  
+  # Get the coordinates relative to the star
+  Xh = X + dXh
+  Yh = Y + dYh
+  Zh = Z + dZh
 
   # Rotate back to the x_y_z_ frame
   xh_ = Xh
@@ -87,13 +100,13 @@ for i in inds:
   # relative to the planet center
   xhrc = (xh - x) * np.cos(rotation) - (yh - y) * np.sin(rotation)
   
-  # Prevent tiny numerical errors yielding NaNs in the arccos below
+  # Prevent tiny numerical errors from yielding NaNs in the arccos below
   if xhrc < -1: 
     xhrc = -1
   elif xhrc > 1: 
     xhrc = 1
   
-  # Find the effective orbital phase
+  # Find the effective phase angle
   if zh >= 0:
     theta = np.arccos(-xhrc / b._r)
   else:
