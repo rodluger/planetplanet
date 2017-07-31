@@ -17,7 +17,7 @@ import matplotlib.pyplot as pl
 
 # Get orbital elements
 star = Star('A')
-b = Planet('b', per = 10., inc = 80., Omega = 30., t0 = 0, ecc = 0., w = 0., dlambda = 0, dpsi = 30)
+b = Planet('b', per = 10., inc = 80., Omega = 30., t0 = 0, ecc = 0., w = 0., dlambda = 0, dpsi = 0)
 system = System(star, b)
 time = np.linspace(-5, 5, 1000)
 system.compute_orbits(time)
@@ -43,80 +43,88 @@ inds = inds[np.argsort([-b.z[i] for i in inds])]
 # Plot images at different phases
 for i in inds:
   
-  # The position of the planet in the xyz frame
-  x = b.x[i]
-  y = b.y[i]
-  z = b.z[i]
-  r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+  # The position of the planet in the original frame (frame #0)
+  x0 = b.x[i]
+  y0 = b.y[i]
+  z0 = b.z[i]
+  r = np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2)
     
-  # Rotate to a frame XYZ in which the orbital plane is the xz plane.
-  # First rotate so that the orbital plane is parallel to the x axis.
-  # This is the x_y_z_ frame
-  x_ = x * np.cos(b._Omega) + y * np.sin(b._Omega)
-  y_ = y * np.cos(b._Omega) - x * np.sin(b._Omega)
-  z_ = z
+  # Rotate so that the orbital plane is parallel to the x axis (frame #1)
+  x1 = x0 * np.cos(b._Omega) + y0 * np.sin(b._Omega)
+  y1 = y0 * np.cos(b._Omega) - x0 * np.sin(b._Omega)
+  z1 = z0
   
-  # Now rotate so that it's also parallel to the z axis to get to the
-  # XYZ frame, where we will perform our hotspot shift(s)
-  X = x_
-  Y = 0
-  Z = z_ * np.sin(b._inc) + y_ * np.cos(b._inc)
+  # Now rotate so that it's also parallel to the z axis (frame #2)
+  x2 = x1
+  y2 = 0
+  z2 = z1 * np.sin(b._inc) + y1 * np.cos(b._inc)
   
-  # Get the coordinates of the hotspot in the XYZ frame
-  Xh = X - X * (b._r / r)
-  Yh = 0
-  Zh = Z - Z * (b._r / r)
+  # Finally, rotate so that the substellar point faces the observer (frame #3)
+  # (TODO)
+  x3 = x2
+  y3 = y2
+  z3 = z2
+  
+  # Get the coordinates of the hotspot in this frame
+  xh3 = x3 - x3 * (b._r / r)
+  yh3 = 0
+  zh3 = z3 - z3 * (b._r / r)
   
   # Get the coordinates relative to the planet center
-  dXh = Xh - X
-  dYh = Yh - Y
-  dZh = Zh - Z
+  dxh3 = xh3 - x3
+  dyh3 = yh3 - y3
+  dzh3 = zh3 - z3
   
   # Add the offset in longitude. This is a counterclockwise rotation
   # in the xz plane by an angle `dpsi` about the planet center
-  dXh, dZh = dXh * np.cos(b._dpsi) - dZh * np.sin(b._dpsi), dZh * np.cos(b._dpsi) + dXh * np.sin(b._dpsi)
+  dxh3, dzh3 = dxh3 * np.cos(b._dpsi) - dzh3 * np.sin(b._dpsi), dzh3 * np.cos(b._dpsi) + dxh3 * np.sin(b._dpsi)
   
-  # Add the offset in latitude. This is trickier. TODO
+  # Add the offset in latitude. This is trickier (TODO)
   
   # Get the coordinates relative to the star
-  Xh = X + dXh
-  Yh = Y + dYh
-  Zh = Z + dZh
-
-  # Rotate back to the x_y_z_ frame
-  xh_ = Xh
-  yh_ = Yh * np.sin(b._inc) + Zh * np.cos(b._inc)
-  zh_ = Zh * np.sin(b._inc) - Yh * np.cos(b._inc)
+  xh3 = x3 + dxh3
+  yh3 = y3 + dyh3
+  zh3 = z3 + dzh3
   
-  # Now rotate back to the original xyz frame
-  xh = xh_ * np.cos(b._Omega) - yh_ * np.sin(b._Omega)
-  yh = yh_ * np.cos(b._Omega) + xh_ * np.sin(b._Omega)
-  zh = zh_
+  # Rotate back to frame #2 (TODO)
+  xh2 = xh3
+  yh2 = yh3
+  zh2 = zh3
+  
+  # Rotate back to frame #1
+  xh1 = xh2
+  yh1 = yh2 * np.sin(b._inc) + zh2 * np.cos(b._inc)
+  zh1 = zh2 * np.sin(b._inc) - yh2 * np.cos(b._inc)
+  
+  # Finally, rotate back to the original frame (frame #0)
+  xh0 = xh1 * np.cos(b._Omega) - yh1 * np.sin(b._Omega)
+  yh0 = yh1 * np.cos(b._Omega) + xh1 * np.sin(b._Omega)
+  zh0 = zh1
 
   # Compute the effective rotation angle
-  rotation = -np.arctan((yh - y) / (xh - x))
+  rotation = -np.arctan((yh0 - y0) / (xh0 - x0))
   
-  # Find the x coordinate of the hotspot in the rotated frame,
+  # Find the x coordinate of the hotspot in the rotated frame (r)
   # relative to the planet center
-  xhrc = (xh - x) * np.cos(rotation) - (yh - y) * np.sin(rotation)
+  dxhr = (xh0 - x0) * np.cos(rotation) - (yh0 - y0) * np.sin(rotation)
   
   # Prevent tiny numerical errors from yielding NaNs in the arccos below
-  if xhrc < -1: 
-    xhrc = -1
-  elif xhrc > 1: 
-    xhrc = 1
+  if dxhr < -1: 
+    dxhr = -1
+  elif dxhr > 1: 
+    dxhr = 1
   
   # Find the effective phase angle
-  if zh >= 0:
-    theta = np.arccos(-xhrc / b._r)
+  if zh0 >= 0:
+    theta = np.arccos(-dxhr / b._r)
   else:
-    theta = np.pi + np.arccos(xhrc / b._r)
+    theta = np.pi + np.arccos(dxhr / b._r)
   
   # Plot the radial vector
-  ax.plot([0, x], [0, y], 'k-', alpha = 0.5, lw = 1)
+  ax.plot([0, x0], [0, y0], 'k-', alpha = 0.5, lw = 1)
   
   # Get the figure coordinates of the point
-  disp_coords = ax.transData.transform((x, y))
+  disp_coords = ax.transData.transform((x0, y0))
   xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
   # Draw the planet
