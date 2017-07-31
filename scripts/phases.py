@@ -17,8 +17,8 @@ import matplotlib.pyplot as pl
 
 # Get orbital elements
 star = Star('A')
-b = Planet('b', per = 10., inc = 80., Omega = 30., t0 = 0, ecc = 0.5, w = 0., dlambda = 0, dpsi = 180)
-system = System(star, b)
+b = Planet('b', per = 10., inc = 70., Omega = 30., t0 = 0, ecc = 0., w = 0, dlambda = 0, dpsi = 0)
+system = System(star, b, nbody = True)
 time = np.linspace(-5, 5, 1000)
 system.compute_orbits(time)
 
@@ -59,37 +59,37 @@ for i in inds:
   y2 = 0
   z2 = z1 * np.sin(b._inc) + y1 * np.cos(b._inc)
   
-  # Finally, rotate so that the substellar point faces the observer (frame #3)
+  # Now rotate so that the substellar point faces the observer (frame #3)
   # This is a counter-clockwise rotation through an angle `xi`: 
   xi = np.pi / 2 - np.arctan2(z2, x2)
   x3 = 0
   y3 = 0
   z3 = z2 * np.cos(xi) + x2 * np.sin(xi)
     
-  # Get the coordinates of the hotspot in this frame
-  xh3 = 0
-  yh3 = 0
-  zh3 = z3 - z3 * (b._r / r)
+  # Finally, translate the axis so that the planet is centered at the origin (frame #4)
+  x4 = 0
+  y4 = 0
+  z4 = 0
   
-  # Get the coordinates relative to the planet center
-  dxh3 = 0
-  dyh3 = 0
-  dzh3 = zh3 - z3
+  # Get the coordinates of the hot spot (frame #4)
+  xh4 = 0
+  yh4 = 0
+  zh4 = -z3 * (b._r / r)
   
   # Add the offset in latitude. This is a *clockwise* rotation in the
   # zy plane by an angle `dlambda` about the planet center
-  dzh3, dyh3 = dzh3 * np.cos(b._dlambda) + dyh3 * np.sin(b._dlambda), \
-               dyh3 * np.cos(b._dlambda) - dzh3 * np.sin(b._dlambda)
+  zh4, yh4 = zh4 * np.cos(b._dlambda) + yh4 * np.sin(b._dlambda), \
+             yh4 * np.cos(b._dlambda) - zh4 * np.sin(b._dlambda)
   
   # Add the offset in longitude. This is a counterclockwise rotation
   # in the xz plane by an angle `dpsi` about the planet center
-  dxh3 = -dzh3 * np.sin(b._dpsi)
-  dzh3 = dzh3 * np.cos(b._dpsi)
+  xh4, zh4 = -zh4 * np.sin(b._dpsi), \
+              zh4 * np.cos(b._dpsi)
   
   # Get the coordinates relative to the star
-  xh3 = x3 + dxh3
-  yh3 = y3 + dyh3
-  zh3 = z3 + dzh3
+  xh3 = x3 + xh4
+  yh3 = y3 + yh4
+  zh3 = z3 + zh4
   
   # Rotate back to frame #2
   xh2 = xh3 * np.cos(xi) + zh3 * np.sin(xi)
