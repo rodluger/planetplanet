@@ -17,7 +17,7 @@ import matplotlib.pyplot as pl
 
 # Get orbital elements
 star = Star('A')
-b = Planet('b', per = 10., inc = 80., Omega = 30., t0 = 0, ecc = 0., w = 0., dlambda = 0, dpsi = 0)
+b = Planet('b', per = 10., inc = 80., Omega = 30., t0 = 0, ecc = 0.5, w = 0., dlambda = 0, dpsi = 180)
 system = System(star, b)
 time = np.linspace(-5, 5, 1000)
 system.compute_orbits(time)
@@ -60,36 +60,41 @@ for i in inds:
   z2 = z1 * np.sin(b._inc) + y1 * np.cos(b._inc)
   
   # Finally, rotate so that the substellar point faces the observer (frame #3)
-  # (TODO)
-  x3 = x2
-  y3 = y2
-  z3 = z2
-  
+  # This is a counter-clockwise rotation through an angle `xi`: 
+  xi = np.pi / 2 - np.arctan2(z2, x2)
+  x3 = 0
+  y3 = 0
+  z3 = z2 * np.cos(xi) + x2 * np.sin(xi)
+    
   # Get the coordinates of the hotspot in this frame
-  xh3 = x3 - x3 * (b._r / r)
+  xh3 = 0
   yh3 = 0
   zh3 = z3 - z3 * (b._r / r)
   
   # Get the coordinates relative to the planet center
-  dxh3 = xh3 - x3
-  dyh3 = yh3 - y3
+  dxh3 = 0
+  dyh3 = 0
   dzh3 = zh3 - z3
+  
+  # Add the offset in latitude. This is a *clockwise* rotation in the
+  # zy plane by an angle `dlambda` about the planet center
+  dzh3, dyh3 = dzh3 * np.cos(b._dlambda) + dyh3 * np.sin(b._dlambda), \
+               dyh3 * np.cos(b._dlambda) - dzh3 * np.sin(b._dlambda)
   
   # Add the offset in longitude. This is a counterclockwise rotation
   # in the xz plane by an angle `dpsi` about the planet center
-  dxh3, dzh3 = dxh3 * np.cos(b._dpsi) - dzh3 * np.sin(b._dpsi), dzh3 * np.cos(b._dpsi) + dxh3 * np.sin(b._dpsi)
-  
-  # Add the offset in latitude. This is trickier (TODO)
+  dxh3 = -dzh3 * np.sin(b._dpsi)
+  dzh3 = dzh3 * np.cos(b._dpsi)
   
   # Get the coordinates relative to the star
   xh3 = x3 + dxh3
   yh3 = y3 + dyh3
   zh3 = z3 + dzh3
   
-  # Rotate back to frame #2 (TODO)
-  xh2 = xh3
+  # Rotate back to frame #2
+  xh2 = xh3 * np.cos(xi) + zh3 * np.sin(xi)
   yh2 = yh3
-  zh2 = zh3
+  zh2 = zh3 * np.cos(xi) - xh3 * np.sin(xi)
   
   # Rotate back to frame #1
   xh1 = xh2
@@ -115,7 +120,7 @@ for i in inds:
     dxhr = 1
   
   # Find the effective phase angle
-  if zh0 >= 0:
+  if (zh0 - z0) <= 0:
     theta = np.arccos(-dxhr / b._r)
   else:
     theta = np.pi + np.arccos(dxhr / b._r)
