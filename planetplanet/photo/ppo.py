@@ -9,7 +9,7 @@
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
 from ..detect import jwst
-from .eyeball import Draw
+from .eyeball import DrawEyeball
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
@@ -1487,9 +1487,9 @@ class System(object):
       occ_dict.append(dict(x = occultor.x_hr[t] - x0, y = occultor.y_hr[t] - y0, r = occultor._r, zorder = i + 1, alpha = 1))
     
     # Draw the eyeball planet and the occultors
-    fig, ax, occ, xy = Draw(x0 = 0, y0 = 0, r = r, theta = theta, nz = 11, dpsi = occulted._dpsi, dlambda = occulted._dlambda, 
-                            occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                            pos = [0.49, 0.45, 0.1, 0.1])
+    fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = r, theta = theta, nz = 11, dpsi = occulted._dpsi, dlambda = occulted._dlambda, 
+                                   occultors = occ_dict, cmap = 'inferno', fig = fig, 
+                                   pos = [0.49, 0.45, 0.1, 0.1])
 
     return ax, occ, xy
 
