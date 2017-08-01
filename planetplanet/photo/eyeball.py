@@ -21,29 +21,18 @@ def ZenithColor(z, cmap = 'inferno'):
   
   return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
 
-def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 0, 
-         alpha = 0, occultors = [], cmap = 'inferno', fig = None, pos = None):
+def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, alpha = 0, occultors = [], cmap = 'inferno', fig = None, pos = None):
   '''
 
   '''
 
-  alpha *= -1
-
-  if np.cos(theta) < 0:
-    # Adjust the domain for quadrants II & III
-    theta = np.pi - theta
-    alpha += np.pi
-  elif np.sin(theta) < 0:
-    # Adjust the domain for quadrant IV
-    theta -= 2 * np.pi
-  
-  # The rotation transformation
-  xy = lambda x, y: (x * np.cos(alpha) - y * np.sin(alpha), y * np.cos(alpha) + x * np.sin(alpha))
+  # The rotation transformation, Equation (E6) in the paper
+  xy = lambda x, y: (x * np.cos(alpha) + y * np.sin(alpha), y * np.cos(alpha) - x * np.sin(alpha))
   
   # Set up the floating axis
   if fig is None:
     fig = pl.figure(figsize = (6,6))
-  tr = Affine2D().rotate_deg(-alpha * 180 / np.pi)
+  tr = Affine2D().rotate_deg(alpha * 180 / np.pi)
   x = 1. / (np.abs(np.cos(alpha)) + np.abs(np.sin(alpha)))
   scale = max([r] + [occultor['r'] for occultor in occultors])
   x *= scale
@@ -166,5 +155,27 @@ class Interact(object):
       if ax not in [self.axtheta, self.axpsi, self.axlam]:
         ax.remove()
   
+    # Get the angles
+    theta = self.theta.val * np.pi / 180
+    dpsi = self.psi.val * np.pi / 180
+    dlambda = self.lam.val * np.pi / 180
+  
+    # The coordinates of the substellar point
+    x_ss = -np.cos(theta + dpsi) * np.cos(dlambda)
+    y_ss = np.sin(dlambda)
+
+    # The rotation angle that makes the planet symmetric about the x-axis
+    alpha = -np.arctan2(y_ss, -x_ss)
+
+    # Compute the new effective theta
+    if theta + dpsi < -np.pi:
+      theta = 2 * np.pi - np.arccos(-x_ss * np.cos(alpha) - y_ss * np.sin(alpha))
+    elif theta + dpsi < 0:
+      theta = -np.arccos(-x_ss * np.cos(alpha) - y_ss * np.sin(alpha))
+    elif theta + dpsi > np.pi:
+      theta = -np.arccos(-x_ss * np.cos(alpha) - y_ss * np.sin(alpha))
+    else:
+      theta = np.arccos(-x_ss * np.cos(alpha) - y_ss * np.sin(alpha))
+    
     # Plot the planet
-    Draw(fig = self.fig, theta = self.theta.val * np.pi / 180, dpsi = self.psi.val * np.pi / 180, dlambda = self.lam.val * np.pi / 180)
+    Draw(fig = self.fig, theta = theta, alpha = alpha)

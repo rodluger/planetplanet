@@ -125,6 +125,15 @@ for i in inds:
   else:
     theta = np.pi + np.arccos(dxhr / b._r)
   
+  # Adjust the domain
+  if np.cos(theta) < 0:
+    # Adjust the domain for quadrants II & III
+    theta = np.pi - theta
+    alpha -= np.pi
+  elif np.sin(theta) < 0:
+    # Adjust the domain for quadrant IV
+    theta -= 2 * np.pi
+  
   # Plot the radial vector
   ax.plot([0, x0], [0, y0], 'k-', alpha = 0.5, lw = 1)
   
