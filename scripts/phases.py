@@ -17,7 +17,7 @@ import matplotlib.pyplot as pl
 
 # Get orbital elements
 star = Star('A')
-b = Planet('b', per = 10., inc = 70., Omega = 30., t0 = 0, ecc = 0., w = 0, dlambda = 0, dpsi = 0)
+b = Planet('b', per = 10., inc = 70., Omega = 30., t0 = 0, ecc = 0., w = 0, dlambda = 30, dpsi = 90)
 system = System(star, b, nbody = True)
 time = np.linspace(-5, 5, 1000)
 system.compute_orbits(time)
