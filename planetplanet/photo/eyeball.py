@@ -26,6 +26,19 @@ def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, alpha = 0, occultors
 
   '''
 
+  # If theta is in quadrants II and III, let's
+  # shift it by 180 degrees in theta and alpha
+  # so that we don't have to change the plotting
+  # stuff below. The equations would still work, but
+  # figuring out the z-order is a pain, so this is
+  # simpler.
+  if theta > np.pi / 2:
+    theta = np.pi - theta
+    alpha += np.pi
+  elif theta < -np.pi / 2:
+    theta = -np.pi - theta
+    alpha += np.pi
+
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(alpha) + y * np.sin(alpha), y * np.cos(alpha) - x * np.sin(alpha))
   
