@@ -107,11 +107,11 @@ for i in inds:
   zh0 = zh1
 
   # Compute the effective rotation angle
-  rotation = -np.arctan((yh0 - y0) / (xh0 - x0))
+  alpha = np.arctan((yh0 - y0) / (xh0 - x0))
   
   # Find the x coordinate of the hotspot in the rotated frame (r)
   # relative to the planet center
-  dxhr = (xh0 - x0) * np.cos(rotation) - (yh0 - y0) * np.sin(rotation)
+  dxhr = (xh0 - x0) * np.cos(alpha) + (yh0 - y0) * np.sin(alpha)
   
   # Prevent tiny numerical errors from yielding NaNs in the arccos below
   if dxhr < -1: 
@@ -121,7 +121,7 @@ for i in inds:
   
   # Find the effective phase angle
   if (zh0 - z0) <= 0:
-    theta = np.arccos(-dxhr / b._r)
+    theta = np.pi - np.arccos(dxhr / b._r)
   else:
     theta = np.pi + np.arccos(dxhr / b._r)
   
@@ -133,7 +133,7 @@ for i in inds:
   xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
   # Draw the planet
-  _, ax_eye, _, _ = eyeball.Draw(theta = theta, rotation = rotation, fig = fig, pos = [xf - 0.015, yf - 0.015, 0.03, 0.03])
+  _, ax_eye, _, _ = eyeball.Draw(theta = theta, alpha = alpha, fig = fig, pos = [xf - 0.015, yf - 0.015, 0.03, 0.03])
   
 # Show
 pl.show()

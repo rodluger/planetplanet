@@ -22,36 +22,29 @@ def ZenithColor(z, cmap = 'inferno'):
   return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
 
 def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 0, 
-         rotation = 0, occultors = [], cmap = 'inferno', fig = None, pos = None):
+         alpha = 0, occultors = [], cmap = 'inferno', fig = None, pos = None):
   '''
 
   '''
-  
-  # The coordinates of the substellar point
-  x_ss = -np.cos(theta + dpsi) * np.cos(dlambda)
-  y_ss = np.sin(dlambda)
-  
-  # The rotation angle that makes the planet symmetric about the x-axis
-  alpha = np.arctan2(y_ss, -x_ss)
+
+  alpha *= -1
+
+  if np.cos(theta) < 0:
+    # Adjust the domain for quadrants II & III
+    theta = np.pi - theta
+    alpha += np.pi
+  elif np.sin(theta) < 0:
+    # Adjust the domain for quadrant IV
+    theta -= 2 * np.pi
   
   # The rotation transformation
-  xy = lambda x, y: (x * np.cos(alpha + rotation) - y * np.sin(alpha + rotation), y * np.cos(alpha + rotation) + x * np.sin(alpha + rotation))
-  
-  # Compute the new effective theta 
-  if theta + dpsi < -np.pi:
-    theta_eff = 2 * np.pi - np.arccos(-x_ss * np.cos(alpha) + y_ss * np.sin(alpha))
-  elif theta + dpsi < 0:
-    theta_eff = -np.arccos(-x_ss * np.cos(alpha) + y_ss * np.sin(alpha))
-  elif theta + dpsi > np.pi:
-    theta_eff = -np.arccos(-x_ss * np.cos(alpha) + y_ss * np.sin(alpha))
-  else:
-    theta_eff = np.arccos(-x_ss * np.cos(alpha) + y_ss * np.sin(alpha))
+  xy = lambda x, y: (x * np.cos(alpha) - y * np.sin(alpha), y * np.cos(alpha) + x * np.sin(alpha))
   
   # Set up the floating axis
   if fig is None:
     fig = pl.figure(figsize = (6,6))
-  tr = Affine2D().rotate_deg(-(alpha + rotation) * 180 / np.pi)
-  x = 1. / (np.abs(np.cos(alpha + rotation)) + np.abs(np.sin(alpha + rotation)))
+  tr = Affine2D().rotate_deg(-alpha * 180 / np.pi)
+  x = 1. / (np.abs(np.cos(alpha)) + np.abs(np.sin(alpha)))
   scale = max([r] + [occultor['r'] for occultor in occultors])
   x *= scale
   grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(-x, x, -x, x))
@@ -92,23 +85,23 @@ def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 
 
     # The ellipse
     a = r * np.abs(np.sin(z))
-    b = max(0.001, a * np.abs(np.sin(theta_eff)))
-    xE = -r * np.cos(z) * np.cos(theta_eff)
-    xlimb = r * np.cos(z) * np.sin(theta_eff) * np.tan(theta_eff)
-    if ((theta_eff > 0) and (b < xlimb)) or ((theta_eff <= 0) and (b > xlimb)):
+    b = max(0.001, a * np.abs(np.sin(theta)))
+    xE = -r * np.cos(z) * np.cos(theta)
+    xlimb = r * np.cos(z) * np.sin(theta) * np.tan(theta)
+    if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
       xmin = xE - b
     else:
       xmin = xE - xlimb
-    if ((theta_eff > 0) and (b > -xlimb)) or ((theta_eff <= 0) and (b < -xlimb)):
+    if ((theta > 0) and (b > -xlimb)) or ((theta <= 0) and (b < -xlimb)):
       xmax = xE + b
     else:
       xmax = xE - xlimb
         
     # Plot it
     x = np.linspace(xE - b, xE + b, 1000)
-    if theta_eff > 0:
+    if theta > 0:
       x[x < xE - xlimb] = np.nan
-    elif theta_eff > -np.pi / 2:
+    elif theta > -np.pi / 2:
       x[x > xE - xlimb] = np.nan
     A = b ** 2 - (x - xE) ** 2
     A[A < 0] = 0
@@ -122,13 +115,13 @@ def Draw(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, dpsi = 0, dlambda = 
       ax.plot(x0 + x, y0 - y, **style)
     
     # Fill the ellipses
-    if theta_eff < 0:
+    if theta < 0:
       ax.fill_between(x0 + x, y0 - y, y0 + y, color = ZenithColor(zarr[i+1], cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
     else:
       ax.fill_between(x0 + x, y0 - y, y0 + y, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
     # Fill the ellipses that are cut off by the limb
-    if theta_eff < 0:
+    if theta < 0:
       x_ = np.linspace(-r, xE - xlimb, 1000)
       y_ = np.sqrt(r ** 2 - x_ ** 2)
       ax.fill_between(x0 + x_, y0 - y_, y0 + y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
