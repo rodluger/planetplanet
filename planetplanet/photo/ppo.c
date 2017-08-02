@@ -3,6 +3,58 @@
 #include <math.h>
 #include "ppo.h"
 
+void GetAngles(double x0, double y0, double z0, double rp, double dlambda, double dpsi, double *theta, double *gamma) {
+  /*
+  Compute the phase angle `theta` and the rotation angle `gamma` at a given
+  point in a planet's orbit.
+  
+  */
+ 
+  double r = sqrt(x0 * x0 + y0 * y0 + z0 * z0);
+  double x0s, y0s, z0s;
+  
+  if ((dlambda == 0) && (dpsi == 0)) {
+  
+    // The "easy" case, with no hotspot offset
+    
+    // Equation (E1)
+    x0s = x0 * (1 - rp / r);
+    y0s = y0 * (1 - rp / r);
+    z0s = z0 * (1 - rp / r);
+    
+    // Equation (E3)
+    *gamma = atan((y0s - y0) / (x0s - x0));
+    
+    // Equation (E4)
+    double x1s = (x0s - x0) * cos(*gamma) + (y0s - y0) * sin(*gamma);
+    
+    // Equation (E5)
+    if (z0s - z0 <= 0)
+      *theta = PI - acos(x1s / rp);
+    else
+      *theta = acos(x1s / rp) - PI;
+    
+  } else {
+    
+    // TODO
+    *gamma = 0;
+    *theta = 0;
+    printf("ERROR: Not yet implemented!\n");
+    exit(0);
+    
+  }
+  
+  // Constrain the theta domain to [-pi/2, pi/2]
+  if (*theta > PI / 2) {
+    *theta = PI - *theta;
+    *gamma += PI;
+  } else if (*theta < -PI / 2) {
+    *theta = -PI - *theta;
+    *gamma += PI;
+  }
+  
+}
+
 int ipow(int base, int exp){
   /*
   
@@ -102,7 +154,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   double xo[np-1], yo[np-1], ro[np-1];
   double tmp[nw];
   double tmpflux[nw];
-  double theta;
+  double theta, gamma;
+  double tmpx, tmpy;
   int t, p, o, w;
   int iErr = ERR_NONE;
   double norm, sflx;
@@ -140,7 +193,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     
   // Pre-compute the stellar luminosity per solid angle
   lum = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff);
-  // Compute the total flux from each of the planets
+  
+  // Compute the total flux from each of the planets at full phase
+  // and store it in the `total_flux` attribute
   for (p = 1; p < np; p++) {
     
     // Full phase
@@ -184,8 +239,12 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // TODO: Interpolate to save time!
         
-        // The orbital phase (edge-on limit!)
-        theta = atan2(body[p]->z[t], body[p]->x[t]);
+        // Get the eyeball angles `theta` and `gamma`
+        // Note that `gamma` does not matter for phase curves.
+        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
+        
+        // debug
+        //printf("%.0f, %.0f\n", theta * 180 / PI, gamma * 180 / PI);
         
         // The irradiation
         dx = (body[0]->x[t] - body[p]->x[t]);
@@ -256,10 +315,18 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       // Now compute the light curve for this planet
       if (no > 0) {
 
-        // The orbital phase (edge-on limit!)
-        theta = atan2(body[p]->z[t], body[p]->x[t]);
-
-        // The irradiation on the planets
+        // Get the eyeball angles `theta` and `gamma`
+        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
+        
+        // Rotate the occultors to a frame in which the ellipses are symmetric about the x axis
+        for (o = 0; o < no; o++) {
+          tmpx = xo[o] * cos(gamma) + yo[o] * sin(gamma);
+          tmpy = yo[o] * cos(gamma) - xo[o] * sin(gamma);
+          xo[no] = tmpx;
+          yo[no] = tmpy;
+        }
+        
+        // The irradiation on the planet
         if (p > 0) {
           dx = (body[0]->x[t] - body[p]->x[t]);
           dy = (body[0]->y[t] - body[p]->y[t]);

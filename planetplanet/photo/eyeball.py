@@ -28,11 +28,7 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
   '''
 
   # If theta is in quadrants II and III, let's
-  # shift it by 180 degrees in theta and alpha
-  # so that we don't have to change the plotting
-  # stuff below. The equations would still work, but
-  # figuring out the z-order is a pain, so this is
-  # simpler.
+  # shift it by 180 degrees in theta and alpha.
   if theta > np.pi / 2:
     theta = np.pi - theta
     gamma += np.pi
@@ -144,7 +140,8 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
   return fig, ax, occ, xy
 
 def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., nphases = 20, size = 1, 
-              draw_orbit = True, draw_orbital_vectors = True, **kwargs):
+              draw_orbit = True, draw_orbital_vectors = True, plot_phasecurve = False, 
+              label_phases = True, **kwargs):
   '''
   
   '''
@@ -153,16 +150,30 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   # We are assuming a period of 10 days, but it doesn't matter for the plot!
   from . import Star, Planet, System
   star = Star('A')
-  b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, dlambda = dlambda, dpsi = dpsi)
-  system = System(star, b)
+  b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
+             dlambda = dlambda, dpsi = dpsi, airless = True, phasecurve = True)
+  system = System(star, b, mintheta = 0.001)
   time = np.linspace(-5, 5, 1000)
-  system.compute_orbits(time)
+  if plot_phasecurve:
+    system.compute(time)
+  else:
+    system.compute_orbits(time)
 
-  # Plot the orbit
+  # Plot stuff
   fig, ax = pl.subplots(1, figsize = (8,8))
+  
+  # Phase curve
+  if plot_phasecurve:
+    figphase, axphase = pl.subplots(1, figsize = (8, 3.5))
+    figphase.subplots_adjust(bottom = 0.2)
+    axphase.plot(np.linspace(0, 1, len(b.time)), b.flux[:,0] / (np.nanmax(b.flux[:,0])))
+    axphase.set_xlabel('Orbital phase', fontweight = 'bold', fontsize = 14)
+    axphase.set_ylabel('Relative flux', fontweight = 'bold', fontsize = 14)
+    
+  # Orbit outline
   if draw_orbit:
     ax.plot(b.x, b.y, 'k-', alpha = 0.5)
-
+  
   # Adjust the plot range
   xmin = min(b.x.min(), b.y.min())
   xmax = max(b.x.max(), b.y.max())
@@ -276,6 +287,16 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
     # Draw the planet
     _, tmp, _, _ = DrawEyeball(theta = theta, gamma = gamma, fig = fig, pos = [xf, yf, 0.03 * size, 0.03 * size], **kwargs)
     ax_eye.append(tmp)
+    
+    # Indicate the orbital phase
+    if label_phases:
+      dx = x0 / r
+      dy = y0 / r
+      dr = np.sqrt(dx ** 2 + dy ** 2)
+      dx *= 20 / dr
+      dy *= 20 / dr
+      tmp.annotate("%.2f" % (i / 1000.), xy = (0, 0), xytext = (dx, dy), xycoords = 'data', 
+                   textcoords = 'offset points', fontsize = 8, ha = 'center', va = 'center')
     
   return fig, ax, ax_eye
  

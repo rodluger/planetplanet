@@ -12,5 +12,6 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import eyeball
 import matplotlib.pyplot as pl
 
-eyeball.DrawOrbit(inc = 70., Omega = 30.)
+eyeball.DrawOrbit(inc = 60., Omega = 0., ecc = 0.5, w = 0, size = 2, 
+                  plot_phasecurve = True, label_phases = False)
 pl.show()
