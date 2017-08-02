@@ -26,16 +26,7 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
   '''
 
   '''
-
-  # If theta is in quadrants II and III, let's
-  # shift it by 180 degrees in theta and alpha.
-  if theta > np.pi / 2:
-    theta = np.pi - theta
-    gamma += np.pi
-  elif theta < -np.pi / 2:
-    theta = -np.pi - theta
-    gamma += np.pi
-
+  
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(gamma) + y * np.sin(gamma), y * np.cos(gamma) - x * np.sin(gamma))
   
@@ -148,7 +139,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   '''
   
   '''
-  
+      
   # Get the orbital elements over a full orbit of the planet
   # We are assuming a period of 10 days, but it doesn't matter for the plot!
   from . import Star, Planet, System
@@ -164,6 +155,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
 
   # Plot stuff
   fig, ax = pl.subplots(1, figsize = (8,8))
+  ax.margins(0.1, 0.1)
   
   # Phase curve
   if plot_phasecurve:
@@ -196,97 +188,47 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   # Plot images at different phases
   axes = [ax]
   for i in inds:
-  
-    # The position of the planet in the original frame (frame #0)
-    x0 = b.x[i]
-    y0 = b.y[i]
-    z0 = b.z[i]
-    r = np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2)
     
-    # Rotate so that the orbital plane is parallel to the x axis (frame #1)
-    x1 = x0 * np.cos(b._Omega) + y0 * np.sin(b._Omega)
-    y1 = y0 * np.cos(b._Omega) - x0 * np.sin(b._Omega)
-    z1 = z0
-  
-    # Now rotate so that it's also parallel to the z axis (frame #2)
-    x2 = x1
-    y2 = 0
-    z2 = z1 * np.sin(b._inc) + y1 * np.cos(b._inc)
-  
-    # Now rotate so that the substellar point faces the observer (frame #3)
-    # This is a counter-clockwise rotation through an angle `xi`: 
-    xi = np.pi / 2 - np.arctan2(z2, x2)
-    x3 = 0
-    y3 = 0
-    z3 = z2 * np.cos(xi) + x2 * np.sin(xi)
-    
-    # Finally, translate the axis so that the planet is centered at the origin (frame #4)
-    x4 = 0
-    y4 = 0
-    z4 = 0
-  
-    # Get the coordinates of the hot spot (frame #4)
-    xh4 = 0
-    yh4 = 0
-    zh4 = -z3 * (b._r / r)
-    
-    # Add the offset in latitude. This is a *clockwise* rotation in the
-    # zy plane by an angle `dlambda` about the planet center
-    zh4, yh4 = zh4 * np.cos(b._dlambda), \
-              -zh4 * np.sin(b._dlambda)
-  
-    # Add the offset in longitude. This is a counterclockwise rotation
-    # in the xz plane by an angle `dpsi` about the planet center
-    xh4, zh4 = -zh4 * np.sin(b._dpsi), \
-                zh4 * np.cos(b._dpsi)
-  
-    # Get the coordinates relative to the star
-    xh3 = xh4
-    yh3 = yh4
-    zh3 = z3 + zh4
-  
-    # Rotate back to frame #2
-    xh2 = xh3 * np.cos(xi) + zh3 * np.sin(xi)
-    yh2 = yh3
-    zh2 = zh3 * np.cos(xi) - xh3 * np.sin(xi)
-  
-    # Rotate back to frame #1
-    xh1 = xh2
-    yh1 = yh2 * np.sin(b._inc) + zh2 * np.cos(b._inc)
-    zh1 = zh2 * np.sin(b._inc) - yh2 * np.cos(b._inc)
-  
-    # Finally, rotate back to the original frame (frame #0)
-    xh0 = xh1 * np.cos(b._Omega) - yh1 * np.sin(b._Omega)
-    yh0 = yh1 * np.cos(b._Omega) + xh1 * np.sin(b._Omega)
-    zh0 = zh1
+    # The position of the planet in the rotated sky plane
+    x = b.x[i] * np.cos(b._Omega) + b.y[i] * np.sin(b._Omega)
+    y = b.y[i] * np.cos(b._Omega) - b.x[i] * np.sin(b._Omega)
+    z = b.z[i]
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        
+    # Coordinates of the hotspot in a frame where the planet is
+    # at x, y, z = (0, 0, r), at full phase
+    xprime = b._r * np.cos(b._dlambda) * np.sin(b._dpsi)
+    yprime = b._r * np.sin(b._dlambda)
+    zprime = r - b._r * np.cos(b._dlambda) * np.cos(b._dpsi)
 
-    # Compute the effective rotation angle
-    gamma = np.arctan((yh0 - y0) / (xh0 - x0))
-  
-    # Find the x coordinate of the hotspot in the rotated frame (r)
-    # relative to the planet center
-    dxhr = (xh0 - x0) * np.cos(gamma) + (yh0 - y0) * np.sin(gamma)
-  
-    # Prevent tiny numerical errors from yielding NaNs in the arccos below
-    if dxhr < -1: 
-      dxhr = -1
-    elif dxhr > 1: 
-      dxhr = 1
-  
-    # Find the effective phase angle
-    if (zh0 - z0) <= 0:
-      # Quadrants I & II
-      theta = np.pi - np.arccos(dxhr / b._r)
+    # Transform to the rotated sky plane
+    rxz = np.sqrt(x ** 2 + z ** 2)
+    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
+    ystar = (rxz * yprime + y * zprime) / r
+    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
+        
+    # Transform back to the true sky plane
+    xstar, ystar = xstar * np.cos(b._Omega) - ystar * np.sin(b._Omega), \
+                   ystar * np.cos(b._Omega) + xstar * np.sin(b._Omega)
+    x = b.x[i]
+    y = b.y[i]
+    
+    # Distance from planet center to hotspot
+    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
+    
+    # Get the rotation and phase angles
+    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
+    if (zstar - z) <= 0:
+      theta = np.arccos(d / b._r)
     else:
-      # Quadrants III & IV
-      theta = np.arccos(dxhr / b._r) - np.pi
+      theta = -np.arccos(d / b._r)
     
     # Plot the radial vector
     if draw_orbital_vectors:
-      ax.plot([0, x0], [0, y0], 'k-', alpha = 0.5, lw = 1)
+      ax.plot([0, x], [0, y], 'k-', alpha = 0.5, lw = 1)
   
     # Get the figure coordinates of the point
-    disp_coords = ax.transData.transform((x0, y0))
+    disp_coords = ax.transData.transform((x, y))
     xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
     # Draw the planet
@@ -295,14 +237,15 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
     
     # Indicate the orbital phase
     if label_phases:
-      dx = x0 / r
-      dy = y0 / r
+      dx = x / r
+      dy = y / r
       dr = np.sqrt(dx ** 2 + dy ** 2)
-      dx *= 20 / dr
-      dy *= 20 / dr
+      dx *= 16 * size / dr
+      dy *= 16 * size / dr
       tmp.annotate("%.2f" % (i / 1000.), xy = (0, 0), xytext = (dx, dy), xycoords = 'data', 
-                   textcoords = 'offset points', fontsize = 8, ha = 'center', va = 'center')
-  
+                   textcoords = 'offset points', fontsize = 8, ha = 'center', va = 'center',
+                   zorder = 10000)
+
   if plot_phasecurve:
     return fig, axes, figphase, axphase
   else:

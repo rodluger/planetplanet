@@ -3,7 +3,7 @@
 #include <math.h>
 #include "ppo.h"
 
-void GetAngles(double x0, double y0, double z0, double rp, double dlambda, double dpsi, double *theta, double *gamma) {
+void GetAngles(double x0, double y0, double z0, double rp, double Omega, double dlambda, double dpsi, double *theta, double *gamma) {
   /*
   Compute the phase angle `theta` and the rotation angle `gamma` at a given
   point in a planet's orbit.
@@ -11,47 +11,66 @@ void GetAngles(double x0, double y0, double z0, double rp, double dlambda, doubl
   */
  
   double r = sqrt(x0 * x0 + y0 * y0 + z0 * z0);
-  double x0s, y0s, z0s;
+  double d, xstar, ystar, zstar;
   
   if ((dlambda == 0) && (dpsi == 0)) {
   
     // The "easy" case, with no hotspot offset
     
-    // Equation (E1)
-    x0s = x0 * (1 - rp / r);
-    y0s = y0 * (1 - rp / r);
-    z0s = z0 * (1 - rp / r);
-    
-    // Equation (E3)
-    *gamma = atan((y0s - y0) / (x0s - x0));
-    
-    // Equation (E4)
-    double x1s = (x0s - x0) * cos(*gamma) + (y0s - y0) * sin(*gamma);
-    
-    // Equation (E5)
-    if (z0s - z0 <= 0)
-      *theta = PI - acos(x1s / rp);
-    else
-      *theta = acos(x1s / rp) - PI;
-    
+    // The coordinates of the sub-stellar point on the sky
+    xstar = x0 * (1 - rp / r);
+    ystar = y0 * (1 - rp / r);
+    zstar = z0 * (1 - rp / r);
+        
   } else {
     
-    // TODO
-    *gamma = 0;
-    *theta = 0;
-    printf("ERROR: Not yet implemented!\n");
-    exit(0);
+    double x, y, z;
+    double xprime, yprime, zprime;
+    double rxz;
+    double tmpx, tmpy;
+    double cosO = cos(Omega);
+    double sinO = sin(Omega);
+    double cosl = cos(dlambda);
+    double sinl = sin(dlambda);
+    double cosp = cos(dpsi);
+    double sinp = sin(dpsi);
     
+    // The position of the planet in the rotated sky plane
+    x = x0 * cosO + y0 * sinO;
+    y = y0 * cosO - x0 * sinO;
+    z = z0;
+        
+    // Coordinates of the hotspot in a frame where the planet is
+    // at x, y, z = (0, 0, r), at full phase
+    xprime = rp * cosl * sinp;
+    yprime = rp * sinl;
+    zprime = r - rp * cosl * cosp;
+
+    // Transform to the rotated sky plane
+    rxz = sqrt(x * x + z * z);
+    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz);
+    ystar = (rxz * yprime + y * zprime) / r;
+    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz);
+        
+    // Transform back to the true sky plane
+    tmpx = xstar * cosO - ystar * sinO;
+    tmpy = ystar * cosO + xstar * sinO;
+    xstar = tmpx;
+    ystar = tmpy;
+                   
   }
   
-  // Constrain the theta domain to [-pi/2, pi/2]
-  if (*theta > PI / 2) {
-    *theta = PI - *theta;
-    *gamma += PI;
-  } else if (*theta < -PI / 2) {
-    *theta = -PI - *theta;
-    *gamma += PI;
-  }
+  // The rotation angle
+  *gamma = PI + atan2(ystar - y0, xstar - x0);
+  
+  // The distance from the center of the planet disk to the substellar point
+  d = sqrt((xstar - x0) * (xstar - x0) + (ystar - y0) * (ystar - y0));
+  
+  // The phase angle
+  if (zstar - z0 <= 0)
+    *theta = acos(d / rp);
+  else
+    *theta = -acos(d / rp);
   
 }
 
@@ -241,10 +260,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Get the eyeball angles `theta` and `gamma`
         // Note that `gamma` does not matter for phase curves.
-        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
-        
-        // debug
-        //printf("%.0f, %.0f\n", theta * 180 / PI, gamma * 180 / PI);
+        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
         
         // The irradiation
         dx = (body[0]->x[t] - body[p]->x[t]);
@@ -316,7 +332,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       if (no > 0) {
 
         // Get the eyeball angles `theta` and `gamma`
-        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
+        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
         
         // Rotate the occultors to a frame in which the ellipses are symmetric about the x axis
         for (o = 0; o < no; o++) {

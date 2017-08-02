@@ -1465,14 +1465,45 @@ class System(object):
       fig = pl.gcf()
       
     # Get the occulted body
-    r = occulted._r
+    rp = occulted._r
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
-    if (occulted.nu == 0) and not (occulted.body_type in ['planet', 'moon'] and occulted.airless == False):
-      theta = np.arctan2(occulted.z_hr[t], occulted.x_hr[t])
-    else:
-      theta = np.pi / 2
+    z0 = occulted.z_hr[t]
+    
+    # Get the angles
+    x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
+    y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
+    z = z0
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        
+    # Coordinates of the hotspot in a frame where the planet is
+    # at x, y, z = (0, 0, r), at full phase
+    xprime = occulted._r * np.cos(occulted._dlambda) * np.sin(occulted._dpsi)
+    yprime = occulted._r * np.sin(occulted._dlambda)
+    zprime = r - occulted._r * np.cos(occulted._dlambda) * np.cos(occulted._dpsi)
 
+    # Transform to the rotated sky plane
+    rxz = np.sqrt(x ** 2 + z ** 2)
+    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
+    ystar = (rxz * yprime + y * zprime) / r
+    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
+        
+    # Transform back to the true sky plane
+    xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
+                   ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
+    x = x0
+    y = y0
+    
+    # Distance from planet center to hotspot
+    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
+    
+    # Get the rotation and phase angles
+    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
+    if (zstar - z) <= 0:
+      theta = np.arccos(d / occulted._r)
+    else:
+      theta = -np.arccos(d / occulted._r)
+    
     # Get the occultors
     if occultors is None:
       occultors = []
@@ -1487,7 +1518,7 @@ class System(object):
       occ_dict.append(dict(x = occultor.x_hr[t] - x0, y = occultor.y_hr[t] - y0, r = occultor._r, zorder = i + 1, alpha = 1))
     
     # Draw the eyeball planet and the occultors
-    fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = r, theta = theta, nz = 11, dpsi = occulted._dpsi, dlambda = occulted._dlambda, 
+    fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = rp, theta = theta, nz = 11, gamma = gamma, 
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, 
                                    pos = [0.49, 0.45, 0.1, 0.1])
 
