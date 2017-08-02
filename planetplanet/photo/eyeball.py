@@ -22,7 +22,7 @@ def ZenithColor(z, cmap = 'inferno'):
   return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
 
 def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
-                pos = None, draw_terminator = True, draw_outline = True, draw_ellipses = True):
+                pos = None, draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False):
   '''
 
   '''
@@ -59,6 +59,9 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
   ax_orig.patch.set_alpha(0)
   fig.add_subplot(ax_orig)
   ax = ax_orig.get_aux_axes(tr)
+  if rasterize:
+    ax_orig.set_rasterization_zorder(9999)
+    ax.set_rasterization_zorder(9999)
   
   # Plot the occultors. Note that we need to transform
   # their position vectors since we're in a rotated frame.
@@ -164,24 +167,26 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   
   # Phase curve
   if plot_phasecurve:
-    figphase, axphase = pl.subplots(1, figsize = (8, 3.5))
-    figphase.subplots_adjust(bottom = 0.2)
-    axphase.plot(np.linspace(0, 1, len(b.time)), b.flux[:,0] / (np.nanmax(b.flux[:,0])))
-    axphase.set_xlabel('Orbital phase', fontweight = 'bold', fontsize = 14)
-    axphase.set_ylabel('Relative flux', fontweight = 'bold', fontsize = 14)
-    
+    figphase, axphase = pl.subplots(1, figsize = (8, 2))
+    figphase.subplots_adjust(bottom = 0.3)
+    axphase.plot(np.linspace(0, 1, len(b.time)), b.flux[:,0] / (np.nanmax(b.flux[:,0])), 'k-')
+    axphase.set_xlabel('Orbital phase', fontweight = 'bold', fontsize = 12)
+    axphase.set_ylabel('Relative flux', fontweight = 'bold', fontsize = 12)
+      
   # Orbit outline
   if draw_orbit:
     ax.plot(b.x, b.y, 'k-', alpha = 0.5)
   
-  # Adjust the plot range
-  xmin = min(b.x.min(), b.y.min())
-  xmax = max(b.x.max(), b.y.max())
-  dx = xmax - xmin
-  xmin -= 0.1 * dx
-  xmax += 0.1 * dx
-  ax.set_xlim(xmin, xmax)
-  ax.set_ylim(xmin, xmax)
+  # Adjust the figure dimensions so the aspect ratio is unity
+  left = 0.125
+  right = 0.9
+  xmin, xmax = ax.get_xlim()
+  ymin, ymax = ax.get_ylim()
+  width = right - left
+  height = width * (ymin - ymax) / (xmin - xmax)
+  bottom = 0.5 - height / 2
+  top = 0.5 + height / 2
+  fig.subplots_adjust(left = left, right = right, bottom = bottom, top = top)
   ax.axis('off')
 
   # Get the indices of the images we'll plot, sorted by zorder
@@ -189,7 +194,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   inds = inds[np.argsort([-b.z[i] for i in inds])]
 
   # Plot images at different phases
-  ax_eye = []
+  axes = [ax]
   for i in inds:
   
     # The position of the planet in the original frame (frame #0)
@@ -286,7 +291,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   
     # Draw the planet
     _, tmp, _, _ = DrawEyeball(theta = theta, gamma = gamma, fig = fig, pos = [xf, yf, 0.03 * size, 0.03 * size], **kwargs)
-    ax_eye.append(tmp)
+    axes.append(tmp)
     
     # Indicate the orbital phase
     if label_phases:
@@ -297,8 +302,11 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
       dy *= 20 / dr
       tmp.annotate("%.2f" % (i / 1000.), xy = (0, 0), xytext = (dx, dy), xycoords = 'data', 
                    textcoords = 'offset points', fontsize = 8, ha = 'center', va = 'center')
-    
-  return fig, ax, ax_eye
+  
+  if plot_phasecurve:
+    return fig, axes, figphase, axphase
+  else:
+    return fig, axes
  
 class Interact(object):
   '''
