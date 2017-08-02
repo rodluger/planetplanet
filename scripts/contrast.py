@@ -14,7 +14,7 @@ planet.
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo.ppo import Planet, Star, System
+from planetplanet.photo.ppo import Planet, Star, System, DrawEyeball
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
@@ -95,20 +95,53 @@ ax[2].plot(minutes, fairless3, '-', color = 'g', label = 'Airless')
 ax[3].plot(minutes, 1e6 * (fairless3 - fthickatm), '-', color = 'k', label = 'Residuals')
 
 # Plot the images
-axim = [None for i in range(5)]
+x0 = 0.5102
+dx = 0.15
+px = [x0 - 2 * dx, x0 - dx, x0, x0 + dx, x0 + 2 * dx]
 for i, t in enumerate([1333 - 600, 1333 - 300, 1333, 1333 + 300, 1333 + 600]):
-  axim[i] = fig.add_axes([0.16 + 0.15 * i, 0.8, 0.1, 0.15])
-  axim[i].set_aspect('equal')
-  axim[i].set_xlim(-2.6, 2.6)
-  axim[i].axis('off')
-  system.plot_image(t, c, ax = axim[i], occultors = [2])
+  rp = c._r
+  x0 = c.x_hr[t]
+  y0 = c.y_hr[t]
+  z0 = c.z_hr[t]
+  x = x0 * np.cos(c._Omega) + y0 * np.sin(c._Omega)
+  y = y0 * np.cos(c._Omega) - x0 * np.sin(c._Omega)
+  z = z0
+  r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+  xprime = c._r * np.cos(c._dlambda) * np.sin(c._dpsi)
+  yprime = c._r * np.sin(c._dlambda)
+  zprime = r - c._r * np.cos(c._dlambda) * np.cos(c._dpsi)
+  rxz = np.sqrt(x ** 2 + z ** 2)
+  xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
+  ystar = (rxz * yprime + y * zprime) / r
+  zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
+  xstar, ystar = xstar * np.cos(c._Omega) - ystar * np.sin(c._Omega), \
+                 ystar * np.cos(c._Omega) + xstar * np.sin(c._Omega)
+  x = x0
+  y = y0
+  dist = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
+  gamma = np.arctan2(ystar - y, xstar - x) + np.pi
+  if (zstar - z) <= 0:
+    theta = np.arccos(dist / c._r)
+  else:
+    theta = -np.arccos(dist / c._r)
+  occ_dict = [dict(x = d.x_hr[t] - x0, y = d.y_hr[t] - y0, r = d._r, zorder = i + 1, alpha = 1)]
+  DrawEyeball(x0 = 0, y0 = 0, r = c._r, theta = theta, nz = 31, gamma = gamma, 
+              draw_ellipses = False,
+              occultors = occ_dict, cmap = 'inferno', fig = fig, 
+              pos = [px[i], 0.85, 0.05, 0.05])
 
 # Arrows
-axim[0].annotate("", xy = (0, -1.2), xytext = (83, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[1].annotate("", xy = (0, -1.2), xytext = (44, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[2].annotate("", xy = (0, -1.2), xytext = (0, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[3].annotate("", xy = (0, -1.2), xytext = (-44, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[4].annotate("", xy = (0, -1.2), xytext = (-83, -60), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+ax[0].annotate("", xy = (minutes[1333 - 600], 1.000008), xycoords = "data", xytext = (-80, 40), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+ax[0].annotate("", xy = (minutes[1333 - 300], 1.000008), xycoords = "data", xytext = (-40, 40), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+ax[0].annotate("", xy = (minutes[1333], 1.000008), xycoords = "data", xytext = (0, 40), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+ax[0].annotate("", xy = (minutes[1333 + 300], 1.000008), xycoords = "data", xytext = (40, 40), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+ax[0].annotate("", xy = (minutes[1333 + 600], 1.000008), xycoords = "data", xytext = (80, 40), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+
 
 # Appeareance
 ax[0].legend(loc = 'lower left', fontsize = 10, frameon = False)

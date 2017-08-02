@@ -12,7 +12,7 @@ planets transit the star and occult each other simultaneously:
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo import Planet, Star, System
+from planetplanet.photo import Planet, Star, System, DrawEyeball
 import matplotlib
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
@@ -73,25 +73,38 @@ for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
 axlc.legend(loc = 'lower right', fontsize = 12)
 
 # Plot the images
-axim = [pl.subplot2grid((60, 5), (0, n), colspan = 1, rowspan = 10) for n in range(5)]
 t = [300, 400, 500, 600, 700]
+
+x0 = 0.535
+dx = 0.15
+px = [x0 - 2 * dx, x0 - dx, x0, x0 + dx, x0 + 2 * dx]
 for n in range(5):
-  system.plot_image(t[n], star, occultors = [1,2,3], ax = axim[n])
-  axim[n].axis('off')
-  axim[n].set_aspect('equal')
+  
+  # Convert them into a list of dicts
+  occ_dict = []
+  for i, occultor in enumerate([b, c, d]):
+    occ_dict.append(dict(x = occultor.x_hr[t[n]], y = occultor.y_hr[t[n]], r = occultor._r, zorder = i + 1, alpha = 1))
+  
+  # Draw the eyeball planet and the occultors
+  DrawEyeball(x0 = 0, y0 = 0, r = star._r, theta = np.pi / 2, nz = 31, gamma = 0, 
+              occultors = occ_dict, cmap = 'inferno', fig = fig, 
+              draw_ellipses = False, pos = [px[n], 0.85, 0.085, 0.085])
 
 # Arrows
-axim[0].annotate("", xy = (0, -12), xytext = (60, -47), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[1].annotate("", xy = (0, -12), xytext = (20, -47), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[2].annotate("", xy = (0, -12), xytext = (0, -47), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[3].annotate("", xy = (0, -12), xytext = (-20, -47), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-axim[4].annotate("", xy = (0, -12), xytext = (-60, -47), textcoords = "offset points", clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+axlc.annotate("", xy = (star.time[t[0]] * 1440, 1.006), xycoords = "data", xytext = (-80, 63), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
 
-axim[0].set_xlim(-30,15)
-axim[1].set_xlim(-26.25,18.75)
-axim[2].set_xlim(-22.5,22.5)
-axim[3].set_xlim(-18.75,26.25)
-axim[4].set_xlim(-15,30)
+axlc.annotate("", xy = (star.time[t[1]] * 1440, 1.006), xycoords = "data", xytext = (-40, 63), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+
+axlc.annotate("", xy = (star.time[t[2]] * 1440, 1.006), xycoords = "data", xytext = (0, 63), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+
+axlc.annotate("", xy = (star.time[t[3]] * 1440, 1.006), xycoords = "data", xytext = (40, 63), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
+
+axlc.annotate("", xy = (star.time[t[4]] * 1440, 1.006), xycoords = "data", xytext = (80, 63), textcoords = "offset points", 
+              clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
     
 fig.savefig('../img/triple.pdf', bbox_inches = 'tight')
 pl.show()

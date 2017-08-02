@@ -338,8 +338,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         for (o = 0; o < no; o++) {
           tmpx = xo[o] * cos(gamma) + yo[o] * sin(gamma);
           tmpy = yo[o] * cos(gamma) - xo[o] * sin(gamma);
-          xo[no] = tmpx;
-          yo[no] = tmpy;
+          xo[o] = tmpx;
+          yo[o] = tmpy;          
         }
         
         // The irradiation on the planet
