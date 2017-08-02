@@ -144,7 +144,7 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
 
 def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., nphases = 20, size = 1, 
               draw_orbit = True, draw_orbital_vectors = True, plot_phasecurve = False, 
-              label_phases = True, **kwargs):
+              label_phases = False, **kwargs):
   '''
   
   '''
@@ -229,7 +229,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
     xh4 = 0
     yh4 = 0
     zh4 = -z3 * (b._r / r)
-  
+    
     # Add the offset in latitude. This is a *clockwise* rotation in the
     # zy plane by an angle `dlambda` about the planet center
     zh4, yh4 = zh4 * np.cos(b._dlambda) + yh4 * np.sin(b._dlambda), \
