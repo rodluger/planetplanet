@@ -232,8 +232,8 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
     
     # Add the offset in latitude. This is a *clockwise* rotation in the
     # zy plane by an angle `dlambda` about the planet center
-    zh4, yh4 = zh4 * np.cos(b._dlambda) + yh4 * np.sin(b._dlambda), \
-               yh4 * np.cos(b._dlambda) - zh4 * np.sin(b._dlambda)
+    zh4, yh4 = zh4 * np.cos(b._dlambda), \
+              -zh4 * np.sin(b._dlambda)
   
     # Add the offset in longitude. This is a counterclockwise rotation
     # in the xz plane by an angle `dpsi` about the planet center
@@ -241,8 +241,8 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
                 zh4 * np.cos(b._dpsi)
   
     # Get the coordinates relative to the star
-    xh3 = x3 + xh4
-    yh3 = y3 + yh4
+    xh3 = xh4
+    yh3 = yh4
     zh3 = z3 + zh4
   
     # Rotate back to frame #2
