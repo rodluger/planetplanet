@@ -330,16 +330,25 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
               
       // Now compute the light curve for this planet
       if (no > 0) {
-
-        // Get the eyeball angles `theta` and `gamma`
-        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
         
-        // Rotate the occultors to a frame in which the ellipses are symmetric about the x axis
-        for (o = 0; o < no; o++) {
-          tmpx = xo[o] * cos(gamma) + yo[o] * sin(gamma);
-          tmpy = yo[o] * cos(gamma) - xo[o] * sin(gamma);
-          xo[o] = tmpx;
-          yo[o] = tmpy;          
+        if (p > 0) {
+        
+          // Get the eyeball angles `theta` and `gamma`
+          GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
+        
+          // Rotate the occultors to a frame in which the ellipses are symmetric about the x axis
+          for (o = 0; o < no; o++) {
+            tmpx = xo[o] * cos(gamma) + yo[o] * sin(gamma);
+            tmpy = yo[o] * cos(gamma) - xo[o] * sin(gamma);
+            xo[o] = tmpx;
+            yo[o] = tmpy;          
+          }
+        
+        } else {
+          
+          theta = PI / 2.;
+          gamma = 0.;
+          
         }
         
         // The irradiation on the planet

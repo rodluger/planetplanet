@@ -88,7 +88,7 @@ def ValidateTransits():
   star = Star('A', m = mstar, r = rstar, nz = 99, limbdark = limbdark)
   b = Planet('b', m = 0., per = per, inc = inc, r = r, t0 = t0, 
              nz = 1, Omega = 0., w = w, ecc = ecc, phasecurve = False)
-  system = System(star, b)
+  system = System(star, b, batmanopt = False, circleopt = False)
   system.compute(time)
   flux_pp = system.A.flux[:,0]
   flux_pp /= flux_pp[0]

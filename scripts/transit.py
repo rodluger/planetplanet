@@ -25,7 +25,7 @@ b = Planet('b', m = 1, per = 2, inc = 90.4, r = 10., t0 = 0,
            nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
 
 # Compute the light curve, no optimization
-system = System(star, b, batmanopt = False, nbody = True)
+system = System(star, b, batmanopt = False)
 time = np.arange(-0.05, 0.05, MINUTE)
 system.compute(time)
 flux1 = system.A.flux[:,0] / system.A.flux[0,0]
@@ -37,6 +37,6 @@ flux2 = system.A.flux[:,0] / system.A.flux[0,0]
 
 # Plot it
 pl.plot(system.A.time, flux1, label = 'Standard')
-pl.plot(system.A.time, flux2, label = 'Batman')
+pl.plot(system.A.time, flux2, '--', label = 'Batman')
 pl.legend()
 pl.show()

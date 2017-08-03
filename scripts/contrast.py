@@ -128,7 +128,7 @@ for i, t in enumerate([1333 - 600, 1333 - 300, 1333, 1333 + 300, 1333 + 600]):
   DrawEyeball(x0 = 0, y0 = 0, r = c._r, theta = theta, nz = 31, gamma = gamma, 
               draw_ellipses = False,
               occultors = occ_dict, cmap = 'inferno', fig = fig, 
-              pos = [px[i], 0.85, 0.05, 0.05])
+              pos = [px[i], 0.85, 0.05, 0.05], rasterize = True)
 
 # Arrows
 ax[0].annotate("", xy = (minutes[1333 - 600], 1.000008), xycoords = "data", xytext = (-80, 40), textcoords = "offset points", 
@@ -163,4 +163,4 @@ ax[2].margins(None, 0.1)
 ax[3].set_ylim(-15, 15)
 ax[3].set_yticks([-10,0,10])
 ax[-1].set_xlabel('Time [minutes]', fontweight = 'bold', fontsize = 16, labelpad = 15)
-fig.savefig("../img/contrast.pdf", bbox_inches = 'tight')
+fig.savefig("../img/contrast.pdf", bbox_inches = 'tight', dpi = 600)
