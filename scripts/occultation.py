@@ -18,7 +18,7 @@ import numpy as np
 system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
 
 # Give `c` a large latitudinal offset in its hotspot just for fun
-system.c.dlambda = 30
+system.c.Phi = 30
 
 # Compute an occultation by `b`
 time = np.linspace(9552.9364, 9552.9564, 100)

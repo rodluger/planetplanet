@@ -25,16 +25,16 @@ ax = [None, None, None, None]
 phase = [None, None]
 flux = [None, None]
 
-for i, dpsi, dlambda in zip([0, 1], [0, 60], [0, 30]):
+for i, Lambda, Phi in zip([0, 1], [0, 60], [0, 30]):
 
   # Plot the geometry
-  fig[i], ax[i] = eyeball.DrawOrbit(inc = inc, Omega = Omega, ecc = ecc, w = w, size = 1.75, dpsi = dpsi, dlambda = dlambda,
+  fig[i], ax[i] = eyeball.DrawOrbit(inc = inc, Omega = Omega, ecc = ecc, w = w, size = 1.75, Lambda = Lambda, Phi = Phi,
                                     plot_phasecurve = False, label_phases = True, rasterize = True)
 
   # Compute the phase curve
   star = Star('A')
   b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
-             dlambda = dlambda, dpsi = dpsi, airless = True, phasecurve = True)
+             Phi = Phi, Lambda = Lambda, airless = True, phasecurve = True)
   system = System(star, b, mintheta = 0.001)
   time = np.linspace(-5, 5, 1000)
   system.compute(time)

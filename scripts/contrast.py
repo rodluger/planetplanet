@@ -107,9 +107,9 @@ for i, t in enumerate([1333 - 600, 1333 - 300, 1333, 1333 + 300, 1333 + 600]):
   y = y0 * np.cos(c._Omega) - x0 * np.sin(c._Omega)
   z = z0
   r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-  xprime = c._r * np.cos(c._dlambda) * np.sin(c._dpsi)
-  yprime = c._r * np.sin(c._dlambda)
-  zprime = r - c._r * np.cos(c._dlambda) * np.cos(c._dpsi)
+  xprime = c._r * np.cos(c._Phi) * np.sin(c._Lambda)
+  yprime = c._r * np.sin(c._Phi)
+  zprime = r - c._r * np.cos(c._Phi) * np.cos(c._Lambda)
   rxz = np.sqrt(x ** 2 + z ** 2)
   xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
   ystar = (rxz * yprime + y * zprime) / r

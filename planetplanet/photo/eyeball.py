@@ -133,7 +133,7 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
   
   return fig, ax, occ, xy
 
-def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., nphases = 20, size = 1, 
+def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., nphases = 20, size = 1, 
               draw_orbit = True, draw_orbital_vectors = True, plot_phasecurve = False, 
               label_phases = False, **kwargs):
   '''
@@ -145,7 +145,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
   from . import Star, Planet, System
   star = Star('A')
   b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
-             dlambda = dlambda, dpsi = dpsi, airless = True, phasecurve = True)
+             Phi = Phi, Lambda = Lambda, airless = True, phasecurve = True)
   system = System(star, b, mintheta = 0.001)
   time = np.linspace(-5, 5, 1000)
   if plot_phasecurve:
@@ -197,9 +197,9 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., dlambda = 0., dpsi = 0., 
         
     # Coordinates of the hotspot in a frame where the planet is
     # at x, y, z = (0, 0, r), at full phase
-    xprime = b._r * np.cos(b._dlambda) * np.sin(b._dpsi)
-    yprime = b._r * np.sin(b._dlambda)
-    zprime = r - b._r * np.cos(b._dlambda) * np.cos(b._dpsi)
+    xprime = b._r * np.cos(b._Phi) * np.sin(b._Lambda)
+    yprime = b._r * np.sin(b._Phi)
+    zprime = r - b._r * np.cos(b._Phi) * np.cos(b._Lambda)
 
     # Transform to the rotated sky plane
     rxz = np.sqrt(x ** 2 + z ** 2)
@@ -288,22 +288,22 @@ class Interact(object):
   
     # Get the angles
     theta = self.theta.val * np.pi / 180
-    dpsi = self.psi.val * np.pi / 180
-    dlambda = self.lam.val * np.pi / 180
+    Lambda = self.psi.val * np.pi / 180
+    Phi = self.lam.val * np.pi / 180
   
     # The coordinates of the substellar point
-    x_ss = -np.cos(theta + dpsi) * np.cos(dlambda)
-    y_ss = np.sin(dlambda)
+    x_ss = -np.cos(theta + Lambda) * np.cos(Phi)
+    y_ss = np.sin(Phi)
 
     # The rotation angle that makes the planet symmetric about the x-axis
     gamma = -np.arctan2(y_ss, -x_ss)
 
     # Compute the new effective theta
-    if theta + dpsi < -np.pi:
+    if theta + Lambda < -np.pi:
       theta = 2 * np.pi - np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))
-    elif theta + dpsi < 0:
+    elif theta + Lambda < 0:
       theta = -np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))
-    elif theta + dpsi > np.pi:
+    elif theta + Lambda > np.pi:
       theta = -np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))
     else:
       theta = np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))

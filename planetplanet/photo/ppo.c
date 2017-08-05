@@ -3,7 +3,7 @@
 #include <math.h>
 #include "ppo.h"
 
-void GetAngles(double x0, double y0, double z0, double rp, double Omega, double dlambda, double dpsi, double *theta, double *gamma) {
+void GetAngles(double x0, double y0, double z0, double rp, double Omega, double Lambda, double Phi, double *theta, double *gamma) {
   /*
   Compute the phase angle `theta` and the rotation angle `gamma` at a given
   point in a planet's orbit.
@@ -13,7 +13,7 @@ void GetAngles(double x0, double y0, double z0, double rp, double Omega, double 
   double r = sqrt(x0 * x0 + y0 * y0 + z0 * z0);
   double d, xstar, ystar, zstar;
   
-  if ((dlambda == 0) && (dpsi == 0)) {
+  if ((Lambda == 0) && (Phi == 0)) {
   
     // The "easy" case, with no hotspot offset
     
@@ -30,10 +30,10 @@ void GetAngles(double x0, double y0, double z0, double rp, double Omega, double 
     double tmpx, tmpy;
     double cosO = cos(Omega);
     double sinO = sin(Omega);
-    double cosl = cos(dlambda);
-    double sinl = sin(dlambda);
-    double cosp = cos(dpsi);
-    double sinp = sin(dpsi);
+    double cosl = cos(Lambda);
+    double sinl = sin(Lambda);
+    double cosp = cos(Phi);
+    double sinp = sin(Phi);
     
     // The position of the planet in the rotated sky plane
     x = x0 * cosO + y0 * sinO;
@@ -260,7 +260,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Get the eyeball angles `theta` and `gamma`
         // Note that `gamma` does not matter for phase curves.
-        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
+        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
         
         // The irradiation
         dx = (body[0]->x[t] - body[p]->x[t]);
@@ -334,7 +334,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         if (p > 0) {
         
           // Get the eyeball angles `theta` and `gamma`
-          GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->dlambda, body[p]->dpsi, &theta, &gamma);
+          GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
         
           // Rotate the occultors to a frame in which the ellipses are symmetric about the x axis
           for (o = 0; o < no; o++) {

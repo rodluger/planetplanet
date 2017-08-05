@@ -131,8 +131,8 @@ class _Body(ctypes.Structure):
               ("tnight", ctypes.c_double),
               ("_phasecurve", ctypes.c_int),
               ("_blackbody", ctypes.c_int),
-              ("_dpsi", ctypes.c_double),
-              ("_dlambda", ctypes.c_double),
+              ("_Lambda", ctypes.c_double),
+              ("_Phi", ctypes.c_double),
               ("_host", ctypes.c_int),
               ("nu", ctypes.c_int),
               ("nz", ctypes.c_int),
@@ -175,13 +175,13 @@ class _Body(ctypes.Structure):
       if self.airless:
         self.tnight = kwargs.pop('tnight', 40.)
         self.limbdark = []
-        self.dpsi = kwargs.pop('dpsi', 0)
-        self.dlambda = kwargs.pop('dlambda', 0)
+        self.Lambda = kwargs.pop('Lambda', 0)
+        self.Phi = kwargs.pop('Phi', 0)
       else:
         self.tnight = 0
         self.limbdark = kwargs.pop('limbdark', [])
-        self.dpsi = 0
-        self.dlambda = 0
+        self.Lambda = 0
+        self.Phi = 0
       self.phasecurve = kwargs.pop('phasecurve', False)
       self.color = kwargs.pop('color', 'r')
     elif self.body_type == 'star':
@@ -193,8 +193,8 @@ class _Body(ctypes.Structure):
       self.teff = kwargs.pop('teff', 5577.)
       self.limbdark = kwargs.pop('limbdark', [1.])
       self.phasecurve = False
-      self.dpsi = 0
-      self.dlambda = 0
+      self.Lambda = 0
+      self.Phi = 0
       self.color = kwargs.pop('color', 'k')
     
     # Settings for moons
@@ -296,20 +296,20 @@ class _Body(ctypes.Structure):
     self._Omega = val * np.pi / 180.
 
   @property
-  def dpsi(self):
-    return self._dpsi * 180 / np.pi
+  def Lambda(self):
+    return self._Lambda * 180 / np.pi
 
-  @dpsi.setter
-  def dpsi(self, val):
-    self._dpsi = val * np.pi / 180.
+  @Lambda.setter
+  def Lambda(self, val):
+    self._Lambda = val * np.pi / 180.
 
   @property
-  def dlambda(self):
-    return self._dlambda * 180 / np.pi
+  def Phi(self):
+    return self._Phi * 180 / np.pi
 
-  @dlambda.setter
-  def dlambda(self, val):
-    self._dlambda = val * np.pi / 180.
+  @Phi.setter
+  def Phi(self, val):
+    self._Phi = val * np.pi / 180.
 
   @property
   def teff(self):
@@ -1480,9 +1480,9 @@ class System(object):
         
       # Coordinates of the hotspot in a frame where the planet is
       # at x, y, z = (0, 0, r), at full phase
-      xprime = occulted._r * np.cos(occulted._dlambda) * np.sin(occulted._dpsi)
-      yprime = occulted._r * np.sin(occulted._dlambda)
-      zprime = r - occulted._r * np.cos(occulted._dlambda) * np.cos(occulted._dpsi)
+      xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
+      yprime = occulted._r * np.sin(occulted._Phi)
+      zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
 
       # Transform to the rotated sky plane
       rxz = np.sqrt(x ** 2 + z ** 2)
