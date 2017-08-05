@@ -49,7 +49,7 @@ def Triple_bc():
   time = np.arange(252.75, 253.50, 10 * MINUTE)
 
   # Compute the light curve
-  system.compute(time)
+  system.compute(time, lambda1 = 1, lambda2 = 35)
 
   # Let's re-center the time array for a prettier x axis
   system.A.time_hr -= time[0]
