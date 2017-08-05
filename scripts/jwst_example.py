@@ -119,7 +119,7 @@ def Stacked_bc():
   time = np.arange(252.75, 253.50, 5 * MINUTE)
 
   # Compute and plot the light curve
-  system.compute(time)
+  system.compute(time, lambda1 = 1, lambda2 = 35)
 
   # Hackishly remove the other occultations and secondary eclipses
   # so we can plot just the occultation of `c` by `b`
