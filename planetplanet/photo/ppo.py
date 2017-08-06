@@ -893,6 +893,10 @@ class System(object):
       atel = 144.0
       # No thermal noise
       thermal = False
+    elif instrument.lower() == 'spitzer':
+      wheel = jwst.get_spitzer_filter_wheel()
+      atel = np.pi * (0.85/2.)**2
+      thermal = False
     else:
       raise ValueError("Invalid instrument.")
 

@@ -20,7 +20,7 @@ import numpy as np
 import astropy.units as u
 
 # Kepler-444 and simulation parameters
-Nocc = 1         # number of occultations observed
+Nocc = 15         # number of occultations observed
 nout = 4.0       # obseved out of transit durations [tint]
 lammin = 1.0     # min wavelength [um]
 lammax = 30.0    # max wavelength [um]
@@ -54,5 +54,10 @@ tdur = Nocc * tdur_mins * 60.0
 print("Planet Temperature : %.1f K" %Tplan)
 print("Transit Duration : %.2f mins" %(tdur_mins))
 
+#jwst.estimate_eclipse_snr(tint = tdur, nout = nout, lammin = lammin, lammax = lammax,
+#                          Tstar = Tstar, Tplan = Tplan, Rs = Rs, Rp = Rp, d = d)
+
+# Estimate for OST
 jwst.estimate_eclipse_snr(tint = tdur, nout = nout, lammin = lammin, lammax = lammax,
-                          Tstar = Tstar, Tplan = Tplan, Rs = Rs, Rp = Rp, d = d)
+                          Tstar = Tstar, Tplan = Tplan, Rs = Rs, Rp = Rp, d = d,
+                          atel = 144., thermal = False)
