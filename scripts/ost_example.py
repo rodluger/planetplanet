@@ -312,6 +312,6 @@ def SNR_v_wavelength():
 
     pl.show()
 
-#Triple_bc()
-#Stacked_bc()
+Triple_bc()
+Stacked_bc()
 SNR_v_wavelength()

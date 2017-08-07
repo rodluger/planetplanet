@@ -54,8 +54,8 @@ tdur = Nocc * tdur_mins * 60.0
 print("Planet Temperature : %.1f K" %Tplan)
 print("Transit Duration : %.2f mins" %(tdur_mins))
 
-#jwst.estimate_eclipse_snr(tint = tdur, nout = nout, lammin = lammin, lammax = lammax,
-#                          Tstar = Tstar, Tplan = Tplan, Rs = Rs, Rp = Rp, d = d)
+jwst.estimate_eclipse_snr(tint = tdur, nout = nout, lammin = lammin, lammax = lammax,
+                          Tstar = Tstar, Tplan = Tplan, Rs = Rs, Rp = Rp, d = d)
 
 # Estimate for OST
 jwst.estimate_eclipse_snr(tint = tdur, nout = nout, lammin = lammin, lammax = lammax,

@@ -15,7 +15,7 @@ from planetplanet.detect import jwst
 import matplotlib.pyplot as pl
 import numpy as np
 
-def Stacked_bc_all_filters(N = 10000):
+def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
    '''
    `N` stacked exposures of `b` occulting `c` observed in both Warm Spitzer filters
 
@@ -31,15 +31,15 @@ def Stacked_bc_all_filters(N = 10000):
    RpRs = np.sqrt(0.7266 / 100)
    r = RpRs * rstar * RSUN / REARTH
    b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-              Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., albedo = 0.3,
-              airless = True, phasecurve = False)
+              Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., albedo = albedo,
+              airless = airless, phasecurve = False)
 
    # Instantiate `c`
    RpRs = np.sqrt(0.687 / 100)
    r = RpRs * rstar * RSUN / REARTH
    c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-              Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., albedo = 0.3,
-              airless = True, phasecurve = False)
+              Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., albedo = albedo,
+              airless = airless, phasecurve = False)
 
    # Instantiate the system
    system = System(star, b, c, distance = 12, oversample = 10)
@@ -78,7 +78,9 @@ def Stacked_bc_all_filters(N = 10000):
    system.A.time_hr -= 253.013
 
    # Get all MIRI filters
-   filters = jwst.get_spitzer_filter_wheel(warm = False)
+   filters = jwst.get_spitzer_filter_wheel(warm = True)
+
+   print("Planet c Teff : %.2f K" %system.c.teff)
 
    # Loop over all MIRI filters
    SNRs = np.zeros(len(filters))
@@ -113,4 +115,6 @@ def Stacked_bc_all_filters(N = 10000):
    #fig.savefig("../img/stacked_bc_all_filters.pdf", bbox_inches = 'tight')
    pl.show()
 
-Stacked_bc_all_filters()
+Stacked_bc_all_filters(N = 100000, airless = False, albedo = 0.0)
+Stacked_bc_all_filters(N = 10000, airless = True, albedo = 0.0)
+Stacked_bc_all_filters(N = 100, airless = False, albedo = -15)
