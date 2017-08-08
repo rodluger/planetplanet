@@ -49,7 +49,7 @@ def Triple_bc():
   time = np.arange(252.75, 253.50, 10 * MINUTE)
 
   # Compute the light curve
-  system.compute(time)
+  system.compute(time, lambda1 = 1, lambda2 = 35)
 
   # Let's re-center the time array for a prettier x axis
   system.A.time_hr -= time[0]
@@ -86,9 +86,9 @@ def Triple_bc():
 
   fig.savefig("../img/triple_bc.pdf", bbox_inches = 'tight')
 
-def Stacked_bc():
+def Stacked_bc(N=10):
   '''
-  Ten stacked exposures of `b` occulting `c`
+  `N` stacked exposures of `b` occulting `c` in the MIRI F1500W filter
 
   '''
 
@@ -119,7 +119,7 @@ def Stacked_bc():
   time = np.arange(252.75, 253.50, 5 * MINUTE)
 
   # Compute and plot the light curve
-  system.compute(time)
+  system.compute(time, lambda1 = 1, lambda2 = 35)
 
   # Hackishly remove the other occultations and secondary eclipses
   # so we can plot just the occultation of `c` by `b`
@@ -150,7 +150,7 @@ def Stacked_bc():
 
   # Observe it (ten exposures)
   np.random.seed(123)
-  fig, ax = system.observe(stack = 10, filter = 'f1500w')
+  fig, ax = system.observe(stack = N, filter = 'f1500w')
   fig.set_size_inches(12, 6)
   fig.subplots_adjust(top = 0.7)
 
@@ -281,5 +281,5 @@ def Stacked_bc_all_filters():
    pl.show()
 
 Triple_bc()
-Stacked_bc()
+Stacked_bc(N=10)
 Stacked_bc_all_filters()

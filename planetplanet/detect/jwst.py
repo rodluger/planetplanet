@@ -11,14 +11,16 @@ __all__ = [
     "estimate_eclipse_snr",
     "lightcurves",
     "create_tophat_filter",
-    "event_snr"
+    "event_snr",
+    "get_spitzer_filter_wheel",
+    "get_miri_filter_wheel"
 ]
 
 HERE = os.path.abspath(os.path.split(__file__)[0])
-MIRI_FILTERS = "miri_filter.csv"
-PATH = os.path.join(HERE,MIRI_FILTERS)
+MIRI_FILTERS = "filter_files/miri_filter.csv"
+MIRI_PATH = os.path.join(HERE,MIRI_FILTERS)
 
-def readin_miri_filters(f=PATH):
+def readin_miri_filters(f=MIRI_PATH):
     """
     Read-in MIRI photometic filters
     """
@@ -42,6 +44,36 @@ def readin_miri_filters(f=PATH):
     names = np.array(df_filt.columns[1:], dtype=str)
 
     return wl_filt, dwl_filt, tputs, names
+
+def get_spitzer_filter_wheel(warm = True):
+    """
+    Read-in and instantiate list of Spitzer IRAC filters as `Filter` objects
+    """
+
+    # Use only warm Spitzer filters?
+    if warm:
+        N = 2
+    else:
+        N = 4
+
+    # Read-in Spitzer IRAC filters
+    data1 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch1trans_full.txt"), skip_header=3)
+    data2 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch2trans_full.txt"), skip_header=3)
+    data3 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch3trans_full.txt"), skip_header=3)
+    data4 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch4trans_full.txt"), skip_header=3)
+
+    spitzer_names = ["IRAC3.6", "IRAC4.5", "IRAC5.8", "IRAC8.0"]
+    spitzer_data = [data1, data2, data3, data4]
+
+    # Construct filter wheel
+    wheel = [
+        Filter(
+            name = spitzer_names[i], wl=spitzer_data[i][:,0], throughput=spitzer_data[i][:,1]
+        )
+        for i in range(N)
+    ]
+
+    return wheel
 
 ################################################################################
 
@@ -401,7 +433,7 @@ def jwst_background(wl):
 
 def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.0, Nlam = 10000,
                          Tstar = 2560., Tplan = 400., Rs = 0.12, Rp = 1.086, d = 12.2,
-                         verbose=True, plot=True):
+                         atel = 25.0, verbose=True, plot=True, thermal = True):
     """
     Parameters
     ----------
@@ -484,13 +516,16 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
     for i in range(nfilt):
 
         # Count STELLAR photons
-        Nphot_star = tint * wheel[i].photon_rate(lam, Fstar)#filter_photon_rate(lam, Fstar, wheel[i], dlam=dlam)
+        Nphot_star = tint * wheel[i].photon_rate(lam, Fstar, atel = atel)#filter_photon_rate(lam, Fstar, wheel[i], dlam=dlam)
 
         # Count PLANET photons
-        Nphot_planet = tint * wheel[i].photon_rate(lam, Fplan)#filter_photon_rate(lam, Fplan, wheel[i], dlam=dlam)
+        Nphot_planet = tint * wheel[i].photon_rate(lam, Fplan, atel = atel)#filter_photon_rate(lam, Fplan, wheel[i], dlam=dlam)
 
         # Count BACKGROUND photons
-        Nphot_bg = tint * wheel[i].photon_rate(lam, Fback)#filter_photon_rate(lam, Fback, wheel[i], dlam=dlam)
+        if thermal:
+            Nphot_bg = tint * wheel[i].photon_rate(lam, Fback, atel = atel)#filter_photon_rate(lam, Fback, wheel[i], dlam=dlam)
+        else:
+            Nphot_bg = np.zeros_like(Nphot_planet)
 
         # Calculate SNR on planet photons
         SNR = Nphot_planet / np.sqrt((1+1./nout)*Nphot_star + 1./nout*Nphot_planet+(1+1./nout)*Nphot_bg)
