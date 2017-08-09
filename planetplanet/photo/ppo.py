@@ -75,7 +75,7 @@ class _Animation(object):
     '''
 
     '''
-    
+
     if self.pause:
       self.button.label.set_text('Pause')
     else:
@@ -86,7 +86,7 @@ class _Animation(object):
     '''
 
     '''
-    
+
     if not self.pause:
 
       # Normalize the time index
@@ -100,14 +100,14 @@ class _Animation(object):
       y0 = self.body.y_hr[self.t[j]]
       for k, occultor in enumerate(self.occultors):
         r = occultor._r
-        
+
         if self.xy is None:
           xo, yo = occultor.x_hr[self.t[j]] - x0, occultor.y_hr[self.t[j]] - y0
         else:
           xo, yo = self.xy(occultor.x_hr[self.t[j]] - x0, occultor.y_hr[self.t[j]] - y0)
-        
+
         self.occ[k].center = (xo, yo)
-        
+
       # _Body orbits
       for k, b in enumerate(self.bodies):
         self.ptb[k].set_xdata(b.x_hr[self.t[j]])
@@ -198,7 +198,7 @@ class _Body(ctypes.Structure):
       self.Lambda = 0
       self.Phi = 0
       self.color = kwargs.pop('color', 'k')
-    
+
     # Settings for moons
     if self.body_type == 'moon':
       self.host = kwargs.pop('host', None)
@@ -206,7 +206,7 @@ class _Body(ctypes.Structure):
         raise ValueError("Please specify the `host` kwarg for all moons.")
     else:
       self.host = 0
-    
+
     # C stuff, computed in `System` class
     self.nt = 0
     self.nw = 0
@@ -483,7 +483,7 @@ class _Settings(ctypes.Structure):
     if self._integrator == REB_INTEGRATOR_WHFAST:
       return 'whfast'
     elif self._integrator == REB_INTEGRATOR_IAS15:
-      return 'ias15' 
+      return 'ias15'
 
   @integrator.setter
   def integrator(self, val):
@@ -684,7 +684,7 @@ class System(object):
           body.host = getattr(self, body.host)
         body._host = np.argmax(self._names == body.host.name)
         body.a = ((body.per * DAYSEC) ** 2 * G * (body.host._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-          
+
     # Reset animations
     self._animations = []
 
@@ -786,17 +786,17 @@ class System(object):
       tmid = np.concatenate(([tmid[0] - (tmid[1] - tmid[0])], tmid, [tmid[-1] + (tmid[-1] - tmid[-2])]))
       time_hr = [np.linspace(tmid[i], tmid[i + 1], oversample) for i in range(len(tmid) - 1)]
       time_hr = np.concatenate(time_hr)
-      
+
     # Allocate memory
     self._malloc(len(time_hr), len(wavelength))
-    
+
     # Call the light curve routine
     err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength),
                      np.ctypeslib.as_ctypes(wavelength), len(self.bodies),
                      self._ptr_bodies, self.settings)
     assert err <= 0, "Error in C routine `Flux` (%d)." % err
     self._computed = True
-    
+
     # Downbin to original time array
     for body in self.bodies:
 
@@ -894,6 +894,10 @@ class System(object):
       # Will have mirror between 8-15m, let's say: 12m
       atel = 144.0
       # No thermal noise
+      thermal = False
+    elif instrument.lower() == 'spitzer':
+      wheel = jwst.get_spitzer_filter_wheel()
+      atel = np.pi * (0.85/2.)**2
       thermal = False
     else:
       raise ValueError("Invalid instrument.")
@@ -1469,7 +1473,7 @@ class System(object):
     # Set up the plot
     if fig is None:
       fig = pl.gcf()
-      
+
     # Get the occulted body
     rp = occulted._r
     x0 = occulted.x_hr[t]
@@ -1523,13 +1527,13 @@ class System(object):
       for b in range(len(self.bodies)):
         if (occulted.occultor[t] & 2 ** b):
           occultors.append(b)
-    
+
     # Convert them into a list of dicts
     occ_dict = []
     for i, occultor in enumerate(occultors):
       occultor = self.bodies[occultor]
       occ_dict.append(dict(x = occultor.x_hr[t] - x0, y = occultor.y_hr[t] - y0, r = occultor._r, zorder = i + 1, alpha = 1))
-    
+
     # Draw the eyeball planet and the occultors
     fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = rp, theta = theta, gamma = gamma, 
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, 
@@ -1608,7 +1612,7 @@ class System(object):
                                         va = 'center', color = occultor.color, fontweight = 'bold',
                                         fontsize = 10, xytext = (0, dy), textcoords = 'offset points', clip_on = True))
             events.append(event_id)
-          
+
     return fig, ax
 
   def _onpick(self, event):
