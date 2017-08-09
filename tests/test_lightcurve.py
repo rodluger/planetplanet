@@ -9,6 +9,7 @@ Test the occultation code.
 '''
 
 from planetplanet import Star, Planet, System
+from planetplanet.photo import Trappist1
 from planetplanet.constants import *
 import numpy as np
 
@@ -113,6 +114,42 @@ def test_compare_methods(tol = 1e-6):
   assert (flux1min - flux3min) / flux1min < tol, "Incorrect flux: %.10e != %.10e" % (flux1min, flux3min)
   assert (flux1mean - flux2mean) / flux1mean < tol, "Incorrect average flux: %.10e != %.10e" % (flux1mean, flux2mean)
   assert (flux1mean - flux3mean) / flux1mean < tol, "Incorrect average flux: %.10e != %.10e" % (flux1mean, flux3mean)
+
+def test_occultation(tol = 1e-10):
+  '''
+  Test a planet-planet occultation of an airless body with phase curves on and using the N-body solver.
+  
+  '''
+  
+  # Instantiate the Trappist-1 system
+  system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
+
+  # Give `c` a large latitudinal offset in its hotspot just for fun
+  system.c.Phi = 30
+
+  # Compute an occultation by `b`
+  time = np.linspace(9552.9364, 9552.9564, 100)
+  system.compute(time)
+
+  # Flux minima at two different wavelengths
+  flux1min = (system.c.flux[:,0] / system.c.flux[0,0]).min()
+  flux2min = (system.c.flux[:,-1] / system.c.flux[0,-1]).min()
+  
+  # Flux averages at two different wavelengths
+  flux1mean = (system.c.flux[:,0] / system.c.flux[0,0]).mean()
+  flux2mean = (system.c.flux[:,-1] / system.c.flux[0,-1]).mean()
+  
+  # Benchmarked values
+  truths = [0.147010846262,
+            0.156670562871,
+            0.881158737004,
+            0.871302511891]
+  
+  # Check!
+  assert (flux1min - truths[0]) / truths[0] < tol, "Incorrect flux: %.10e != %.10e" % (flux1min, truths[0])
+  assert (flux2min - truths[1]) / truths[1] < tol, "Incorrect flux: %.10e != %.10e" % (flux2min, truths[1])
+  assert (flux1mean - truths[2]) / truths[2] < tol, "Incorrect average flux: %.10e != %.10e" % (flux1mean, truths[2])
+  assert (flux2mean - truths[3]) / truths[3] < tol, "Incorrect average flux: %.10e != %.10e" % (flux2mean, truths[3])
   
 def test_limbdark(tol = 1e-4):
   '''
@@ -148,3 +185,4 @@ if __name__ == '__main__':
   test_mutual()
   test_limbdark()
   test_compare_methods()
+  test_occultation()
