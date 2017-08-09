@@ -44,7 +44,7 @@ def test_mutual(tol = 1e-10):
              nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
   # System
-  system = System(star, b, c)
+  system = System(star, b, c, quiet = True)
 
   # Get the occultation light curves
   time = np.linspace(-0.06, 0.06, 1000)
@@ -85,17 +85,17 @@ def test_compare_methods(tol = 1e-6):
   time = np.arange(-0.025, 0.025, 0.1 * MINUTE)
   
   # Compute the light curve, no optimization
-  system = System(star, planet, batmanopt = False, circleopt = False)
+  system = System(star, planet, batmanopt = False, circleopt = False, quiet = True)
   system.compute(time, lambda1 = 0.5, lambda2 = 2.)
   flux1 = system.star.flux[:,0] / system.star.flux[0,0]
   
   # Compute the light curve w/ circle optimization
-  system = System(star, planet, batmanopt = False, circleopt = True)
+  system = System(star, planet, batmanopt = False, circleopt = True, quiet = True)
   system.compute(time, lambda1 = 0.5, lambda2 = 2.)
   flux2 = system.star.flux[:,0] / system.star.flux[0,0]
   
   # Compute the light curve w/ batman optimization
-  system = System(star, planet, batmanopt = True, circleopt = False)
+  system = System(star, planet, batmanopt = True, circleopt = False, quiet = True)
   system.compute(time, lambda1 = 0.5, lambda2 = 2.)
   flux3 = system.star.flux[:,0] / system.star.flux[0,0]
   
@@ -129,6 +129,7 @@ def test_occultation(tol = 1e-10):
 
   # Compute an occultation by `b`
   time = np.linspace(9552.9364, 9552.9564, 100)
+  system.quiet = True
   system.compute(time)
 
   # Flux minima at two different wavelengths
@@ -167,7 +168,7 @@ def test_limbdark(tol = 1e-4):
   truth = 4 * np.pi * (r * RSUN) ** 2 * SBOLTZ * teff ** 4
 
   # System
-  system = System(star)
+  system = System(star, quiet = True)
   system.distance = 12.2
   
   # Compute the light curve
