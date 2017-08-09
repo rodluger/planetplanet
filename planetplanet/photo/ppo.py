@@ -34,7 +34,7 @@ if suffix is None:
   suffix = ".so"
 
 # Import shared library
-from ctypes import cdll, c_char_p
+from ctypes import cdll
 dn = os.path.dirname
 libppo = cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
 

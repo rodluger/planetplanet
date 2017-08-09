@@ -3,3 +3,4 @@ include planetplanet/photo/rebound/*.h
 include planetplanet/photo/*.c
 include planetplanet/photo/*.h
 include planetplanet/photo/sigma_ecc_rho_theta_tremaine.txt
+include planetplanet/detect/filter_files/*

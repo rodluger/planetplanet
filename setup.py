@@ -18,7 +18,7 @@ else:
 builtins.__PLANETPLANET_SETUP__ = True
 import planetplanet
 
-# REBOUND C EXTENSION
+# PLANETPLANET C EXTENSION. Borrowing heavily from REBOUND here.
 if sys.platform == 'darwin':
   from distutils import sysconfig
   vars = sysconfig.get_config_vars()

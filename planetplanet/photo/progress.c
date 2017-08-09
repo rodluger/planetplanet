@@ -1,8 +1,8 @@
 #include "progress.h"
 
-/**
- * Implementation
- */
+/*
+ A progress bar adapted from https://github.com/jwerle/progress.c
+*/
 
 
 char * _strdup (const char *str) {

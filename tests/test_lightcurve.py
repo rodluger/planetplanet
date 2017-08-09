@@ -122,13 +122,13 @@ def test_occultation(tol = 1e-10):
   '''
   
   # Instantiate the Trappist-1 system
-  system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
+  system = Trappist1(sample = False, phasecurve = True, airless = True, nbody = True)
 
   # Give `c` a large latitudinal offset in its hotspot just for fun
   system.c.Phi = 30
-
+  
   # Compute an occultation by `b`
-  time = np.linspace(9552.9364, 9552.9564, 100)
+  time = np.arange(19000.49, 19000.52, 0.1 * MINUTE)
   system.quiet = True
   system.compute(time)
 
@@ -141,11 +141,11 @@ def test_occultation(tol = 1e-10):
   flux2mean = (system.c.flux[:,-1] / system.c.flux[0,-1]).mean()
   
   # Benchmarked values
-  truths = [0.147010846262,
-            0.156670562871,
-            0.881158737004,
-            0.871302511891]
-  
+  truths = [0.672732911622,
+            0.607448074224,
+            0.959376439849,
+            0.932224623354]
+
   # Check!
   assert (flux1min - truths[0]) / truths[0] < tol, "Incorrect flux: %.10e != %.10e" % (flux1min, truths[0])
   assert (flux2min - truths[1]) / truths[1] < tol, "Incorrect flux: %.10e != %.10e" % (flux2min, truths[1])
