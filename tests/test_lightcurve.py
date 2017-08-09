@@ -27,6 +27,7 @@ def u1(lam):
 
 def test_mutual(tol = 1e-10):
   '''
+  Test the code's ability to compute mutual transit light curves.
   
   '''
 
@@ -68,6 +69,7 @@ def test_mutual(tol = 1e-10):
 
 def test_compare_methods(tol = 1e-6):
   '''
+  Compare the different optimization methods for limb-darkened transits, including the `batman` algorithm.
   
   '''
 
@@ -112,8 +114,10 @@ def test_compare_methods(tol = 1e-6):
   assert (flux1mean - flux2mean) / flux1mean < tol, "Incorrect average flux: %.10e != %.10e" % (flux1mean, flux2mean)
   assert (flux1mean - flux3mean) / flux1mean < tol, "Incorrect average flux: %.10e != %.10e" % (flux1mean, flux3mean)
   
-def test_limbdark(tol = 0.001):
+def test_limbdark(tol = 1e-4):
   '''
+  Test the limb darkening normalization by comparing the total flux of the star
+  to what you get with the Stefan-Boltzmann law.
   
   '''
     
@@ -131,7 +135,7 @@ def test_limbdark(tol = 0.001):
   
   # Compute the light curve
   time = np.arange(0., 1., 10)
-  system.compute(time, lambda1 = 0.1, lambda2 = 100, R = 3000)
+  system.compute(time, lambda1 = 0.01, lambda2 = 1000, R = 3000)
   
   # Luminosity
   bol = np.trapz(system.flux[0], system.A.wavelength * 1e6)
