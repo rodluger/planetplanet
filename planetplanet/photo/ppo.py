@@ -55,10 +55,7 @@ class _Animation(object):
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100,
                                              interval = interval, repeat = True)
-    self.axbutton = pl.axes([0.185, 0.12, 0.1, 0.03])
-    self.button = Button(self.axbutton, 'Play', color = 'lightgray')
-    self.button.on_clicked(self.toggle)
-
+    
     # Save?
     if gifname is not None:
       self.pause = False
@@ -68,7 +65,12 @@ class _Animation(object):
         print("Saving %s..." % gifname)
       self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
       self.pause = True
-
+    
+    # Toggle button
+    self.axbutton = pl.axes([0.185, 0.12, 0.1, 0.03])
+    self.button = Button(self.axbutton, 'Play', color = 'lightgray')
+    self.button.on_clicked(self.toggle)
+    
   def toggle(self, event):
     '''
 
@@ -1185,7 +1187,9 @@ class System(object):
 
   def histogram(self, tstart, tend, dt = 0.0001):
     '''
-
+    
+    .. warning:: Returns the **orbital phase angle**, measured from **transit**.
+    
     '''
 
     # Reset
@@ -1303,7 +1307,7 @@ class System(object):
     self.settings.quiet = quiet
     return np.nan
 
-  def plot_occultation(self, body, time, interval = 50, gifname = None):
+  def plot_occultation(self, body, time, interval = 50, gifname = None, spectral = True, **kwargs):
     '''
 
     '''
@@ -1353,13 +1357,15 @@ class System(object):
 
     # Add a baseline?
     if not (body.phasecurve or body.body_type == 'star'):
-      fluxb += 1
       fluxg += 1
       fluxr += 1
-
-    axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
-    axlc.plot(body.time_hr[t], fluxg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
-    axlc.plot(body.time_hr[t], fluxr, 'r-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[-1])) + r"\ \mu\mathrm{m}$")
+    
+    if spectral:
+      axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
+      axlc.plot(body.time_hr[t], fluxg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
+      axlc.plot(body.time_hr[t], fluxr, 'r-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[-1])) + r"\ \mu\mathrm{m}$")
+    else:
+      axlc.plot(body.time_hr[t], fluxg, 'k-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
     axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
     axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
     axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -1416,7 +1422,7 @@ class System(object):
     axxz.axis('off')
 
     # Plot the image
-    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig)
+    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig, **kwargs)
     bodies = [self.bodies[o] for o in occultors] + [body]
     xmin = min(np.concatenate([o.x_hr[t] - body.x_hr[t] - 1.1 * o._r for o in bodies]))
     xmax = max(np.concatenate([o.x_hr[t] - body.x_hr[t] + 1.1 * o._r for o in bodies]))
@@ -1525,9 +1531,9 @@ class System(object):
       occ_dict.append(dict(x = occultor.x_hr[t] - x0, y = occultor.y_hr[t] - y0, r = occultor._r, zorder = i + 1, alpha = 1))
     
     # Draw the eyeball planet and the occultors
-    fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = rp, theta = theta, nz = 11, gamma = gamma, 
+    fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = rp, theta = theta, gamma = gamma, 
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                                   pos = [0.535, 0.5, 0.1, 0.1])
+                                   pos = [0.535, 0.5, 0.1, 0.1], **kwargs)
 
     return ax, occ, xy
 

@@ -4,7 +4,7 @@
 hist.py
 -------
 
-Histograms of the occultation events as a function of phase, duration, and
+Histograms of the occultation events as a function of mean longitude, duration, and
 impact parameter for each of the seven TRAPPIST-1 planets.
 
 ```
@@ -101,15 +101,20 @@ def Plot():
   # Corner plot
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):  
     samples = np.array(hist[k])
-    fig = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Phase [deg]", "Impact parameter", "Duration [min]"], bins = 30)
+    fig = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Longitude [deg]", "Impact parameter", "Duration [min]"], bins = 30)
     for i, ax in enumerate(fig.axes):
       ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
       ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
       for tick in ax.get_xticklabels() + ax.get_yticklabels():
         tick.set_fontsize(12)
-    fig.axes[0].set_xticks([-180, -90, 0, 90, 180])
-    fig.axes[3].set_xticks([-180, -90, 0, 90, 180])
-    fig.axes[6].set_xticks([-180, -90, 0, 90, 180])
+    for i in [0,3,6]:
+      # IMPORTANT: The `histogram()` method returns the **orbital phase angle**, which is
+      # measured from *transit* (phase = 0 deg). The mean longitude is measured from
+      # *quadrature*, so there's a 90 deg offset we must apply.
+      # Order is secondary eclipse, quadrature left, transit, quadrature right, secondary eclipse
+      fig.axes[i].set_xticks([-180, -90, 0, 90, 180])
+    fig.axes[6].set_xticklabels([r"$+$90", r"$\pm$180", r"$-$90", "0", r"$+$90"])
+      
     fig.axes[3].set_yticks([0.2, 0.4, 0.6, 0.8])
     fig.axes[7].set_xticks([0.2, 0.4, 0.6, 0.8])
     fig.axes[8].set_xticks([0, 1, 2, 3])
@@ -213,5 +218,5 @@ def ObservationWindow():
   import pdb; pdb.set_trace()
 
 if __name__ == '__main__':
-  Compute()
+  #Compute()
   Plot()

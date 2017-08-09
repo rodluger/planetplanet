@@ -111,5 +111,5 @@ pl.show()
 pl.close()
 
 # Animate!
-fig, axlc, axxz, axim = system.plot_occultation('A', 0.) #, gifname = 'triple')
+fig, axlc, axxz, axim = system.plot_occultation('A', -0.05, nz = 51, draw_ellipses = False, draw_terminator = False) #, gifname = 'triple')
 pl.show()
