@@ -27,8 +27,16 @@ plasma = pl.get_cmap('plasma')
 
 __all__ = ['Star', 'Planet', 'Moon', 'System']
 
-# Load the library
-libppo = ctypes.CDLL(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libppo.so'))
+# Find system suffix
+import sysconfig
+suffix = sysconfig.get_config_var('EXT_SUFFIX')
+if suffix is None:
+  suffix = ".so"
+
+# Import shared library
+from ctypes import cdll, c_char_p
+dn = os.path.dirname
+libppo = cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
 
 class _Animation(object):
   '''
