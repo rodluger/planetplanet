@@ -3,6 +3,7 @@ old/
 .DS_Store
 *.o
 img/pdf/*
+scripts/debug
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
