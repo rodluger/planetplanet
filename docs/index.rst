@@ -7,6 +7,7 @@ Documentation
    overview
    install
    figures
+   api
    
 Indices and tables
 ==================
