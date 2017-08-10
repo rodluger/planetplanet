@@ -4,5 +4,6 @@ Generates planet-planet occultation light curves in Python. To install:
 
 ```
 git clone git@github.com:rodluger/planetplanet.git
+cd planetplanet
 python setup.py develop
 ```
