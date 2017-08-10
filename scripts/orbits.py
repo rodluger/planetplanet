@@ -8,14 +8,25 @@ Plots the orbital path of each of the seven TRAPPIST-1 planets as seen
 by an observer on Earth. The width of each path is the planet diameter.
 Planet-planet occultations may occur anywhere where two orbits cross.
 
+  .. plot::
+     :align: center
+     
+     from scripts.orbits import PlotOrbits
+     import matplotlib.pyplot as pl
+     PlotOrbits()
+     pl.show()
+
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 import numpy as np
 import matplotlib.pyplot as pl
 
-if __name__ == '__main__':
-
+def PlotOrbits():
+  '''
+  
+  '''
+  
   # Setup
   AUREARTH = 23454.9271
   rstar = 12.758 / AUREARTH
@@ -55,4 +66,9 @@ if __name__ == '__main__':
   pl.ylabel(r'y [R$_\oplus$]', fontsize = 16, fontweight = 'bold')
   pl.ylim(-14, 14)
   pl.legend(ncol = 2, loc = 'lower left', frameon = False)
-  fig.savefig('../img/orbits.png', bbox_inches = 'tight')
+  
+  return fig, pl.gca()
+  
+if __name__ == '__main__':
+  PlotOrbits()
+  fig.savefig('../img/orbits.pdf', bbox_inches = 'tight')

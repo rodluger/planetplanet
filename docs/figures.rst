@@ -1,4 +1,7 @@
 Figures
 =======
 
-Check out `this <http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html>`_.
+.. toctree::
+   :maxdepth: 2
+   
+   figures/orbits
