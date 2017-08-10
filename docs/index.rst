@@ -6,7 +6,7 @@ Documentation
    
    overview
    install
-   figures
+   scripts
    api
    
 Indices and tables

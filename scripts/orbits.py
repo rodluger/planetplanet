@@ -11,9 +11,9 @@ Planet-planet occultations may occur anywhere where two orbits cross.
   .. plot::
      :align: center
      
-     from scripts.orbits import PlotOrbits
+     from scripts import orbits
      import matplotlib.pyplot as pl
-     PlotOrbits()
+     orbits.plot()
      pl.show()
 
 '''
@@ -22,7 +22,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import numpy as np
 import matplotlib.pyplot as pl
 
-def PlotOrbits():
+def plot():
   '''
   
   '''
@@ -70,5 +70,5 @@ def PlotOrbits():
   return fig, pl.gca()
   
 if __name__ == '__main__':
-  PlotOrbits()
-  fig.savefig('../img/orbits.pdf', bbox_inches = 'tight')
+  plot()
+  fig.savefig('../pdf/orbits.pdf', bbox_inches = 'tight')
