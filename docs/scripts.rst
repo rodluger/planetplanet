@@ -7,4 +7,8 @@ Scripts
    scripts/contrast
    scripts/corner
    scripts/exomoon
+   scripts/eyeball
+   scripts/eyeball_orbit
+   scripts/flower
+   scripts/geometry
    scripts/orbits

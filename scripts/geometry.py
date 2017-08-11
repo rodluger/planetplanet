@@ -5,13 +5,28 @@ geometry.py
 -----------
 
 Plots the geometry of the ellipses of constant zenith angle used
-to compute the occultation light curves of airless planets.
+to compute the occultation light curves of airless planets. |github|
+
+  .. plot::
+     :align: center
+     
+     from scripts.geometry import Observer, Side, Top
+     import matplotlib.pyplot as pl
+     
+     fig, ax = pl.subplots(3, figsize = (8, 24))
+     Observer(ax[0]); ax[0].set_title('Observer View', fontweight = 'bold', fontsize = 20)
+     Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
+     Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
+     pl.show()
+
+  .. role:: raw-html(raw)
+     :format: html
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/geometry.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+
 
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.photo import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
@@ -299,11 +314,10 @@ def Front(ax, r = 1, theta = np.pi / 8, za = np.pi / 4):
   ax.set_xticks([])
   ax.set_yticks([])
 
-fig, ax = pl.subplots(3, figsize = (8, 24))
-Observer(ax[0]); ax[0].set_title('Observer View', fontweight = 'bold', fontsize = 20)
-Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
-Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
-
-fig.savefig('../img/geometry.pdf', bbox_inches = 'tight')
-fig.savefig('../img/geometry.png', bbox_inches = 'tight')
-pl.close()
+if __name__ == '__main__':
+  fig, ax = pl.subplots(3, figsize = (8, 24))
+  Observer(ax[0]); ax[0].set_title('Observer View', fontweight = 'bold', fontsize = 20)
+  Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
+  Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
+  fig.savefig('geometry.pdf', bbox_inches = 'tight')
+  pl.close()

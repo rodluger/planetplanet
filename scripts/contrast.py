@@ -186,4 +186,4 @@ def plot():
   
 if __name__ == '__main__':
   fig, ax = plot()
-  fig.savefig("../img/contrast.pdf", bbox_inches = 'tight', dpi = 600)
+  fig.savefig("contrast.pdf", bbox_inches = 'tight', dpi = 600)

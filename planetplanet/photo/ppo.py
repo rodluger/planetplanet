@@ -114,7 +114,7 @@ class _Animation(object):
         else:
           xo, yo = self.xy(occultor.x_hr[self.t[j]] - x0, occultor.y_hr[self.t[j]] - y0)
 
-        self.occ[k].center = (xo, yo)
+        self.occ[k].center = (xo / self.body._r, yo / self.body._r)
 
       # _Body orbits
       for k, b in enumerate(self.bodies):
@@ -1401,6 +1401,11 @@ class System(object):
     occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
 
     # Plot the orbits of all bodies except moons
+    # NOTE: These are plotted from a top-down view for each planet
+    # individually. This places non-coplanar planets in the same
+    # orbital plane so that their orbits can be better visualized.
+    # In the future, we should show a top-down and edge-on view
+    # in fixed reference frames.
     axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
     f = np.linspace(0, 2 * np.pi, 1000)
     for j, b in enumerate(self.bodies):
@@ -1540,12 +1545,11 @@ class System(object):
     occ_dict = []
     for i, occultor in enumerate(occultors):
       occultor = self.bodies[occultor]
-      occ_dict.append(dict(x = occultor.x_hr[t] - x0, y = occultor.y_hr[t] - y0, r = occultor._r, zorder = i + 1, alpha = 1))
+      occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp, y = (occultor.y_hr[t] - y0) / rp, r = occultor._r / rp, zorder = i + 1, alpha = 1))
 
     # Draw the eyeball planet and the occultors
-    fig, ax, occ, xy = DrawEyeball(x0 = 0, y0 = 0, r = rp, theta = theta, gamma = gamma, 
-                                   occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                                   pos = [0.535, 0.5, 0.1, 0.1], **kwargs)
+    fig, ax, occ, xy = DrawEyeball(0.535, 0.5, 0.05, theta = theta, gamma = gamma, 
+                                   occultors = occ_dict, cmap = 'inferno', fig = fig, **kwargs)
 
     return ax, occ, xy
 
