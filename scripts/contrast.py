@@ -7,7 +7,7 @@ contrast.py
 Plots an occultation event in two different limits: the airless limit
 and the thick atmosphere limit. The asymmetry of the light curve in the 
 former case betrays a strong day/night temperature contrast on the occulted
-planet.
+planet. |github|
 
   .. plot::
      :align: center
@@ -16,6 +16,10 @@ planet.
      import matplotlib.pyplot as pl
      contrast.plot()
      pl.show()
+
+  .. role:: raw-html(raw)
+     :format: html
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/contrast.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 

@@ -4,7 +4,11 @@
 constants
 ---------
 
-Constants used throughout the code. All values are in MKS units unless otherwise specified.
+Constants used throughout the code. All values are in MKS units unless otherwise specified. |github|
+
+  .. role:: raw-html(raw)
+     :format: html
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/constants.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 

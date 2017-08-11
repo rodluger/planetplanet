@@ -6,7 +6,7 @@ orbits.py
 
 Plots the orbital path of each of the seven TRAPPIST-1 planets as seen
 by an observer on Earth. The width of each path is the planet diameter.
-Planet-planet occultations may occur anywhere where two orbits cross.
+Planet-planet occultations may occur anywhere where two orbits cross. |github|
 
   .. plot::
      :align: center
@@ -15,6 +15,10 @@ Planet-planet occultations may occur anywhere where two orbits cross.
      import matplotlib.pyplot as pl
      orbits.plot()
      pl.show()
+
+  .. role:: raw-html(raw)
+     :format: html
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/orbits.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
