@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-eyeball.py
-----------
+eyeball.py |github|
+-------------------
 
-Interactive eyeball planet visualizer. See :py:mod:`planetplanet.photo.eyeball`. |github|
+Interactive eyeball planet visualizer. See :py:mod:`planetplanet.photo.eyeball`.
 
   .. plot::
      :align: center

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-flower.py
----------
+flower.py |github|
+------------------
 
 Computes a mutual transit among four planets with longitudes
 of ascending node at right angles to each other. The premise
 is silly, but this showcases the ability of the code to handle
-mutual transits. |github|
+mutual transits.
 
   .. plot::
      :align: center
@@ -19,6 +19,7 @@ mutual transits. |github|
 
   .. role:: raw-html(raw)
      :format: html
+     
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/flower.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 

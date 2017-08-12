@@ -1,0 +1,1 @@
+.. automodule:: scripts.spitzer_example

@@ -1,1 +1,1 @@
-.. automodule:: scripts.flower 
+.. automodule:: scripts.flower

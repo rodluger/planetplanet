@@ -542,10 +542,9 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
         # Optionally plot
         if plot:
             ax.plot(wheel[i].eff_wl, SNR, "o", c="k")
+    
     if plot:
-        plt.show()
-
-    return
+        return fig, ax
 
 def fake_time_func(t, factor=0.01):
     """

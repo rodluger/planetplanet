@@ -1,10 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-intersection.py
----------------
+intersection.py |github|
+------------------------
 
-Interactive circle/ellipse intersection point finder.
+Interactive circle/ellipse intersection point finder. Solves a quartic polynomial
+to determine the points of intersection. This method is slow because it also finds
+imaginary roots, which we don't care about. Eventually :py:class:`planetplanet` will
+adopt a faster solver for this.
+
+  .. plot::
+     :align: center
+     
+     from scripts import intersection
+     import matplotlib.pyplot as pl
+     intersection.Interactor()
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/intersection.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+
 
 '''
 

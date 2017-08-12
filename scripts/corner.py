@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 '''
-corner.py
----------
+corner.py |github|
+------------------
 
 Adapted from `corner.py <https://github.com/dfm/corner.py>`_
 by Rodrigo Luger on 7/11/17 to produce 2D heatmaps
 instead of contour plots for the histograms of planet-planet
-occultations. |github|
+occultations.
 
 .. plot::
    :align: center
@@ -14,8 +14,8 @@ occultations. |github|
    import matplotlib.pyplot as pl
    import matplotlib.pyplot as pl
    from scripts import corner
-   samples = np.random.randn(10000, 3)
-   corner.corner(samples)
+   samples = np.random.randn(1000000, 3)
+   corner.corner(samples, bins = 100)
    pl.show()
 
 .. role:: raw-html(raw)

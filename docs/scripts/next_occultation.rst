@@ -1,0 +1,1 @@
+.. automodule:: scripts.next_occultation

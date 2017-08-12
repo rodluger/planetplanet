@@ -1,8 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-validation.py
--------------
+validation.py |github|
+----------------------
+
+Validates the code against :py:obj:`batman` for transit light curves
+and against a direct (brute force) integration of the radiance map for
+planet-planet occultations.
+
+  .. plot::
+     :align: center
+     
+     from scripts import validation
+     import matplotlib.pyplot as pl
+     validation.ValidateTransits()
+     validation.ValidateOccultations()
+     pl.show()
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/validation.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+
 
 '''
 
@@ -109,14 +128,15 @@ def ValidateTransits():
 
   # Plot the comparison
   fig, ax = pl.subplots(2, sharex = True)
-  ax[0].plot(time, flux_pp, color = 'b', label = 'pp')
-  ax[0].plot(time, flux_bm, color = 'g', ls = '--', label = 'bm')
+  ax[0].plot(time, flux_pp, color = 'b', label = 'planetplanet (pp)')
+  ax[0].plot(time, flux_bm, color = 'g', ls = '--', label = 'batman (bm)')
   ax[1].plot(time, (flux_pp - flux_bm) * 1e6, color = 'k')
   ax[0].legend(loc = 9)
   ax[0].set_ylabel('Flux', fontweight = 'bold')
   ax[1].set_ylabel('pp - bm [ppm]', fontweight = 'bold')
   ax[1].set_xlabel('Time [days]', fontweight = 'bold')
-  pl.show()
+  
+  return fig, ax
 
 def ValidateOccultations():
   '''
@@ -198,11 +218,16 @@ def ValidateOccultations():
   flux_bf = flux_bf * dpp / dbf + 1
   
   # Plot the light curve
-  pl.plot(time, flux_pp, '-', label = 'pp')
-  pl.plot(time, flux_bf, '-', label = 'bf')
+  fig = pl.figure()
+  pl.plot(time, flux_pp, '-', label = 'planetplanet')
+  pl.plot(time, flux_bf, '-', label = 'brute force')
+  pl.ylabel('Flux', fontweight = 'bold')
+  pl.xlabel('Time [days]', fontweight = 'bold')
   pl.legend()
-  pl.show()
+  
+  return fig, pl.gca()
 
 if __name__ == '__main__':
   ValidateTransits()
   ValidateOccultations()
+  pl.show()

@@ -1371,6 +1371,7 @@ class System(object):
     if not (body.phasecurve or body.body_type == 'star'):
       fluxg += 1
       fluxr += 1
+      fluxb += 1
     
     if spectral:
       axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")

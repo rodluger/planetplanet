@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-exomoon.py
-----------
+exomoon.py |github|
+-------------------
 
 A silly example of a star-planet-moon system. The
 orbital parameters are unrealistic, but this showcases
-how the code can handle moons. |github|
+how the code can handle moons.
 
   .. plot::
      :align: center

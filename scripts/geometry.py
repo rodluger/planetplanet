@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-geometry.py
------------
+geometry.py |github|
+--------------------
 
 Plots the geometry of the ellipses of constant zenith angle used
-to compute the occultation light curves of airless planets. |github|
+to compute the occultation light curves of airless planets.
 
   .. plot::
      :align: center

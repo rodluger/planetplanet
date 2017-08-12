@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-eyeball_orbit.py
-----------------
+eyeball_orbit.py |github|
+-------------------------
 
 Visualize an "eyeball" planet's orbit with and without hot spot offsets. 
-See :py:mod:`planetplanet.photo.eyeball`. |github|
+See :py:mod:`planetplanet.photo.eyeball`.
 
   .. plot::
      :align: center

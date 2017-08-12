@@ -41,7 +41,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.todo',
               'sphinx.ext.coverage',
               'sphinx.ext.mathjax',
-              'sphinx.ext.viewcode',
+              #'sphinx.ext.viewcode',
               'matplotlib.sphinxext.plot_directive']
 
 plot_include_source = False
