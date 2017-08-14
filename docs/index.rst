@@ -17,9 +17,11 @@ Documentation
    install
    scripts
    api
+   Github <https://github.com/rodluger/planetplanet>
    
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
+
