@@ -18,3 +18,8 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+ifdef PLANETPLANET_DOCS	
+  # Export to server
+	# TODO @rsync -aP --times --delete --exclude='*.pdf' --exclude='*.hires.png' .build/html/ $(PLANETPLANET_DOCS)
+	@echo "Export finished."
+endif

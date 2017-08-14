@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+jwst.py |github|
+----------------
+
+.. todo:: Jake add description.
+
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/detect/jwst.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+
+'''
+
 from __future__ import division, print_function, absolute_import, unicode_literals
 import numpy as np
 import matplotlib as mpl
@@ -23,6 +39,9 @@ MIRI_PATH = os.path.join(HERE,MIRI_FILTERS)
 def readin_miri_filters(f=MIRI_PATH):
     """
     Read-in MIRI photometic filters
+    
+    .. todo:: Jake add docs.
+    
     """
     import pandas as pd
 
@@ -48,6 +67,9 @@ def readin_miri_filters(f=MIRI_PATH):
 def get_spitzer_filter_wheel(warm = True):
     """
     Read-in and instantiate list of Spitzer IRAC filters as `Filter` objects
+    
+    .. todo:: Jake add docs.
+    
     """
 
     # Use only warm Spitzer filters?
@@ -79,6 +101,9 @@ def get_spitzer_filter_wheel(warm = True):
 
 class Filter(object):
     """
+    
+    .. todo:: Jake add docs.
+    
     """
     def __init__(self, name=None, wl=None, throughput=None, dwl=None, eff_wl=None, eff_dwl=None):
         self.name = name
@@ -149,10 +174,13 @@ class Filter(object):
 
     def photon_rate(self, lam, flux, atel=25.0, dlam=None):
         """
+        
+        .. todo:: Jake convert to Sphinx style.
+        
         Compute the photon count rate registered by the detector
 
         Parameters
-        ----------
+
         lam : array-like
             Wavelength [um]
         flux : array-like
@@ -163,7 +191,7 @@ class Filter(object):
             Delta-wavelength grid (calculated if not given)
 
         Returns
-        -------
+
         Photon count rate [s$^{-1}$]
         """
 
@@ -183,17 +211,20 @@ class Filter(object):
 
     def convolve(self, lam, flux):
         """
+        
+        .. todo:: Jake convert to Sphinx style.
+        
         Convolve flux with normalized throughput
 
         Parameters
-        ----------
+
         lam : numpy.ndarray
             Wavelength grid [um]
         flux : numpy.ndarray
             Flux grid [W/m^2/um]
 
         Returns
-        -------
+
         F : numpy.ndarray
             Flux convolved with normalized throughput
         """
@@ -208,10 +239,13 @@ class Filter(object):
 
     def compute_lightcurve(self, flux, time, lam, stack = 1, atel = 25., thermal = True, time_hr = None, flux_hr = None):
         """
+        
+        .. todo:: Jake convert to Sphinx style.
+        
         Computes an observed lightcurve in the `Filter`
 
         Parameters
-        ----------
+
         flux : numpy.ndarray
             Observed flux grid (`time` by `lam`) [W/m^2/um]
         time : numpy.ndarray
@@ -294,10 +328,13 @@ class Filter(object):
 
 class Lightcurve(object):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Lightcurve object to store all observed quantities
 
     Parameters
-    ----------
+
     time : array
         Observed time grid [days]
     Nphot : array
@@ -332,7 +369,12 @@ class Lightcurve(object):
         self.norm_hr = norm_hr
 
     def plot(self, ax0=None, title=""):
-
+        '''
+        
+        .. todo:: Jake add docs
+        
+        '''
+        
         # Create new fig if axis is not user provided
         if ax0 is None:
             fig, ax = plt.subplots(figsize=(16,6))
@@ -365,17 +407,20 @@ class Lightcurve(object):
 
 def planck(temp, wav):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Planck blackbody function
 
     Parameters
-    ----------
+
     temp : float or array-like
         Temperature [K]
     wav : float or array-like
         Wavelength [microns]
 
     Returns
-    -------
+
     B_lambda [W/m^2/um/sr]
     """
     h = 6.62607e-34       # Planck constant (J * s)
@@ -387,6 +432,9 @@ def planck(temp, wav):
 
 def plot_miri_filters(ax, wl, filters, names, ylim=[0.0,1.0], leg=True):
     """
+    
+    .. todo:: Jake add docs.
+    
     Plot JWST/MIRI photometric filter bands
     """
     ax1 = ax.twinx()
@@ -401,15 +449,18 @@ def plot_miri_filters(ax, wl, filters, names, ylim=[0.0,1.0], leg=True):
 
 def jwst_background(wl):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Calculate the JWST thermal background (Glasse et al. )
 
     Parameters
-    ----------
+
     wl : array-like
         Wavelength grid [um]
 
     Returns
-    -------
+
     Fback : array-like
         Spectral flux density [W/m$^2$/um]
     """
@@ -435,8 +486,11 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
                          Tstar = 2560., Tplan = 400., Rs = 0.12, Rp = 1.086, d = 12.2,
                          atel = 25.0, verbose=True, plot=True, thermal = True):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Parameters
-    ----------
+
     tint : float, optional
         Exposure time [s]
     nout : float, optional
@@ -459,7 +513,7 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
         System distance [pc]
 
     Returns
-    -------
+
     """
 
     # Physical params
@@ -548,7 +602,11 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
 
 def fake_time_func(t, factor=0.01):
     """
+    
+    .. todo:: Jake add docs
+    
     Returns a function of time
+    
     """
     f = np.sin(t/2)**2 * 0.5*np.sin(t/10.)
     return 1.0 + factor*(f/np.max(f))
@@ -557,10 +615,13 @@ def fake_time_func(t, factor=0.01):
 def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, tmax=4.0,
                      Tstar = 2560., Tplan=400., Rs=0.12, Rp=1.086, d=12.2, tfact=0.01):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Creates a fake flux dataset as a function of wavelength and time
 
     Parameters
-    ----------
+
     Nlam : int, optional
         Number of wavelengths
     Ntime : int, optional
@@ -587,7 +648,7 @@ def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, t
         Relative variability factor
 
     Returns
-    -------
+
     ttup : tuple
         (time, delta_time)
     ltup : tuple
@@ -637,10 +698,13 @@ def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, t
 
 def gen_lr_grid(lomin, lomax, Nlow):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Generate low-res grid
 
     Parameters
-    ----------
+
     lomin : float
         Min value
     lomax : float
@@ -649,7 +713,7 @@ def gen_lr_grid(lomin, lomax, Nlow):
         Number of final points
 
     Returns
-    -------
+
     lr : numpy.ndarray
         New evenly-spaced grid
     dlr : numpy.ndarray
@@ -665,10 +729,13 @@ def gen_lr_grid(lomin, lomax, Nlow):
 
 def downbin_series(yhr, xhr, xlr, dxlr=None):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Re-bin series to lower resolution using scipy.binned_statistic
 
     Parameters
-    ----------
+
     yhr : array-like
         Series to be degraded
     xhr : array-like
@@ -679,7 +746,7 @@ def downbin_series(yhr, xhr, xlr, dxlr=None):
         Low-res x width grid
 
     Returns
-    -------
+
     ylr : ndarray
         Low-res series
     """
@@ -709,6 +776,9 @@ def downbin_series(yhr, xhr, xlr, dxlr=None):
 
 def random_draw(val, sig):
     """
+    
+    .. todo:: Jake add docs
+    
     Draw fake data points from model `val` with errors `sig`
     """
     if type(val) is np.ndarray:
@@ -718,8 +788,11 @@ def random_draw(val, sig):
 
 def lightcurves(wheel, flux, time, lam, obscad=5.0, plot=None):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Parameters
-    ----------
+
     wheel : list
         List of Filters
     flux : numpy.ndarray
@@ -732,7 +805,7 @@ def lightcurves(wheel, flux, time, lam, obscad=5.0, plot=None):
         Observation cadence [mins]
 
     Returns
-    -------
+
     """
 
     raise NotImplementedError("TODO: Fix this routine; no need to oversample light curve any more.")
@@ -818,6 +891,9 @@ def lightcurves(wheel, flux, time, lam, obscad=5.0, plot=None):
 
 def get_miri_filter_wheel():
     """
+    
+    .. todo:: Jake add docs
+    
     Create a filter 'wheel'
     """
 
@@ -835,10 +911,13 @@ def get_miri_filter_wheel():
 
 def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Create a tophat `Filter`
 
     Parameters
-    ----------
+
     lammin : float
         Wavelength minimum [um]
     lammax : float
@@ -873,11 +952,14 @@ def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
 
 def event_snr(cp, ccont, cb, iband, itime=10.):
     """
+    
+    .. todo:: Jake convert to Sphinx style.
+    
     Calc the exposure time necessary to get a given S/N on an event
     following Eqn 7 from Robinson et al. 2016 for molecular band detection.
 
     Parameters
-    ----------
+
     cp :
         Planet count rate
     ccont :
@@ -890,7 +972,7 @@ def event_snr(cp, ccont, cb, iband, itime=10.):
         Integration time [hours]
 
     Returns
-    -------
+
     SNR to detect band given exposure time
     """
 

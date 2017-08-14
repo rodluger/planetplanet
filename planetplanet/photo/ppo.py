@@ -1,8 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-:py:mod:`ppo.py` - Python interface to C
-----------------------------------------
+ppo.py |github|
+---------------
+
+The main Python interface to the C photodynamics code. Allows users to compute
+and plot planet-planet occultation light curves, as well as transits, secondary
+eclipses, phase curves, mutual transits, planet-moon events, and more.
+
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
@@ -81,7 +91,10 @@ class _Animation(object):
     
   def toggle(self, event):
     '''
-
+    Pause/play the animation. Unfortunately I haven't been able to figure out
+    how to freeze the animation so that it resumes at the same frame it was paused
+    on...
+    
     '''
 
     if self.pause:
@@ -92,7 +105,8 @@ class _Animation(object):
 
   def animate(self, j):
     '''
-
+    Play frame `j` of the animation.
+    
     '''
 
     if not self.pause:
@@ -123,10 +137,13 @@ class _Animation(object):
 
 class _Body(ctypes.Structure):
   '''
-  The class containing all the input planet/star parameters.
+  The class containing all the input planet/star parameters. This is a :py:mod:`ctypes` interface
+  to the C :py:obj:`BODY` struct. Users should instantiate these via the :py:func:`Star`,
+  :py:func:`Planet`, and :py:func:`Moon` functions.
 
   '''
 
+  #: All the fields 
   _fields_ = [("_m", ctypes.c_double),
               ("_per", ctypes.c_double),
               ("_inc", ctypes.c_double),
@@ -160,7 +177,15 @@ class _Body(ctypes.Structure):
               ]
 
   def __init__(self, name, body_type, **kwargs):
-
+    '''
+    
+    :param str name: The name of the body.
+    :param str body_type: One of :py:obj:`planet`, :py:obj:`star`, or :py:obj:`moon`.
+    :param kwargs: Any body-specific :py:obj:`kwargs`. See :py:func:`Star`, \
+    :py:func:`Planet`, and :py:func:`Moon`.
+    
+    '''
+    
     # Check
     self.name = name
     self.body_type = body_type
@@ -377,12 +402,14 @@ class _Body(ctypes.Structure):
     '''
 
     return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
-
+    
 class _Settings(ctypes.Structure):
   '''
-  The class that contains the model settings. This class is used internally.
+  The class that contains the model settings. This class is used internally; settings
+  should be specified as :py:obj:`kwargs` to :py:class:`System` or by assignment once 
+  a :py:class:`System` object has been instantiated.
 
-  :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
+  :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute orbits. Default :py:obj:`False`
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
@@ -390,8 +417,8 @@ class _Settings(ctypes.Structure):
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
-  :param bool quiet: Suppress output? Default `False`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
+  :param bool quiet: Suppress output? Default :py:obj:`False`
   :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
          angle, elliptical boundaries of constant surface brightness on the planet surface are \
          treated as vertical lines. Default `1.`
@@ -399,7 +426,12 @@ class _Settings(ctypes.Structure):
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
   :param int oversample: Oversampling factor for each exposure. Default `1`
   :param float distance: Distance to the system in parsecs. Default `10.`
-
+  :param bool circleopt: Solve the simpler quadratic problem for circle-ellipse intersections when \
+         the axes of the ellipse are equal to within :math:`10^{-10}`? Default :py:obj:`True`
+  :param bool batmanopt: Use the :py:mod:`batman` algorithm to compute light curves of radially \
+         symmetric bodies? This can significantly speed up the code. Default :py:obj:`True`
+  :param str integrator: The N-body integrator (:py:obj:`whfast` | :py:obj:`ias15`) to use. Default :py:obj:`whfast`
+  
   '''
 
   _fields_ = [("_nbody", ctypes.c_int),
@@ -521,7 +553,7 @@ class _Settings(ctypes.Structure):
 def Star(name, **kwargs):
   '''
 
-  Returns a `_Body` instance of type `star`.
+  Returns a :py:class:`_Body` instance of type :py:obj:`star`.
 
   :param str name: A unique identifier for this star
   :param float m: Mass in solar masses. Default `1.`
@@ -549,7 +581,7 @@ def Star(name, **kwargs):
 def Planet(name, **kwargs):
   '''
 
-  Returns a `_Body` instance of type `planet`.
+  Returns a :py:class:`_Body` instance of type :py:obj:`planet`.
 
   :param str name: A unique identifier for this planet
   :param float m: Mass in Earth masses. Default `1.`
@@ -560,14 +592,14 @@ def Planet(name, **kwargs):
   :param float w: Longitude of pericenter in degrees. `0.`
   :param float Omega: Longitude of ascending node in degrees. `0.`
   :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
-  :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
+  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
+  :param bool airless: Treat this as an airless planet? If :py:obj:`True`, computes light curves \
          in the instant re-radiation limit, where the surface brightness is proportional \
          to the cosine of the zenith angle (the angle between the line connecting \
          the centers of the planet and the star and the line connecting the center of the \
          planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If `False`, treats the planet as a limb-darkened blackbody. \
-         Default `True`
+         via the `tnight` kwarg. If :py:obj:`False`, treats the planet as a limb-darkened blackbody. \
+         Default :py:obj:`True`
   :param float albedo: Planetary albedo (airless limit). Default `0.3`
   :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
   :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
@@ -576,6 +608,10 @@ def Planet(name, **kwargs):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
+         shift. Airless bodies only. Default `0.`
+  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
+         shift. Airless bodies only. Default `0.`
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
 
@@ -586,7 +622,7 @@ def Planet(name, **kwargs):
 def Moon(name, host, **kwargs):
   '''
 
-  Returns a `_Body` instance of type `moon`.
+  Returns a :py:class:`_Body` instance of type :py:obj:`moon`.
 
   :param str name: A unique identifier for this moon
   :param str host: The name of the moon's host planet
@@ -598,14 +634,14 @@ def Moon(name, host, **kwargs):
   :param float w: Longitude of pericenter in degrees. `0.`
   :param float Omega: Longitude of ascending node in degrees. `0.`
   :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default `False`
-  :param bool airless: Treat this as an airless planet? If `True`, computes light curves \
+  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
+  :param bool airless: Treat this as an airless planet? If :py:obj:`True`, computes light curves \
          in the instant re-radiation limit, where the surface brightness is proportional \
          to the cosine of the zenith angle (the angle between the line connecting \
          the centers of the planet and the star and the line connecting the center of the \
          planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If `False`, treats the planet as a limb-darkened blackbody. \
-         Default `True`
+         via the `tnight` kwarg. If :py:obj:`False`, treats the planet as a limb-darkened blackbody. \
+         Default :py:obj:`True`
   :param float albedo: Planetary albedo (airless limit). Default `0.3`
   :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
   :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
@@ -614,6 +650,10 @@ def Moon(name, host, **kwargs):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
+         shift. Airless bodies only. Default `0.`
+  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
+         shift. Airless bodies only. Default `0.`
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
 
@@ -624,14 +664,12 @@ def Moon(name, host, **kwargs):
 class System(object):
   '''
 
-  A planetary system class. Instantiate with all bodies in the system
-  and the desired settings, passed as kwargs.
+  The planetary system class. This is the main interface to the photodynamical core. 
+  Instantiate with all bodies in the system and the desired settings, passed as :py:obj:`kwargs`.
 
-  ** Calculation settings **
-
-  :param *bodies: Any number of `Planet` or `Star` instances \
+  :param bodies: Any number of :py:func:`Planet`, :py:func:`Moon`, or :py:func:`Star` instances \
          comprising all the bodies in the system. The first body is assumed to be the primary.
-  :param bool nbody: Uses `REBOUND` N-body code to compute orbits. Default `False`
+  :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute orbits. Default :py:obj:`False`
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
@@ -639,8 +677,8 @@ class System(object):
   :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
   :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default `True`
-  :param bool quiet: Suppress output? Default `False`
+  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
+  :param bool quiet: Suppress output? Default :py:obj:`False`
   :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
          angle, elliptical boundaries of constant surface brightness on the planet surface are \
          treated as vertical lines. Default `1.`
@@ -648,12 +686,18 @@ class System(object):
   :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
   :param int oversample: Oversampling factor for each exposure. Default `1`
   :param float distance: Distance to the system in parsecs. Default `10.`
+  :param bool circleopt: Solve the simpler quadratic problem for circle-ellipse intersections when \
+         the axes of the ellipse are equal to within :math:`10^{-10}`? Default :py:obj:`True`
+  :param bool batmanopt: Use the :py:mod:`batman` algorithm to compute light curves of radially \
+         symmetric bodies? This can significantly speed up the code. Default :py:obj:`True`
+  :param str integrator: The N-body integrator (:py:obj:`whfast` | :py:obj:`ias15`) to use. Default :py:obj:`whfast`
 
   '''
 
   def __init__(self, *bodies, **kwargs):
     '''
-
+    Initialize the class.
+    
     '''
 
     # Initialize
@@ -663,7 +707,9 @@ class System(object):
 
   def _reset(self):
     '''
-
+    Applies all settings, makes bodies accessible as properties, resets flags,
+    and computes some preliminary orbital information for the system.
+    
     '''
 
     # Move params set by the user over to the settings class
@@ -701,7 +747,8 @@ class System(object):
 
   def _malloc(self, nt, nw):
     '''
-
+    Allocate memory for all the C arrays.
+    
     '''
 
     # Initialize the C interface
@@ -754,7 +801,16 @@ class System(object):
 
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
-
+    Compute the full system light curve over a given `time` array between
+    wavelengths `lambda1` and `lambda2` at resolution `R`. This method runs the 
+    photodynamical core, populates all bodies with their individual light curves,
+    and flags all occultation events.
+    
+    :param array_like time: The times at which to evaluate the light curve in days
+    :param float lambda1: The start point of the wavelength grid in microns. Default `5`
+    :param float lambda2: The end point of the wavelength grid in microns. Default `15`
+    :param float R: The spectrum resolution, :math:`R = \\frac{\lambda}{\Delta\lambda}`. Default `100`
+    
     '''
 
     # Reset
@@ -864,7 +920,11 @@ class System(object):
 
   def compute_orbits(self, time):
     '''
-
+    Run the dynamical code to compute the positions of all bodies over a given `time` 
+    array. This method does not compute light curves, but it does check for occultations.
+    
+    :param array_like time: The times at which to store the body positions in days
+    
     '''
 
     # Reset
@@ -883,7 +943,9 @@ class System(object):
     '''
 
     :param int stack: Number of exposures to stack. Default `1`
-
+    
+    .. todo:: Jake needs to add documentation here.
+    
     '''
 
     # Have we computed the light curves?
@@ -1056,7 +1118,24 @@ class System(object):
 
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
-
+    
+    Compute all occultations between `tstart` and `tend` and plot an occultation
+    scatter plot like the one in the paper.
+    
+    .. plot::
+       :align: center
+     
+       from planetplanet.photo import Trappist1
+       import matplotlib.pyplot as pl
+       system = Trappist1(sample = True, nbody = True)
+       system.scatter_plot(0, 365 * 3)
+       pl.show()
+    
+    :param float tstart: The integration start time in days
+    :param float tend: The integration end time in days
+    :param float dt: The time resolution in days. Occultations shorter than this \
+           will not be registered.
+    
     '''
 
     # Reset
@@ -1200,7 +1279,32 @@ class System(object):
   def histogram(self, tstart, tend, dt = 0.0001):
     '''
     
-    .. warning:: Returns the **orbital phase angle**, measured from **transit**.
+    Computes statistical properties of planet-planet occultations that occur over a given interval.
+    Computes the frequency of occultations as a function of orbital phase, duration,
+    and impact parameter, as well as the fully marginalized occultation frequency for
+    each planet in the system. Occultations by the star are not included, nor are occultations
+    occuring behind the star, which are not visible to the observer.
+        
+    .. plot::
+       :align: center
+   
+       from scripts import hist
+       import matplotlib.pyplot as pl
+       figs = hist.Plot()
+       for fig in figs[:-1]:
+         pl.close(fig)
+       pl.show()
+    
+    :param float tstart: The integration start time in days
+    :param float tend: The integration end time in days
+    :param float dt: The time resolution in days. Occultations shorter than this \
+           will not be registered.
+    
+    :returns: A list of :py:obj:`(phase angle, impact parameter, duration)` tuples for each planet in \
+              the system. The phase angle is measured in degrees and the duration is measured in days.
+    
+    .. warning:: This routine computes the **orbital phase angle**, which is measured from **transit**. \
+              This is different from the mean longitude by :math:`\pi/2`
     
     '''
 
@@ -1259,7 +1363,20 @@ class System(object):
 
   def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''
-
+    Computes the time of the next occultation of body `occulted`.
+    
+    :param float tstart: The time at which to start the occultation search (days)
+    :param occulted: The occulted body
+    :type occulted: :py:class:`_Body`
+    :param occultor: The occultor(s). If :py:obj:`None`, occultations by any body are considered. Default :py:obj:`None`
+    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :param float min_duration: Minimum occultation duration in **minutes**. Default `10`
+    :param float max_impact: The maximum impact parameter. Default `0.5`
+    :param int maxruns: Maximum number of 100-day runs to search for the occultation. Default `100`
+    :param float dt: The integration timestep
+    
+    :returns: The time of the occultation. If no occultation was found, returns :py:class:`np.nan`
+    
     '''
 
     # Quiet?
@@ -1321,7 +1438,26 @@ class System(object):
 
   def plot_occultation(self, body, time, interval = 50, gifname = None, spectral = True, **kwargs):
     '''
-
+    
+    :param body: The occulted body
+    :type body: :py:class:`_Body`
+    :param float time: The time of the occultation event in days
+    :param int interval: The interval between frames in the animation in ms. Default `50`
+    :param str gifname: If specified, saves the occultation animation as a :py:obj:`gif` in the current directory. Default :py:obj:`None`
+    :param bool spectral: Plot the light curve at different wavelengths? If :py:obj:`True`, plots the first, middle, \
+           and last wavelength in the wavelength grid. If :py:obj:`False`, plots the middle wavelength. Default :py:obj:`True`
+    :param kwargs: Any additional keyword arguments to be passed to :py:func:`plot_image`
+    
+    :returns: :py:obj:`(fig, ax1, ax2, ax3)`, a figure instance and its three axes
+    
+    .. plot::
+       :align: center
+     
+       from scripts import occultation
+       import matplotlib.pyplot as pl
+       occultation.plot()
+       pl.show()
+    
     '''
 
     # Have we computed the light curves?
@@ -1478,10 +1614,30 @@ class System(object):
 
     return fig, axlc, axxz, axim
 
-  def plot_image(self, t, occulted, occultors = None, fig = None, pad = 2.5, occultor_alpha = 1, **kwargs):
+  def plot_image(self, t, occulted, occultor = None, fig = None, figx = 0.535, figy = 0.5, figr = 0.05, **kwargs):
     '''
-    Plots an image of the `occulted` body and its occultors at a given index of the `time_hr` array `t`.
-
+    Plots an image of the `occulted` body and its occultor(s) at a given index of the `time_hr` array `t`.
+    
+    .. plot::
+       :align: center
+     
+       from planetplanet.photo.eyeball import DrawEyeball
+       import matplotlib.pyplot as pl
+       DrawEyeball(0.535, 0.5, 0.25, theta = 1., gamma = 1., 
+                   occultors = [{'x': 0.2, 'y': 0.4, 'r': 0.5}], cmap = 'inferno')
+       pl.show()
+    
+    :param int t: The index of the occultation in the high resolution time array `time_hr`
+    :param occulted: The occulted body instance
+    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :param occultor: The occultor(s). Default :py:obj:`None`
+    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :param fig: The figure on which to plot the image
+    :type fig: :py:class:`matplotlib.Figure`
+    :param float figx: The x coordinate of the image in figure units. Default `0.535`
+    :param float figy: The y coordinate of the image in figure units. Default `0.5`
+    :param float figr: The radius of the image in figure units. Default `0.05` 
+ 
     '''
 
     # Set up the plot
@@ -1535,28 +1691,50 @@ class System(object):
       theta = np.pi / 2
       gamma = 0
 
-    # Get the occultors
-    if occultors is None:
-      occultors = []
+    # Get the occultor
+    if occultor is None:
+      occultor = []
       for b in range(len(self.bodies)):
         if (occulted.occultor[t] & 2 ** b):
-          occultors.append(b)
-
+          occultor.append(b)
+    elif not hasattr(occultor, '__len__'):
+      occultor = [occultor]
+      
+    # If they are _Body instances, turn them into indices
+    for i, occ in enumerate(occultor):
+      if occ in self.bodies:
+        occultor[i] = np.argmax([b == occ for b in self.bodies])  
+        
     # Convert them into a list of dicts
     occ_dict = []
-    for i, occultor in enumerate(occultors):
+    for i, occultor in enumerate(occultor):
       occultor = self.bodies[occultor]
       occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp, y = (occultor.y_hr[t] - y0) / rp, r = occultor._r / rp, zorder = i + 1, alpha = 1))
 
-    # Draw the eyeball planet and the occultors
-    fig, ax, occ, xy = DrawEyeball(0.535, 0.5, 0.05, theta = theta, gamma = gamma, 
+    # Draw the eyeball planet and the occultor(s)
+    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma, 
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, **kwargs)
 
     return ax, occ, xy
 
   def plot_lightcurve(self, wavelength = 15.):
     '''
-
+    
+    Plot the light curve of the system after running :py:func:`compute`.
+    
+    .. plot::
+       :align: center
+     
+       from scripts import lightcurve
+       import matplotlib.pyplot as pl
+       lightcurve.plot()
+       pl.show()
+    
+    :param float wavelength: The wavelength in microns at which to plot the light curve. \
+           Must be within the wavelength grid. Default `15`
+    
+    :returns: :py:obj:`(fig, ax)`
+    
     '''
 
     # Have we computed the light curves?
@@ -1630,7 +1808,8 @@ class System(object):
 
   def _onpick(self, event):
     '''
-
+    Picker event for interactive light curves
+    
     '''
 
     index = event.ind[len(event.ind) // 2]

@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-eyeball.py
-----------
+eyeball.py |github|
+-------------------
 
-Code for plotting and visualizing "eyeball" planets. |github|
+Code for plotting and visualizing "eyeball" planets.
 
   .. role:: raw-html(raw)
      :format: html
+     
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/eyeball.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''

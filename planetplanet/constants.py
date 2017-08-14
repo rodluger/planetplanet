@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-constants
----------
+constants.py |github|
+---------------------
 
-Constants used throughout the code. All values are in MKS units unless otherwise specified. |github|
+Constants used throughout the code. All values are in MKS units unless otherwise specified.
 
   .. role:: raw-html(raw)
      :format: html
+     
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/constants.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''

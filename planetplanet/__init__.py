@@ -20,3 +20,4 @@ if not __PLANETPLANET_SETUP__:
   # Import stuff
   from . import photo, detect
   from .photo import *
+  from .photo.trappist1 import *
