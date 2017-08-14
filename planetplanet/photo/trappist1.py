@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-:py:mod:`ppo.py` - Python interface to C
-----------------------------------------
+trappist1.py |github|
+---------------------
+
+This module hosts TRAPPIST-1-specific routines.
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/trappist1.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
@@ -19,6 +26,33 @@ __all__ = ['Trappist1']
 
 def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwargs):
   '''
+  
+  Returns an instance of :py:obj:`planetplanet.photo.System` for the full 
+  TRAPPIST-1 system. Star and planet parameters are drawn from their respective
+  prior distributions, which are based on the observed values from Gillon et al. (2017),
+  Luger et al. (2017), and Burgasser & Mamajek (2017). Longitudes of ascending node are
+  drawn from the :math:`\\theta` distribution derived in the paper.
+  
+  :param bool sample: Draw a random sample from the full prior? If :py:obj:`False`,\
+  returns the mean values for all parameters. Default :py:obj:`True`
+  :param bool airless: Compute all planet occultation light curves in the airless limit?\
+  Default :py:obj:`True`
+  :param float distance: Distance to the system in parsecs. Default :py:obj:`12`
+  :param int seed: Random number generator seed. Default :py:obj:`None`
+  :param kwargs: Any other :py:obj:`kwargs` to be passed to :py:func:`planetplanet.Star`,\
+  :py:func:`planetplanet.Planet`, and :py:func:`planetplanet.System`.
+  
+  .. plot::
+     :align: center
+     
+     from planetplanet.photo.trappist1 import Trappist1
+     from planetplanet.constants import MINUTE
+     import matplotlib.pyplot as pl
+     import numpy as np
+     system = Trappist1()
+     system.compute(np.arange(0, 10, 1 * MINUTE))
+     system.plot_lightcurve()
+     pl.show()
   
   '''
   

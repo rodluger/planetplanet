@@ -1,11 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-flower.py
----------
+flower.py |github|
+------------------
 
 Computes a mutual transit among four planets with longitudes
-of ascending node at right angles to each other.
+of ascending node at right angles to each other. The premise
+is silly, but this showcases the ability of the code to handle
+mutual transits.
+
+  .. plot::
+     :align: center
+     
+     from scripts import flower
+     import matplotlib.pyplot as pl
+     flower.plot()
+     pl.show()
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/flower.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+
 
 '''
 
@@ -30,30 +46,38 @@ def u1(lam):
   result[lam > 15] = 0.5
   return result
 
-# Instantiate the star
-star = Star('A', m = 0.1, r = 0.1, nz = 21, color = 'k', limbdark = [u1])
+def plot():
+  '''
+  
+  '''
+  
+  # Instantiate the star
+  star = Star('A', m = 0.1, r = 0.1, nz = 21, color = 'k', limbdark = [u1])
 
-# Planet b
-b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., t0 = 0, 
-           nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
+  # Planet b
+  b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., t0 = 0, 
+             nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'r')
 
-# Planet c
-c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., t0 = 0, 
-           nz = 11, Omega = 90, w = 0., ecc = 0., phasecurve = False, color = 'b')
+  # Planet c
+  c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., t0 = 0, 
+             nz = 11, Omega = 90, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
-# Planet c
-d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., t0 = 0, 
-           nz = 11, Omega = 180, w = 0., ecc = 0., phasecurve = False, color = 'b')
+  # Planet c
+  d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., t0 = 0, 
+             nz = 11, Omega = 180, w = 0., ecc = 0., phasecurve = False, color = 'b')
            
-# Planet c
-e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., t0 = 0, 
-           nz = 11, Omega = 270, w = 0., ecc = 0., phasecurve = False, color = 'b')
+  # Planet c
+  e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., t0 = 0, 
+             nz = 11, Omega = 270, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
-# System
-system = System(star, b, c, d, e)
+  # System
+  system = System(star, b, c, d, e)
 
-# Get the occultation light curves
-time = np.linspace(-0.02, 0.02, 100)
-system.compute(time)
-system.plot_occultation('A', 0.) #, gifname = 'flower')
-pl.show()
+  # Get the occultation light curves
+  time = np.linspace(-0.02, 0.02, 100)
+  system.compute(time)
+  system.plot_occultation('A', 0.) #, gifname = 'flower')
+
+if __name__ == '__main__':
+  plot()
+  pl.show()

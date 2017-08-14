@@ -1,21 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-hist.py
--------
+hist.py |github|
+----------------
 
 Histograms of the occultation events as a function of mean longitude, duration, and
-impact parameter for each of the seven TRAPPIST-1 planets.
+impact parameter for each of the seven TRAPPIST-1 planets, as well as a marginalized
+histogram of the total number of potentially detectable planet-planet occultations in
+one Earth year.
 
-```
-screen -dm python -c "import hist; hist.Compute(nsamp = 100)"
-```
+.. note:: When I sample too many times from the prior in a single run, the code often \
+          hangs. There is likely a memory leak somewhere, but I haven't been able to find \
+          it yet. If you want to run large ensembles, I recommend parallelizing smaller \
+          batches. A brain-dead way of doing it is to instantiate a bunch of **screen** \
+          sessions: `screen -dm python -c "import hist; hist.Compute(nsamp = 100)"`
+          
+
+.. plot::
+   :align: center
+   
+   from scripts import hist
+   import matplotlib.pyplot as pl
+   figs = hist.Plot()
+   for fig in figs[:-1]:
+     pl.close(fig)
+   pl.show()
+
+.. role:: raw-html(raw)
+   :format: html
+.. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/hist.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import os
+import planetplanet
 from planetplanet.photo import Trappist1
 from planetplanet.constants import *
 import matplotlib
@@ -25,7 +44,10 @@ import corner
 from tqdm import tqdm
 from zipfile import BadZipFile
 from scipy.stats import norm
-
+datapath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(planetplanet.__file__))), 'scripts', 'data')
+if not os.path.exists(datapath):
+  os.makedirs(datapath)
+  
 def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
   '''
   
@@ -61,11 +83,10 @@ def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
   
   # Save
   n = 0
-  if not os.path.exists('data'):
-    os.makedirs('data')
-  while os.path.exists('data/hist%03d.npz' % n): 
+  
+  while os.path.exists(os.path.join(datapath, 'hist%03d.npz' % n)): 
     n += 1
-  np.savez('data/hist%03d.npz' % n, hist = hist, count = count)
+  np.savez(os.path.join(datapath, 'hist%03d.npz' % n), hist = hist, count = count)
 
 def Plot():
   '''
@@ -76,7 +97,7 @@ def Plot():
   print("Loading...")
   for n in tqdm(range(1000)):
     try:
-      data = np.load('data/hist%03d.npz' % n)
+      data = np.load(os.path.join(datapath, 'hist%03d.npz' % n))
       data['hist'][0]
     except FileNotFoundError:
       if n == 0:
@@ -97,12 +118,15 @@ def Plot():
   occ_day = np.sum([hist[n].shape[0] for n in range(7)]) / count.shape[1] / 365
   # I get 1.1 (!) These are occultations at all impact parameters and durations,
   # so most are grazing / not really detectable.
-    
+  
+  # We will plot 8 different figures
+  figs = [None for i in range(8)]
+  
   # Corner plot
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):  
     samples = np.array(hist[k])
-    fig = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Longitude [deg]", "Impact parameter", "Duration [min]"], bins = 30)
-    for i, ax in enumerate(fig.axes):
+    figs[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Longitude [deg]", "Impact parameter", "Duration [min]"], bins = 30)
+    for i, ax in enumerate(figs[k].axes):
       ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
       ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
       for tick in ax.get_xticklabels() + ax.get_yticklabels():
@@ -112,21 +136,18 @@ def Plot():
       # measured from *transit* (phase = 0 deg). The mean longitude is measured from
       # *quadrature*, so there's a 90 deg offset we must apply.
       # Order is secondary eclipse, quadrature left, transit, quadrature right, secondary eclipse
-      fig.axes[i].set_xticks([-180, -90, 0, 90, 180])
-    fig.axes[6].set_xticklabels([r"$+$90", r"$\pm$180", r"$-$90", "0", r"$+$90"])
-      
-    fig.axes[3].set_yticks([0.2, 0.4, 0.6, 0.8])
-    fig.axes[7].set_xticks([0.2, 0.4, 0.6, 0.8])
-    fig.axes[8].set_xticks([0, 1, 2, 3])
-    fig.axes[8].set_xticklabels([1, 10, 100, 1000])
-    fig.axes[6].set_yticks([0, 1, 2, 3])
-    fig.axes[6].set_yticklabels([1, 10, 100, 1000])
-    fig.savefig('../img/%s.corner.pdf' % planet, bbox_inches = 'tight')
-    pl.close()
-  
+      figs[k].axes[i].set_xticks([-180, -90, 0, 90, 180])
+    figs[k].axes[6].set_xticklabels([r"$+$90", r"$\pm$180", r"$-$90", "0", r"$+$90"])
+    figs[k].axes[3].set_yticks([0.2, 0.4, 0.6, 0.8])
+    figs[k].axes[7].set_xticks([0.2, 0.4, 0.6, 0.8])
+    figs[k].axes[8].set_xticks([0, 1, 2, 3])
+    figs[k].axes[8].set_xticklabels([1, 10, 100, 1000])
+    figs[k].axes[6].set_yticks([0, 1, 2, 3])
+    figs[k].axes[6].set_yticklabels([1, 10, 100, 1000])
+    
   # Frequency histogram
   matplotlib.rcParams['mathtext.fontset'] = 'cm'
-  fig, ax = pl.subplots(1, figsize = (8, 6))
+  figs[-1], ax = pl.subplots(1, figsize = (8, 6))
   system = Trappist1(sample = True, nbody = False, quiet = True)
   for k, planet in enumerate(system.bodies[1:]): 
       
@@ -147,76 +168,13 @@ def Plot():
   ax.set_ylabel('Probability', fontsize = 16, fontweight = 'bold')
   for tick in ax.get_xticklabels() + ax.get_yticklabels():
     tick.set_fontsize(12)
-  fig.savefig('../img/hist.pdf', bbox_inches = 'tight')
-  pl.close()
-
-def ObservationWindow():
-  '''
-  Experimental.
   
-  '''
+  return figs
   
-  # Load
-  print("Loading...")
-  for n in tqdm(range(1000)):
-    try:
-      data = np.load('data/hist%03d.npz' % n)
-      data['hist'][0]
-    except FileNotFoundError:
-      if n == 0:
-        raise Exception("Please run `Compute()` first.")
-      break
-    except BadZipFile:
-      print("Bad zip file: %d." % n)
-      continue
-    if n == 0:
-      hist = data['hist']
-      count = data['count']
-    else:
-      for k in range(7):
-        hist[k] = np.vstack((hist[k], data['hist'][k]))
-      count = np.hstack((count, data['count']))
-  
-  # Instantiate the system
-  system = Trappist1(sample = False)
-  Pb = system.b.per
-  Pc = system.c.per
-  total_time = 365 * count.shape[1]
-  
-  # Occultations of `b`
-  theta = 100
-  theta_arr = hist[0].T[0]
-  total_time = 365 * count.shape[1]
-  def avg_sep(dtime):
-    dtheta = 360 * dtime / system.b.per
-    events = len(np.where((np.abs(theta_arr - theta) <= dtheta / 2) | (np.abs(360 + theta_arr - theta) <= dtheta / 2))[0])
-    return total_time / events
-  time_arr = np.logspace(0, np.log10(8 * system.b.per / MINUTE), 500)
-  sep_arr = [avg_sep(t * MINUTE) for t in time_arr]
-  pl.plot(time_arr, sep_arr, label = 'b')
-  
-  # Occultations of `c`
-  theta = 180 - np.arcsin((Pb / Pc) ** (2 / 3)) * 180 / np.pi
-  theta_arr = hist[1].T[0]
-  def avg_sep(dtime):
-    dtheta = 360 * dtime / system.c.per
-    events = len(np.where((np.abs(theta_arr - theta) <= dtheta / 2) | (np.abs(360 + theta_arr - theta) <= dtheta / 2))[0])
-    return total_time / events
-  time_arr = np.logspace(0, np.log10(8 * system.b.per / MINUTE), 500)
-  sep_arr = [avg_sep(t * MINUTE) for t in time_arr]
-  pl.plot(time_arr, sep_arr, label = 'c')
-  
-  # Appearance
-  pl.yscale('log')
-  pl.xscale('log')
-  pl.xlabel('Observation window [minutes]')
-  pl.ylabel('Time between events [days]')
-  pl.legend()
-  pl.show()
-  
-  # Enter debug
-  import pdb; pdb.set_trace()
-
 if __name__ == '__main__':
-  #Compute()
-  Plot()
+  Compute()
+  figs = Plot()
+  for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
+    figs[k].savefig('%s.corner.pdf' % planet, bbox_inches = 'tight')
+  figs[-1].savefig('hist.pdf', bbox_inches = 'tight')
+  pl.close()

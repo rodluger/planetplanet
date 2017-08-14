@@ -1,12 +1,27 @@
 # -*- coding: utf-8 -*-
 '''
-corner.py
----------
+corner.py |github|
+------------------
 
-Adapted by Rodrigo Luger on 7/11/17 to produce 2d heatmaps
+Adapted from `corner.py <https://github.com/dfm/corner.py>`_
+by Rodrigo Luger on 7/11/17 to produce 2D heatmaps
 instead of contour plots for the histograms of planet-planet
 occultations.
 
+.. plot::
+   :align: center
+   
+   import matplotlib.pyplot as pl
+   import matplotlib.pyplot as pl
+   from scripts import corner
+   samples = np.random.randn(1000000, 3)
+   corner.corner(samples, bins = 100)
+   pl.show()
+
+.. role:: raw-html(raw)
+   :format: html
+.. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/corner.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+   
 '''
 
 from __future__ import print_function, absolute_import, unicode_literals

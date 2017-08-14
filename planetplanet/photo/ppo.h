@@ -22,9 +22,9 @@
 #define HPLANCK                 6.62607004e-34                                        // m^2 kg / s
 #define CLIGHT                  2.998e8                                               // m / 2
 #define REARTH                  6.3781e6                                              // m
-#define MICRON                  1e-6
-#define PARSEC                  3.086e16
-#define MEARTH                  5.9722e24
+#define MICRON                  1e-6                                                  // m
+#define PARSEC                  3.086e16                                              // m
+#define MEARTH                  5.9722e24                                             // kg
 #define GEARTH                  (BIGG * DAYSEC * DAYSEC * MEARTH / (REARTH * REARTH * REARTH))
 
 // Settings

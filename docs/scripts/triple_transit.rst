@@ -1,0 +1,1 @@
+.. automodule:: scripts.triple_transit

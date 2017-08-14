@@ -1,8 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-theta.py
---------
+theta.py |github|
+-----------------
+
+This module enables sampling from the :math:`\theta` distribution for the
+TRAPPIST-1 planets derived using the Monte Carlo method described in the 
+paper. :math:`\theta` is the polar angle of the angular momentum vector; we 
+assume all planets in the TRAPPIST-1 system have angular momentum vectors with 
+polar angle drawn from this distribution.
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/theta.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
@@ -13,7 +24,7 @@ from scipy.integrate import cumtrapz
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
-__all__ = ['sample']
+__all__ = ['sample', 'CDF']
 
 # Load
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -41,17 +52,52 @@ except ValueError:
   f = interp1d(x[:-1], CDF, fill_value = 'extrapolate', bounds_error = False, kind = 'linear')
   
 # Enforce bounds
-def CDF(x):
-  res = f(np.atleast_1d(x))
+def CDF(theta):
+  '''
+  Returns the value of the cumulative distribution function (CDF) of the 
+  polar angle of the angular momentum vector, :math:`\\theta`.
+  
+  .. plot::
+     :align: center
+     
+     from planetplanet.photo import theta
+     import matplotlib.pyplot as pl
+     x = np.linspace(0, 1, 1000)
+     y = [theta.CDF(xi) for xi in x]
+     pl.plot(x, y)
+     pl.xlabel(r'$\\theta$ [deg]', fontweight = 'bold')
+     pl.ylabel('Cumulative Probability', fontweight = 'bold')
+     pl.show()
+  
+  '''
+  
+  res = f(np.atleast_1d(theta))
   res[res > 1] = 1
   res[res < 0] = 0
-  if hasattr(x, '__len__'):
+  if hasattr(theta, '__len__'):
     return res
   else:
     return res[0]
 
 # Draw a sample
 def sample():
+  '''
+  Draw a sample from the distribution of polar angle of the angular momentum vector, :math:`\\theta`,
+  computed using the Monte Carlo technique discussed in the paper. 
+  
+  .. plot::
+     :align: center
+     
+     from planetplanet.photo import theta
+     import matplotlib.pyplot as pl
+     x = [theta.sample() for i in range(10000)]
+     pl.hist(x, bins = 50)
+     pl.xlabel(r'$\\theta$ [deg]', fontweight = 'bold')
+     pl.ylabel('Probability', fontweight = 'bold')
+     pl.show()
+     
+  '''
+  
   y = np.random.random()
   f = lambda x: CDF(x) - y
   while np.sign(f(0)) == np.sign(f(1)):

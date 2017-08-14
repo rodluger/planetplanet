@@ -2,6 +2,9 @@ old/
 *.npz
 .DS_Store
 *.o
+pdf/*
+scripts/debug
+docs/.build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

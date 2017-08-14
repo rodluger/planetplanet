@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-jwst_example.py
----------------
+jwst_example.py |github|
+------------------------
+
+Routines for generating synthetic JWST observations of planet-planet
+occultations in TRAPPIST-1.
+
+  .. role:: raw-html(raw)
+     :format: html
+  
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/jwst_example.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.constants import *
 from planetplanet.photo import Star, Planet, System
 from planetplanet.detect import jwst
@@ -19,6 +25,14 @@ def Triple_bc():
   '''
   Simulate an observation of a triple occultation of TRAPPIST-1 `c` by `b`
   with JWST MIRI at 15 microns.
+  
+  .. plot::
+     :align: center
+     
+     from scripts import jwst_example
+     import matplotlib.pyplot as pl
+     jwst_example.Triple_bc()
+     pl.show()
 
   '''
 
@@ -84,11 +98,19 @@ def Triple_bc():
       axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]), va = "center", ha = "center", xytext = (12, 4), textcoords = "offset points", color = "coral",
                     fontweight = 'bold', fontsize = 8)
 
-  fig.savefig("../img/triple_bc.pdf", bbox_inches = 'tight')
+  return fig, ax, axxz
 
-def Stacked_bc(N=10):
+def Stacked_bc(N = 10):
   '''
-  `N` stacked exposures of `b` occulting `c` in the MIRI F1500W filter
+  Simulate `N` stacked exposures of `b` occulting `c` in the MIRI F1500W filter.
+
+  .. plot::
+     :align: center
+     
+     from scripts import jwst_example
+     import matplotlib.pyplot as pl
+     jwst_example.Stacked_bc()
+     pl.show()
 
   '''
 
@@ -179,12 +201,21 @@ def Stacked_bc(N=10):
   axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]), va = "center", ha = "center", xytext = (18, 3), textcoords = "offset points", color = "coral",
                 fontweight = 'bold', fontsize = 8)
 
-  # Save
-  fig.savefig("../img/stacked_bc.pdf", bbox_inches = 'tight')
+  return fig, ax, axxz
 
 def Stacked_bc_all_filters():
    '''
-   Ten stacked exposures of `b` occulting `c` observed in all MIRI filters
+   Simulate ten stacked exposures of `b` occulting `c` observed in all MIRI filters.
+
+   .. plot::
+     :align: center
+     
+     from scripts import jwst_example
+     import matplotlib.pyplot as pl
+     figs = jwst_example.Stacked_bc_all_filters()
+     for fig in figs[:-1]:
+       pl.close(fig)
+     pl.show()
 
    '''
 
@@ -248,38 +279,41 @@ def Stacked_bc_all_filters():
    filters = jwst.get_miri_filter_wheel()
 
    # Loop over all MIRI filters
+   figs = [None for i in range(len(filters) + 1)]
    SNRs = np.zeros(len(filters))
    wls = np.zeros(len(filters))
    for i in range(len(filters)):
 
        # Observe it (ten exposures)
        np.random.seed(123)
-       fig, ax = system.observe(stack = 10, filter = filters[i])
-
+       figs[i], _ = system.observe(stack = 10, filter = filters[i])
        SNRs[i] = system.filter.lightcurve.event_SNRs[0]
        wls[i] = system.filter.eff_wl
        print("SNR: %.3f" %SNRs[i])
 
-       # Save
-       #fig.savefig("../img/stacked_bc.pdf", bbox_inches = 'tight')
-       #pl.show()
-       pl.clf()
-       pl.close()
-
-   fig, ax = pl.subplots(figsize=(12,10))
+   figs[-1], ax = pl.subplots(figsize=(12,10))
    ax.plot(wls, SNRs, "-o", color="k")
    ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold', fontsize = 25)
    ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 25)
 
    wl_filt, dwl_filt, tputs, names = jwst.readin_miri_filters()
    jwst.plot_miri_filters(ax, wl_filt, tputs, names, ylim=[0.0,1.0], leg=True)
-   ax2 = fig.get_axes()[1]
+   ax2 = figs[-1].get_axes()[1]
    ax2.set_ylabel("Throughput", fontweight = 'bold', fontsize = 25)
    ax.tick_params(labelsize=20)
    ax2.tick_params(labelsize=20)
-   fig.savefig("../img/stacked_bc_all_filters.pdf", bbox_inches = 'tight')
-   pl.show()
+   
+   return figs
 
-Triple_bc()
-Stacked_bc(N=10)
-Stacked_bc_all_filters()
+if __name__ == '__main__':
+
+  fig, _, _ = Triple_bc()
+  fig.savefig("triple_bc.pdf", bbox_inches = 'tight')
+  
+  fig, _, _ = Stacked_bc(N=10)
+  fig.savefig("stacked_bc.pdf", bbox_inches = 'tight')
+  
+  figs = Stacked_bc_all_filters()
+  for i, fig in enumerate(figs[:-1]):
+    fig.savefig("stacked_bc_%02d.pdf" % i, bbox_inches = 'tight')
+  figs[-1].savefig("stacked_bc_all_filters.pdf", bbox_inches = 'tight')

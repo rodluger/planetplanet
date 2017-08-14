@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-eyeball.py
-----------
+eyeball.py |github|
+-------------------
+
+Code for plotting and visualizing "eyeball" planets.
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/eyeball.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
@@ -15,16 +22,51 @@ from matplotlib.widgets import Slider
 
 def ZenithColor(z, cmap = 'inferno'):
   '''
-  Color of a given zenith angle slice
+  Returns the color of a given spherical segment of zenith angle `z`.
+  
+  :param float z: The zenith angle in radians
+  :param str cmap: The name of the :py:class:`matplotlib` colormap. Default `inferno`
   
   '''
   
   return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
 
-def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
-                pos = None, draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False):
+def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
+                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False):
   '''
-
+  Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
+  
+  .. plot::
+     :align: center
+     
+     from planetplanet.photo.eyeball import DrawEyeball
+     import matplotlib.pyplot as pl
+     fig = pl.figure(figsize = (3,3))
+     DrawEyeball(0.5, 0.5, 0.5, fig = fig)
+     pl.show()
+  
+  :param float x0: The `x` position of the center of the planet in figure coordinates
+  :param float y0: The `y` position of the center of the planet in figure coordinates
+  :param float r: The radius of the planet in figure coordinates
+  :param float theta: The phase angle of the eyeball in radians. Default :math:`\pi/3`
+  :param float gamma: The rotation angle of the eyeball in radians. Default `0`
+  :param int nz: The number of zenith angle wedges. Default `11`
+  :param array_like occultors: A list of :py:obj:`dict` instances with information on each of the occultors to draw. \
+  Each dictionary must have keywords `x`, `y`, and `r`, corresponding to the xy position and radius of the \
+  occultor, respectively. These are defined relative to the center of the planet and scaled so that the \
+  radius of the planet is unity. Optional keywords are `zorder`, `color`, and `alpha`. Default :py:obj:`[]`
+  :param str cmap: The name of the :py:class:`matplotlib` colormap. Default `inferno`
+  :param fig: The figure object in which to create the axis. Default :py:obj:`None`
+  :type fig: :py:class:`matplotlib.Figure`
+  :param bool draw_terminator: Draw the terminator ellipse outline? Default :py:obj:`True`
+  :param bool draw_outline: Draw the planet outline(s)? Default :py:obj:`True`
+  :param bool draw_ellipses: Draw the zenith angle ellipse outlines? Default :py:obj:`True`
+  :param bool rasterize: Rasterize the image? Default :py:obj:`False`
+  
+  :return: **fig**, **ax**, **occ**, **xy**. These are the figure and floating axis instances, a lits of :py:obj:`Circle` \
+  instances corresponding to each of the occultors, and a function **xy** that performs the rotation \
+  transformation into the axis-symmetric eyeball frame
+  
   '''
   
   # The rotation transformation, Equation (E6) in the paper
@@ -35,14 +77,11 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
     fig = pl.figure(figsize = (6,6))
   tr = Affine2D().rotate_deg(gamma * 180 / np.pi)
   x = 1. / (np.abs(np.cos(gamma)) + np.abs(np.sin(gamma)))
-  scale = max([r] + [occultor['r'] for occultor in occultors])
+  scale = max([1] + [occultor['r'] for occultor in occultors])
   x *= scale
   grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(-x, x, -x, x))
   ax_orig = floating_axes.FloatingSubplot(fig, 111, grid_helper = grid_helper)
-  if pos is not None:
-    pos[0] -= pos[2] / 2
-    pos[1] -= pos[3] / 2
-    ax_orig.set_position(pos)
+  ax_orig.set_position([x0 - r, y0 - r, 2 * r, 2 * r])
   ax_orig.axis["bottom"].set_visible(False)
   ax_orig.axis["top"].set_visible(False)
   ax_orig.axis["left"].set_visible(False)
@@ -69,21 +108,21 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
     ax.add_artist(occ[i])
     
   # Plot the occulted body
-  x = np.linspace(-r, r, 1000)
-  y = np.sqrt(r ** 2 - x ** 2)
+  x = np.linspace(-1, 1, 1000)
+  y = np.sqrt(1 - x ** 2)
   if draw_outline:
-    ax.plot(x0 + x, y0 + y, color = 'k', zorder = 0, lw = 1, clip_on = False)
-    ax.plot(x0 + x, y0 - y, color = 'k', zorder = 0, lw = 1, clip_on = False)
+    ax.plot(x, y, color = 'k', zorder = 0, lw = 1, clip_on = False)
+    ax.plot(x, -y, color = 'k', zorder = 0, lw = 1, clip_on = False)
 
   # Plot the zenith angle ellipses
   zarr = np.linspace(0, np.pi, nz + 2)
   for i, z in enumerate(zarr[1:]):
 
     # The ellipse
-    a = r * np.abs(np.sin(z))
+    a = np.abs(np.sin(z))
     b = max(0.001, a * np.abs(np.sin(theta)))
-    xE = -r * np.cos(z) * np.cos(theta)
-    xlimb = r * np.cos(z) * np.sin(theta) * np.tan(theta)
+    xE = -np.cos(z) * np.cos(theta)
+    xlimb = np.cos(z) * np.sin(theta) * np.tan(theta)
     if ((theta > 0) and (b < xlimb)) or ((theta <= 0) and (b > xlimb)):
       xmin = xE - b
     else:
@@ -104,39 +143,65 @@ def DrawEyeball(x0 = 0, y0 = 0, r = 1, theta = np.pi / 3, nz = 11, gamma = 0, oc
     y = (a / b) * np.sqrt(A)
     if np.abs(np.cos(z)) < 1e-5:
       # This is the terminator
-      if draw_terminator and scale < 3 * r:
+      if draw_terminator and scale < 3:
         style = dict(color = 'k', ls = '--', lw = 0.5, zorder = 0, clip_on = False)
-        ax.plot(x0 + x, y0 + y, **style)
-        ax.plot(x0 + x, y0 - y, **style)
+        ax.plot(x, y, **style)
+        ax.plot(x, -y, **style)
     else:
       # These are the ellipse boundaries
-      if draw_ellipses and scale < 3 * r:
+      if draw_ellipses and scale < 3:
         style = dict(color = 'k', ls = '-', lw = 0.5, zorder = 0, clip_on = False)
-        ax.plot(x0 + x, y0 + y, **style)
-        ax.plot(x0 + x, y0 - y, **style)
+        ax.plot(x, y, **style)
+        ax.plot(x, -y, **style)
       
     # Fill the ellipses
     if theta < 0:
-      ax.fill_between(x0 + x, y0 - y, y0 + y, color = ZenithColor(zarr[i+1], cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
     else:
-      ax.fill_between(x0 + x, y0 - y, y0 + y, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
     # Fill the ellipses that are cut off by the limb
     if theta < 0:
-      x_ = np.linspace(-r, xE - xlimb, 1000)
-      y_ = np.sqrt(r ** 2 - x_ ** 2)
-      ax.fill_between(x0 + x_, y0 - y_, y0 + y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      x_ = np.linspace(-1, xE - xlimb, 1000)
+      y_ = np.sqrt(1 - x_ ** 2)
+      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
     else:
-      x_ = np.linspace(-r, xE - xlimb, 1000)
-      y_ = np.sqrt(r ** 2 - x_ ** 2)
-      ax.fill_between(x0 + x_, y0 - y_, y0 + y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      x_ = np.linspace(-1, xE - xlimb, 1000)
+      y_ = np.sqrt(1 - x_ ** 2)
+      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
   return fig, ax, occ, xy
 
 def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., nphases = 20, size = 1, 
               draw_orbit = True, draw_orbital_vectors = True, plot_phasecurve = False, 
-              label_phases = False, **kwargs):
+              label_phases = False, figsize = (8, 8), **kwargs):
   '''
+  Draw an "eyeball" planet's orbit on the sky, illustrating the changing phases over the course of the orbit.
+  
+  .. plot::
+     :align: center
+   
+     from planetplanet.photo.eyeball import DrawOrbit
+     import matplotlib.pyplot as pl
+     DrawOrbit(Omega = 45., size = 2, figsize = (6, 6))
+     pl.show()
+  
+  :param float inc: The orbital inclination in degrees. Default `70.`
+  :param float Omega: The longitude of ascending node in degrees. Default `0.`
+  :param float ecc: The orbital eccentricity. Default `0.`
+  :param float w: The longitude of pericenter in degrees. Default `0.`
+  :param float Phi: The longitudinal hot spot offset in degrees. Default `0.`
+  :param float Lambda: The latitidinal hot spot offset in degrees. Default `0.`
+  :param int nphases: The number of planets to draw at different phases. Default `20`
+  :param float size: The size of the planets in arbitrary units. Default `1.`
+  :param bool draw_orbit: Draw the orbit outline? Default :py:obj:`True`
+  :param bool draw_orbital_vectors: Draw the orbital radial vectors? Default :py:obj:`True`
+  :param bool plot_phasecurve: Compute and plot the phase curve for one orbit? Default :py:obj:`False`
+  :param bool label_phases: Label each of the phases? Default :py:obj:`False`
+  :param tuple figsize: The size of the figure in inches. Default :py:obj:`(8, 8)`
+  :param dict kwargs: Any other :py:obj:`kwargs` to be passed to :py:func:`DrawEyeball`
+  
+  :returns: `fig`, `axes`, and optionally `figphase`, `axphase`; these are all the figure and axes objects generated by the function
   
   '''
       
@@ -154,7 +219,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
     system.compute_orbits(time)
 
   # Plot stuff
-  fig, ax = pl.subplots(1, figsize = (8,8))
+  fig, ax = pl.subplots(1, figsize = figsize)
   ax.margins(0.1, 0.1)
   
   # Phase curve
@@ -232,7 +297,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
     xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
     # Draw the planet
-    _, tmp, _, _ = DrawEyeball(theta = theta, gamma = gamma, fig = fig, pos = [xf, yf, 0.03 * size, 0.03 * size], **kwargs)
+    _, tmp, _, _ = DrawEyeball(xf, yf, 0.015 * size, theta = theta, gamma = gamma, fig = fig, **kwargs)
     axes.append(tmp)
     
     # Indicate the orbital phase
@@ -253,6 +318,16 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
  
 class Interact(object):
   '''
+  Generates an interactive "eyeball" planet viewer, where the user can change the
+  orbital phase and the latitudinal/longitudinal hot spot offset angles.
+  
+  .. plot::
+     :align: center
+   
+     from planetplanet.photo.eyeball import Interact
+     Interact()
+  
+  :param dict kwargs: Any :py:obj:`kwargs` to be passed to :py:func:`DrawEyeball`
   
   '''
   
@@ -270,13 +345,13 @@ class Interact(object):
     self.psi = Slider(self.axpsi, r'$\psi$', -90, 90., valinit = 0.)
     self.axlam = pl.axes([0.3, 0.15, 0.44, 0.03])
     self.lam = Slider(self.axlam, r'$\lambda$', -90, 90., valinit = 0.)
-    self.theta.on_changed(self.update)
-    self.psi.on_changed(self.update)
-    self.lam.on_changed(self.update)
-    self.update(90.)
+    self.theta.on_changed(self._update)
+    self.psi.on_changed(self._update)
+    self.lam.on_changed(self._update)
+    self._update(90.)
     pl.show()
   
-  def update(self, val):
+  def _update(self, val):
     '''
   
     '''
@@ -309,4 +384,4 @@ class Interact(object):
       theta = np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))
     
     # Plot the planet
-    DrawEyeball(fig = self.fig, theta = theta, gamma = gamma, **self.kwargs)
+    DrawEyeball(0.525, 0.6, 0.3, fig = self.fig, theta = theta, gamma = gamma, **self.kwargs)

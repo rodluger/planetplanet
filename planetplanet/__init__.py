@@ -16,11 +16,8 @@ except NameError:
   __PLANETPLANET_SETUP__ = False
 
 if not __PLANETPLANET_SETUP__:
-  
-  # Check if the code needs to be compiled
-  if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'photo', 'libppo.so')):
-    subprocess.call(["make"], cwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'photo'))
-  
+    
   # Import stuff
   from . import photo, detect
   from .photo import *
+  from .photo.trappist1 import *

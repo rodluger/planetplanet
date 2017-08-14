@@ -1,68 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-ost_example.py
---------------
+ost_example.py |github|
+-----------------------
+
+Routines for generating synthetic OST observations of planet-planet
+occultations in TRAPPIST-1.
+
+  .. role:: raw-html(raw)
+     :format: html
+  
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/ost_example.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.constants import *
 from planetplanet.photo import Star, Planet, System
 from planetplanet.detect import create_tophat_filter
 import matplotlib.pyplot as pl
 import numpy as np
 
-"""
-def Triple_bc():
-    '''
-    '''
-
-    # Instantiate the star
-    mstar = 0.0802
-    rstar = 0.121
-    teff = (0.000524 * LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
-    star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
-
-    # Instantiate `b`
-    RpRs = np.sqrt(0.7266 / 100)
-    r = RpRs * rstar * RSUN / REARTH
-    b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-               Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., albedo = 0.3,
-               airless = True, phasecurve = True)
-
-    # Instantiate `c`
-    RpRs = np.sqrt(0.687 / 100)
-    r = RpRs * rstar * RSUN / REARTH
-    c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-               Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., albedo = 0.3,
-               airless = True, phasecurve = True)
-
-    # Instantiate the system
-    system = System(star, b, c, distance = 12, oversample = 10)
-
-    # There's a triple occultation of `c` at this time
-    time = np.arange(252.75, 253.50, 10 * MINUTE)
-
-    # Compute and plot the light curve
-    system.compute(time, lambda1 = 5, lambda2 = 35)
-    #system.plot_lightcurve(50.)
-
-    # Create custom filter
-    f50 = create_tophat_filter(10., 30., dlam = 0.1, Tput = 0.3, name = r"20 $\pm$5 $\mu$m")
-
-    # Observe it (one exposure)
-    system.observe(stack = 1, filter = f50, instrument = 'ost')
-    pl.show()
-"""
-
 def Triple_bc():
   '''
   Simulate an observation of a triple occultation of TRAPPIST-1 `c` by `b`
-  with OST at 50 microns.
-
+  with OST.
+  
+    .. plot::
+     :align: center
+     
+     from scripts import jwst_example
+     import matplotlib.pyplot as pl
+     jwst_example.Triple_bc()
+     pl.show()
+  
   '''
 
   # Instantiate the star
@@ -129,12 +100,20 @@ def Triple_bc():
                     fontweight = 'bold', fontsize = 8)
       axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]), va = "center", ha = "center", xytext = (12, 4), textcoords = "offset points", color = "coral",
                     fontweight = 'bold', fontsize = 8)
+  
+  return fig, ax, axxz
 
-  fig.savefig("../img/triple_bc_ost.pdf", bbox_inches = 'tight')
-
-def Stacked_bc():
+def Stacked_bc(N = 10):
   '''
-  Ten stacked exposures of `b` occulting `c`
+  Simulate `N` stacked exposures of `b` occulting `c`.
+
+    .. plot::
+     :align: center
+     
+     from scripts import ost_example
+     import matplotlib.pyplot as pl
+     ost_example.Stacked_bc()
+     pl.show()
 
   '''
 
@@ -199,7 +178,7 @@ def Stacked_bc():
 
   # Observe it (ten exposures)
   np.random.seed(123)
-  fig, ax = system.observe(stack = 60, filter = f50, instrument = 'ost')
+  fig, ax = system.observe(stack = N, filter = f50, instrument = 'ost')
   fig.set_size_inches(12, 6)
   fig.subplots_adjust(top = 0.7)
 
@@ -228,12 +207,24 @@ def Stacked_bc():
   axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]), va = "center", ha = "center", xytext = (18, 3), textcoords = "offset points", color = "coral",
                 fontweight = 'bold', fontsize = 8)
 
-  # Save
-  fig.savefig("../img/stacked_bc_ost.pdf", bbox_inches = 'tight')
+  return fig, ax, axxz
 
 def SNR_v_wavelength():
     '''
+    Signal-to-noise ratio of an occultation of TRAPPIST-1c by TRAPPIST-1b 
+    as a function of wavelength for OST, assuming 5 micron-wide
+    filters.
+    
+    .. plot::
+       :align: center
+     
+       from scripts import ost_example
+       import matplotlib.pyplot as pl
+       ost_example.SNR_v_wavelength()
+       pl.show()
+    
     '''
+    
     # Instantiate the star
     mstar = 0.0802
     rstar = 0.121
@@ -308,10 +299,15 @@ def SNR_v_wavelength():
     #"""
 
     # Save
-    fig.savefig("../img/snr_bc_ost.pdf", bbox_inches = 'tight')
+    return fig, ax, ax2
 
-    pl.show()
+if __name__ == '__main__':
 
-Triple_bc()
-Stacked_bc()
-SNR_v_wavelength()
+  fig, _, _ = Triple_bc()
+  fig.savefig("triple_bc_ost.pdf", bbox_inches = 'tight')
+  
+  fig, _, _ = Stacked_bc(N=10)
+  fig.savefig("stacked_bc_ost.pdf", bbox_inches = 'tight')
+
+  fig, _, _ = SNR_v_wavelength()
+  fig.savefig("snr_bc_ost.pdf", bbox_inches = 'tight')

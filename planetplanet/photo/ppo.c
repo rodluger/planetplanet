@@ -374,7 +374,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                      settings.maxpolyiter, settings.mintheta, settings.maxvertices,
                      settings.maxfunctions, settings.adaptive, settings.circleopt, settings.batmanopt, body[p]->nu, body[p]->nz, nw, 
                      body[p]->u, wavelength, tmp, settings.quiet, &iErr);
-          
+        
         // Update the body light curve
         for (w = 0; w < nw; w++)
           body[p]->flux[nw * t + w] -= tmp[w];

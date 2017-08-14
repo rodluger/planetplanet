@@ -1,14 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-spitzer_example.py
-------------------
+spitzer_example.py |github|
+---------------------------
+
+Sample observations of TRAPPIST-1 PPOs with Spitzer.
+
+  .. plot::
+     :align: center
+     
+     from scripts import spitzer_example
+     import matplotlib.pyplot as pl
+     spitzer_example.plot()
+     pl.show()
+
+  .. role:: raw-html(raw)
+     :format: html
+     
+  .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/spitzer_example.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
+
 
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.constants import *
 from planetplanet.photo import Star, Planet, System
 from planetplanet.detect import jwst
@@ -77,7 +91,7 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
    system.A.time -= 253.013
    system.A.time_hr -= 253.013
 
-   # Get all MIRI filters
+   # Get all filters
    filters = jwst.get_spitzer_filter_wheel(warm = True)
 
    print("Planet c Teff : %.2f K" %system.c.teff)
@@ -101,20 +115,33 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
        pl.clf()
        pl.close()
 
-   fig, ax = pl.subplots(figsize=(10,7))
+   fig, ax = pl.subplots(figsize=(6,4))
+   fig.subplots_adjust(left = 0.2, bottom = 0.2)
    ax.plot(wls, SNRs, "-o", color="k")
-   ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold', fontsize = 25)
-   ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 25)
+   ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold', fontsize = 14)
+   ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 14)
 
    wl_filt, dwl_filt, tputs, names = jwst.readin_miri_filters()
    #jwst.plot_miri_filters(ax, wl_filt, tputs, names, ylim=[0.0,1.0], leg=True)
    #ax2 = fig.get_axes()[1]
    #ax2.set_ylabel("Throughput", fontweight = 'bold', fontsize = 25)
-   ax.tick_params(labelsize=20)
+   ax.tick_params(labelsize=12)
    #ax2.tick_params(labelsize=20)
    #fig.savefig("../img/stacked_bc_all_filters.pdf", bbox_inches = 'tight')
-   pl.show()
+   return fig, ax
 
-Stacked_bc_all_filters(N = 100000, airless = False, albedo = 0.0)
-Stacked_bc_all_filters(N = 10000, airless = True, albedo = 0.0)
-Stacked_bc_all_filters(N = 100, airless = False, albedo = -15)
+def plot():
+  '''
+  
+  '''
+  
+  fig1, ax1 = Stacked_bc_all_filters(N = 100000, airless = False, albedo = 0.0)
+  fig1.suptitle("100,000 stacked occultations of a blackbody at eq. temperature", fontweight = 'bold', fontsize = 10)
+  fig2, ax2 = Stacked_bc_all_filters(N = 10000, airless = True, albedo = 0.0)
+  fig2.suptitle("10,000 stacked occultations of airless body at eq. temperature", fontweight = 'bold', fontsize = 10)
+  fig3, ax3 = Stacked_bc_all_filters(N = 100, airless = False, albedo = -15)
+  fig3.suptitle("100 stacked occultations of 683 K blackbody", fontweight = 'bold', fontsize = 10)
+
+if __name__ == '__main__':
+  plot()
+  pl.show()
