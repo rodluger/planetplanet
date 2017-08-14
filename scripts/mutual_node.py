@@ -9,15 +9,15 @@ mutual transit between TRAPPIST-1 b and c as a function of the
 difference in their longitude of ascending nodes. With some
 scatter, the difference in this angle is inversely proportional
 to the duration of the mutual transit. Observing such an event
-can place strong constraints on the longitudes of ascending node
+can place constraints on the longitudes of ascending node
 of the TRAPPIST-1 planets.
 
   .. plot::
      :align: center
      
-     from scripts import mutual_node
+     from scripts import corner, mutual_node
      import matplotlib.pyplot as pl
-     mutual_node.plot()
+     mutual_node.plot(niter = 500)
      pl.show()
 
   .. role:: raw-html(raw)
@@ -37,13 +37,12 @@ np.random.seed(1234)
 RSUN = 6.957e8
 REARTH = 6.3781e6
 
-def plot():
+def plot(niter = 10000):
   '''
   
   '''
   
   # Draw from prior several times and plot
-  niter = 10000
   time = np.linspace(-0.05, 0.05, 1000)
   dt = (time[1] - time[0]) * 1440.
   Omega = np.linspace(0, 180, 100)
