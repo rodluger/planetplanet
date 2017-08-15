@@ -1,3 +1,7 @@
+/**
+@file complex.c
+@brief Complex number arithmetic from Press et al. (1991)
+*/
 #include <math.h>
 
 typedef struct dcomplex {double r,i;} dcomplex;

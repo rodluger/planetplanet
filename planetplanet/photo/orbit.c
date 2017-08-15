@@ -1,3 +1,8 @@
+/**
+@file orbit.c
+@brief Orbital evolution routines.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -5,44 +10,64 @@
 #include "rebound.h"
 #include "progress.h"
 
-void on_progress(progress_data_t *data) {
-  /*
-  
-  */
-  
+/**
+Update the progress bar. Used internally.
+
+*/
+void on_progress(progress_data_t *data) {  
   progress_write(data->holder);
-  
 } 
- 
+
+/**
+The arithmetic modulus, x mod y.
+
+@param x
+@param y
+@return x mod y
+*/
 double modulus(double x, double y) {
-  /*
-      The arithmetic modulus, x mod y
-  */
   return x - y * floor(x / y);
 } 
  
+/**
+Returns the sign of x.
+
+@param x
+@return sign(x)
+*/ 
 double sgn(double x) {
-  /* 
-      Returns the sign of x
-  */ 
   return (x > 0) - (x < 0);
 }
- 
+
+/**
+The true anomaly as a function of the eccentric anomaly \a E
+and the eccentricity \a ecc.
+
+@param E The eccentric anomaly in radians
+@param ecc The eccentricity
+@return The true anomaly in radians
+
+*/
 double TrueAnomaly(double E, double ecc) {
-  /* 
-      The true anomaly as a function of the eccentric anomaly E
-      and the eccentricity ecc
-  */ 
   if (ecc == 0.) return E;
   else return 2. * atan2(pow(1. + ecc, 0.5) * sin(E / 2.), 
                          pow(1. - ecc, 0.5) * cos(E / 2.));
 }
 
+/**
+Computes the eccentric anomaly from the mean anomaly and the eccentricity
+using a fast iterative scheme. Adapted from Rory Barnes, based on equations 
+in Murray & Dermott.
+
+@param dMeanA The mean anomaly in radians
+@param dEcc The eccentricity
+@param tol The solver tolerance
+@param maxiter The maximum number of iterations
+@return The eccentric anomaly in radians
+
+*/
 double EccentricAnomalyFast(double dMeanA, double dEcc, double tol, int maxiter) {
-  /* 
-      Adapted from Rory Barnes, based on Murray & Dermott 
-  */
-  
+
   double dEccA;
   double di_1, di_2, di_3 = 1.0, fi, fi_1, fi_2, fi_3;
   double lo = -2 * PI;
@@ -86,11 +111,18 @@ double EccentricAnomalyFast(double dMeanA, double dEcc, double tol, int maxiter)
     
 }
 
+/**  
+Computes the eccentric anomaly from the mean anomaly and the eccentricity.
+This is a simpler version of the Kepler solver, borrowed from
+https://github.com/lkreidberg/batman/blob/master/c_src/_rsky.c
+
+@param M The mean anomaly in radians
+@param e The eccentricity
+@param tol The solver tolerance
+@param maxiter The maximum number of iterations
+@return The eccentric anomaly in radians
+*/
 double EccentricAnomaly(double M, double e, double tol, int maxiter) {
-  /*  
-      A simpler version of the Kepler solver, borrowed from
-      https://github.com/lkreidberg/batman/blob/master/c_src/_rsky.c
-  */
   
   double E = M, eps = tol;                                                            // Kreidberg: eps = 1.0e-7;
   int iter;
@@ -109,11 +141,17 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
 	
 }
 
+/**
+Compute the instantaneous x, y, and z positions of all 
+planets with a simple multi-Keplerian solver.
+
+@param np The number of particles (bodies) in the system
+@param body An array of BODY pointers to each of the bodies in the system
+@param settings An instance of the SETTINGS class
+@return The error code
+
+*/
 int Kepler(int np, BODY **body, SETTINGS settings){
-  /*
-      Compute the instantaneous x, y, and z positions of all 
-      planets with a simple Keplerian solver
-  */
   
   double M, E, f, r;
   double  cwf, swf, co, so, ci, si;
@@ -185,15 +223,24 @@ int Kepler(int np, BODY **body, SETTINGS settings){
 	
 }
 
+/**
+Called at each step of the N-Body simulation. Currently does nothing!
+
+*/
 void heartbeat(struct reb_simulation* r){
-  /*
-  
-  */
-  
   // Nothing!
-	
 }
 
+/**
+Compute the instantaneous x, y, and z positions of all 
+planets using the REBOUND N-Body code.
+
+@param np The number of particles (bodies) in the system
+@param body An array of BODY pointers to each of the bodies in the system
+@param settings An instance of the SETTINGS class
+@return The error code
+
+*/
 int NBody(int np, BODY **body, SETTINGS settings) {
   /*
   

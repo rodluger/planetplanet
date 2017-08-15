@@ -1,3 +1,7 @@
+/**
+@file roots.c
+@brief Polynomial root finder from Press et al. (1991)
+*/
 #include <math.h>
 #include <stdio.h>
 #include "complex.h"

@@ -1,3 +1,7 @@
+/**
+@file progress.h
+@brief A progress bar adapted from https://github.com/jwerle/progress.c
+*/
 #ifndef PROGRESS_H
 #define PROGRESS_H 1
 

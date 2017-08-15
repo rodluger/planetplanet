@@ -1,3 +1,7 @@
+/**
+@file complex.h
+@brief Complex number arithmetic from Press et al. (1991)
+*/
 #ifndef _NR_COMPLEX_H_
 #define _NR_COMPLEX_H_
 

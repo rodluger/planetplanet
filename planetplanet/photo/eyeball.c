@@ -1,24 +1,51 @@
+/**
+@file eyeball.c
+@brief Occultation light curve routines.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
 #include "complex.h"
 
+/**
+Computes the blackbody intensity (W / m^2 / m / sr).
+
+@param lambda The wavelength in m
+@param T The effective temperature in K
+@return The intensity given by Planck's Law
+
+*/
 double Blackbody(double lambda, double T) {
-  /*
   
-  */
-  
-  // Planck's law
+  // Planck's Law
   double a = 2 * HPLANCK * CLIGHT * CLIGHT / (lambda * lambda * lambda * lambda * lambda);
   double b = HPLANCK * CLIGHT / (lambda * KBOLTZ * T);
   return a / (exp(b) - 1);
 }
 
+/**
+An implementation of the BATMAN algorithm (Kreidberg 2016) to compute
+occultations of radially-symmetric bodies. This applies to transits
+across stars and planet-planet occultations in the limb-darkened limit
+or of planets at full or new phase.
+
+@param r The occulted body's radius in Earth radii
+@param x0 The x coordinate of the occultor relative to the occulted body in Earth radii
+@param y0 The y coordinate of the occultor relative to the occulted body in Earth radii
+@param ro The radius of the occultor in Earth radii
+@param teff The effective temperature of the occulted body
+@param distance The distance to the system in parsecs
+@param nu The number of limb darkening coefficients
+@param nz The number of zenith angle slices
+@param nw The size of the wavelength grid
+@param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
+@param lambda The wavelength grid in m
+@param flux The wavelength-dependent light curve computed by this function
+
+*/
 void BatmanFlux(double r, double x0, double y0, double ro, double teff, double distance, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw]) {
-  /*
-  
-  */
   
   int i, j, k;  
   double d, d2, ro2, x2;
@@ -126,11 +153,15 @@ void BatmanFlux(double r, double x0, double y0, double ro, double teff, double d
   
 }
 
+/**
+Compares two doubles. Used with qsort.
+
+@param a A double
+@param b A double
+@return 0 if a == b, 1 if a < b, -1 otherwise
+
+*/
 int dblcomp( const void* a, const void* b) {
-  /*
-  
-  */
-  
   double dbl_a = * ( (double*) a );
   double dbl_b = * ( (double*) b );
   if ( dbl_a == dbl_b ) return 0;
@@ -138,11 +169,15 @@ int dblcomp( const void* a, const void* b) {
   else return 1;
 }
 
+/**
+Compares the y values of two FUNCTIONs. Used with qsort.
+
+@param a A FUNCTION instance
+@param b A FUNCTION instance
+@return 0 if a.y == b.y, 1 if a.y < b.y, -1 otherwise
+
+*/
 int funcomp( const void* a, const void* b) {
-  /*
-  
-  */
-  
   FUNCTION *fun_a = (FUNCTION *)a;
   FUNCTION *fun_b = (FUNCTION *)b;
   if ( fun_a->y == fun_b->y ) return 0;
@@ -150,10 +185,17 @@ int funcomp( const void* a, const void* b) {
   else return 1;
 }
 
+/**
+Computes the temperature at a given zenith angle on an eyeball planet.
+
+@param za The zenith angle in radians, measured from the hotspot
+@param irrad The irradiation from the star
+@param albedo The body's albedo
+@param tnight The night side temperature in K
+@return The temperature in K
+
+*/
 double EyeballTemperature(double za, double irrad, double albedo, double tnight) {
-  /*
-  
-  */
   
   double temp;
   
@@ -168,6 +210,23 @@ double EyeballTemperature(double za, double irrad, double albedo, double tnight)
   }
 }
 
+/**
+Computes the real roots of the circle-ellipse intersection quartic equation. These roots
+are the x coordinates of the intersection point(s) relative to the center of the circle.
+
+@param a The semi-major axis of the ellipse, which is aligned with the y axis
+@param b The semi-minor axis of the ellipse, which is aligned with the x axis
+@param xE The x coordinate of the center of the ellipse
+@param yE The y coordinate of the center of the ellipse
+@param xC The x coordinate of the center of the circle
+@param yC The y coordinate of the center of the ellipse
+@param r The radius of the circle
+@param polyeps1 Tolerance in \a zroots
+@param polyeps2 Tolerance in \a zroots
+@param maxpolyiter Maximum iterations in \a zroots
+@param roots The x coordinates of the point(s) of intersection
+
+*/
 void GetRoots(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[4]) {
   /*
 
@@ -222,10 +281,17 @@ void GetRoots(double a, double b, double xE, double yE, double xC, double yC, do
 
 }
 
+/**
+Computes the zenith angle of a point (x, y) on the projected disk of a planet.
+
+@param x The x coordinate of the point
+@param y The y coordinate of the point
+@param r The radius of the planet
+@param theta The phase angle of the eyeball
+@return The zenith angle in radians
+
+*/
 double ZenithAngle(double x, double y, double r, double theta) {
-  /*
-  
-  */
     
   // Normalize
   x = x / r;
@@ -259,12 +325,24 @@ double ZenithAngle(double x, double y, double r, double theta) {
 
 }
 
+/**
+Computes the blackbody intensity at the center of each zenith_angle slice 
+evaluated at a given array of wavelengths.
+
+@param albedo The planet's albedo
+@param irrad The irradiation on the planet
+@param tnight The night side temperature in K (eyeball limit)
+@param teff The effective temperature of the planet (blackbody limit)
+@param nz The number of zenith angle slices
+@param zenithgrid The zenith angle grid
+@param nw The number of wavelength points
+@param lambda The wavelength array
+@param nu The number of limb darkening coefficients
+@param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
+@param B The blackbody intensity grid
+
+*/
 void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
-  /*
-  Returns the blackbody intensity at the center of each zenith_angle slice 
-  evaluated at a given array of wavelengths.
-  
-  */
   
   int i, j, k;
   double zenith_angle, cosza;
@@ -341,14 +419,40 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
   }   
 }
 
+/**
+Evaluates a FUNCTION instance.
+
+@param x The point at which to evaluate the function
+@param function A FUNCTION instance
+@return The value of the function at \a x
+
+*/
 double curve(double x, FUNCTION function) {
   return function.curve(x, function.ellipse);
 }
 
+/**
+Evaluates the definite integral of a FUNCTION instance.
+
+@param x0 The lower integration limit
+@param x1 The upper integration limit
+@param function A FUNCTION instance
+@param oob Flag set to 1 if the integration limits are out of bounds
+@return The definite integral of the function from \a x0 to \a x1
+
+*/
 double integral(double x0, double x1, FUNCTION function, int *oob) {
   return function.integral(x0, x1, function.ellipse, oob);
 }
 
+/**
+The upper curve of an ellipse.
+
+@param x The point at which to evaluate the curve
+@param ellipse An ELLIPSE instance
+@return The value of the upper curve of the ellipse at \a x.
+
+*/
 double fupper(double x, ELLIPSE *ellipse) {
   double A;
   if (ellipse->circle) {
@@ -364,6 +468,14 @@ double fupper(double x, ELLIPSE *ellipse) {
   }
 }
 
+/**
+The lower curve of an ellipse.
+
+@param x The point at which to evaluate the curve
+@param ellipse An ELLIPSE instance
+@return The value of the lower curve of the ellipse at \a x.
+
+*/
 double flower(double x, ELLIPSE *ellipse) {
   double A;
   if (ellipse->circle) {
@@ -379,6 +491,16 @@ double flower(double x, ELLIPSE *ellipse) {
   }
 }
 
+/**
+The area under the upper curve of an ellipse.
+
+@param xL The left (lower) integration limit
+@param xR The right (upper) integration limit
+@param ellipse An ELLIPSE instance
+@param oob Flag set to 1 if the integration limits are out of bounds
+@return The value of the definite integral of the upper curve of the ellipse
+
+*/
 double iupper(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   /*
   
@@ -410,6 +532,16 @@ double iupper(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   return FR - FL;
 }
 
+/**
+The area under the lower curve of an ellipse.
+
+@param xL The left (lower) integration limit
+@param xR The right (upper) integration limit
+@param ellipse An ELLIPSE instance
+@param oob Flag set to 1 if the integration limits are out of bounds
+@return The value of the definite integral of the lower curve of the ellipse
+
+*/
 double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   /*
   
@@ -441,11 +573,32 @@ double ilower(double xL, double xR, ELLIPSE *ellipse, int *oob) {
   return FR - FL;
 }
 
+/**
+Computes the full geometry for a single zenith angle ellipse. Computes the 
+functional form of the ellipse, its integral, and all points of intersection
+with the limb of the occulted planet and the limb of the occultor. Adds the
+vertices and functions to the running lists.
+
+@param zenith_angle The zenith angle in radians
+@param r The radius of the occulted planet
+@param no The number of occulting bodies
+@param x0 The x coordinate of the center of each occulting body
+@param y0 The y coordinate of the center of each occulting body
+@param ro The radius of each occulting body
+@param theta The phase angle of the eyeball
+@param polyeps1 Tolerance in \a zroots
+@param polyeps2 Tolerance in \a zroots
+@param maxpolyiter Maximum iterations in \a zroots
+@param maxvertices Maximum number of vertices in the problem
+@param maxfunctions Maximum number of functions in the problem
+@param vertices The list of vertices
+@param v The number of vertices so far
+@param functions The list of functions
+@param f The number of functions so far
+
+*/
 void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
-  /*
-  
-  */    
-  
+    
   int i, j;
   double xlimb, x, y;
   double roots[4];
@@ -584,11 +737,28 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
   
 }
 
+/**
+Computes the full geometry for a single zenith angle circle. This is the limiting
+case of \a AddZenithAngleEllipse for limb-darkened planets or those at full/new 
+phase. Computes the functional form of the circle, its integral, and all points of intersection
+with the limb of the occultor. Adds the vertices and functions to the running lists.
+
+@param zenith_angle The zenith angle in radians
+@param r The radius of the occulted planet
+@param no The number of occulting bodies
+@param x0 The x coordinate of the center of each occulting body
+@param y0 The y coordinate of the center of each occulting body
+@param ro The radius of each occulting body
+@param maxvertices Maximum number of vertices in the problem
+@param maxfunctions Maximum number of functions in the problem
+@param vertices The list of vertices
+@param v The number of vertices so far
+@param functions The list of functions
+@param f The number of functions so far
+
+*/
 void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
-  /*
-  
-  */    
-  
+
   int i;
   double ro2[no];
   double d, A, x, y, frac, cost, sint;
@@ -678,10 +848,24 @@ void AddZenithAngleCircle(double zenith_angle, double r, int no, double x0[no], 
   
 }
 
+/**
+Computes the geometry for all occulting bodies. Adds relevant vertices
+and functions to the running lists.
+
+@param r The radius of the occulted planet
+@param no The number of occulting bodies
+@param x0 The x coordinate of the center of each occulting body
+@param y0 The y coordinate of the center of each occulting body
+@param ro The radius of each occulting body
+@param maxvertices Maximum number of vertices in the problem
+@param maxfunctions Maximum number of functions in the problem
+@param vertices The list of vertices
+@param v The number of vertices so far
+@param functions The list of functions
+@param f The number of functions so far
+
+*/
 void AddOccultors(double r, int no, double x0[no], double y0[no], double ro[no], int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f) {
-  /*
-  
-  */ 
 
   int i;
   double r2 = r * r;
@@ -735,6 +919,24 @@ void AddOccultors(double r, int no, double x0[no], double y0[no], double ro[no],
   
 }
 
+/**
+Computes the geometry for the occulted body. Adds the vertices of intersection
+with each of the occultors and the functional form of the planet disk to the running
+lists.
+
+@param r The radius of the occulted planet
+@param no The number of occulting bodies
+@param x0 The x coordinate of the center of each occulting body
+@param y0 The y coordinate of the center of each occulting body
+@param ro The radius of each occulting body
+@param maxvertices Maximum number of vertices in the problem
+@param maxfunctions Maximum number of functions in the problem
+@param vertices The list of vertices
+@param v The number of vertices so far
+@param functions The list of functions
+@param f The number of functions so far
+
+*/
 void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f) {
   /*
   
@@ -824,10 +1026,43 @@ void AddOcculted(double r, int no, double x0[no], double y0[no], double ro[no], 
   
 }
 
+/**
+Computes the flux of an eyeball planet occulted by one or more bodies
+over a grid of wavelengths.
+
+@param r The radius of the occulted planet
+@param no The number of occulting bodies
+@param x0 The x coordinate of the center of each occulting body
+@param y0 The y coordinate of the center of each occulting body
+@param ro The radius of each occulting body
+@param theta The eyeball phase angle
+@param albedo The planet's albedo
+@param irrad The planet's irradiation
+@param tnight The planet's night side temperature in K (airless limit only)
+@param teff The planet's effective temperature in K (blackbody limit only)
+@param distance The distance to the system in parsecs
+@param polyeps1 Tolerance in \a zroots
+@param polyeps2 Tolerance in \a zroots
+@param maxpolyiter Maximum iterations in \a zroots
+@param mintheta The minimum absolute value of the phase angle, 
+       below which it is assumed constant to prevent numerical errors
+@param maxvertices Maximum number of vertices in the problem
+@param maxfunctions Maximum number of functions in the problem
+@param adaptive Adaptive zenith angle grid? Limb-darkened limit only
+@param circleopt Treat ellipses as circles for limb-darkened bodies? There's
+       no reason *not* to do this! Option left in mainly for testing purposes.
+@param batmanopt Use the BATMAN algorithm to speed up limb-darkened occultations?
+@param nu The number of limb darkening coefficients
+@param nz The number of zenith angle slices
+@param nw The size of the wavelength grid
+@param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
+@param lambda The wavelength grid in m
+@param flux The wavelength-dependent light curve computed by this function
+@param quiet Suppress output?
+@param iErr Flag set if an error occurs
+
+*/
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter,  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
-  /*
-  
-  */
   
   int i, j, k, m;
   int oob;
@@ -1051,11 +1286,41 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
    
 }
 
+/**
+Computes the total flux of an eyeball over a grid of wavelengths. This routine
+(hackishly) calls \a OccultedFlux with an imaginary occultor covering the entire disk
+of the body.
+
+@param r The radius of the occulted planet
+@param theta The eyeball phase angle
+@param albedo The planet's albedo
+@param irrad The planet's irradiation
+@param tnight The planet's night side temperature in K (airless limit only)
+@param teff The planet's effective temperature in K (blackbody limit only)
+@param distance The distance to the system in parsecs
+@param polyeps1 Tolerance in \a zroots
+@param polyeps2 Tolerance in \a zroots
+@param maxpolyiter Maximum iterations in \a zroots
+@param mintheta The minimum absolute value of the phase angle, 
+       below which it is assumed constant to prevent numerical errors
+@param maxvertices Maximum number of vertices in the problem
+@param maxfunctions Maximum number of functions in the problem
+@param adaptive Adaptive zenith angle grid? Limb-darkened limit only
+@param circleopt Treat ellipses as circles for limb-darkened bodies? There's
+       no reason *not* to do this! Option left in mainly for testing purposes.
+@param batmanopt Use the BATMAN algorithm to speed up limb-darkened occultations?
+@param nu The number of limb darkening coefficients
+@param nz The number of zenith angle slices
+@param nw The size of the wavelength grid
+@param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
+@param lambda The wavelength grid in m
+@param flux The wavelength-dependent light curve computed by this function
+@param quiet Suppress output?
+@param iErr Flag set if an error occurs
+
+*/
 void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1,  double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
-  /*
-  
-  */
-  
+
   double x0[1] = {0};
   double y0[1] = {0};
   double ro[1] = {2 * r};

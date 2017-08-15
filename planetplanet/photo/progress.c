@@ -1,9 +1,8 @@
-#include "progress.h"
-
-/*
- A progress bar adapted from https://github.com/jwerle/progress.c
+/**
+@file progress.c
+@brief A progress bar adapted from https://github.com/jwerle/progress.c
 */
-
+#include "progress.h"
 
 char * _strdup (const char *str) {
   char *cpy = NULL;

@@ -55,6 +55,20 @@ def GetRoots(a, b, xE, yE, xC, yC, r):
   c1 = 2. * B * C - 2. * D * x0;
   c0 = C * C - (b2 - x2) * D;
   
+  
+  # debug
+  costheta = np.sqrt(1 - (b / a) ** 2)
+  rcosphi = -xE / costheta
+  
+  print(xC)
+  
+  q = rcosphi / costheta
+  print(c0 / c4, q ** 4)
+  print(c1 / c4, 4 * q ** 3)
+  print(c2 / c4, 6 * q ** 2)
+  print(c3 / c4, 4 * q)
+  
+  
   # Get the real roots
   roots = [r.real + xC for r in np.roots([c4, c3, c2, c1, c0]) if np.abs(r.imag) < tol]
   return roots

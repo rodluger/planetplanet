@@ -1,27 +1,43 @@
+/**
+@file ppo.c
+@brief Main interface to the photodynamical routines.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
 
+/**
+Computes the phase angle \a theta and the rotation angle \a gamma at a given
+point in a planet's orbit.
+
+@param x0 The x coordinate of the planet's position on the sky in Earth radii
+@param y0 The y coordinate of the planet's position on the sky in Earth radii
+@param z0 The z coordinate of the planet's position on the sky in Earth radii
+@param rp The radius of the planet in Earth radii
+@param Omega The longitude of ascending node in radians
+@param Lambda The latitudinal hotspot offset in radians (north positive)
+@param Phi The longitudinal hotspot offset in radians (east positive)
+@param theta The eyeball phase angle
+@param gamma The eyeball rotation angle
+
+*/
 void GetAngles(double x0, double y0, double z0, double rp, double Omega, double Lambda, double Phi, double *theta, double *gamma) {
-  /*
-  Compute the phase angle `theta` and the rotation angle `gamma` at a given
-  point in a planet's orbit.
-  
-  */
  
   double r = sqrt(x0 * x0 + y0 * y0 + z0 * z0);
   double d, xstar, ystar, zstar;
   
+  // The "easy" case, with no hotspot offset
   if ((Lambda == 0) && (Phi == 0)) {
   
-    // The "easy" case, with no hotspot offset
     
     // The coordinates of the sub-stellar point on the sky
     xstar = x0 * (1 - rp / r);
     ystar = y0 * (1 - rp / r);
     zstar = z0 * (1 - rp / r);
-        
+  
+  // The general case   
   } else {
     
     double x, y, z;
@@ -74,10 +90,15 @@ void GetAngles(double x0, double y0, double z0, double rp, double Omega, double 
   
 }
 
+/**
+Raises an integer to an integer power.
+
+@param base The base
+@param exp The exponent
+@return The result of base^exponent
+
+*/
 int ipow(int base, int exp){
-  /*
-  
-  */
   
   int result = 1;
   while (exp) {
@@ -90,12 +111,18 @@ int ipow(int base, int exp){
   
 }
 
+/**
+Evolves the orbital positions of all bodies forward in time with either a Keplerian
+or an N-body solver.
+
+@param nt The size of the time array
+@param time The array of times at which to evaluate the orbits
+@param np The number of particles (bodies) in the system
+@param body An array of BODY pointers corresponding to all the bodies in the system
+@param settings An instance of the SETTINGS class containing all settings
+
+*/
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
-  /*
-  
-  Compute just the orbits and whether occultations occur.
-  
-  */
 
   int t, p, o;
   double dx, dy, d;
@@ -162,10 +189,19 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
 
 }
 
+/**
+Computes the full light curve for all bodies in the system.
+
+@param nt The size of the time array
+@param time The array of times at which to evaluate the orbits
+@param nw The size of the wavelength grid
+@param wavelength The wavelength grid in microns
+@param np The number of particles (bodies) in the system
+@param body An array of BODY pointers corresponding to all the bodies in the system
+@param settings An instance of the SETTINGS class containing all settings
+
+*/
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings){
-  /*
-  
-  */
 
   double d, dx, dy, dz, d2;
   double lum, irrad;
@@ -256,7 +292,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       // Compute the phase curve for this body?
       if ((p > 0) && (body[p]->phasecurve)) {
         
-        // TODO: Interpolate to save time!
+        // TODO: Interpolate here to save time!
         
         // Get the eyeball angles `theta` and `gamma`
         // Note that `gamma` does not matter for phase curves.
@@ -346,6 +382,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         } else {
           
+          // The star is a simple limb-darkened body
           theta = PI / 2.;
           gamma = 0.;
           
@@ -365,7 +402,10 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           }
   
         } else {
+        
+          // No irradiation on the star
           irrad = 0.;
+          
         }
         
         // Call the eyeball routine
