@@ -21,8 +21,8 @@ void on_progress(progress_data_t *data) {
 /**
 The arithmetic modulus, x mod y.
 
-@param x
-@param y
+@param x A double
+@param y A double
 @return x mod y
 */
 double modulus(double x, double y) {
@@ -32,7 +32,7 @@ double modulus(double x, double y) {
 /**
 Returns the sign of x.
 
-@param x
+@param x A double
 @return sign(x)
 */ 
 double sgn(double x) {

@@ -17,9 +17,11 @@ help:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
+# Copy title image
+	@cp title.png .build/html/_images/title.png
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 ifdef PLANETPLANET_DOCS	
-  # Export to server
+# Export to server
 	@rsync -aP --times --delete --exclude='*.pdf' --exclude='*.hires.png' .build/html/ $(PLANETPLANET_DOCS)
 	@echo "Export finished."
 endif
