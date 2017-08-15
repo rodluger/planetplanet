@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
-#include "rebound.h"
-#include "progress.h"
+#include "rebound/rebound.h"
+#include "progress/progress.h"
 
 /**
 Update the progress bar. Used internally.
@@ -242,10 +242,7 @@ planets using the REBOUND N-Body code.
 
 */
 int NBody(int np, BODY **body, SETTINGS settings) {
-  /*
-  
-  */
-  
+
   int p, t, i;
   double M, E, f, d;
   double cwf, swf, co, so, ci, si;

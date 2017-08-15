@@ -28,7 +28,7 @@ __all__ = ['sample', 'CDF']
 
 # Load
 PATH = os.path.dirname(os.path.abspath(__file__))
-file = os.path.join(PATH, "sigma_ecc_rho_theta_tremaine.txt")
+file = os.path.join(PATH, "posteriors.dat")
 sig_theta, rho_star, sig_ecc, P = np.loadtxt(file, unpack = True, delimiter = ',')
 
 # Get grid points

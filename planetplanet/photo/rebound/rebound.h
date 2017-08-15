@@ -1836,9 +1836,7 @@ struct reb_display_data {
     unsigned int orbit_shader_particle_vao;
     unsigned int orbit_shader_vertex_count;
 };
-/**
- * @cond PRIVATE
- */
+/** @endcond */
 
 
 #endif

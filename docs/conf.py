@@ -27,7 +27,8 @@ import shlex
 import planetplanet
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
+import sphinx_rtd_theme
 
 # -- General configuration ------------------------------------------------
 
@@ -51,7 +52,7 @@ plot_html_show_formats = False
 
 # Breathe bridge to Doxygen C docs
 breathe_default_project = "planetplanet"
-breathe_projects_source = { "planetplanet" : ( "/Users/rodrigo/src/planetplanet/planetplanet/photo", [ "ppo.c", "ppo.h", "orbit.c", "eyeball.c" ] ) }
+breathe_projects_source = { "planetplanet" : ( "/Users/rodrigo/src/planetplanet/planetplanet/photo", [ "ppo.c", "orbit.c", "eyeball.c", "ppo.h"] ) }
    
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']

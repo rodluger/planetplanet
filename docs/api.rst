@@ -4,7 +4,7 @@ API
 Detailed documentation of the Python and C code.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    
    constants.py <api/constants>
    api/dynamics

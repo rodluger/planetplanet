@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
-#include "complex.h"
+#include "numerical/complex.h"
 
 /**
 Computes the blackbody intensity (W / m^2 / m / sr).
