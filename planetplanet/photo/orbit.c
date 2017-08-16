@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
-#include "rebound/rebound.h"
-#include "progress/progress.h"
+#include "rebound.h"
+#include "progress.h"
 
 /**
 Update the progress bar. Used internally.

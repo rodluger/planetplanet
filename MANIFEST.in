@@ -1,5 +1,7 @@
-include planetplanet/photo/rebound/*.c
-include planetplanet/photo/rebound/*.h
+include rebound/src/*.c
+include rebound/src/*.h
+include progress/*.c
+include progress/*.h
 include planetplanet/photo/*.c
 include planetplanet/photo/*.h
 include planetplanet/photo/posteriors.dat

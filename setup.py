@@ -3,6 +3,7 @@
 
 from __future__ import division, print_function, absolute_import
 from setuptools import setup, find_packages, Extension
+import glob
 import sysconfig
 suffix = sysconfig.get_config_var('EXT_SUFFIX')
 if suffix is None:
@@ -27,35 +28,13 @@ if sys.platform == 'darwin':
 else:
   extra_link_args=[]
 libppomodule = Extension('libppo',
-                   sources = ['planetplanet/photo/rebound/rebound.c',
-                              'planetplanet/photo/rebound/integrator_ias15.c',
-                              'planetplanet/photo/rebound/integrator_whfast.c',
-                              'planetplanet/photo/rebound/integrator_whfasthelio.c',
-                              'planetplanet/photo/rebound/integrator_hermes.c',
-                              'planetplanet/photo/rebound/integrator_leapfrog.c',
-                              'planetplanet/photo/rebound/integrator_janus.c',
-                              'planetplanet/photo/rebound/integrator_sei.c',
-                              'planetplanet/photo/rebound/integrator.c',
-                              'planetplanet/photo/rebound/gravity.c',
-                              'planetplanet/photo/rebound/boundary.c',
-                              'planetplanet/photo/rebound/display.c',
-                              'planetplanet/photo/rebound/collision.c',
-                              'planetplanet/photo/rebound/tools.c',
-                              'planetplanet/photo/rebound/derivatives.c',
-                              'planetplanet/photo/rebound/tree.c',
-                              'planetplanet/photo/rebound/particle.c',
-                              'planetplanet/photo/rebound/output.c',
-                              'planetplanet/photo/rebound/input.c',
-                              'planetplanet/photo/rebound/simulationarchive.c',
-                              'planetplanet/photo/rebound/transformations.c',
+                   sources = glob.glob('rebound/src/*.c') + \
+                             ['progress/progress.c',
                               'planetplanet/photo/orbit.c',
-                              'planetplanet/photo/numerical/complex.c',
-                              'planetplanet/photo/numerical/roots.c',
                               'planetplanet/photo/eyeball.c',
                               'planetplanet/photo/ppo.c',
-                              'planetplanet/photo/progress/progress.c'
-                              ],
-                   include_dirs = ['planetplanet/photo/rebound', 'planetplanet/photo/', '/usr/local/include'],
+                             ],
+                   include_dirs = ['rebound/src/', 'progress/', 'planetplanet/photo/', '/usr/local/include'],
                    define_macros=[ ('LIBREBOUND', None) ],
                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
                    extra_link_args=extra_link_args,

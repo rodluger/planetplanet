@@ -1,0 +1,8 @@
+[submodule "rebound"]
+	path = rebound
+	url = https://github.com/rodluger/rebound
+	branch = master
+[submodule "progress"]
+	path = progress
+	url = https://github.com/rodluger/progress
+	branch = master
