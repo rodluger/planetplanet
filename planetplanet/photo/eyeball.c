@@ -9,6 +9,9 @@
 #include "ppo.h"
 #include "numerical/complex.h"
 
+// TEST: Let's see if I can get things to compile on travis with GSL
+#include <gsl/gsl_math.h>
+
 /**
 Computes the blackbody intensity (W / m^2 / m / sr).
 

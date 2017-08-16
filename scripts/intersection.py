@@ -27,9 +27,112 @@ adopt a faster solver for this.
 import numpy as np
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider
+from scipy.optimize import brentq, minimize_scalar
+import timeit, builtins
 tol = 1e-5
 
-def GetRoots(a, b, xE, yE, xC, yC, r):
+def Circle(x, sgnC, xC, yC, r):
+  '''
+  
+  '''
+  
+  A = r ** 2 - (x - xC) ** 2
+  if A < 0:
+    A = 0
+  else:
+    A = np.sqrt(A)
+  return yC + sgnC * A
+
+def Ellipse(x, sgnE, xE, yE, a, b):
+  '''
+  
+  '''
+  
+  A = b ** 2 - (x - xE) ** 2
+  if A < 0:
+    A = 0
+  else:
+    A = np.sqrt(A)
+  return yE + sgnE * a / b * A
+
+def CircleMinusEllipse(x, sgnC, xC, yC, r, sgnE, xE, yE, a, b):
+  '''
+  
+  '''
+  
+  return Circle(x, sgnC, xC, yC, r) - Ellipse(x, sgnE, xE, yE, a, b)
+
+def EllipseMinusCircle(x, sgnC, xC, yC, r, sgnE, xE, yE, a, b):
+  '''
+  
+  '''
+  
+  return -CircleMinusEllipse(x, sgnC, xC, yC, r, sgnE, xE, yE, a, b)
+
+def GetRootsNumerical(a, b, xE, yE, xC, yC, r):
+  '''
+  
+  '''
+  
+  # There are up to four roots
+  roots = []
+  
+  # Loop over the left and right halves of the ellipse
+  xLs = [max(xC - r, xE - b), max(xC - r, xE)]
+  xRs = [min(xC + r, xE), min(xC + r, xE + b)]
+  for xL, xR in zip(xLs, xRs):
+    
+    # Loop over the four cases
+    sgnCs = [1, 1, -1, -1]
+    sgnEs = [1, -1, 1, -1]
+    for sgnC, sgnE in zip(sgnCs, sgnEs):
+          
+      # Get the signs at the bounds
+      sL = np.sign(CircleMinusEllipse(xL, sgnC, xC, yC, r, sgnE, xE, yE, a, b))
+      sR = np.sign(CircleMinusEllipse(xR, sgnC, xC, yC, r, sgnE, xE, yE, a, b))
+      
+      # How many roots?
+      if sL != sR:
+        
+        # One root: easy
+        x = brentq(CircleMinusEllipse, xL, xR, (sgnC, xC, yC, r, sgnE, xE, yE, a, b))
+        roots.append(x)
+        
+      else:
+        
+        # Zero or two roots: let's find the sign at the minimum
+        
+        if sL > 0:
+        
+          # We want to *minimize* the function
+          res = minimize_scalar(CircleMinusEllipse, bounds = (xL, xR), args = (sgnC, xC, yC, r, sgnE, xE, yE, a, b), method = 'bounded')
+          xmin = res.x
+          ymin = res.fun
+          
+        else:
+          
+          # We want to *maximize* the function
+          res = minimize_scalar(EllipseMinusCircle, bounds = (xL, xR), args = (sgnC, xC, yC, r, sgnE, xE, yE, a, b), method = 'bounded')
+          xmin = res.x
+          ymin = -res.fun
+               
+        if np.sign(ymin) == sL:
+          
+          # No roots
+          continue
+        
+        else:
+
+          # Two roots, one on each side of xmin
+          x = brentq(CircleMinusEllipse, xL, xmin, (sgnC, xC, yC, r, sgnE, xE, yE, a, b))
+          roots.append(x)
+      
+          x = brentq(CircleMinusEllipse, xmin, xR, (sgnC, xC, yC, r, sgnE, xE, yE, a, b))
+          roots.append(x)
+          
+  return roots
+
+def GetRootsPolynomial(a, b, xE, yE, xC, yC, r):
   '''
   
   '''
@@ -54,24 +157,22 @@ def GetRoots(a, b, xE, yE, xC, yC, r):
   c2 = 2. * A * C + B * B + D;
   c1 = 2. * B * C - 2. * D * x0;
   c0 = C * C - (b2 - x2) * D;
-  
-  
-  # debug
-  costheta = np.sqrt(1 - (b / a) ** 2)
-  rcosphi = -xE / costheta
-  
-  print(xC)
-  
-  q = rcosphi / costheta
-  print(c0 / c4, q ** 4)
-  print(c1 / c4, 4 * q ** 3)
-  print(c2 / c4, 6 * q ** 2)
-  print(c3 / c4, 4 * q)
-  
-  
+    
   # Get the real roots
   roots = [r.real + xC for r in np.roots([c4, c3, c2, c1, c0]) if np.abs(r.imag) < tol]
   return roots
+
+def GetRoots(*args, method = 'numerical'):
+  '''
+  
+  '''
+  
+  if method.lower() == 'numerical':
+    return GetRootsNumerical(*args)
+  elif method.lower() == 'polynomial':
+    return GetRootsPolynomial(*args)
+  else:
+    raise ValueError("Invalid method.")
 
 class Interactor(object):
   '''
@@ -96,9 +197,9 @@ class Interactor(object):
     self.ax.plot(x, -np.sqrt(1 - x**2), 'k--', lw = 1)
     
     # Plot the ellipse
-    xE = 0
-    yE = 0
-    a = 1.5
+    xE = -0.38
+    yE = 0.94
+    a = 0.3
     b = 0.3
     x = np.linspace(xE - b, xE + b, 1000)
     self.el1, = self.ax.plot(x, yE - a / b * np.sqrt(b ** 2 - (x - xE) ** 2), 'k-', lw = 1)
@@ -208,7 +309,7 @@ class Interactor(object):
         self.pts[n].set_xdata(x)
         self.pts[n].set_ydata(yC2)
         n += 1
-
+    
 if __name__ == '__main__':       
   Interactor()
   pl.show()

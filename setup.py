@@ -55,10 +55,11 @@ libppomodule = Extension('libppo',
                               'planetplanet/photo/ppo.c',
                               'planetplanet/photo/progress/progress.c'
                               ],
-                   include_dirs = ['planetplanet/photo/rebound', 'planetplanet/photo/'],
+                   include_dirs = ['planetplanet/photo/rebound', 'planetplanet/photo/', '/usr/local/include'],
                    define_macros=[ ('LIBREBOUND', None) ],
                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC'],
                    extra_link_args=extra_link_args,
+                   libraries=['gsl', 'gslcblas', 'm']
                    )
 
 long_description = \
