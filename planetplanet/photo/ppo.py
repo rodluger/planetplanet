@@ -439,13 +439,11 @@ class _Settings(ctypes.Structure):
               ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
               ("_kepsolver", ctypes.c_int),
-              ("polyeps1", ctypes.c_double),
-              ("polyeps2", ctypes.c_double),
-              ("maxpolyiter", ctypes.c_int),
               ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
               ("_circleopt", ctypes.c_int),
               ("_batmanopt", ctypes.c_int),
+              ("_quarticsolver", ctypes.c_int),
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
@@ -465,6 +463,7 @@ class _Settings(ctypes.Structure):
     self.adaptive = kwargs.pop('adaptive', True)
     self.circleopt = kwargs.pop('circleopt', True)
     self.batmanopt = kwargs.pop('batmanopt', True)
+    self.quarticsolver = kwargs.pop('quarticsolver', 'gsl')
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
@@ -474,9 +473,9 @@ class _Settings(ctypes.Structure):
 
   @property
   def params(self):
-    return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
-            'maxpolyiter', 'timestep', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
-            'maxfunctions', 'oversample', 'distance']
+    return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
+            'timestep', 'adaptive', 'circleopt', 'batmanopt', 'quarticsolver', 'quiet', 
+            'mintheta', 'maxvertices', 'maxfunctions', 'oversample', 'distance']
 
   @property
   def mintheta(self):
@@ -533,6 +532,18 @@ class _Settings(ctypes.Structure):
       self._integrator = REB_INTEGRATOR_IAS15
     else:
       raise ValueError("Unsupported integrator.")
+  
+  @property
+  def quarticsolver(self):
+    if self._quarticsolver == QGSL:
+      return 'gsl'
+      
+  @quarticsolver.setter
+  def quarticsolver(self, val):
+    if val.lower() == 'gsl':
+      self._quarticsolver = QGSL
+    else:		
+      raise ValueError("Unsupported solver.")
 
   @property
   def quiet(self):

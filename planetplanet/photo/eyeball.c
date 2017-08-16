@@ -1172,7 +1172,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
 
   // Add the ellipses  
   for (i = 0; i < nz * no; i++) {
-  
+
     if ((circleopt || (quarticsolver == QGSL)) && fabs(cos(theta)) < SMALL)
       AddZenithAngleCircle(zenithgrid[i], r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);
     else
