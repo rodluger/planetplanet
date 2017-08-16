@@ -582,6 +582,7 @@ vertices and functions to the running lists.
 @param x0 The x coordinate of the center of each occulting body
 @param y0 The y coordinate of the center of each occulting body
 @param ro The radius of each occulting body
+@param quarticsolver Which quartic solver to use?
 @param theta The phase angle of the eyeball
 @param maxvertices Maximum number of vertices in the problem
 @param maxfunctions Maximum number of functions in the problem

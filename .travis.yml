@@ -2,11 +2,6 @@
 
 language: python
 
-# blocklist
-branches:
-  except:
-  - jakedev
-
 matrix:
   include:
     # All the versions of Python.
