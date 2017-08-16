@@ -945,9 +945,11 @@ class System(object):
     computed. Calculates a synthetic noised lightcurve in the user specified filter. 
 
     :param bool save: Save a text file and a plot. Default :py:obj:`None`
-    :param str or :py:func:`Filter`: Filter name or :py:func:`Filter` object. Default `'f1500w'`
+    :param filter: Filter name or :py:func:`Filter` object. Default `'f1500w'`
+    :type filter: str or :py:func:`Filter`
     :param int stack: Number of exposures to stack. Default `1`
     :param str instrument: Telescope instrument to use. Default `'jwst'`
+    
     '''
 
     # Have we computed the light curves?

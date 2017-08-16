@@ -25,7 +25,6 @@ import astropy.units as u
 __all__ = [
     "Filter",
     "estimate_eclipse_snr",
-    "lightcurves",
     "create_tophat_filter",
     "get_spitzer_filter_wheel",
     "get_miri_filter_wheel"
@@ -175,7 +174,9 @@ class Filter(object):
         '''
         Plots the filter throughput curve.
 
-        :param :py:obj:`axis`
+        :param ax: An axis instance
+        :type ax: :py:obj:`axis`
+        
         '''
         import matplotlib.pyplot as plt
         if ax is None:
@@ -197,9 +198,10 @@ class Filter(object):
         :param array_like lam: High-res wavelengths [:math:`\mu \mathrm{m}`]
         :param array_like flux: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
         :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default is `25`
-        :param array_like dlam: Delta-wavelength grid. Default is py:obj:`None` and is calculated
+        :param array_like dlam: Delta-wavelength grid. Default is :py:obj:`None` and is calculated
 
-        :returns array_like cphot: Photon count rate [s:math:`^{-1}`]
+        :returns array_like cphot: Photon count rate [:math:`\mathrm{s}^{-1}`]
+        
         '''
 
         # (Speed of light) * (Planck's constant)
@@ -221,9 +223,10 @@ class Filter(object):
         Convolve flux with normalized filter throughput.
 
         :param array_like lam: High-res wavelength grid [:math:`\mu \mathrm{m}`]
-        :param array_like flux  High-res flux grid [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+        :param array_like flux:  High-res flux grid [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
 
         :returns array_like F: Flux convolved with normalized throughput
+        
         '''
 
         # interpolate filter throughout to HR grid
@@ -238,14 +241,15 @@ class Filter(object):
         """
         Computes an observed lightcurve in the :py:func:`Filter`.
 
-        :param array_like flux: Observed flux grid (`time` by `lam`) [W/m:math:`^2`/:math:`\mu`m]
+        :param array_like flux: Observed flux grid (`time` by `lam`) [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
         :param array_like time: Time grid [days]
         :param array_like lam: Wavelength [:math:`\mu \mathrm{m}`]
         :param int stack: Number of exposures to stack. Default `1`
-        :param float atel: Telescope collecting area [m$^2$]. Default `25`
+        :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default `25`
         :param bool thermal: Compute thermal noise. Default :py:obj:`True`
         :param array_like time_hr: High-res time grid [Days]. Default :py:obj:`None`
-        :param array_like flux_hr: High-res flux grif. Default :py:obj:`None`
+        :param array_like flux_hr: High-res flux grid. Default :py:obj:`None`
+        
         """
 
         print("Computing observed light curve in %s filter..." % self.name)
@@ -347,7 +351,8 @@ class Lightcurve(object):
         '''
         Plots the synthetic lightcurve.
 
-        :param :py:obj:`axis` ax0: User provided plot :py:obj:`axis`. Default :py:obj:`None`
+        :param ax0: User provided plot :py:obj:`axis`. Default :py:obj:`None`
+        :type ax0: :py:obj:`axis`
         :param str title: Plot title. Defult ""
         '''
 
@@ -388,7 +393,7 @@ def planck(temp, wav):
     :param float or array_like temp: Temperature [K]
     :param float or array_like wav: Wavelength [:math:`\mu \mathrm{m}`]
 
-    :retruns array_like B_lambda: Planck function [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+    :returns array_like B_lambda: Planck function [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
     '''
     h = 6.62607e-34       # Planck constant (J * s)
     c = 2.998e8           # Speed of light (m / s)
@@ -424,7 +429,7 @@ def jwst_background(wl):
 
     :param array_like wl: Wavelength grid [:math:`\mu \mathrm{m}`]
 
-    :retruns array_like Fback: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+    :returns array_like Fback: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
     """
 
     # Solid angle
@@ -461,7 +466,7 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
     :param float Rs: Stellar radius [solar radii]. Default `0.12`
     :param float Rp: Planet radius [Earth radii]. Default `1.086`
     :param float d: System distance [pc]. Default `12.2`
-    :param float atel: Telescope collecting area [m:math:`^2`]. Default `25`
+    :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default `25`
     :param verbose: Print things. Default `True`
     :param plot: Make a plot. Detault `True`
     :param thermal: Include thermal noise. Default `True`
@@ -723,7 +728,9 @@ def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
     :param float Tput: Filter throughput. Default `0.3`
     :param str name: Name of filter. Default "custom"
 
-    :returns :py:func:`Filter` filt: New custom tophat :py:func:`Filter` object
+    :returns filt: New custom tophat :py:func:`Filter` object
+    :type filt: :py:func:`Filter` 
+    
     """
 
     # Number of wavelength points
