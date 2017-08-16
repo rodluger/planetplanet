@@ -11,7 +11,7 @@ eclipses, phase curves, mutual transits, planet-moon events, and more.
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -73,7 +73,7 @@ class _Animation(object):
     self.pause = True
     self.animation = animation.FuncAnimation(self.fig, self.animate, frames = 100,
                                              interval = interval, repeat = True)
-    
+
     # Save?
     if gifname is not None:
       self.pause = False
@@ -83,18 +83,18 @@ class _Animation(object):
         print("Saving %s..." % gifname)
       self.animation.save(gifname, writer = 'imagemagick', fps = 20, dpi = 150)
       self.pause = True
-    
+
     # Toggle button
     self.axbutton = pl.axes([0.185, 0.12, 0.1, 0.03])
     self.button = Button(self.axbutton, 'Play', color = 'lightgray')
     self.button.on_clicked(self.toggle)
-    
+
   def toggle(self, event):
     '''
     Pause/play the animation. Unfortunately I haven't been able to figure out
     how to freeze the animation so that it resumes at the same frame it was paused
     on...
-    
+
     '''
 
     if self.pause:
@@ -106,7 +106,7 @@ class _Animation(object):
   def animate(self, j):
     '''
     Play frame `j` of the animation.
-    
+
     '''
 
     if not self.pause:
@@ -143,7 +143,7 @@ class _Body(ctypes.Structure):
 
   '''
 
-  #: All the fields 
+  #: All the fields
   _fields_ = [("_m", ctypes.c_double),
               ("_per", ctypes.c_double),
               ("_inc", ctypes.c_double),
@@ -178,14 +178,14 @@ class _Body(ctypes.Structure):
 
   def __init__(self, name, body_type, **kwargs):
     '''
-    
+
     :param str name: The name of the body.
     :param str body_type: One of :py:obj:`planet`, :py:obj:`star`, or :py:obj:`moon`.
     :param kwargs: Any body-specific :py:obj:`kwargs`. See :py:func:`Star`, \
     :py:func:`Planet`, and :py:func:`Moon`.
-    
+
     '''
-    
+
     # Check
     self.name = name
     self.body_type = body_type
@@ -402,17 +402,20 @@ class _Body(ctypes.Structure):
     '''
 
     return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
-    
+
 class _Settings(ctypes.Structure):
   '''
   The class that contains the model settings. This class is used internally; settings
-  should be specified as :py:obj:`kwargs` to :py:class:`System` or by assignment once 
+  should be specified as :py:obj:`kwargs` to :py:class:`System` or by assignment once
   a :py:class:`System` object has been instantiated.
 
   :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute orbits. Default :py:obj:`False`
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
+  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
+  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
+  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
@@ -428,7 +431,7 @@ class _Settings(ctypes.Structure):
   :param bool batmanopt: Use the :py:mod:`batman` algorithm to compute light curves of radially \
          symmetric bodies? This can significantly speed up the code. Default :py:obj:`True`
   :param str integrator: The N-body integrator (:py:obj:`whfast` | :py:obj:`ias15`) to use. Default :py:obj:`whfast`
-  
+
   '''
 
   _fields_ = [("_nbody", ctypes.c_int),
@@ -436,11 +439,13 @@ class _Settings(ctypes.Structure):
               ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
               ("_kepsolver", ctypes.c_int),
+              ("polyeps1", ctypes.c_double),
+              ("polyeps2", ctypes.c_double),
+              ("maxpolyiter", ctypes.c_int),
               ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
               ("_circleopt", ctypes.c_int),
               ("_batmanopt", ctypes.c_int),
-              ("_quarticsolver", ctypes.c_int),
               ("_quiet", ctypes.c_int),
               ("_mintheta", ctypes.c_double),
               ("maxvertices", ctypes.c_int),
@@ -453,11 +458,13 @@ class _Settings(ctypes.Structure):
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = kwargs.pop('kepsolver', 'newton')
+    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
+    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
+    self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
     self.circleopt = kwargs.pop('circleopt', True)
     self.batmanopt = kwargs.pop('batmanopt', True)
-    self.quarticsolver = kwargs.pop('quarticsolver', 'gsl')
     self.quiet = kwargs.pop('quiet', False)
     self.mintheta = kwargs.pop('mintheta', 1.)
     self.maxvertices = kwargs.pop('maxvertices', 999)
@@ -467,9 +474,9 @@ class _Settings(ctypes.Structure):
 
   @property
   def params(self):
-    return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
-            'timestep', 'adaptive', 'circleopt', 'batmanopt', 'quarticsolver', 'quiet', 
-            'mintheta', 'maxvertices', 'maxfunctions', 'oversample', 'distance']
+    return ['nbody', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
+            'maxpolyiter', 'timestep', 'adaptive', 'quiet', 'mintheta', 'maxvertices',
+            'maxfunctions', 'oversample', 'distance']
 
   @property
   def mintheta(self):
@@ -526,22 +533,6 @@ class _Settings(ctypes.Structure):
       self._integrator = REB_INTEGRATOR_IAS15
     else:
       raise ValueError("Unsupported integrator.")
-
-  @property
-  def quarticsolver(self):
-    if self._quarticsolver == QPRESS:
-      return 'press'
-    elif self._quarticsolver == QGSL:
-      return 'gsl'
-
-  @quarticsolver.setter
-  def quarticsolver(self, val):
-    if val.lower() == 'press':
-      self._quarticsolver = QPRESS
-    elif val.lower() == 'gsl':
-      self._quarticsolver = QGSL
-    else:
-      raise ValueError("Unsupported solver.")
 
   @property
   def quiet(self):
@@ -673,7 +664,7 @@ def Moon(name, host, **kwargs):
 class System(object):
   '''
 
-  The planetary system class. This is the main interface to the photodynamical core. 
+  The planetary system class. This is the main interface to the photodynamical core.
   Instantiate with all bodies in the system and the desired settings, passed as :py:obj:`kwargs`.
 
   :param bodies: Any number of :py:func:`Planet`, :py:func:`Moon`, or :py:func:`Star` instances \
@@ -682,6 +673,9 @@ class System(object):
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
+  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
+  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
+  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
@@ -703,7 +697,7 @@ class System(object):
   def __init__(self, *bodies, **kwargs):
     '''
     Initialize the class.
-    
+
     '''
 
     # Initialize
@@ -715,7 +709,7 @@ class System(object):
     '''
     Applies all settings, makes bodies accessible as properties, resets flags,
     and computes some preliminary orbital information for the system.
-    
+
     '''
 
     # Move params set by the user over to the settings class
@@ -754,7 +748,7 @@ class System(object):
   def _malloc(self, nt, nw):
     '''
     Allocate memory for all the C arrays.
-    
+
     '''
 
     # Initialize the C interface
@@ -808,15 +802,15 @@ class System(object):
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
     Compute the full system light curve over a given `time` array between
-    wavelengths `lambda1` and `lambda2` at resolution `R`. This method runs the 
+    wavelengths `lambda1` and `lambda2` at resolution `R`. This method runs the
     photodynamical core, populates all bodies with their individual light curves,
     and flags all occultation events.
-    
+
     :param array_like time: The times at which to evaluate the light curve in days
     :param float lambda1: The start point of the wavelength grid in microns. Default `5`
     :param float lambda2: The end point of the wavelength grid in microns. Default `15`
     :param float R: The spectrum resolution, :math:`R = \\frac{\lambda}{\Delta\lambda}`. Default `100`
-    
+
     '''
 
     # Reset
@@ -926,11 +920,11 @@ class System(object):
 
   def compute_orbits(self, time):
     '''
-    Run the dynamical code to compute the positions of all bodies over a given `time` 
+    Run the dynamical code to compute the positions of all bodies over a given `time`
     array. This method does not compute light curves, but it does check for occultations.
-    
+
     :param array_like time: The times at which to store the body positions in days
-    
+
     '''
 
     # Reset
@@ -947,11 +941,13 @@ class System(object):
 
   def observe(self, save = None, filter = 'f1500w', stack = 1, instrument = 'jwst'):
     '''
+    Run telescope observability calculations for a system that has had its lightcurve
+    computed. Calculates a synthetic noised lightcurve in the user specified filter. 
 
+    :param bool save: Save a text file and a plot. Default :py:obj:`None`
+    :param str or :py:func:`Filter`: Filter name or :py:func:`Filter` object. Default `'f1500w'`
     :param int stack: Number of exposures to stack. Default `1`
-    
-    .. todo:: Jake needs to add documentation here.
-    
+    :param str instrument: Telescope instrument to use. Default `'jwst'`
     '''
 
     # Have we computed the light curves?
@@ -1124,24 +1120,24 @@ class System(object):
 
   def scatter_plot(self, tstart, tend, dt = 0.001):
     '''
-    
+
     Compute all occultations between `tstart` and `tend` and plot an occultation
     scatter plot like the one in the paper.
-    
+
     .. plot::
        :align: center
-     
+
        from planetplanet.photo import Trappist1
        import matplotlib.pyplot as pl
        system = Trappist1(sample = True, nbody = True)
        system.scatter_plot(0, 365 * 3)
        pl.show()
-    
+
     :param float tstart: The integration start time in days
     :param float tend: The integration end time in days
     :param float dt: The time resolution in days. Occultations shorter than this \
            will not be registered.
-    
+
     '''
 
     # Reset
@@ -1284,34 +1280,34 @@ class System(object):
 
   def histogram(self, tstart, tend, dt = 0.0001):
     '''
-    
+
     Computes statistical properties of planet-planet occultations that occur over a given interval.
     Computes the frequency of occultations as a function of orbital phase, duration,
     and impact parameter, as well as the fully marginalized occultation frequency for
     each planet in the system. Occultations by the star are not included, nor are occultations
     occuring behind the star, which are not visible to the observer.
-        
+
     .. plot::
        :align: center
-   
+
        from scripts import hist
        import matplotlib.pyplot as pl
        figs = hist.Plot()
        for fig in figs[:-1]:
          pl.close(fig)
        pl.show()
-    
+
     :param float tstart: The integration start time in days
     :param float tend: The integration end time in days
     :param float dt: The time resolution in days. Occultations shorter than this \
            will not be registered.
-    
+
     :returns: A list of :py:obj:`(phase angle, impact parameter, duration)` tuples for each planet in \
               the system. The phase angle is measured in degrees and the duration is measured in days.
-    
+
     .. warning:: This routine computes the **orbital phase angle**, which is measured from **transit**. \
               This is different from the mean longitude by :math:`\pi/2`
-    
+
     '''
 
     # Reset
@@ -1370,7 +1366,7 @@ class System(object):
   def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
     '''
     Computes the time of the next occultation of body `occulted`.
-    
+
     :param float tstart: The time at which to start the occultation search (days)
     :param occulted: The occulted body
     :type occulted: :py:class:`_Body`
@@ -1380,9 +1376,9 @@ class System(object):
     :param float max_impact: The maximum impact parameter. Default `0.5`
     :param int maxruns: Maximum number of 100-day runs to search for the occultation. Default `100`
     :param float dt: The integration timestep
-    
+
     :returns: The time of the occultation. If no occultation was found, returns :py:class:`np.nan`
-    
+
     '''
 
     # Quiet?
@@ -1444,7 +1440,7 @@ class System(object):
 
   def plot_occultation(self, body, time, interval = 50, gifname = None, spectral = True, **kwargs):
     '''
-    
+
     :param body: The occulted body
     :type body: :py:class:`_Body`
     :param float time: The time of the occultation event in days
@@ -1453,17 +1449,17 @@ class System(object):
     :param bool spectral: Plot the light curve at different wavelengths? If :py:obj:`True`, plots the first, middle, \
            and last wavelength in the wavelength grid. If :py:obj:`False`, plots the middle wavelength. Default :py:obj:`True`
     :param kwargs: Any additional keyword arguments to be passed to :py:func:`plot_image`
-    
+
     :returns: :py:obj:`(fig, ax1, ax2, ax3)`, a figure instance and its three axes
-    
+
     .. plot::
        :align: center
-     
+
        from scripts import occultation
        import matplotlib.pyplot as pl
        occultation.plot()
        pl.show()
-    
+
     '''
 
     # Have we computed the light curves?
@@ -1514,7 +1510,7 @@ class System(object):
       fluxg += 1
       fluxr += 1
       fluxb += 1
-    
+
     if spectral:
       axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
       axlc.plot(body.time_hr[t], fluxg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
@@ -1623,16 +1619,16 @@ class System(object):
   def plot_image(self, t, occulted, occultor = None, fig = None, figx = 0.535, figy = 0.5, figr = 0.05, **kwargs):
     '''
     Plots an image of the `occulted` body and its occultor(s) at a given index of the `time_hr` array `t`.
-    
+
     .. plot::
        :align: center
-     
+
        from planetplanet.photo.eyeball import DrawEyeball
        import matplotlib.pyplot as pl
-       DrawEyeball(0.535, 0.5, 0.25, theta = 1., gamma = 1., 
+       DrawEyeball(0.535, 0.5, 0.25, theta = 1., gamma = 1.,
                    occultors = [{'x': 0.2, 'y': 0.4, 'r': 0.5}], cmap = 'inferno')
        pl.show()
-    
+
     :param int t: The index of the occultation in the high resolution time array `time_hr`
     :param occulted: The occulted body instance
     :type occultor: :py:class:`_Body` or :py:obj:`list`
@@ -1642,8 +1638,8 @@ class System(object):
     :type fig: :py:class:`matplotlib.Figure`
     :param float figx: The x coordinate of the image in figure units. Default `0.535`
     :param float figy: The y coordinate of the image in figure units. Default `0.5`
-    :param float figr: The radius of the image in figure units. Default `0.05` 
- 
+    :param float figr: The radius of the image in figure units. Default `0.05`
+
     '''
 
     # Set up the plot
@@ -1655,15 +1651,15 @@ class System(object):
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
     z0 = occulted.z_hr[t]
-    
+
     # Get the angles
     if (occulted.nu == 0) and not (occulted.body_type in ['planet', 'moon'] and occulted.airless == False):
-    
+
       x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
       y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
       z = z0
       r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-        
+
       # Coordinates of the hotspot in a frame where the planet is
       # at x, y, z = (0, 0, r), at full phase
       xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
@@ -1675,25 +1671,25 @@ class System(object):
       xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
       ystar = (rxz * yprime + y * zprime) / r
       zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
-        
+
       # Transform back to the true sky plane
       xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
                      ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
       x = x0
       y = y0
-    
+
       # Distance from planet center to hotspot
       d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
-    
+
       # Get the rotation and phase angles
       gamma = np.arctan2(ystar - y, xstar - x) + np.pi
       if (zstar - z) <= 0:
         theta = np.arccos(d / occulted._r)
       else:
         theta = -np.arccos(d / occulted._r)
-    
+
     else:
-        
+
       theta = np.pi / 2
       gamma = 0
 
@@ -1705,12 +1701,12 @@ class System(object):
           occultor.append(b)
     elif not hasattr(occultor, '__len__'):
       occultor = [occultor]
-      
+
     # If they are _Body instances, turn them into indices
     for i, occ in enumerate(occultor):
       if occ in self.bodies:
-        occultor[i] = np.argmax([b == occ for b in self.bodies])  
-        
+        occultor[i] = np.argmax([b == occ for b in self.bodies])
+
     # Convert them into a list of dicts
     occ_dict = []
     for i, occultor in enumerate(occultor):
@@ -1718,29 +1714,29 @@ class System(object):
       occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp, y = (occultor.y_hr[t] - y0) / rp, r = occultor._r / rp, zorder = i + 1, alpha = 1))
 
     # Draw the eyeball planet and the occultor(s)
-    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma, 
+    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma,
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, **kwargs)
 
     return ax, occ, xy
 
   def plot_lightcurve(self, wavelength = 15.):
     '''
-    
+
     Plot the light curve of the system after running :py:func:`compute`.
-    
+
     .. plot::
        :align: center
-     
+
        from scripts import lightcurve
        import matplotlib.pyplot as pl
        lightcurve.plot()
        pl.show()
-    
+
     :param float wavelength: The wavelength in microns at which to plot the light curve. \
            Must be within the wavelength grid. Default `15`
-    
+
     :returns: :py:obj:`(fig, ax)`
-    
+
     '''
 
     # Have we computed the light curves?
@@ -1815,9 +1811,9 @@ class System(object):
   def _onpick(self, event):
     '''
     Picker event for interactive light curves
-    
+
     '''
-    
+
     index = event.ind[len(event.ind) // 2]
     for body in self.bodies:
       for occultation in body._inds:

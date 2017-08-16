@@ -4,12 +4,12 @@
 jwst.py |github|
 ----------------
 
-.. todo:: Jake add description.
-
+A Python interface for simulating time-series filter photometry with the James
+Webb Space Telescope (JWST).
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/detect/jwst.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -27,7 +27,6 @@ __all__ = [
     "estimate_eclipse_snr",
     "lightcurves",
     "create_tophat_filter",
-    "event_snr",
     "get_spitzer_filter_wheel",
     "get_miri_filter_wheel"
 ]
@@ -37,12 +36,16 @@ MIRI_FILTERS = "filter_files/miri_filter.csv"
 MIRI_PATH = os.path.join(HERE,MIRI_FILTERS)
 
 def readin_miri_filters(f=MIRI_PATH):
-    """
-    Read-in MIRI photometic filters
-    
-    .. todo:: Jake add docs.
-    
-    """
+    '''
+    Function to read-in MIRI photometic filters
+
+    :param str f: File location/name of JWST/MIRI photometric filter file. Default is relative to file.
+
+    :returns: array_like wl_filt: Wavelength grid for filter throughputs [:math:`\mu \mathrm{m}`]
+    :returns: array_like dwl_filt: Wavelength bin widths for filter throughputs [:math:`\mu \mathrm{m}`]
+    :returns: array_like tputs: Filter throughputs
+    :returns: list tputs: List of MIRI filter names
+    '''
     import pandas as pd
 
     # Read in MIRI filter response functions
@@ -66,10 +69,11 @@ def readin_miri_filters(f=MIRI_PATH):
 
 def get_spitzer_filter_wheel(warm = True):
     """
-    Read-in and instantiate list of Spitzer IRAC filters as `Filter` objects
-    
-    .. todo:: Jake add docs.
-    
+    Read-in and instantiate list of Spitzer IRAC filters as :py:func:`Filter` objects
+
+    :param bool warm: If :py:obj:`True` uses only Warm Spitzer filters
+
+    :returns: A list of :py:func:`Filter` objects
     """
 
     # Use only warm Spitzer filters?
@@ -100,12 +104,21 @@ def get_spitzer_filter_wheel(warm = True):
 ################################################################################
 
 class Filter(object):
-    """
-    
-    .. todo:: Jake add docs.
-    
-    """
+    '''
+    A photometruc filter class. This is an interface for filter
+    photometry calculations.
+
+    :param str name: Name of the filter
+    :param array_like wl: Wavelength grid for filter [:math:`\mu \mathrm{m}`]
+    :param array_like throughput: Filter throughput
+    :param array_like dwl: Wavelength width grid for filter [:math:`\mu \mathrm{m}`]
+    :param float eff_wl: Effective filter wavelenth [:math:`\mu \mathrm{m}`]
+    :param float eff_dwl: Effective filter width [:math:`\mu \mathrm{m}`]
+    '''
     def __init__(self, name=None, wl=None, throughput=None, dwl=None, eff_wl=None, eff_dwl=None):
+        '''
+        Instantiate the class.
+        '''
         self.name = name
         self.wl = wl
         self.throughput = throughput
@@ -159,6 +172,11 @@ class Filter(object):
         return sum(self.dwl*self.throughput)/np.max(self.throughput)
 
     def plot(self, ax=None):
+        '''
+        Plots the filter throughput curve.
+
+        :param :py:obj:`axis`
+        '''
         import matplotlib.pyplot as plt
         if ax is None:
             fig, axi = plt.subplots(figsize=(10,6))
@@ -173,27 +191,16 @@ class Filter(object):
         plt.show();
 
     def photon_rate(self, lam, flux, atel=25.0, dlam=None):
-        """
-        
-        .. todo:: Jake convert to Sphinx style.
-        
-        Compute the photon count rate registered by the detector
+        '''
+        Compute the photon count rate registered by the detector.
 
-        Parameters
+        :param array_like lam: High-res wavelengths [:math:`\mu \mathrm{m}`]
+        :param array_like flux: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+        :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default is `25`
+        :param array_like dlam: Delta-wavelength grid. Default is py:obj:`None` and is calculated
 
-        lam : array-like
-            Wavelength [um]
-        flux : array-like
-            Spectral flux density [W/m$^2$/um]
-        atel : float
-            Telescope collecting area [m$^2$]
-        dlam : array-like, optional
-            Delta-wavelength grid (calculated if not given)
-
-        Returns
-
-        Photon count rate [s$^{-1}$]
-        """
+        :returns array_like cphot: Photon count rate [s:math:`^{-1}`]
+        '''
 
         # (Speed of light) * (Planck's constant)
         hc = 1.986446e-25  # h*c (kg*m**3/s**2)
@@ -210,24 +217,14 @@ class Filter(object):
         return cphot
 
     def convolve(self, lam, flux):
-        """
-        
-        .. todo:: Jake convert to Sphinx style.
-        
-        Convolve flux with normalized throughput
+        '''
+        Convolve flux with normalized filter throughput.
 
-        Parameters
+        :param array_like lam: High-res wavelength grid [:math:`\mu \mathrm{m}`]
+        :param array_like flux  High-res flux grid [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
 
-        lam : numpy.ndarray
-            Wavelength grid [um]
-        flux : numpy.ndarray
-            Flux grid [W/m^2/um]
-
-        Returns
-
-        F : numpy.ndarray
-            Flux convolved with normalized throughput
-        """
+        :returns array_like F: Flux convolved with normalized throughput
+        '''
 
         # interpolate filter throughout to HR grid
         T = np.interp(lam, self.wl, self.throughput)
@@ -239,25 +236,16 @@ class Filter(object):
 
     def compute_lightcurve(self, flux, time, lam, stack = 1, atel = 25., thermal = True, time_hr = None, flux_hr = None):
         """
-        
-        .. todo:: Jake convert to Sphinx style.
-        
-        Computes an observed lightcurve in the `Filter`
+        Computes an observed lightcurve in the :py:func:`Filter`.
 
-        Parameters
-
-        flux : numpy.ndarray
-            Observed flux grid (`time` by `lam`) [W/m^2/um]
-        time : numpy.ndarray
-            Time grid [days]
-        lam : numpy.ndarray
-            Wavelength [um]
-        stack: int
-            Number of exposures to stack. Default `1`
-        atel : float
-            Telescope collecting area [m$^2$]
-        thermal : bool
-            Compute thermal noise
+        :param array_like flux: Observed flux grid (`time` by `lam`) [W/m:math:`^2`/:math:`\mu`m]
+        :param array_like time: Time grid [days]
+        :param array_like lam: Wavelength [:math:`\mu \mathrm{m}`]
+        :param int stack: Number of exposures to stack. Default `1`
+        :param float atel: Telescope collecting area [m$^2$]. Default `25`
+        :param bool thermal: Compute thermal noise. Default :py:obj:`True`
+        :param array_like time_hr: High-res time grid [Days]. Default :py:obj:`None`
+        :param array_like flux_hr: High-res flux grif. Default :py:obj:`None`
         """
 
         print("Computing observed light curve in %s filter..." % self.name)
@@ -328,29 +316,16 @@ class Filter(object):
 
 class Lightcurve(object):
     """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Lightcurve object to store all observed quantities
+    A lightcurve class to contain all outputs from a snythetic lightcurve observation.
 
-    Parameters
-
-    time : array
-        Observed time grid [days]
-    Nphot : array
-        Number of photons from `System`
-    Nback : array
-        Number of photons from background
-    SNR : array
-        Signal-to-noise on `System`
-    obs : array
-        Observed photon signal (normalized)
-    sig : array
-        1-sigma errors on signal (normalized)
-    norm : float
-        Normalization constant
-    tint : array
-        Integration time [mins]
+    :param array_like time: Observed time grid [days]
+    :param array_like Nphot: Number of photons from `System`
+    :param array_like Nback: Number of photons from background
+    :param array_like SNR: Signal-to-noise on `System`
+    :param array_like obs: Observed photon signal (normalized)
+    :param array_like sig: 1-sigma errors on signal (normalized)
+    :param float norm: Normalization constant (median of lightcurve)
+    :param array_like tint: Integration time [mins]
     """
     def __init__(self, time = None, Nphot = None, Nback = None, SNR = None,
                  obs = None, sig = None, norm = None, tint = None, stack = None,
@@ -370,11 +345,12 @@ class Lightcurve(object):
 
     def plot(self, ax0=None, title=""):
         '''
-        
-        .. todo:: Jake add docs
-        
+        Plots the synthetic lightcurve.
+
+        :param :py:obj:`axis` ax0: User provided plot :py:obj:`axis`. Default :py:obj:`None`
+        :param str title: Plot title. Defult ""
         '''
-        
+
         # Create new fig if axis is not user provided
         if ax0 is None:
             fig, ax = plt.subplots(figsize=(16,6))
@@ -406,23 +382,14 @@ class Lightcurve(object):
 ################################################################################
 
 def planck(temp, wav):
-    """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Planck blackbody function
+    '''
+    Planck blackbody function.
 
-    Parameters
+    :param float or array_like temp: Temperature [K]
+    :param float or array_like wav: Wavelength [:math:`\mu \mathrm{m}`]
 
-    temp : float or array-like
-        Temperature [K]
-    wav : float or array-like
-        Wavelength [microns]
-
-    Returns
-
-    B_lambda [W/m^2/um/sr]
-    """
+    :retruns array_like B_lambda: Planck function [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+    '''
     h = 6.62607e-34       # Planck constant (J * s)
     c = 2.998e8           # Speed of light (m / s)
     k = 1.3807e-23        # Boltzmann constant (J / K)
@@ -430,12 +397,16 @@ def planck(temp, wav):
     # Returns B_lambda [W/m^2/um/sr]
     return 1e-6 * (2. * h * c**2) / (wav**5) / (np.exp(h * c / (wav * k * temp)) - 1.0)
 
-def plot_miri_filters(ax, wl, filters, names, ylim=[0.0,1.0], leg=True):
+def plot_miri_filters(ax, wl, filters, names, ylim=(0.0,1.0), leg=True):
     """
-    
-    .. todo:: Jake add docs.
-    
-    Plot JWST/MIRI photometric filter bands
+    Plot JWST/MIRI photometric filter bands.
+
+    :param :py:obj:`Axis` ax: Matplotlib Axis
+    :param array_like wl: Wavelengths
+    :param array_like filters: Filter throughput curves
+    :param list names: Names of filters
+    :param tuple ylim: y-axis limits. Default `(0.0, 1.0)`
+    :param bool leg: Add a legend to the plot. Default :py:obj:`True`
     """
     ax1 = ax.twinx()
     for i in range(len(names)):
@@ -449,20 +420,11 @@ def plot_miri_filters(ax, wl, filters, names, ylim=[0.0,1.0], leg=True):
 
 def jwst_background(wl):
     """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Calculate the JWST thermal background (Glasse et al. )
+    Calculates the JWST thermal background from (Glasse et al. 2015)
 
-    Parameters
+    :param array_like wl: Wavelength grid [:math:`\mu \mathrm{m}`]
 
-    wl : array-like
-        Wavelength grid [um]
-
-    Returns
-
-    Fback : array-like
-        Spectral flux density [W/m$^2$/um]
+    :retruns array_like Fback: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
     """
 
     # Solid angle
@@ -486,34 +448,23 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
                          Tstar = 2560., Tplan = 400., Rs = 0.12, Rp = 1.086, d = 12.2,
                          atel = 25.0, verbose=True, plot=True, thermal = True):
     """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Parameters
+    Estimate the signal-to-noise on the detection of secondary eclipses in JWST/MIRI
+    photometric filters.
 
-    tint : float, optional
-        Exposure time [s]
-    nout : float, optional
-        Out-of-transit time observed [transit durations]
-    lammin : float, optional
-        Wavelength minimum [um]
-    lammax : float, optional
-        Wavelength maximum [um]
-    Nlam : int, optional
-        Number of wavelengths
-    Tstar : float, optional
-        Stellar effective temperature [K]
-    Tplan : float, optional
-        Planet equilibrium temperature [K]
-    Rs : float, optional
-        Stellar radius [solar radii]
-    Rp : float, optional
-        Planet radius [Earth radii]
-    d : float, optinoal
-        System distance [pc]
-
-    Returns
-
+    :param float tint: Exposure time [s]. Default `36.4*60.`
+    :param float nout: Out-of-transit time observed [transit durations]. Default `4`
+    :param float lammin: Wavelength minimum [:math:`\mu \mathrm{m}`]. Default `1.0`
+    :param float lammax: Wavelength maximum [:math:`\mu \mathrm{m}`]. Default `30.0`
+    :param int Nlam: Number of wavelengths. Default `10000`
+    :param float Tstar: Stellar effective temperature [K]. Default `2560`
+    :param float Tplan: Planet equilibrium temperature [K]. Default `400`
+    :param float Rs: Stellar radius [solar radii]. Default `0.12`
+    :param float Rp: Planet radius [Earth radii]. Default `1.086`
+    :param float d: System distance [pc]. Default `12.2`
+    :param float atel: Telescope collecting area [m:math:`^2`]. Default `25`
+    :param verbose: Print things. Default `True`
+    :param plot: Make a plot. Detault `True`
+    :param thermal: Include thermal noise. Default `True`
     """
 
     # Physical params
@@ -596,17 +547,18 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
         # Optionally plot
         if plot:
             ax.plot(wheel[i].eff_wl, SNR, "o", c="k")
-    
+
     if plot:
         return fig, ax
 
 def fake_time_func(t, factor=0.01):
     """
-    
-    .. todo:: Jake add docs
-    
-    Returns a function of time
-    
+    Returns a function of time for testing.
+
+    :param array_like t: Time grid
+    :param float factor: Relative variability factor
+
+    :returns array_like f: A function of time
     """
     f = np.sin(t/2)**2 * 0.5*np.sin(t/10.)
     return 1.0 + factor*(f/np.max(f))
@@ -615,46 +567,24 @@ def fake_time_func(t, factor=0.01):
 def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, tmax=4.0,
                      Tstar = 2560., Tplan=400., Rs=0.12, Rp=1.086, d=12.2, tfact=0.01):
     """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Creates a fake flux dataset as a function of wavelength and time
+    Creates a fake flux dataset as a function of wavelength and time for testing.
 
-    Parameters
+    :param int Nlam: Number of wavelengths. Default `4000`
+    :param int Ntime: Number of times. Default `4000`
+    :param float lammin: Wavelength min [:math:`\mu \mathrm{m}`]. Defult `1.0`
+    :param float lammax: Wavelength max [:math:`\mu \mathrm{m}`]. Defult `30.0`
+    :param float tmin: Time min [days]. Default `0.0`
+    :param float tmax: Time max [days]. Default `4.0`
+    :param float Tstar: Stellar effective temperature [K]. Defult `2560`
+    :param float Tplan: Planet equilibrium temperature [K]. Defult `400`
+    :param float Rs: Stellar radius [solar radii]. Default `0.12`
+    :param float Rp: Planet radius [Earth radii]. Default `1.086`
+    :param float d: System distance [pc]. Default `12.2`
+    :param float tfact: Relative variability factor. Default `0.01`
 
-    Nlam : int, optional
-        Number of wavelengths
-    Ntime : int, optional
-        Number of times
-    lammin : float, optional
-        Wavelength min [um]
-    lammax : float, optional
-        Wavelength max [um]
-    tmin : float, optional
-        Time min [days]
-    tmax : float, optional
-        Time max [days]
-    Tstar : float, optional
-        Stellar effective temperature [K]
-    Tplan : float, optional
-        Planet equilibrium temperature [K]
-    Rs : float, optional
-        Stellar radius [solar radii]
-    Rp : float, optional
-        Planet radius [Earth radii]
-    d : float, optinoal
-        System distance [pc]
-    tfact : float, optional
-        Relative variability factor
-
-    Returns
-
-    ttup : tuple
-        (time, delta_time)
-    ltup : tuple
-        (lam, delta_lam)
-    data : tuple
-        Flux as a function of time and wavelength
+    :returns tuple ttup: (`time`, `delta_time`)
+    :returns tuple ltup: (`lam`, `delta_lam`)
+    :returns tuple data: Flux as a function of time and wavelength
     """
 
     """
@@ -697,28 +627,16 @@ def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, t
     return (t, dt), (lam, dlam), data
 
 def gen_lr_grid(lomin, lomax, Nlow):
-    """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Generate low-res grid
+    '''
+    Generate a low-resolution grid and bin widths
 
-    Parameters
+    :param float lomin: Min value
+    :param float lomax: Max value
+    :param int Nlow: Number of final points
 
-    lomin : float
-        Min value
-    lomax : float
-        Max value
-    Nlow : int
-        Number of final points
-
-    Returns
-
-    lr : numpy.ndarray
-        New evenly-spaced grid
-    dlr : numpy.ndarray
-        New bin widths
-    """
+    :returns array_like lr: New evenly-spaced grid
+    :returns array_like dlr: New bin widths
+    '''
     # Use linspace to create an evenly spaced grid
     lr = np.linspace(lomin,lomax,Nlow+1)
     # Bin widths
@@ -729,26 +647,14 @@ def gen_lr_grid(lomin, lomax, Nlow):
 
 def downbin_series(yhr, xhr, xlr, dxlr=None):
     """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Re-bin series to lower resolution using scipy.binned_statistic
+    Re-bin series to lower resolution using `sp.binned_statistic`
 
-    Parameters
+    :param array_like yhr: Series to be degraded
+    :param array_like xhr: High-res x grid
+    :param array_like xlr: Low-res x grid
+    :param array_like dxlr: Low-res x width grid. Default :py:obj:`None`
 
-    yhr : array-like
-        Series to be degraded
-    xhr : array-like
-        High-res x grid
-    xlr : array-like
-        Low-res x grid
-    dxlr : array-like, optional
-        Low-res x width grid
-
-    Returns
-
-    ylr : ndarray
-        Low-res series
+    :returns: array_like ylr: Low-res series
     """
     from scipy.stats import binned_statistic
 
@@ -776,125 +682,23 @@ def downbin_series(yhr, xhr, xlr, dxlr=None):
 
 def random_draw(val, sig):
     """
-    
-    .. todo:: Jake add docs
-    
     Draw fake data points from model `val` with errors `sig`
+
+    :param float or array_like val: Mean of Gaussian to sample from
+    :param float or array_like sig: Standard deviation of Gaussian to sample from
+
+    :returns float or array_like: Randomly sampled fake data points
     """
     if type(val) is np.ndarray:
         return val + np.random.randn(len(val))*sig
     elif (type(val) is float) or (type(val) is int):
         return val + np.random.randn(1)[0]*sig
 
-def lightcurves(wheel, flux, time, lam, obscad=5.0, plot=None):
-    """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Parameters
-
-    wheel : list
-        List of Filters
-    flux : numpy.ndarray
-        Observed flux grid (`time` by `lam`) [W/m^2/um]
-    time : numpy.ndarray
-        Time grid [days]
-    lam : numpy.ndarray
-        Wavelength [um]
-    obscad : float, optional
-        Observation cadence [mins]
-
-    Returns
-
-    """
-
-    raise NotImplementedError("TODO: Fix this routine; no need to oversample light curve any more.")
-
-    Ntime = len(time)
-    Nlam = len(lam)
-    tmin = np.min(time)
-    tmax = np.max(time)
-
-    # Convert cadence from mins to hours
-    cadence = obscad / 60. # hours
-
-    # High-res time cadence
-    cadencehr = np.mean(time[1:] - time[:-1]) * 24 # convert from days to hours
-
-    # factor by which to bin neighboring times
-    Ncad = cadence / cadencehr
-
-    # Number of new time points
-    Ntlo = np.floor(Ntime / Ncad)
-
-    # New time grid at observational cadence
-    tlo, dtlo = gen_lr_grid(tmin, tmax, Ntlo)
-
-    # Rebin high spectral res lightcurves to observational grid
-    data = []
-    for i in range(Nlam):
-        data.append(
-            downbin_series(flux[:,i], time, tlo, dxlr=dtlo)
-        )
-    data = np.array(data).T
-
-    # Calculate jwst background flux
-    Fback = jwst_background(lam)
-
-    # Exposure time [s]
-    tint = dtlo * 3600. * 24
-
-    # Allocate arrays
-    obs_snr = np.zeros((len(wheel), len(tlo)))
-    obs_n = np.zeros((len(wheel), len(tlo)))
-
-    # Loop over filters
-    for i in range(len(wheel)):
-
-        # Calculate SYSTEM photons
-        Nphot = tint * wheel[i].photon_rate(lam, data[:,:])
-
-        # Calculate BACKGROUND
-        Nback = tint * wheel[i].photon_rate(lam, Fback)
-
-        # Signal-to-noise
-        SNR = Nphot / np.sqrt(Nphot + Nback)
-
-        # Save arrays
-        obs_snr[i,:] = SNR
-        obs_n[i,:] = Nphot
-
-        # Generate synthetic data points
-        norm = np.median(obs_n[i,:])
-        sig = obs_n[i,:] / obs_snr[i,:] / norm
-        obs = random_draw(obs_n[i,:] / norm, sig)
-
-        if plot is not None:
-            fig, ax = plt.subplots(figsize=(16,6))
-            ax.set_title(r"%s" %(wheel[i].name))
-            ax.plot(tlo, obs_n[i,:]/norm, label=wheel[i].name, zorder=11, alpha=0.75)
-            ax.errorbar(tlo, obs, yerr=sig, fmt="o", c="k", ms=2, alpha=0.75, zorder=10)
-            ax.text(0.01, 0.02, r"$\Delta t = %.1f$ mins" %(tint[0]/60.),
-                    ha="left", va="bottom", transform=ax.transAxes,
-                    fontsize=16)
-            #leg=ax.legend(loc=4, fontsize=16, ncol=1)
-            #leg.get_frame().set_alpha(0.0)
-            ax.set_ylabel("Relative Flux")
-            ax.set_xlabel("Time [days]")
-            if plot == "save":
-                fig.savefig("../img/jwst_lc_%s.pdf" %wheel[i].name, bbox_inches="tight")
-            else:
-                fig.subplots_adjust(bottom=0.2)
-                plt.show()
-
-    return
-
 def get_miri_filter_wheel():
     """
-    
-    .. todo:: Jake add docs
-    
-    Create a filter 'wheel'
+    Create a `list` of MIRI :py:func:`Filter` objects
+
+    :returns list wheel: `list` of MIRI :py:func:`Filter` objects
     """
 
     # Read-in MIRI filters
@@ -911,23 +715,15 @@ def get_miri_filter_wheel():
 
 def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
     """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Create a tophat `Filter`
+    Create a tophat :py:func:`Filter`
 
-    Parameters
+    :param float lammin: Wavelength minimum [:math:`\mu \mathrm{m}`]
+    :param float lammax: Wavelength maximum [:math:`\mu \mathrm{m}`]
+    :param float dlam: Wavelength resolution [:math:`\mu \mathrm{m}`]. Default `0.1`
+    :param float Tput: Filter throughput. Default `0.3`
+    :param str name: Name of filter. Default "custom"
 
-    lammin : float
-        Wavelength minimum [um]
-    lammax : float
-        Wavelength maximum [um]
-    dlam : float, optional
-        Wavelength resolution [um]
-    Tput : float, optional
-        Filter throughput
-    name : string, optional
-        Name of filter
+    :returns :py:func:`Filter` filt: New custom tophat :py:func:`Filter` object
     """
 
     # Number of wavelength points
@@ -949,34 +745,3 @@ def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
     filt = Filter(name=name, wl=lam, throughput=Tputs)
 
     return filt
-
-def event_snr(cp, ccont, cb, iband, itime=10.):
-    """
-    
-    .. todo:: Jake convert to Sphinx style.
-    
-    Calc the exposure time necessary to get a given S/N on an event
-    following Eqn 7 from Robinson et al. 2016 for molecular band detection.
-
-    Parameters
-
-    cp :
-        Planet count rate
-    ccont :
-        Continuum count rate
-    cb :
-        Background count rate
-    iband :
-        Indicies of molecular band
-    itime :
-        Integration time [hours]
-
-    Returns
-
-    SNR to detect band given exposure time
-    """
-
-    denominator = np.power(np.sum(cp[iband] + 2.*cb[iband]), 0.5)
-    numerator = np.sum(np.fabs(ccont - cp[iband]))
-
-    return np.power(itime*3600., 0.5) * numerator / denominator
