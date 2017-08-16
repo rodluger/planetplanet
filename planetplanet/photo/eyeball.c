@@ -8,9 +8,7 @@
 #include <math.h>
 #include "ppo.h"
 #include "numerical/complex.h"
-
-// TEST: Let's see if I can get things to compile on travis with GSL
-#include <gsl/gsl_math.h>
+#include <gsl/gsl_poly.h>
 
 /**
 Computes the blackbody intensity (W / m^2 / m / sr).
@@ -230,7 +228,78 @@ are the x coordinates of the intersection point(s) relative to the center of the
 @param roots The x coordinates of the point(s) of intersection
 
 */
-void GetRoots(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[4]) {
+void GetRootsGSL(double a, double b, double xE, double yE, double xC, double yC, double r, double roots[4]) {
+  /*
+
+  */
+  
+  int i, j;
+  double A, B, C, D;
+  double z[8];
+  double r2 = r * r;
+  double a2 = a * a;
+  double b2 = b * b;
+  double a2b2 = a2 / b2;
+  double x0 = xE - xC;
+  double y0 = yE - yC;
+  double y2 = y0 * y0;
+  double x2 = x0 * x0;
+      
+  // Get the quartic coefficients
+  A = a2b2 - 1.;
+  B = -2. * x0 * a2b2;
+  C = r2 - y2 - a2 + a2b2 * x2;
+  D = 4. * y2 * a2b2;
+  double c[5] = { 
+                  C * C - (b2 - x2) * D, 
+                  2. * B * C - 2. * D * x0, 
+                  2. * A * C + B * B + D,
+                  2. * A * B, 
+                  A * A 
+                };
+  
+  // Allocate memory
+  gsl_poly_complex_workspace *w = gsl_poly_complex_workspace_alloc(5);
+  
+  // Solve the polynomial
+  gsl_poly_complex_solve (c, 5, w, z);
+  
+  // Free the memory
+  gsl_poly_complex_workspace_free (w);
+  
+  // Get the real roots (up to 4)
+  roots[0] = NAN;
+  roots[1] = NAN;
+  roots[2] = NAN;
+  roots[3] = NAN;
+  j = 0;
+  for (i = 0; i < 8; i+=2) {
+    if (!(isnan(z[i])) && (fabs(z[i + 1]) < MAXIM)) {
+      roots[j] = z[i] + xC;
+      j += 1;
+    }
+  }
+
+}
+
+/**
+Computes the real roots of the circle-ellipse intersection quartic equation. These roots
+are the x coordinates of the intersection point(s) relative to the center of the circle.
+
+@param a The semi-major axis of the ellipse, which is aligned with the y axis
+@param b The semi-minor axis of the ellipse, which is aligned with the x axis
+@param xE The x coordinate of the center of the ellipse
+@param yE The y coordinate of the center of the ellipse
+@param xC The x coordinate of the center of the circle
+@param yC The y coordinate of the center of the ellipse
+@param r The radius of the circle
+@param polyeps1 Tolerance in \a zroots
+@param polyeps2 Tolerance in \a zroots
+@param maxpolyiter Maximum iterations in \a zroots
+@param roots The x coordinates of the point(s) of intersection
+
+*/
+void GetRootsPress(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[4]) {
   /*
 
   */
@@ -600,7 +669,7 @@ vertices and functions to the running lists.
 @param f The number of functions so far
 
 */
-void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], double theta, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], double theta, int quarticsolver, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
     
   int i, j;
   double xlimb, x, y;
@@ -711,7 +780,14 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
     if (sqrt(x0[i] * x0[i] + y0[i] * y0[i]) + r + SMALL < ro[i]) continue;
     
     // Solve the quartic
-    GetRoots(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
+    if (quarticsolver == QGSL)
+      GetRootsGSL(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], roots);
+    else if (quarticsolver == QPRESS)
+      GetRootsPress(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
+    else {
+      printf("ERROR: Invalid quartic solver.\n");
+      abort();
+    }
     
     // Keep only real roots within the visible bounds of the ellipse
     for (j = 0; j < 4; j++) {
@@ -1055,6 +1131,7 @@ over a grid of wavelengths.
 @param circleopt Treat ellipses as circles for limb-darkened bodies? There's
        no reason *not* to do this! Option left in mainly for testing purposes.
 @param batmanopt Use the BATMAN algorithm to speed up limb-darkened occultations?
+@param quarticsolver Which quartic solver to use?
 @param nu The number of limb darkening coefficients
 @param nz The number of zenith angle slices
 @param nw The size of the wavelength grid
@@ -1065,7 +1142,7 @@ over a grid of wavelengths.
 @param iErr Flag set if an error occurs
 
 */
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter,  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter,  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   
   int i, j, k, m;
   int oob;
@@ -1177,10 +1254,10 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   // Add the ellipses  
   for (i = 0; i < nz * no; i++) {
   
-    if (circleopt && (fabs(fabs(theta) - PI / 2)) < SMALL)
+    if ((circleopt || (quarticsolver == QGSL)) && fabs(cos(theta)) < SMALL)
       AddZenithAngleCircle(zenithgrid[i], r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);
     else
-      AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
+      AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, quarticsolver, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
   
   }
   
@@ -1312,6 +1389,7 @@ of the body.
 @param circleopt Treat ellipses as circles for limb-darkened bodies? There's
        no reason *not* to do this! Option left in mainly for testing purposes.
 @param batmanopt Use the BATMAN algorithm to speed up limb-darkened occultations?
+@param quarticsolver Which quartic solver to use?
 @param nu The number of limb darkening coefficients
 @param nz The number of zenith angle slices
 @param nw The size of the wavelength grid
@@ -1322,13 +1400,13 @@ of the body.
 @param iErr Flag set if an error occurs
 
 */
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1,  double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1,  double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
 
   double x0[1] = {0};
   double y0[1] = {0};
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, nu, nz, nw, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, quiet, iErr);
     
 }

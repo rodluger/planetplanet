@@ -40,7 +40,6 @@ from tqdm import tqdm
 import timeit, builtins
 
 # System params
-
 mstar = 1.
 rstar = 1.
 limbdark = [0.4, 0.26]

@@ -8,6 +8,8 @@
 // Models
 #define MDFAST                  0                                                     /**< Use the Murray & Dermott fast Kepler solver */
 #define NEWTON                  1                                                     /**< Use the standard Newton Kepler solver */
+#define QPRESS                  2                                                     /**< Use the Press et al. (1991) polynomial solver */
+#define QGSL                    3                                                     /**< Use the GSL complex polynomial solver */
 
 // Errors
 #define ERR_NONE                0                                                     /**< No error occurred */
@@ -92,6 +94,7 @@ typedef struct {
   int adaptive;                                                                       /**< Adaptive zenith angle grid for limb-darkened bodies? */
   int circleopt;                                                                      /**< Treat zenith angle slices as circles in the limb-darkened limit? No reason to set this to 0 */
   int batmanopt;                                                                      /**< Use BATMAN algorithm to speed up limb-darkened occultation light curves? */
+  int quarticsolver;                                                                  /**< Which quartic solver to use? */
   int quiet;                                                                          /**< Suppress output? */
   double mintheta;                                                                    /**< Minimum absolute value of the phase angle below which it is assumed to be constant to prevent numerical errors */
   int maxvertices;                                                                    /**< Maximum number of vertices (for memory allocation) */
@@ -141,7 +144,7 @@ typedef struct {
 double Blackbody(double lambda, double T);
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);
