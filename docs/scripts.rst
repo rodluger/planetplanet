@@ -5,34 +5,51 @@ A collection of scripts that use :py:obj:`planetplanet` in various ways to compu
 and plot occultations, transits, phase curves, etc. Several of these were used to
 generate the figures in the `paper <#>`_.
 
+Simple Examples
+~~~~~~~~~~~~~~~
+
 .. toctree::
    :maxdepth: 2
    
-   day/night contrast <scripts/contrast>
-   colorful corner plot <scripts/corner>
    exomoons <scripts/exomoon>
-   interactive eyeball <scripts/eyeball>
-   eyeball orbit <scripts/eyeball_orbit>
-   flower transit <scripts/flower>
-   eyeball geometry <scripts/geometry>
-   occultation histograms <scripts/hist>
-   integration method <scripts/integration>
-   circle/ellipse intersection points <scripts/intersection>
-   JWST example <scripts/jwst_example>
-   Kepler-444 example <scripts/kepler444>
-   sample TRAPPIST-1 light curve <scripts/lightcurve>
-   mutual inclination from PPOs <scripts/mutual_node>
    hypothetical mutual transit <scripts/mutual_transit>
+   interactive eyeball <scripts/eyeball>
    next occultation <scripts/next_occultation>
    sample occultation of TRAPPIST-1c <scripts/occultation>
+   sample transit <scripts/transit>
+   
+From the paper
+~~~~~~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 2
+  
+   day/night contrast <scripts/contrast>
+   eyeball geometry <scripts/geometry>
+   eyeball orbit <scripts/eyeball_orbit>
+   integration method <scripts/integration>
+   JWST example <scripts/jwst_example>
+   Kepler-444 example <scripts/kepler444>
+   occultation histograms <scripts/hist>
    OST example <scripts/ost_example>
-   light curve oversampling example <scripts/oversample>
    PPO scatter plot <scripts/scatter>
+   sample TRAPPIST-1 light curve <scripts/lightcurve>
    Spitzer example <scripts/spitzer_example>
+   TRAPPIST-1 orbits <scripts/orbits>
+   triple mutual transit <scripts/triple_transit>
+   
+Miscellaneous
+~~~~~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 2
+   
+   circle/ellipse intersection points <scripts/intersection>
+   code validation <scripts/validation>
+   colorful corner plot <scripts/corner>
+   flower transit <scripts/flower>
+   light curve oversampling example <scripts/oversample>
+   mutual inclination from PPOs <scripts/mutual_node>
    integration timestep <scripts/timestep>
    timing tests <scripts/timing>
-   sample transit <scripts/transit>
-   triple mutual transit <scripts/triple_transit>
-   code validation <scripts/validation>
    zenith angle <scripts/zenith>
-   TRAPPIST-1 orbits <scripts/orbits>
