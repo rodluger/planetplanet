@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ppo.h"
-#include "numerical/complex.h"
 #include <gsl/gsl_poly.h>
 
 /**
@@ -222,9 +221,6 @@ are the x coordinates of the intersection point(s) relative to the center of the
 @param xC The x coordinate of the center of the circle
 @param yC The y coordinate of the center of the ellipse
 @param r The radius of the circle
-@param polyeps1 Tolerance in \a zroots
-@param polyeps2 Tolerance in \a zroots
-@param maxpolyiter Maximum iterations in \a zroots
 @param roots The x coordinates of the point(s) of intersection
 
 */
@@ -276,77 +272,6 @@ void GetRootsGSL(double a, double b, double xE, double yE, double xC, double yC,
   for (i = 0; i < 8; i+=2) {
     if (!(isnan(z[i])) && (fabs(z[i + 1]) < MAXIM)) {
       roots[j] = z[i] + xC;
-      j += 1;
-    }
-  }
-
-}
-
-/**
-Computes the real roots of the circle-ellipse intersection quartic equation. These roots
-are the x coordinates of the intersection point(s) relative to the center of the circle.
-
-@param a The semi-major axis of the ellipse, which is aligned with the y axis
-@param b The semi-minor axis of the ellipse, which is aligned with the x axis
-@param xE The x coordinate of the center of the ellipse
-@param yE The y coordinate of the center of the ellipse
-@param xC The x coordinate of the center of the circle
-@param yC The y coordinate of the center of the ellipse
-@param r The radius of the circle
-@param polyeps1 Tolerance in \a zroots
-@param polyeps2 Tolerance in \a zroots
-@param maxpolyiter Maximum iterations in \a zroots
-@param roots The x coordinates of the point(s) of intersection
-
-*/
-void GetRootsPress(double a, double b, double xE, double yE, double xC, double yC, double r, double polyeps1, double polyeps2, int maxpolyiter, double roots[4]) {
-  /*
-
-  */
-  
-  int i, j;
-  double A, B, C, D;
-  dcomplex c[5];
-  dcomplex croots[5];
-  double r2 = r * r;
-  double a2 = a * a;
-  double b2 = b * b;
-  double a2b2 = a2 / b2;
-  double x0 = xE - xC;
-  double y0 = yE - yC;
-  double y2 = y0 * y0;
-  double x2 = x0 * x0;
-  
-  // Get the coefficients
-  A = a2b2 - 1.;
-  B = -2. * x0 * a2b2;
-  C = r2 - y2 - a2 + a2b2 * x2;
-  D = 4. * y2 * a2b2;
-  c[4].r = A * A;
-  c[3].r = 2. * A * B;
-  c[2].r = 2. * A * C + B * B + D;
-  c[1].r = 2. * B * C - 2. * D * x0;
-  c[0].r = C * C - (b2 - x2) * D;
-  
-  // Zero out the rest of the elements
-  for (i = 0; i < 5; i++) c[i].i = 0.;
-  for (i = 0; i < 5; i++) {
-    croots[i].r = NAN;
-    croots[i].i = NAN;
-  }
-  
-  // Solve the quartic w/ polishing
-  zroots(c, 4, croots, 1, polyeps1, polyeps2, maxpolyiter);
-  
-  // Get the real roots (up to 4)
-  roots[0] = NAN;
-  roots[1] = NAN;
-  roots[2] = NAN;
-  roots[3] = NAN;
-  j = 0;
-  for (i = 1; i < 5; i++) {
-    if (!(isnan(croots[i].r)) && (fabs(croots[i].i) < MAXIM)) {
-      roots[j] = croots[i].r + xC;
       j += 1;
     }
   }
@@ -658,9 +583,6 @@ vertices and functions to the running lists.
 @param y0 The y coordinate of the center of each occulting body
 @param ro The radius of each occulting body
 @param theta The phase angle of the eyeball
-@param polyeps1 Tolerance in \a zroots
-@param polyeps2 Tolerance in \a zroots
-@param maxpolyiter Maximum iterations in \a zroots
 @param maxvertices Maximum number of vertices in the problem
 @param maxfunctions Maximum number of functions in the problem
 @param vertices The list of vertices
@@ -669,7 +591,7 @@ vertices and functions to the running lists.
 @param f The number of functions so far
 
 */
-void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], double theta, int quarticsolver, double polyeps1, double polyeps2, int maxpolyiter, int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
+void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no], double y0[no], double ro[no], double theta, int quarticsolver, int maxvertices, int maxfunctions, double *vertices, int *v, FUNCTION *functions, int *f){
     
   int i, j;
   double xlimb, x, y;
@@ -782,9 +704,8 @@ void AddZenithAngleEllipse(double zenith_angle, double r, int no, double x0[no],
     // Solve the quartic
     if (quarticsolver == QGSL)
       GetRootsGSL(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], roots);
-    else if (quarticsolver == QPRESS)
-      GetRootsPress(ellipse->a, ellipse->b, ellipse->x0, ellipse->y0, x0[i], y0[i], ro[i], polyeps1, polyeps2, maxpolyiter, roots);
     else {
+      // TODO: Implement more solvers
       printf("ERROR: Invalid quartic solver.\n");
       abort();
     }
@@ -1120,9 +1041,6 @@ over a grid of wavelengths.
 @param tnight The planet's night side temperature in K (airless limit only)
 @param teff The planet's effective temperature in K (blackbody limit only)
 @param distance The distance to the system in parsecs
-@param polyeps1 Tolerance in \a zroots
-@param polyeps2 Tolerance in \a zroots
-@param maxpolyiter Maximum iterations in \a zroots
 @param mintheta The minimum absolute value of the phase angle, 
        below which it is assumed constant to prevent numerical errors
 @param maxvertices Maximum number of vertices in the problem
@@ -1142,7 +1060,7 @@ over a grid of wavelengths.
 @param iErr Flag set if an error occurs
 
 */
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double polyeps1, double polyeps2, int maxpolyiter,  double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
   
   int i, j, k, m;
   int oob;
@@ -1257,7 +1175,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     if ((circleopt || (quarticsolver == QGSL)) && fabs(cos(theta)) < SMALL)
       AddZenithAngleCircle(zenithgrid[i], r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);
     else
-      AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, quarticsolver, polyeps1, polyeps2, maxpolyiter, maxvertices, maxfunctions, vertices, &v, functions, &f);
+      AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, quarticsolver, maxvertices, maxfunctions, vertices, &v, functions, &f);
   
   }
   
@@ -1378,9 +1296,6 @@ of the body.
 @param tnight The planet's night side temperature in K (airless limit only)
 @param teff The planet's effective temperature in K (blackbody limit only)
 @param distance The distance to the system in parsecs
-@param polyeps1 Tolerance in \a zroots
-@param polyeps2 Tolerance in \a zroots
-@param maxpolyiter Maximum iterations in \a zroots
 @param mintheta The minimum absolute value of the phase angle, 
        below which it is assumed constant to prevent numerical errors
 @param maxvertices Maximum number of vertices in the problem
@@ -1400,13 +1315,13 @@ of the body.
 @param iErr Flag set if an error occurs
 
 */
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double polyeps1,  double polyeps2, int maxpolyiter, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
 
   double x0[1] = {0};
   double y0[1] = {0};
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, polyeps1, polyeps2, maxpolyiter, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, quiet, iErr);
     
 }

@@ -270,8 +270,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     
     // Call the eyeball routine
     UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
-                   settings.distance, settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
-                   settings.mintheta, settings.maxvertices, settings.maxfunctions, 
+                   settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                    settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                    body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
                    tmp, settings.quiet, &iErr);
@@ -313,8 +312,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
-                       settings.distance, settings.polyeps1, settings.polyeps2, settings.maxpolyiter,
-                       settings.mintheta, settings.maxvertices, settings.maxfunctions, 
+                       settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                        body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
                        tmp, settings.quiet, &iErr);
@@ -412,9 +410,9 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Call the eyeball routine
         OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
-                     irrad, body[p]->tnight,  body[p]->teff, settings.distance, settings.polyeps1, settings.polyeps2, 
-                     settings.maxpolyiter, settings.mintheta, settings.maxvertices,
-                     settings.maxfunctions, settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
+                     irrad, body[p]->tnight,  body[p]->teff, settings.distance, 
+                     settings.mintheta, settings.maxvertices, settings.maxfunctions, settings.adaptive, 
+                     settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                      body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, tmp, settings.quiet, &iErr);
         
         // Update the body light curve

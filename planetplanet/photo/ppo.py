@@ -413,9 +413,6 @@ class _Settings(ctypes.Structure):
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
@@ -439,9 +436,6 @@ class _Settings(ctypes.Structure):
               ("keptol", ctypes.c_double),
               ("maxkepiter", ctypes.c_int),
               ("_kepsolver", ctypes.c_int),
-              ("polyeps1", ctypes.c_double),
-              ("polyeps2", ctypes.c_double),
-              ("maxpolyiter", ctypes.c_int),
               ("timestep", ctypes.c_double),
               ("_adaptive", ctypes.c_int),
               ("_circleopt", ctypes.c_int),
@@ -459,9 +453,6 @@ class _Settings(ctypes.Structure):
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = kwargs.pop('kepsolver', 'newton')
-    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
-    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
-    self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
     self.circleopt = kwargs.pop('circleopt', True)
@@ -476,8 +467,8 @@ class _Settings(ctypes.Structure):
 
   @property
   def params(self):
-    return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver', 'polyeps1', 'polyeps2',
-            'maxpolyiter', 'timestep', 'adaptive', 'circleopt', 'batmanopt', 'quarticsolver', 'quiet', 
+    return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
+            'timestep', 'adaptive', 'circleopt', 'batmanopt', 'quarticsolver', 'quiet', 
             'mintheta', 'maxvertices', 'maxfunctions', 'oversample', 'distance']
 
   @property
@@ -691,9 +682,6 @@ class System(object):
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
