@@ -9,5 +9,13 @@ Generates planet-planet occultation light curves in Python. To install:
 ```
 git clone git@github.com:rodluger/planetplanet.git
 cd planetplanet
+git submodule init
+git submodule update
 python setup.py develop
+```
+
+You may need to install the [GNU Scientific Library](https://www.gnu.org/software/gsl/). On a Mac, it's as simple as
+
+```
+brew install gsl
 ```
