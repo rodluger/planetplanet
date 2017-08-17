@@ -31,11 +31,13 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.widgets import Button
 from scipy.integrate import quad
 from tqdm import tqdm
+import numba
+from numba import cfunc
 rdbu = pl.get_cmap('RdBu_r')
 greys = pl.get_cmap('Greys')
 plasma = pl.get_cmap('plasma')
 
-__all__ = ['Star', 'Planet', 'Moon', 'System']
+__all__ = ['Star', 'Planet', 'Moon', 'System', 'RadiativeEquilibriumMap']
 
 # Find system suffix
 import sysconfig
@@ -47,6 +49,30 @@ if suffix is None:
 from ctypes import cdll
 dn = os.path.dirname
 libppo = cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
+
+@cfunc("float64(float64, float64)")
+def RadiativeEquilibriumMap(lam, z):
+  '''
+  
+  '''
+  
+  # Planet c
+  albedo = 0.3
+  tnight = 40.
+  irrad = 2.27 * SEARTH
+  
+  # Compute the temperature
+  if (z < np.pi / 2):
+    temp = ((irrad * np.cos(z) * (1 - albedo)) / SBOLTZ) ** 0.25
+    if (temp < tnight):
+      temp = tnight
+  else:
+    temp = tnight
+  
+  # Compute the radiance
+  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+  b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
+  return a / (np.exp(b) - 1.)
 
 class _Animation(object):
   '''
@@ -174,6 +200,8 @@ class _Body(ctypes.Structure):
               ("_occultor", ctypes.POINTER(ctypes.c_int)),
               ("_flux", ctypes.POINTER(ctypes.c_double)),
               ("_total_flux", ctypes.POINTER(ctypes.c_double)),
+              ("_custommap", ctypes.c_int),
+              ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, ctypes.c_double)),
               ]
 
   def __init__(self, name, body_type, **kwargs):
@@ -185,7 +213,7 @@ class _Body(ctypes.Structure):
     :py:func:`Planet`, and :py:func:`Moon`.
 
     '''
-
+    
     # Check
     self.name = name
     self.body_type = body_type
@@ -231,7 +259,13 @@ class _Body(ctypes.Structure):
       self.Lambda = 0
       self.Phi = 0
       self.color = kwargs.pop('color', 'k')
-
+    
+    # User-defined radiance map
+    self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap)
+    assert type(self.radiancemap) is numba.ccallback.CFunc, "Keyword `radiancemap` must be a NUMBA C callback function."
+    assert self.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
+    assert self.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
+    
     # Settings for moons
     if self.body_type == 'moon':
       self.host = kwargs.pop('host', None)
@@ -801,6 +835,12 @@ class System(object):
       # HACK: Same for the limb darkening coefficients
       body._u1d = body.u.reshape(-1)
       body._u = np.ctypeslib.as_ctypes(body._u1d)
+      # Radiance map
+      if body.radiancemap == RadiativeEquilibriumMap:
+        body._custommap = 0
+      else:
+        body._custommap = 1
+      body._radiancemap = body.radiancemap.ctypes
       # Dimensions
       body.nu = len(body.u)
       body.nt = nt
@@ -1451,16 +1491,19 @@ class System(object):
     self.settings.quiet = quiet
     return np.nan
 
-  def plot_occultation(self, body, time, interval = 50, gifname = None, spectral = True, **kwargs):
+  def plot_occultation(self, body, time, wavelength = 15., interval = 50, gifname = None, spectral = False, **kwargs):
     '''
-
+    Plots and animates an occultation event.
+    
     :param body: The occulted body
     :type body: :py:class:`_Body`
     :param float time: The time of the occultation event in days
+    :param float wavelength: The wavelength in microns at which to plot the light curve. \
+           Must be within the wavelength grid. Default `15`
     :param int interval: The interval between frames in the animation in ms. Default `50`
     :param str gifname: If specified, saves the occultation animation as a :py:obj:`gif` in the current directory. Default :py:obj:`None`
     :param bool spectral: Plot the light curve at different wavelengths? If :py:obj:`True`, plots the first, middle, \
-           and last wavelength in the wavelength grid. If :py:obj:`False`, plots the middle wavelength. Default :py:obj:`True`
+           and last wavelength in the wavelength grid. If :py:obj:`False`, plots the specified `wavelength`. Default :py:obj:`True`
     :param kwargs: Any additional keyword arguments to be passed to :py:func:`plot_image`
 
     :returns: :py:obj:`(fig, ax1, ax2, ax3)`, a figure instance and its three axes
@@ -1477,7 +1520,11 @@ class System(object):
 
     # Have we computed the light curves?
     assert self._computed, "Please run `compute()` first."
-
+    
+    # Get the wavelength index
+    assert (wavelength >= self.bodies[0].wavelength[0]) and (wavelength >= self.bodies[0].wavelength[-1]), "Wavelength value outside of computed grid."
+    w = np.argmax(1e-6 * wavelength <= self.bodies[0].wavelength)
+    
     # Check file name
     if gifname is not None:
       if gifname.endswith(".gif"):
@@ -1509,27 +1556,33 @@ class System(object):
     # Set up the figure
     fig = pl.figure(figsize = (7, 8))
     fig.subplots_adjust(left = 0.175)
-
-    # Plot three different wavelengths (first, mid, and last)
     axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
     ti = t[0]
     tf = t[-1]
-    fluxb = body.flux_hr[t, 0] / body.total_flux[0]
-    fluxg = body.flux_hr[t, body.flux_hr.shape[-1] // 2] / body.total_flux[body.flux.shape[-1] // 2]
-    fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
-
-    # Add a baseline?
-    if not (body.phasecurve or body.body_type == 'star'):
-      fluxg += 1
-      fluxr += 1
-      fluxb += 1
-
+    
+    # Plot three different wavelengths (first, mid, and last)
     if spectral:
+      fluxb = body.flux_hr[t, 0] / body.total_flux[0]
+      fluxg = body.flux_hr[t, body.flux_hr.shape[-1] // 2] / body.total_flux[body.flux.shape[-1] // 2]
+      fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
+
+      # Add a baseline?
+      if not (body.phasecurve or body.body_type == 'star'):
+        fluxg += 1
+        fluxr += 1
+        fluxb += 1
+
+      # Plot
       axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
       axlc.plot(body.time_hr[t], fluxg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
       axlc.plot(body.time_hr[t], fluxr, 'r-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[-1])) + r"\ \mu\mathrm{m}$")
     else:
-      axlc.plot(body.time_hr[t], fluxg, 'k-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
+      
+      fluxw = body.flux_hr[t, w] / body.total_flux[w]
+      if not (body.phasecurve or body.body_type == 'star'):
+        fluxw += 1
+      axlc.plot(body.time_hr[t], fluxw, 'k-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
+
     axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
     axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
     axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -1591,7 +1644,7 @@ class System(object):
     axxz.axis('off')
 
     # Plot the image
-    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig, **kwargs)
+    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig, wavelength = wavelength, **kwargs)
     bodies = [self.bodies[o] for o in occultors] + [body]
     xmin = min(np.concatenate([o.x_hr[t] - body.x_hr[t] - 1.1 * o._r for o in bodies]))
     xmax = max(np.concatenate([o.x_hr[t] - body.x_hr[t] + 1.1 * o._r for o in bodies]))
@@ -1629,7 +1682,7 @@ class System(object):
 
     return fig, axlc, axxz, axim
 
-  def plot_image(self, t, occulted, occultor = None, fig = None, figx = 0.535, figy = 0.5, figr = 0.05, **kwargs):
+  def plot_image(self, t, occulted, occultor = None, wavelength = 15., fig = None, figx = 0.535, figy = 0.5, figr = 0.05, **kwargs):
     '''
     Plots an image of the `occulted` body and its occultor(s) at a given index of the `time_hr` array `t`.
 
@@ -1647,6 +1700,8 @@ class System(object):
     :type occultor: :py:class:`_Body` or :py:obj:`list`
     :param occultor: The occultor(s). Default :py:obj:`None`
     :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :param float wavelength: The wavelength in microns at which to plot the light curve. \
+           Must be within the wavelength grid. Default `15`
     :param fig: The figure on which to plot the image
     :type fig: :py:class:`matplotlib.Figure`
     :param float figx: The x coordinate of the image in figure units. Default `0.535`
@@ -1654,7 +1709,7 @@ class System(object):
     :param float figr: The radius of the image in figure units. Default `0.05`
 
     '''
-
+    
     # Set up the plot
     if fig is None:
       fig = pl.gcf()
@@ -1728,7 +1783,9 @@ class System(object):
 
     # Draw the eyeball planet and the occultor(s)
     fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma,
-                                   occultors = occ_dict, cmap = 'inferno', fig = fig, **kwargs)
+                                   occultors = occ_dict, cmap = 'inferno', fig = fig, 
+                                   radiancemap = occulted.radiancemap.ctypes, 
+                                   wavelength = wavelength, **kwargs)
 
     return ax, occ, xy
 

@@ -68,7 +68,8 @@ setup(name = 'planetplanet',
                           'scipy',
                           'matplotlib',
                           'tqdm',
-                          'astropy'
+                          'astropy',
+                          'numba>=0.34'
                          ],
       include_package_data = True,
       zip_safe = False,

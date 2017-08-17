@@ -339,7 +339,7 @@ evaluated at a given array of wavelengths.
 @param B The blackbody intensity grid
 
 */
-void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
+void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int custommap, RADIANCEMAP radiancemap, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
   
   int i, j, k;
   double zenith_angle, cosza;
@@ -368,14 +368,23 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
     // Get its blackbody temperature
     if (teff == 0) {
       
-      // No limb darkening
-      T = EyeballTemperature(zenith_angle, irrad, albedo, tnight);
-
-      // Loop over each wavelength bin
-      for (j = 0; j < nw; j++) {
+      if (custommap) {
+      
+        for (j = 0; j < nw; j++)
+          B[i][j] = radiancemap(lambda[j], zenith_angle);
         
-        // Get the blackbody intensity (W / m^2 / m / sr)
-        B[i][j] = Blackbody(lambda[j], T);
+      } else {
+      
+        // No limb darkening
+        T = EyeballTemperature(zenith_angle, irrad, albedo, tnight);
+
+        // Loop over each wavelength bin
+        for (j = 0; j < nw; j++) {
+        
+          // Get the blackbody intensity (W / m^2 / m / sr)
+          B[i][j] = Blackbody(lambda[j], T);
+      
+        }
       
       }
     
@@ -1061,7 +1070,7 @@ over a grid of wavelengths.
 @param iErr Flag set if an error occurs
 
 */
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int custommap, RADIANCEMAP radiancemap, int quiet, int *iErr) {
   
   int i, j, k, m;
   int oob;
@@ -1181,7 +1190,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   }
   
   // Pre-compute the surface intensity in each zenith_angle slice
-  SurfaceIntensity(albedo, irrad, tnight, teff, nz * no, zenithgrid, nw, lambda, nu, u, B);
+  SurfaceIntensity(albedo, irrad, tnight, teff, custommap, radiancemap, nz * no, zenithgrid, nw, lambda, nu, u, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
@@ -1316,13 +1325,13 @@ of the body.
 @param iErr Flag set if an error occurs
 
 */
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int custommap, RADIANCEMAP radiancemap, int quiet, int *iErr) {
 
   double x0[1] = {0};
   double y0[1] = {0};
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, custommap, radiancemap, quiet, iErr);
     
 }

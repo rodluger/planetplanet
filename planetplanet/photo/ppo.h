@@ -40,6 +40,12 @@
 #define CRESCENTNZ              31                                                    /**< Number of zenith slices in the tiny crescent limit */
 
 /**
+A radiance map function of the wavelength and the zenith angle. 
+
+*/
+typedef double (*RADIANCEMAP)(double, double);
+
+/**
 Struct containing all the information pertaining to a body (star, planet, or moon) in the system.
 
 */
@@ -74,6 +80,8 @@ typedef struct {
   int *occultor;                                                                      /**< The array of occultor bit flags */
   double *flux;                                                                       /**< The grid of observed flux from this body in time/wavelength */
   double *total_flux;                                                                 /**< The total unocculted flux of this body at full phase */
+  int custommap;                                                                      /**< Use a custom radiance map? */
+  RADIANCEMAP radiancemap;                                                            /**< A function that returns a radiance map for the body's surface */
 } BODY;
 
 /**
@@ -140,7 +148,7 @@ typedef struct {
 double Blackbody(double lambda, double T);
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int custommap, RADIANCEMAP radiancemap, int quiet, int *iErr);
+void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int custommap, RADIANCEMAP radiancemap, int quiet, int *iErr);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);

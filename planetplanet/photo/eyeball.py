@@ -20,7 +20,7 @@ from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 from matplotlib.widgets import Slider
 
-def ZenithColor(z, cmap = 'inferno'):
+def ZenithColor(z, radiancemap, wavelength, cmap = 'inferno'):
   '''
   Returns the color of a given spherical segment of zenith angle `z`.
   
@@ -29,10 +29,19 @@ def ZenithColor(z, cmap = 'inferno'):
   
   '''
   
-  return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
+  zarr = np.linspace(0, np.pi, 100)
+  rarr = [radiancemap(wavelength, za) for za in zarr]
+  rmax = np.max(rarr)
+  rmin = np.min(rarr)
+  rrng = rmax - rmin
+  rmax += 0.1 * rrng
+  rmin -= 0.1 * rrng
+  val = (radiancemap(wavelength, z) - rmin) / (rmax - rmin)
+  return pl.get_cmap(cmap)(val)
 
 def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
-                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False):
+                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False,
+                radiancemap = None, wavelength = 15.):
   '''
   Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
   
@@ -68,6 +77,11 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
   transformation into the axis-symmetric eyeball frame
   
   '''
+  
+  #
+  if radiancemap is None:
+    from . import RadiativeEquilibriumMap
+    radiancemap = RadiativeEquilibriumMap.ctypes
   
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(gamma) + y * np.sin(gamma), y * np.cos(gamma) - x * np.sin(gamma))
@@ -156,19 +170,19 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
       
     # Fill the ellipses
     if theta < 0:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
     else:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
     # Fill the ellipses that are cut off by the limb
     if theta < 0:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
     else:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
   return fig, ax, occ, xy
 

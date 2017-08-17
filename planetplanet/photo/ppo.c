@@ -214,7 +214,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   int t, p, o, w;
   int iErr = ERR_NONE;
   double norm, sflx;
-  
+    
   // Initialize the arrays for each body
   for (p = 0; p < np; p++) {
     body[p]->nw = nw;
@@ -273,7 +273,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                    settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                    settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                    body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
-                   tmp, settings.quiet, &iErr);
+                   tmp, body[p]->custommap, body[p]->radiancemap, settings.quiet, &iErr);
     for (w = 0; w < nw; w++) {
       body[p]->total_flux[w] = tmp[w];          
     }    
@@ -315,7 +315,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                        settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                        body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
-                       tmp, settings.quiet, &iErr);
+                       tmp, body[p]->custommap, body[p]->radiancemap, settings.quiet, &iErr);
         for (w = 0; w < nw; w++) {
           body[p]->flux[nw * t + w] = tmp[w];          
         }
@@ -413,7 +413,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
                      irrad, body[p]->tnight,  body[p]->teff, settings.distance, 
                      settings.mintheta, settings.maxvertices, settings.maxfunctions, settings.adaptive, 
                      settings.circleopt, settings.batmanopt, settings.quarticsolver, 
-                     body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, tmp, settings.quiet, &iErr);
+                     body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, tmp, body[p]->custommap, body[p]->radiancemap, settings.quiet, &iErr);
         
         // Update the body light curve
         for (w = 0; w < nw; w++)
