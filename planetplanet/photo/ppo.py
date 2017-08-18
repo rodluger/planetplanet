@@ -20,10 +20,12 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 from ..constants import *
 from ..detect import jwst
 from .eyeball import DrawEyeball
+from .maps import NullMap
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
 import os, shutil
+import sysconfig
 from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
@@ -32,47 +34,15 @@ from matplotlib.widgets import Button
 from scipy.integrate import quad
 from tqdm import tqdm
 import numba
-from numba import cfunc
-rdbu = pl.get_cmap('RdBu_r')
-greys = pl.get_cmap('Greys')
-plasma = pl.get_cmap('plasma')
 
-__all__ = ['Star', 'Planet', 'Moon', 'System', 'RadiativeEquilibriumMap']
+__all__ = ['Star', 'Planet', 'Moon', 'System']
 
-# Find system suffix
-import sysconfig
+# Find system suffix and import the shared library
 suffix = sysconfig.get_config_var('EXT_SUFFIX')
 if suffix is None:
   suffix = ".so"
-
-# Import shared library
-from ctypes import cdll
 dn = os.path.dirname
-libppo = cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
-
-@cfunc("float64(float64, float64)")
-def RadiativeEquilibriumMap(lam, z):
-  '''
-  
-  '''
-  
-  # Planet c
-  albedo = 0.3
-  tnight = 40.
-  irrad = 2.27 * SEARTH
-  
-  # Compute the temperature
-  if (z < np.pi / 2):
-    temp = ((irrad * np.cos(z) * (1 - albedo)) / SBOLTZ) ** 0.25
-    if (temp < tnight):
-      temp = tnight
-  else:
-    temp = tnight
-  
-  # Compute the radiance
-  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
-  b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
-  return a / (np.exp(b) - 1.)
+libppo = ctypes.cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
 
 class _Animation(object):
   '''
@@ -259,12 +229,9 @@ class _Body(ctypes.Structure):
       self.Lambda = 0
       self.Phi = 0
       self.color = kwargs.pop('color', 'k')
-    
+      
     # User-defined radiance map
-    self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap)
-    assert type(self.radiancemap) is numba.ccallback.CFunc, "Keyword `radiancemap` must be a NUMBA C callback function."
-    assert self.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
-    assert self.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
+    self.radiancemap = kwargs.get('radiancemap', None)
     
     # Settings for moons
     if self.body_type == 'moon':
@@ -447,9 +414,6 @@ class _Settings(ctypes.Structure):
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
@@ -490,9 +454,6 @@ class _Settings(ctypes.Structure):
     self.keptol = kwargs.pop('keptol', 1.e-15)
     self.maxkepiter = kwargs.pop('maxkepiter', 100)
     self.kepsolver = kwargs.pop('kepsolver', 'newton')
-    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
-    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
-    self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
     self.timestep = kwargs.pop('timestep', 0.01)
     self.adaptive = kwargs.pop('adaptive', True)
     self.circleopt = kwargs.pop('circleopt', True)
@@ -718,9 +679,6 @@ class System(object):
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
@@ -826,21 +784,29 @@ class System(object):
       body._occultor = np.ctypeslib.as_ctypes(body.occultor)
       body.total_flux = np.zeros(nw)
       body._total_flux = np.ctypeslib.as_ctypes(body.total_flux)
+      
       # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
       # treat it as a 1d array within C and keep track of the row/column
       # indices by hand...
       body.flux = np.zeros((nt, nw))
       body._flux1d = body.flux.reshape(-1)
       body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+      
       # HACK: Same for the limb darkening coefficients
       body._u1d = body.u.reshape(-1)
       body._u = np.ctypeslib.as_ctypes(body._u1d)
+      
       # Radiance map
-      if body.radiancemap == RadiativeEquilibriumMap:
+      if body.radiancemap is None:
         body._custommap = 0
+        body._radiancemap = NullMap().ctypes
       else:
+        assert type(body.radiancemap) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
+        assert body.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
+        assert body.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
         body._custommap = 1
-      body._radiancemap = body.radiancemap.ctypes
+        body._radiancemap = body.radiancemap.ctypes
+      
       # Dimensions
       body.nu = len(body.u)
       body.nt = nt
@@ -1784,7 +1750,7 @@ class System(object):
     # Draw the eyeball planet and the occultor(s)
     fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma,
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                                   radiancemap = occulted.radiancemap.ctypes, 
+                                   radiancemap = occulted.radiancemap, 
                                    wavelength = wavelength, **kwargs)
 
     return ax, occ, xy

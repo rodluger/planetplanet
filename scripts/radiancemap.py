@@ -17,32 +17,13 @@ Illustrates how to specify different surface radiance maps.
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.photo import Trappist1
 from planetplanet.constants import *
-from planetplanet.photo import RadiativeEquilibriumMap
+from planetplanet.photo import RadiativeEquilibriumMap, BandedCloudsMap, UniformMap
 import matplotlib.pyplot as pl
 import numpy as np
 from numba import cfunc
 import timeit, builtins
 
-@cfunc("float64(float64, float64)")
-def BandedCloudsMap(lam, z):
-  '''
-  
-  '''
-  
-  # Planet c
-  albedo = 0.3
-  tnight = 40.
-  irrad = 2.27 * SEARTH
-  
-  # Compute the temperature
-  temp = ((irrad * np.cos(5 * z) ** 2 * (1 - albedo)) / SBOLTZ) ** 0.25
-  
-  # Compute the radiance
-  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
-  b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
-  return a / (np.exp(b) - 1.)
-
-def compute(radiancemap = RadiativeEquilibriumMap, Phi = 0, Lambda = 0):
+def compute(radiancemap = None, Phi = 0, Lambda = 0):
   '''
   
   '''
@@ -54,6 +35,7 @@ def compute(radiancemap = RadiativeEquilibriumMap, Phi = 0, Lambda = 0):
   system.c.Phi = Phi
   system.c.Lambda = Lambda
   system.c.nz = 99
+  system.b.r /= 2
   
   # Give `c` a custom radiance map
   system.c.radiancemap = radiancemap
@@ -78,6 +60,7 @@ def plot(**kwargs):
   return fig, axlc, axxz, axim
 
 if __name__ == '__main__':
-  plot(radiancemap = RadiativeEquilibriumMap, Lambda = -30)
-  plot(radiancemap = BandedCloudsMap)
+  plot(radiancemap = None, Lambda = -30)
+  plot(radiancemap = RadiativeEquilibriumMap(), Lambda = -30)
+  plot(radiancemap = BandedCloudsMap())
   pl.show()

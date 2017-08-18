@@ -20,7 +20,7 @@ from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 from matplotlib.widgets import Slider
 
-def ZenithColor(z, radiancemap, wavelength, cmap = 'inferno'):
+def ZenithColor(z, radiancemap, wavelength, cpad = 0.2, rmax = None, rmin = None, cmap = 'inferno'):
   '''
   Returns the color of a given spherical segment of zenith angle `z`.
   
@@ -29,19 +29,23 @@ def ZenithColor(z, radiancemap, wavelength, cmap = 'inferno'):
   
   '''
   
-  zarr = np.linspace(0, np.pi, 100)
-  rarr = [radiancemap(wavelength, za) for za in zarr]
-  rmax = np.max(rarr)
-  rmin = np.min(rarr)
+  if rmax is None or rmin is None:
+    zarr = np.linspace(0, np.pi, 100)
+    rarr = [radiancemap.ctypes(wavelength, za) for za in zarr]
+    rmax = np.max(rarr)
+    rmin = np.min(rarr)
   rrng = rmax - rmin
-  rmax += 0.1 * rrng
-  rmin -= 0.1 * rrng
-  val = (radiancemap(wavelength, z) - rmin) / (rmax - rmin)
+  rmax += cpad * rrng
+  rmin -= cpad * rrng
+  if rrng > 0:
+    val = (radiancemap.ctypes(wavelength, z) - rmin) / (rmax - rmin)
+  else:
+    val = 1 - cpad
   return pl.get_cmap(cmap)(val)
 
 def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
                 draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False,
-                radiancemap = None, wavelength = 15.):
+                radiancemap = None, cpad = 0.2, wavelength = 15.):
   '''
   Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
   
@@ -78,10 +82,10 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
   
   '''
   
-  #
+  # Default radiance map
   if radiancemap is None:
-    from . import RadiativeEquilibriumMap
-    radiancemap = RadiativeEquilibriumMap.ctypes
+    from .maps import RadiativeEquilibriumMap
+    radiancemap = RadiativeEquilibriumMap()
   
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(gamma) + y * np.sin(gamma), y * np.cos(gamma) - x * np.sin(gamma))
@@ -128,6 +132,12 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
     ax.plot(x, y, color = 'k', zorder = 0, lw = 1, clip_on = False)
     ax.plot(x, -y, color = 'k', zorder = 0, lw = 1, clip_on = False)
 
+  # Get the color normalization
+  zarr = np.linspace(0, np.pi, 100)
+  rarr = [radiancemap.ctypes(wavelength, za) for za in zarr]
+  rmax = np.max(rarr)
+  rmin = np.min(rarr)
+
   # Plot the zenith angle ellipses
   zarr = np.linspace(0, np.pi, nz + 2)
   for i, z in enumerate(zarr[1:]):
@@ -170,19 +180,19 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
       
     # Fill the ellipses
     if theta < 0:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
     else:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
     # Fill the ellipses that are cut off by the limb
     if theta < 0:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
     else:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
   return fig, ax, occ, xy
 
