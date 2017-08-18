@@ -39,3 +39,4 @@ addons:
   apt:
     packages:
       libgsl0-dev
+      llvm-4.0-dev
