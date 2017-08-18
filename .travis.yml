@@ -21,7 +21,7 @@ before_install:
 install:
   - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
-  - conda install --yes numpy scipy matplotlib nose
+  - conda install --yes numpy scipy matplotlib nose numba
   - python setup.py develop
 
 # Configure a headless display to test plot generation
@@ -39,4 +39,3 @@ addons:
   apt:
     packages:
       libgsl0-dev
-      llvm-4.0-dev
