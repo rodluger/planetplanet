@@ -126,12 +126,12 @@ class _Animation(object):
 
         self.occ[k].center = (xo / self.body._r, yo / self.body._r)
 
-      # _Body orbits
+      # BODY orbits
       for k, b in enumerate(self.bodies):
         self.ptb[k].set_xdata(b.x_hr[self.t[j]])
         self.ptb[k].set_ydata(b.z_hr[self.t[j]])
 
-class _Body(ctypes.Structure):
+class BODY(ctypes.Structure):
   '''
   The class containing all the input planet/star parameters. This is a :py:mod:`ctypes` interface
   to the C :py:obj:`BODY` struct. Users should instantiate these via the :py:func:`Star`,
@@ -404,7 +404,7 @@ class _Body(ctypes.Structure):
 
     return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
 
-class _Settings(ctypes.Structure):
+class SETTINGS(ctypes.Structure):
   '''
   The class that contains the model settings. This class is used internally; settings
   should be specified as :py:obj:`kwargs` to :py:class:`System` or by assignment once
@@ -559,7 +559,7 @@ class _Settings(ctypes.Structure):
 def Star(name, **kwargs):
   '''
 
-  Returns a :py:class:`_Body` instance of type :py:obj:`star`.
+  Returns a :py:class:`BODY` instance of type :py:obj:`star`.
 
   :param str name: A unique identifier for this star
   :param float m: Mass in solar masses. Default `1.`
@@ -582,12 +582,12 @@ def Star(name, **kwargs):
 
   '''
 
-  return _Body(name, 'star', **kwargs)
+  return BODY(name, 'star', **kwargs)
 
 def Planet(name, **kwargs):
   '''
 
-  Returns a :py:class:`_Body` instance of type :py:obj:`planet`.
+  Returns a :py:class:`BODY` instance of type :py:obj:`planet`.
 
   :param str name: A unique identifier for this planet
   :param float m: Mass in Earth masses. Default `1.`
@@ -623,12 +623,12 @@ def Planet(name, **kwargs):
 
   '''
 
-  return _Body(name, 'planet', **kwargs)
+  return BODY(name, 'planet', **kwargs)
 
 def Moon(name, host, **kwargs):
   '''
 
-  Returns a :py:class:`_Body` instance of type :py:obj:`moon`.
+  Returns a :py:class:`BODY` instance of type :py:obj:`moon`.
 
   :param str name: A unique identifier for this moon
   :param str host: The name of the moon's host planet
@@ -665,7 +665,7 @@ def Moon(name, host, **kwargs):
 
   '''
 
-  return _Body(name, 'moon', host = host, **kwargs)
+  return BODY(name, 'moon', host = host, **kwargs)
 
 class System(object):
   '''
@@ -705,7 +705,7 @@ class System(object):
 
     # Initialize
     self.bodies = bodies
-    self.settings = _Settings(**kwargs)
+    self.settings = SETTINGS(**kwargs)
     self._reset()
 
   def _reset(self):
@@ -758,15 +758,15 @@ class System(object):
     self._Orbits = libppo.Orbits
     self._Orbits.restype = ctypes.c_int
     self._Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                             ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                             _Settings]
+                             ctypes.c_int, ctypes.POINTER(ctypes.POINTER(BODY)),
+                             SETTINGS]
 
     self._Flux = libppo.Flux
     self._Flux.restype = ctypes.c_int
     self._Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
                            ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
-                           ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                           _Settings]
+                           ctypes.c_int, ctypes.POINTER(ctypes.POINTER(BODY)),
+                           SETTINGS]
 
     # Allocate memory for all the arrays
     for body in self.bodies:
@@ -812,9 +812,9 @@ class System(object):
       body.nt = nt
       body.nw = nw
 
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances,
+    # A pointer to a pointer to `BODY`. This is an array of `n` `BODY` instances,
     # passed by reference. The contents can all be accessed through `bodies`
-    self._ptr_bodies = (ctypes.POINTER(_Body) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
+    self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
 
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
@@ -1388,9 +1388,9 @@ class System(object):
 
     :param float tstart: The time at which to start the occultation search (days)
     :param occulted: The occulted body
-    :type occulted: :py:class:`_Body`
+    :type occulted: :py:class:`BODY`
     :param occultor: The occultor(s). If :py:obj:`None`, occultations by any body are considered. Default :py:obj:`None`
-    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :type occultor: :py:class:`BODY` or :py:obj:`list`
     :param float min_duration: Minimum occultation duration in **minutes**. Default `10`
     :param float max_impact: The maximum impact parameter. Default `0.5`
     :param int maxruns: Maximum number of 100-day runs to search for the occultation. Default `100`
@@ -1462,7 +1462,7 @@ class System(object):
     Plots and animates an occultation event.
     
     :param body: The occulted body
-    :type body: :py:class:`_Body`
+    :type body: :py:class:`BODY`
     :param float time: The time of the occultation event in days
     :param float wavelength: The wavelength in microns at which to plot the light curve. \
            Must be within the wavelength grid. Default `15`
@@ -1663,9 +1663,9 @@ class System(object):
 
     :param int t: The index of the occultation in the high resolution time array `time_hr`
     :param occulted: The occulted body instance
-    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :type occultor: :py:class:`BODY` or :py:obj:`list`
     :param occultor: The occultor(s). Default :py:obj:`None`
-    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :type occultor: :py:class:`BODY` or :py:obj:`list`
     :param float wavelength: The wavelength in microns at which to plot the light curve. \
            Must be within the wavelength grid. Default `15`
     :param fig: The figure on which to plot the image
@@ -1736,7 +1736,7 @@ class System(object):
     elif not hasattr(occultor, '__len__'):
       occultor = [occultor]
 
-    # If they are _Body instances, turn them into indices
+    # If they are BODY instances, turn them into indices
     for i, occ in enumerate(occultor):
       if occ in self.bodies:
         occultor[i] = np.argmax([b == occ for b in self.bodies])
