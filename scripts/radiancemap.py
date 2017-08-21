@@ -17,7 +17,7 @@ Illustrates how to specify different surface radiance maps.
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.photo import Trappist1
 from planetplanet.constants import *
-from planetplanet.photo import RadiativeEquilibriumMap, BandedCloudsMap, UniformMap
+from planetplanet.photo import LimbDarkenedMap, RadiativeEquilibriumMap, BandedCloudsMap, UniformMap
 import matplotlib.pyplot as pl
 import numpy as np
 from numba import cfunc
@@ -42,7 +42,7 @@ def compute(radiancemap = None, Phi = 0, Lambda = 0):
 
   # Compute an occultation by `b`
   system.quiet = True
-  time = np.linspace(9552.9364, 9552.9564, 500)
+  time = np.linspace(9552.9364, 9552.9564, 100)
   system.compute(time)
   
   return system

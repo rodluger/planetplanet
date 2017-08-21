@@ -186,28 +186,58 @@ int funcomp( const void* a, const void* b) {
 }
 
 /**
-Computes the temperature at a given zenith angle on an eyeball planet.
+Computes the flux at a given zenith angle on an eyeball planet.
 
 @param za The zenith angle in radians, measured from the hotspot
 @param irrad The irradiation from the star
 @param albedo The body's albedo
 @param tnight The night side temperature in K
-@return The temperature in K
+@return The emitted spectral flux density from that point on the surface
 
 */
-double EyeballTemperature(double za, double irrad, double albedo, double tnight) {
+double RadiativeEquilibriumMap(double lambda, double za, double irrad, double albedo, double tnight) {
   
   double temp;
   
   if (za < PI / 2) {
     temp = pow((irrad * cos(za) * (1 - albedo)) / SBOLTZ, 0.25);
-    if (temp > tnight)
-      return temp;
-    else
-      return tnight;
+    if (temp < tnight)
+      temp = tnight;
   } else {
-    return tnight;
+    temp = tnight;
   }
+  
+  // Return the flux
+  return Blackbody(lambda, temp);
+  
+}
+
+/**
+Computes the flux at a given zenith angle on a limb-darkened planet.
+
+@param za The zenith angle in radians, measured from the hotspot
+@return The emitted spectral flux density from that point on the surface
+
+*/
+double LimbDarkenedMap(int j, double za, double teff, int nu, int nw, double u[nu * nw], double B0) {
+  
+  int k;
+  double x;
+  double B = B0;
+  double cosza = cos(za);
+  
+  // Loop over the coefficient order
+  for (k = 0; k < nu; k++) {
+  
+    // The Taylor expansion is in (1 - mu)
+    x = pow(1 - cosza, k + 1);
+    B -= u[nw * k + j] * B0 * x;
+    
+  } 
+  
+  // Return the flux
+  return B;
+  
 }
 
 /**
@@ -339,14 +369,10 @@ evaluated at a given array of wavelengths.
 @param B The blackbody intensity grid
 
 */
-void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int custommap, RADIANCEMAP radiancemap, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
+void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int custommap, RADIANCEMAP radiancemap, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B0[nw], double B[nz + 1][nw]) {
   
-  int i, j, k;
-  double zenith_angle, cosza;
-  double T = 0.;
-  double B0[nw];
-  double x;
-  double norm;
+  int i, j;
+  double zenith_angle;
   
   // Loop over each slice
   for (i = 0; i < nz + 1; i++) {
@@ -365,64 +391,18 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
     } else
       zenith_angle = 0.5 * (zenithgrid[i] + zenithgrid[i - 1]);
 
-    // Get its blackbody temperature
-    if (teff == 0) {
-      
+    // Get the flux      
+    for (j = 0; j < nw; j++) {
       if (custommap) {
-      
-        for (j = 0; j < nw; j++)
-          B[i][j] = radiancemap(lambda[j], zenith_angle);
-        
+        B[i][j] = radiancemap(lambda[j], zenith_angle);
       } else {
-      
-        // No limb darkening
-        T = EyeballTemperature(zenith_angle, irrad, albedo, tnight);
-
-        // Loop over each wavelength bin
-        for (j = 0; j < nw; j++) {
-        
-          // Get the blackbody intensity (W / m^2 / m / sr)
-          B[i][j] = Blackbody(lambda[j], T);
-      
-        }
-      
+        if (teff == 0)
+          B[i][j] = RadiativeEquilibriumMap(lambda[j], zenith_angle, irrad, albedo, tnight);
+        else
+          B[i][j] = LimbDarkenedMap(j, zenith_angle, teff, nu, nw, u, B0[j]);
       }
-    
-    } else {
-    
-      // TODO: Do this outside of the *i* loop.
-    
-      // Normalized polynomial limb darkening
-      // Equation (15) in Luger et al. (2017)
-      for (j = 0; j < nw; j++) {
-        
-        // Compute the normalization term, Equation (E5)
-        norm = 0;
-        for (k = 0; k < nu; k++) {
-          norm += u[nw * k + j] / ((k + 2) * (k + 3));
-        }
-        norm = 1 - 2 * norm;
-        B0[j] = Blackbody(lambda[j], teff) / norm;
-        B[i][j] = B0[j];
-      
-      }
-      
-      // Pre-compute mu
-      cosza = cos(zenith_angle);
-      
-      // Loop over the coefficient order
-      for (k = 0; k < nu; k++) {
-      
-        // The Taylor expansion is in (1 - mu)
-        x = pow(1 - cosza, k + 1);
-        
-        // Compute the wavelength-dependent intensity
-        for (j = 0; j < nw; j++) {
-          B[i][j] -= u[nw * k + j] * B0[j] * x;
-        } 
-      } 
     }
-  }   
+  } 
 }
 
 /**
@@ -1088,8 +1068,21 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     ro2[i] = ro[i] * ro[i];
     ro2[i] += SMALL * ro2[i];
   }
+  double norm;
+  double B0[nw];
   double d2 = distance * distance * PARSEC * PARSEC;
   *iErr = ERR_NONE;
+  
+  // Pre-compute the blackbody normalization if necessary
+  // TODO: Enclose this in an if statement
+  for (j = 0; j < nw; j++) {
+    norm = 0;
+    for (k = 0; k < nu; k++) {
+      norm += u[nw * k + j] / ((k + 2) * (k + 3));
+    }
+    norm = 1 - 2 * norm;
+    B0[j] = Blackbody(lambda[j], teff) / norm;
+  }
   
   // Zero out the flux
   for (m = 0; m < nw; m++) 
@@ -1190,7 +1183,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   }
   
   // Pre-compute the surface intensity in each zenith_angle slice
-  SurfaceIntensity(albedo, irrad, tnight, teff, custommap, radiancemap, nz * no, zenithgrid, nw, lambda, nu, u, B);
+  SurfaceIntensity(albedo, irrad, tnight, teff, custommap, radiancemap, nz * no, zenithgrid, nw, lambda, nu, u, B0, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
