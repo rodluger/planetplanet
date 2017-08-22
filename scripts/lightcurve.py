@@ -38,7 +38,7 @@ def plot():
   '''
   
   # Instantiate the Trappist-1 system
-  system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
+  system = Trappist1(sample = True, phasecurve = True, nbody = True, seed = 999)
 
   # Get the occultation light curves over 10 random days
   tstart = np.random.random() * 10000

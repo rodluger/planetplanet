@@ -35,7 +35,7 @@ def plot():
   '''
   
   # Instantiate the Trappist-1 system
-  system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
+  system = Trappist1(sample = True, phasecurve = True, nbody = True, seed = 999)
 
   # Give `c` a large latitudinal offset in its hotspot just for fun
   system.c.Phi = 30

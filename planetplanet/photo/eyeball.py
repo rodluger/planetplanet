@@ -13,6 +13,8 @@ Code for plotting and visualizing "eyeball" planets.
 
 '''
 
+from .maps import RadiativeEquilibriumMap, LimbDarkenedMap
+from ..constants import *
 import numpy as np
 np.seterr(invalid = 'ignore')
 import matplotlib.pyplot as pl
@@ -43,9 +45,9 @@ def ZenithColor(z, radiancemap, wavelength, cpad = 0.2, rmax = None, rmin = None
     val = 1 - cpad
   return pl.get_cmap(cmap)(val)
 
-def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
+def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
                 draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False,
-                radiancemap = None, cpad = 0.2, wavelength = 15.):
+                cpad = 0.2, wavelength = 15.):
   '''
   Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
   
@@ -81,12 +83,7 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
   transformation into the axis-symmetric eyeball frame
   
   '''
-  
-  # Default radiance map
-  if radiancemap is None:
-    from .maps import RadiativeEquilibriumMap
-    radiancemap = RadiativeEquilibriumMap()
-  
+    
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(gamma) + y * np.sin(gamma), y * np.cos(gamma) - x * np.sin(gamma))
   

@@ -24,7 +24,7 @@ from tqdm import tqdm
 
 __all__ = ['Trappist1']
 
-def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwargs):
+def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
   '''
   
   Returns an instance of :py:obj:`planetplanet.photo.System` for the full 
@@ -35,8 +35,6 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
   
   :param bool sample: Draw a random sample from the full prior? If :py:obj:`False`,\
   returns the mean values for all parameters. Default :py:obj:`True`
-  :param bool airless: Compute all planet occultation light curves in the airless limit?\
-  Default :py:obj:`True`
   :param float distance: Distance to the system in parsecs. Default :py:obj:`12`
   :param int seed: Random number generator seed. Default :py:obj:`None`
   :param kwargs: Any other :py:obj:`kwargs` to be passed to :py:func:`planetplanet.Star`,\
@@ -186,8 +184,7 @@ def Trappist1(sample = True, airless = True, distance = 12, seed = None, **kwarg
     # Instantiate!
     planets[i] = Planet(names[i], m = m, per = per, inc = inc, r = r, t0 = t0, 
                         Omega = Omega, w = w, ecc = ecc, color = colors[i], 
-                        tnight = tnight, albedo = albedo, 
-                        airless = airless, **kwargs)
+                        tnight = tnight, albedo = albedo, **kwargs)
 
   # Return the system
   system = System(star, distance = distance, *planets, **kwargs)

@@ -20,7 +20,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 from ..constants import *
 from ..detect import jwst
 from .eyeball import DrawEyeball
-from .maps import NullMap
+from .maps import LimbDarkenedMap, RadiativeEquilibriumMap
 from .structs import *
 import ctypes
 import numpy as np
@@ -213,7 +213,7 @@ class System(object):
     # Reset flag
     self._computed = False
 
-  def _malloc(self, nt, nw):
+  def _malloc(self, nt, nw, **kwargs):
     '''
     Allocate memory for all the C arrays.
 
@@ -263,14 +263,21 @@ class System(object):
       
       # Radiance map
       if body.radiancemap is None:
-        body._custommap = 0
-        body._radiancemap = NullMap().ctypes
+        if body.symmetry == 'radial':
+          body._maptype = MAP_RADIAL
+          body.radiancemap = LimbDarkenedMap(teff = body.teff, u = body.limbdark, **kwargs)
+        else:
+          body._maptype = MAP_ELLIPTICAL
+          body.radiancemap = RadiativeEquilibriumMap(albedo = body.albedo, tnight = body.tnight)
       else:
         assert type(body.radiancemap) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
         assert body.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
         assert body.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
-        body._custommap = 1
-        body._radiancemap = body.radiancemap.ctypes
+        if body.symmetry == 'radial':
+          body._maptype = MAP_RADIAL_CUSTOM
+        else:
+          body._maptype = MAP_ELLIPTICAL_CUSTOM
+      body._radiancemap = body.radiancemap.ctypes
       
       # Dimensions
       body.nu = len(body.u)
@@ -334,7 +341,7 @@ class System(object):
       time_hr = np.concatenate(time_hr)
 
     # Allocate memory
-    self._malloc(len(time_hr), len(wavelength))
+    self._malloc(len(time_hr), len(wavelength), lambda1 = lambda1, lambda2 = lambda2, R = R)
 
     # Call the light curve routine
     err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength),
@@ -1152,7 +1159,7 @@ class System(object):
     z0 = occulted.z_hr[t]
 
     # Get the angles
-    if (occulted.nu == 0) and not (occulted.body_type in ['planet', 'moon'] and occulted.airless == False):
+    if occulted.symmetry == 'elliptical':
 
       x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
       y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
@@ -1213,9 +1220,8 @@ class System(object):
       occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp, y = (occultor.y_hr[t] - y0) / rp, r = occultor._r / rp, zorder = i + 1, alpha = 1))
 
     # Draw the eyeball planet and the occultor(s)
-    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma,
+    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap, theta = theta, gamma = gamma,
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                                   radiancemap = occulted.radiancemap, 
                                    wavelength = wavelength, **kwargs)
 
     return ax, occ, xy

@@ -20,15 +20,6 @@ from numba import cfunc
 
 __all__ = ['RadiativeEquilibriumMap', 'LimbDarkenedMap', 'BandedCloudsMap', 'UniformMap', 'NullMap']
 
-def Blackbody(lam, temp):
-  '''
-  
-  '''
-  
-  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
-  b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
-  return a / (np.exp(b) - 1.)
-
 def NullMap():
   '''
   
@@ -86,8 +77,10 @@ def LimbDarkenedMap(teff = 2500, u = [1.], lambda1 = 5., lambda2 = 15., R = 100)
     else:
       raise Exception("Limb darkening coefficients must be provided as a list of scalars or as a list of functions.")
   u = np.array(ulam)
-  nu, nw = u.shape
+  nu = len(u)
+  nw = len(wavelength)
   B0 = np.zeros_like(wavelength)
+  wavelength *= 1e-6
   
   # Compute the normalization term, Equation (E5)
   for j, lam in enumerate(wavelength):
@@ -95,8 +88,10 @@ def LimbDarkenedMap(teff = 2500, u = [1.], lambda1 = 5., lambda2 = 15., R = 100)
     for i in range(nu):
       norm += u[i, j] / ((i + 2) * (i + 3))
     norm = 1 - 2 * norm
-    B0[j] = Blackbody(lam * 1e-6, teff) / norm;
-  
+    a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+    b = HPLANCK * CLIGHT / (lam * KBOLTZ * teff)
+    B0[j] = a / (np.exp(b) - 1.) / norm
+    
   @cfunc("float64(float64, float64)")
   def func(lam, z):
     '''

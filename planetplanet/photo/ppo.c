@@ -31,7 +31,6 @@ void GetAngles(double x0, double y0, double z0, double rp, double Omega, double 
   // The "easy" case, with no hotspot offset
   if ((Lambda == 0) && (Phi == 0)) {
   
-    
     // The coordinates of the sub-stellar point on the sky
     xstar = x0 * (1 - rp / r);
     ystar = y0 * (1 - rp / r);
@@ -253,29 +252,23 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   // and store it in the `total_flux` attribute
   for (p = 1; p < np; p++) {
     
-    // Full phase
-    theta = PI / 2;
-    
-    // The irradiation
+    // The planet effective temperature from radiation balance
     dx = (body[0]->x[0] - body[p]->x[0]);
     dy = (body[0]->y[0] - body[p]->y[0]);
     dz = (body[0]->z[0] - body[p]->z[0]);
     d2 = dx * dx + dy * dy + dz * dz;
-    irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
+    irrad = lum / d2;
+    body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
     
-    // The planet effective temperature from radiation balance
-    if (body[p]->blackbody) {
-      body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
-    }
-    
-    // Call the eyeball routine
-    UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
+    // Call the eyeball routine at *full phase*
+    UnoccultedFlux(body[p]->r, PI / 2, body[p]->tnight, body[p]->teff,
                    settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                    settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                    body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
-                   tmp, body[p]->custommap, body[p]->radiancemap, settings.quiet, &iErr);
+                   tmp, body[p]->maptype, body[p]->radiancemap, settings.quiet, &iErr);
     for (w = 0; w < nw; w++) {
-      body[p]->total_flux[w] = tmp[w];          
+      body[p]->total_flux[w] = tmp[w];  
+              
     }    
   }
   
@@ -290,7 +283,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     for (p = 0; p < np; p++) {
       
       // Compute the phase curve for this body?
-      if ((p > 0) && (body[p]->phasecurve)) {
+      if ((p > 0) && (body[p]->phasecurve) && ((body[p]->maptype == MAP_ELLIPTICAL) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
         // TODO: Interpolate here to save time!
         
@@ -298,26 +291,30 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         // Note that `gamma` does not matter for phase curves.
         GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
         
-        // The irradiation
+        // The planet effective temperature from radiation balance
         dx = (body[0]->x[t] - body[p]->x[t]);
         dy = (body[0]->y[t] - body[p]->y[t]);
         dz = (body[0]->z[t] - body[p]->z[t]);
         d2 = dx * dx + dy * dy + dz * dz;
         irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
-        
-        // The planet effective temperature from radiation balance
-        if (body[p]->blackbody) {
-          body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
-        }
-        
+        body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
+                
         // Call the eyeball routine
-        UnoccultedFlux(body[p]->r, theta, body[p]->albedo, irrad, body[p]->tnight, body[p]->teff,
+        UnoccultedFlux(body[p]->r, theta, body[p]->tnight, body[p]->teff,
                        settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
                        settings.adaptive, settings.circleopt, settings.batmanopt, settings.quarticsolver, 
                        body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, 
-                       tmp, body[p]->custommap, body[p]->radiancemap, settings.quiet, &iErr);
+                       tmp, body[p]->maptype, body[p]->radiancemap, settings.quiet, &iErr);
         for (w = 0; w < nw; w++) {
           body[p]->flux[nw * t + w] = tmp[w];          
+        }
+      
+      } else if ((body[p]->maptype == MAP_RADIAL) || (body[p]->maptype == MAP_RADIAL_CUSTOM)) {
+        
+        // The flux is constant because the planet emission is radially
+        // symmetrical about the center of the planet disk
+        for (w = 0; w < nw; w++) {
+          body[p]->flux[nw * t + w] = body[p]->total_flux[w];
         }
         
       } else if (p > 0) {
@@ -367,7 +364,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       // Now compute the light curve for this planet
       if (no > 0) {
         
-        if (p > 0) {
+        if ((p > 0) && ((body[p]->maptype == MAP_ELLIPTICAL) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
           // Get the eyeball angles `theta` and `gamma`
           GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
@@ -382,38 +379,26 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         } else {
           
-          // The star is a simple limb-darkened body
+          // The body is radially symmetric
           theta = PI / 2.;
-          gamma = 0.;
           
         }
         
-        // The irradiation on the planet
+        // The planet effective temperature from radiation balance
         if (p > 0) {
           dx = (body[0]->x[t] - body[p]->x[t]);
           dy = (body[0]->y[t] - body[p]->y[t]);
           dz = (body[0]->z[t] - body[p]->z[t]);
           d2 = dx * dx + dy * dy + dz * dz;
           irrad = lum / d2;
-          
-          // The planet effective temperature from radiation balance
-          if (body[p]->blackbody) {
-            body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
-          }
-  
-        } else {
-        
-          // No irradiation on the star
-          irrad = 0.;
-          
+          body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
         }
         
         // Call the eyeball routine
-        OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->albedo, 
-                     irrad, body[p]->tnight,  body[p]->teff, settings.distance, 
+        OccultedFlux(body[p]->r, no, xo, yo, ro, theta, body[p]->tnight,  body[p]->teff, settings.distance, 
                      settings.mintheta, settings.maxvertices, settings.maxfunctions, settings.adaptive, 
                      settings.circleopt, settings.batmanopt, settings.quarticsolver, 
-                     body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, tmp, body[p]->custommap, body[p]->radiancemap, settings.quiet, &iErr);
+                     body[p]->nu, body[p]->nz, nw, body[p]->u, wavelength, tmp, body[p]->maptype, body[p]->radiancemap, settings.quiet, &iErr);
         
         // Update the body light curve
         for (w = 0; w < nw; w++)

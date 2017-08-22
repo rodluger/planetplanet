@@ -40,7 +40,6 @@ class BODY(ctypes.Structure):
               ("_teff", ctypes.c_double),
               ("tnight", ctypes.c_double),
               ("_phasecurve", ctypes.c_int),
-              ("_blackbody", ctypes.c_int),
               ("_Lambda", ctypes.c_double),
               ("_Phi", ctypes.c_double),
               ("_host", ctypes.c_int),
@@ -57,7 +56,7 @@ class BODY(ctypes.Structure):
               ("_occultor", ctypes.POINTER(ctypes.c_int)),
               ("_flux", ctypes.POINTER(ctypes.c_double)),
               ("_total_flux", ctypes.POINTER(ctypes.c_double)),
-              ("_custommap", ctypes.c_int),
+              ("_maptype", ctypes.c_int),
               ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, ctypes.c_double)),
               ]
 
@@ -87,12 +86,12 @@ class BODY(ctypes.Structure):
 
     # These defaults are different depending on body type
     if self.body_type in ['planet', 'moon']:
-      self.airless = kwargs.pop('airless', True)
+      self.symmetry = kwargs.pop('symmetry', 'elliptical')
       self.nz = kwargs.pop('nz', 11)
       self.per = kwargs.pop('per', 3.)
       self.albedo = kwargs.pop('albedo', 0.3)
       self.teff = 0
-      if self.airless:
+      if self.symmetry == 'elliptical':
         self.tnight = kwargs.pop('tnight', 40.)
         self.limbdark = []
         self.Lambda = kwargs.pop('Lambda', 0)
@@ -105,7 +104,7 @@ class BODY(ctypes.Structure):
       self.phasecurve = kwargs.pop('phasecurve', False)
       self.color = kwargs.pop('color', 'r')
     elif self.body_type == 'star':
-      self.airless = False
+      self._symmetry = 'radial'
       self.nz = kwargs.pop('nz', 31)
       self.per = kwargs.pop('per', 0.)
       self.albedo = 0.
@@ -138,6 +137,23 @@ class BODY(ctypes.Structure):
     # Python stuff
     self._inds = []
     self._computed = False
+
+  @property
+  def symmetry(self):
+    return self._symmetry
+
+  @symmetry.setter
+  def symmetry(self, val):
+    if self.body_type in ['planet', 'moon']:
+      try:
+        if val.lower() in ['radial', 'elliptical']:
+          self._symmetry = val.lower()
+        else:
+          raise ValueError("Invalid `symmetry` type.")
+      except:
+        raise ValueError("Invalid `symmetry` type.")
+    elif self.body_type == 'star':
+      raise Exception("Can't set this property for the star.")
 
   @property
   def m(self):
@@ -183,14 +199,6 @@ class BODY(ctypes.Structure):
   @phasecurve.setter
   def phasecurve(self, val):
     self._phasecurve = int(val)
-
-  @property
-  def airless(self):
-    return not bool(self._blackbody)
-
-  @airless.setter
-  def airless(self, val):
-    self._blackbody = int(not bool(val))
 
   @property
   def inc(self):
@@ -487,13 +495,6 @@ def Planet(name, **kwargs):
   :param float Omega: Longitude of ascending node in degrees. `0.`
   :param float t0: Time of transit in days. Default `0.`
   :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
-  :param bool airless: Treat this as an airless planet? If :py:obj:`True`, computes light curves \
-         in the instant re-radiation limit, where the surface brightness is proportional \
-         to the cosine of the zenith angle (the angle between the line connecting \
-         the centers of the planet and the star and the line connecting the center of the \
-         planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If :py:obj:`False`, treats the planet as a limb-darkened blackbody. \
-         Default :py:obj:`True`
   :param float albedo: Planetary albedo (airless limit). Default `0.3`
   :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
   :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
@@ -529,13 +530,6 @@ def Moon(name, host, **kwargs):
   :param float Omega: Longitude of ascending node in degrees. `0.`
   :param float t0: Time of transit in days. Default `0.`
   :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
-  :param bool airless: Treat this as an airless planet? If :py:obj:`True`, computes light curves \
-         in the instant re-radiation limit, where the surface brightness is proportional \
-         to the cosine of the zenith angle (the angle between the line connecting \
-         the centers of the planet and the star and the line connecting the center of the \
-         planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If :py:obj:`False`, treats the planet as a limb-darkened blackbody. \
-         Default :py:obj:`True`
   :param float albedo: Planetary albedo (airless limit). Default `0.3`
   :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
   :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
