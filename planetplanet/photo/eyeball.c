@@ -1070,7 +1070,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     flux[m] = 0.;
   
   // Can we optimize this with the *batman* algorithm?
-  // TODO: Adapt this to work with custom radial maps
+  // TODO: Adapt this to work with custom radial maps?
   if ((no == 1) && (batmanopt) && (maptype == MAP_RADIAL)) {
     BatmanFlux(r, x0[0], y0[0], ro[0], teff, distance, nu, nz, nw, u, lambda, flux);
     return;
@@ -1103,7 +1103,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
   // Compute the zenith_angle grid
-  if (adaptive && (teff > 0)) {
+  if (adaptive && ((maptype == MAP_RADIAL) || (maptype == MAP_RADIAL_CUSTOM))) {
   
     // Adaptive zenith_angle grid
     // Loop over each occultor
