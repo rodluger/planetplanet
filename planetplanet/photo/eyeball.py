@@ -45,8 +45,8 @@ def ZenithColor(z, radiancemap, wavelength, cpad = 0.2, rmax = None, rmin = None
     val = 1 - cpad
   return pl.get_cmap(cmap)(val)
 
-def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
-                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False,
+def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
+                draw_terminator = False, draw_outline = True, draw_ellipses = False, rasterize = False,
                 cpad = 0.2, wavelength = 15.):
   '''
   Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
@@ -73,9 +73,9 @@ def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 11, gamma = 0, o
   :param str cmap: The name of the :py:class:`matplotlib` colormap. Default `inferno`
   :param fig: The figure object in which to create the axis. Default :py:obj:`None`
   :type fig: :py:class:`matplotlib.Figure`
-  :param bool draw_terminator: Draw the terminator ellipse outline? Default :py:obj:`True`
+  :param bool draw_terminator: Draw the terminator ellipse outline? Default :py:obj:`False`
   :param bool draw_outline: Draw the planet outline(s)? Default :py:obj:`True`
-  :param bool draw_ellipses: Draw the zenith angle ellipse outlines? Default :py:obj:`True`
+  :param bool draw_ellipses: Draw the zenith angle ellipse outlines? Default :py:obj:`False`
   :param bool rasterize: Rasterize the image? Default :py:obj:`False`
   
   :return: **fig**, **ax**, **occ**, **xy**. These are the figure and floating axis instances, a lits of :py:obj:`Circle` \

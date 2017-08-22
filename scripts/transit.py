@@ -49,8 +49,7 @@ def plot():
   flux1 = system.star.flux[:,0] / system.star.flux[0,0]
 
   # Plot it
-  system.plot_occultation('star', 0, nz = 51, draw_ellipses = False, spectral = False, 
-                          draw_outline = False, draw_terminator = False)
+  system.plot_occultation('star', 0, spectral = False)
 
   # Compute the light curve w/ batman optimization
   system = System(star, planet, batmanopt = True)

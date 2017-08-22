@@ -14,6 +14,7 @@ structs.py |github|
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
 from .maps import LimbDarkenedMap, RadiativeEquilibriumMap, NullMap
+import numba
 import ctypes
 import numpy as np
 
@@ -93,16 +94,6 @@ class BODY(ctypes.Structure):
     self._inds = []
     self._computed = False
   
-  def draw(self, x0, y0, r, **kwargs):
-    '''
-    
-    '''
-    
-    from .eyeball import DrawEyeball
-    DrawEyeball(x0, y0, r, self.radiancemap, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
-                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False,
-                cpad = 0.2, wavelength = 15.)
-    
   @property
   def radiancemap(self):
     return self._rmap
