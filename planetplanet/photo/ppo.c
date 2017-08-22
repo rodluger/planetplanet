@@ -57,9 +57,9 @@ void GetAngles(double x0, double y0, double z0, double rp, double Omega, double 
         
     // Coordinates of the hotspot in a frame where the planet is
     // at x, y, z = (0, 0, r), at full phase
-    xprime = rp * cosl * sinp;
-    yprime = rp * sinl;
-    zprime = r - rp * cosl * cosp;
+    xprime = rp * cosp * sinl;
+    yprime = rp * sinp;
+    zprime = r - rp * cosp * cosl;
 
     // Transform to the rotated sky plane
     rxz = sqrt(x * x + z * z);

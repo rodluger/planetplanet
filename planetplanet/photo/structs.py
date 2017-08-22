@@ -13,6 +13,7 @@ structs.py |github|
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
+from .maps import LimbDarkenedMap, RadiativeEquilibriumMap, NullMap
 import ctypes
 import numpy as np
 
@@ -69,6 +70,14 @@ class BODY(ctypes.Structure):
 
     '''
     
+    # C stuff
+    self.nt = 0
+    self.nw = 0
+    self.nu = 0
+    self.tperi0 = 0.
+    self.a = 0.
+    self._maptype = MAP_NONE
+    
     # Universal params
     self.name = name
     self.m = kwargs.pop('m', 1.)
@@ -79,19 +88,52 @@ class BODY(ctypes.Structure):
     self.Omega = kwargs.pop('Omega', 0.)
     self.inc = kwargs.pop('inc', 90.)
     self.radiancemap = kwargs.get('radiancemap', None)
-    
-    # C stuff, computed in `System` class
-    self.nt = 0
-    self.nw = 0
-    self.nu = 0
-    self.tperi0 = 0.
-    self.a = 0.
-    self._maptype = MAP_NONE
 
     # Python stuff
     self._inds = []
     self._computed = False
-
+  
+  def draw(self, x0, y0, r, **kwargs):
+    '''
+    
+    '''
+    
+    from .eyeball import DrawEyeball
+    DrawEyeball(x0, y0, r, self.radiancemap, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
+                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False,
+                cpad = 0.2, wavelength = 15.)
+    
+  @property
+  def radiancemap(self):
+    return self._rmap
+  
+  @radiancemap.setter
+  def radiancemap(self, val):
+    if val is None:
+      if self.symmetry == 'radial':
+        self._maptype = MAP_RADIAL
+        # NOTE: We will have to re-evaluate this when we call `compute()` in case
+        # the user chooses a different wavelength array.
+        self._rmap = LimbDarkenedMap(teff = self.teff, limbdark = self.limbdark)
+        self._radiancemap = self._rmap.ctypes
+        self._recomputeLimbDarkenedMap = True
+      else:
+        self._maptype = MAP_ELLIPTICAL
+        self._rmap = RadiativeEquilibriumMap(albedo = self.albedo, tnight = self.tnight)
+        self._radiancemap = self._rmap.ctypes
+        self._recomputeLimbDarkenedMap = False
+    else:
+      assert type(val) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
+      assert val.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
+      assert val.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
+      if self.symmetry == 'radial':
+        self._maptype = MAP_RADIAL_CUSTOM
+      else:
+        self._maptype = MAP_ELLIPTICAL_CUSTOM
+      self._rmap = val
+      self._radiancemap = self._rmap.ctypes
+      self._recomputeLimbDarkenedMap = False
+  
   @property
   def symmetry(self):
     return self._symmetry
@@ -106,7 +148,7 @@ class BODY(ctypes.Structure):
       self._symmetry = val.lower()
     else:
       raise ValueError("Invalid `symmetry` type.")
-  
+    
   @property
   def m(self):
     return self._m
@@ -274,10 +316,9 @@ class Planet(BODY):
 
     '''
     
-    super(Planet, self).__init__(*args, **kwargs)
     self.symmetry = kwargs.pop('symmetry', 'elliptical')
     self.nz = kwargs.pop('nz', 11)
-    self.per = kwargs.pop('per', 3.)
+    self._per = kwargs.pop('per', 3.)
     self.albedo = kwargs.pop('albedo', 0.3)
     self.teff = 0
     self.tnight = kwargs.pop('tnight', 0.)
@@ -287,6 +328,7 @@ class Planet(BODY):
     self.phasecurve = kwargs.pop('phasecurve', False)
     self.color = kwargs.pop('color', 'r')
     self.host = 0
+    super(Planet, self).__init__(*args, **kwargs)
   
   @property
   def body_type(self):
@@ -329,10 +371,9 @@ class Moon(BODY):
 
     '''
     
-    super(Planet, self).__init__(*args, **kwargs)
     self.symmetry = kwargs.pop('symmetry', 'elliptical')
     self.nz = kwargs.pop('nz', 11)
-    self.per = kwargs.pop('per', 3.)
+    self._per = kwargs.pop('per', 3.)
     self.albedo = kwargs.pop('albedo', 0.3)
     self.teff = 0
     self.tnight = kwargs.pop('tnight', 0.)
@@ -342,6 +383,7 @@ class Moon(BODY):
     self.phasecurve = kwargs.pop('phasecurve', False)
     self.color = kwargs.pop('colorw', 'b')
     self.host = kwargs.pop('host', None)
+    super(Planet, self).__init__(*args, **kwargs)
   
   @property
   def body_type(self):
@@ -377,10 +419,9 @@ class Star(BODY):
 
     '''
     
-    super(Star, self).__init__(*args, **kwargs)
     self._symmetry = 'radial'
     self.nz = kwargs.pop('nz', 31)
-    self.per = kwargs.pop('per', 0.)
+    self._per = kwargs.pop('per', 0.)
     self.albedo = 0.
     self.tnight = 0.
     self.teff = kwargs.pop('teff', 5577.)
@@ -390,6 +431,7 @@ class Star(BODY):
     self.Phi = 0
     self.color = kwargs.pop('color', 'k')
     self.host = 0
+    super(Star, self).__init__(*args, **kwargs)
   
   @property
   def body_type(self):

@@ -70,8 +70,8 @@ typedef struct {
   double teff;                                                                        /**< Effective temperature in K */
   double tnight;                                                                      /**< Night side temperature in K */
   int phasecurve;                                                                     /**< Compute the phase curve for this body? */
-  double Phi;                                                                         /**< Longitudinal hotspot offset in radians */
-  double Lambda;                                                                      /**< Latitudinal hotspot offset in radians */
+  double Lambda;                                                                      /**< Longitudinal hotspot offset in radians */
+  double Phi;                                                                         /**< Latitudinal hotspot offset in radians */
   int host;                                                                           /**< The index of this body's host (host star if planet; host planet if moon) */
   int nu;                                                                             /**< Number of limb darkening coefficients (per wavelength) */
   int nz;                                                                             /**< Number of zenith angle slices */

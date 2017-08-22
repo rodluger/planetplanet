@@ -56,7 +56,7 @@ def UniformMap(albedo = 0.3, irrad = SEARTH):
   
   return func
 
-def LimbDarkenedMap(teff = 2500, u = [1.], lambda1 = 5., lambda2 = 15., R = 100):
+def LimbDarkenedMap(teff = 2500, limbdark = [1.], lambda1 = 5., lambda2 = 15., R = 100):
   '''
   
   '''
@@ -68,18 +68,19 @@ def LimbDarkenedMap(teff = 2500, u = [1.], lambda1 = 5., lambda2 = 15., R = 100)
   wavelength = np.array(wav)
   
   # Ensure limb darkening coefficients are a 2d array in wavelength and mu
-  ulam = [None for ui in u]
-  for i in range(len(u)):
-    if callable(u[i]):
-      ulam[i] = u[i](wavelength)
-    elif not hasattr(u[i], '__len__'):
-      ulam[i] = u[i] * np.ones_like(wavelength)
+  ulam = [None for ui in limbdark]
+  for i in range(len(limbdark)):
+    if callable(limbdark[i]):
+      ulam[i] = limbdark[i](wavelength)
+    elif not hasattr(limbdark[i], '__len__'):
+      ulam[i] = limbdark[i] * np.ones_like(wavelength)
     else:
       raise Exception("Limb darkening coefficients must be provided as a list of scalars or as a list of functions.")
   u = np.array(ulam)
-  nu = len(u)
-  nw = len(wavelength)
+  nu, nw = u.shape
   B0 = np.zeros_like(wavelength)
+  
+  # Convert to meters
   wavelength *= 1e-6
   
   # Compute the normalization term, Equation (E5)
@@ -90,8 +91,8 @@ def LimbDarkenedMap(teff = 2500, u = [1.], lambda1 = 5., lambda2 = 15., R = 100)
     norm = 1 - 2 * norm
     a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
     b = HPLANCK * CLIGHT / (lam * KBOLTZ * teff)
-    B0[j] = a / (np.exp(b) - 1.) / norm
-    
+    B0[j] = a / (np.exp(b) - 1.) / norm;
+  
   @cfunc("float64(float64, float64)")
   def func(lam, z):
     '''

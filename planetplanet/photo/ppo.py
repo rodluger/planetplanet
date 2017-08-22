@@ -20,8 +20,8 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 from ..constants import *
 from ..detect import jwst
 from .eyeball import DrawEyeball
-from .maps import LimbDarkenedMap, RadiativeEquilibriumMap
 from .structs import *
+from .maps import LimbDarkenedMap, NullMap
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
@@ -223,12 +223,16 @@ class System(object):
     # Reset flag
     self._computed = False
 
-  def _malloc(self, nt, nw, **kwargs):
+  def _malloc(self, nt, nw):
     '''
     Allocate memory for all the C arrays.
 
     '''
-
+      
+    # Check that the first body is a star and that there are no other stars (for now)
+    assert self.bodies[0].body_type == 'star', 'The first body must be a :py:class:`Star`.'  
+    assert 'star' not in [b.body_type for b in self.bodies[1:]], 'Multiple-star systems not yet implemented.'  
+    
     # Initialize the C interface
     self._Orbits = libppo.Orbits
     self._Orbits.restype = ctypes.c_int
@@ -270,26 +274,7 @@ class System(object):
       # HACK: Same for the limb darkening coefficients
       body._u1d = body.u.reshape(-1)
       body._u = np.ctypeslib.as_ctypes(body._u1d)
-      
-      # Radiance map
-      if body._maptype == MAP_NONE:
-        if body.radiancemap is None:
-          if body.symmetry == 'radial':
-            body._maptype = MAP_RADIAL
-            body.radiancemap = LimbDarkenedMap(teff = body.teff, u = body.limbdark, **kwargs)
-          else:
-            body._maptype = MAP_ELLIPTICAL
-            body.radiancemap = RadiativeEquilibriumMap(albedo = body.albedo, tnight = body.tnight)
-        else:
-          assert type(body.radiancemap) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
-          assert body.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
-          assert body.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
-          if body.symmetry == 'radial':
-            body._maptype = MAP_RADIAL_CUSTOM
-          else:
-            body._maptype = MAP_ELLIPTICAL_CUSTOM
-      body._radiancemap = body.radiancemap.ctypes
-      
+            
       # Dimensions
       body.nu = len(body.u)
       body.nt = nt
@@ -302,7 +287,6 @@ class System(object):
     # I now case the `Planet`, `Star`, and `Moon` instances as `BODY` pointers, as per
     # https://stackoverflow.com/a/37827528
     self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.cast(ctypes.byref(p), ctypes.POINTER(BODY)) for p in self.bodies])
-    
 
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
@@ -341,7 +325,15 @@ class System(object):
 
     # Convert from microns to meters
     wavelength *= 1e-6
-
+    
+    # If we are doing the custom limb-darkened map, re-evaluate with the correct
+    # wavelength array.
+    for body in self.bodies:
+      if body._recomputeLimbDarkenedMap:
+        body._maptype = MAP_RADIAL
+        body._rmap = LimbDarkenedMap(teff = body.teff, limbdark = body.limbdark, lambda1 = lambda1, lambda2 = lambda2, R = R) 
+        body._radiancemap = body._rmap.ctypes
+        
     # Oversample the time array to generate light curves observed w/ finite exposure time.
     # Ensure `oversample` is odd.
     if self.settings.oversample % 2 == 0:
@@ -357,7 +349,7 @@ class System(object):
       time_hr = np.concatenate(time_hr)
 
     # Allocate memory
-    self._malloc(len(time_hr), len(wavelength), lambda1 = lambda1, lambda2 = lambda2, R = R)
+    self._malloc(len(time_hr), len(wavelength))
 
     # Call the light curve routine
     err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), len(wavelength),
