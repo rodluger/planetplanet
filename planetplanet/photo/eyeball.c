@@ -389,9 +389,9 @@ void SurfaceIntensity(double tnight, double teff, int maptype, RADIANCEMAP radia
 
     // Get the flux      
     for (j = 0; j < nw; j++) {
-      if (maptype == MAP_ELLIPTICAL)
+      if (maptype == MAP_ELLIPTICAL_DEFAULT)
         B[i][j] = RadiativeEquilibriumMap(lambda[j], zenith_angle, teff, tnight);
-      else if (maptype == MAP_RADIAL)
+      else if (maptype == MAP_RADIAL_DEFAULT)
         B[i][j] = LimbDarkenedMap(j, zenith_angle, teff, nu, nw, u, B0[j]);
       else
         B[i][j] = radiancemap(lambda[j], zenith_angle);
@@ -1071,7 +1071,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   
   // Can we optimize this with the *batman* algorithm?
   // TODO: Adapt this to work with custom radial maps?
-  if ((no == 1) && (batmanopt) && (maptype == MAP_RADIAL)) {
+  if ((no == 1) && (batmanopt) && (maptype == MAP_RADIAL_DEFAULT)) {
     BatmanFlux(r, x0[0], y0[0], ro[0], teff, distance, nu, nz, nw, u, lambda, flux);
     return;
   }
@@ -1103,7 +1103,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
   // Compute the zenith_angle grid
-  if (adaptive && ((maptype == MAP_RADIAL) || (maptype == MAP_RADIAL_CUSTOM))) {
+  if (adaptive && ((maptype == MAP_RADIAL_DEFAULT) || (maptype == MAP_RADIAL_CUSTOM))) {
   
     // Adaptive zenith_angle grid
     // Loop over each occultor
@@ -1158,7 +1158,7 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   }
    
   // Pre-compute the blackbody normalization if necessary
-  if (maptype == MAP_RADIAL) {
+  if (maptype == MAP_RADIAL_DEFAULT) {
     for (j = 0; j < nw; j++) {
       norm = 0;
       for (k = 0; k < nu; k++) {

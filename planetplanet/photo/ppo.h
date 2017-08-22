@@ -12,9 +12,9 @@
 
 // Surface maps
 #define MAP_NONE               -1
-#define MAP_RADIAL              0
+#define MAP_RADIAL_DEFAULT      0
 #define MAP_RADIAL_CUSTOM       1
-#define MAP_ELLIPTICAL          2
+#define MAP_ELLIPTICAL_DEFAULT  2
 #define MAP_ELLIPTICAL_CUSTOM   3
 
 // Errors

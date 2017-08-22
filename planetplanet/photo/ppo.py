@@ -21,7 +21,6 @@ from ..constants import *
 from ..detect import jwst
 from .eyeball import DrawEyeball
 from .structs import *
-from .maps import LimbDarkenedMap, NullMap
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
@@ -210,12 +209,6 @@ class System(object):
           raise ValueError("Invalid `host` setting for moon `%s`." % body.name)
         body._host = np.argmax(self._names == body.host.name)
         body.a = ((body.per * DAYSEC) ** 2 * G * (body.host._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-    
-    # Check for conflicting options
-    for body in self.bodies:
-      if body.symmetry == 'elliptical':
-        if len(body.limbdark):
-          raise ValueError("Body %s's symmetry is elliptical, but its limb darkening coefficients have been specified." % body.name)
 
     # Reset animations
     self._animations = []
@@ -325,15 +318,7 @@ class System(object):
 
     # Convert from microns to meters
     wavelength *= 1e-6
-    
-    # If we are doing the custom limb-darkened map, re-evaluate with the correct
-    # wavelength array.
-    for body in self.bodies:
-      if body._recomputeLimbDarkenedMap:
-        body._maptype = MAP_RADIAL
-        body._rmap = LimbDarkenedMap(teff = body.teff, limbdark = body.limbdark, lambda1 = lambda1, lambda2 = lambda2, R = R) 
-        body._radiancemap = body._rmap.ctypes
-        
+            
     # Oversample the time array to generate light curves observed w/ finite exposure time.
     # Ensure `oversample` is odd.
     if self.settings.oversample % 2 == 0:
@@ -1167,45 +1152,38 @@ class System(object):
     z0 = occulted.z_hr[t]
 
     # Get the angles
-    if occulted.symmetry == 'elliptical':
+    x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
+    y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
+    z = z0
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
 
-      x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
-      y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
-      z = z0
-      r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    # Coordinates of the hotspot in a frame where the planet is
+    # at x, y, z = (0, 0, r), at full phase
+    xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
+    yprime = occulted._r * np.sin(occulted._Phi)
+    zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
 
-      # Coordinates of the hotspot in a frame where the planet is
-      # at x, y, z = (0, 0, r), at full phase
-      xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
-      yprime = occulted._r * np.sin(occulted._Phi)
-      zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
+    # Transform to the rotated sky plane
+    rxz = np.sqrt(x ** 2 + z ** 2)
+    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
+    ystar = (rxz * yprime + y * zprime) / r
+    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
 
-      # Transform to the rotated sky plane
-      rxz = np.sqrt(x ** 2 + z ** 2)
-      xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
-      ystar = (rxz * yprime + y * zprime) / r
-      zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
+    # Transform back to the true sky plane
+    xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
+                   ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
+    x = x0
+    y = y0
 
-      # Transform back to the true sky plane
-      xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
-                     ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
-      x = x0
-      y = y0
+    # Distance from planet center to hotspot
+    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
 
-      # Distance from planet center to hotspot
-      d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
-
-      # Get the rotation and phase angles
-      gamma = np.arctan2(ystar - y, xstar - x) + np.pi
-      if (zstar - z) <= 0:
-        theta = np.arccos(d / occulted._r)
-      else:
-        theta = -np.arccos(d / occulted._r)
-
+    # Get the rotation and phase angles
+    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
+    if (zstar - z) <= 0:
+      theta = np.arccos(d / occulted._r)
     else:
-
-      theta = np.pi / 2
-      gamma = 0
+      theta = -np.arccos(d / occulted._r)
 
     # Get the occultor
     if occultor is None:

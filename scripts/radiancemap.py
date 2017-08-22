@@ -23,7 +23,7 @@ import numpy as np
 from numba import cfunc
 import timeit, builtins
 
-def compute(radiancemap = None, Phi = 0, Lambda = 0):
+def compute(radiancemap = None, symmetry = 'radial', Phi = 0, Lambda = 0):
   '''
   
   '''
@@ -31,13 +31,15 @@ def compute(radiancemap = None, Phi = 0, Lambda = 0):
   # Instantiate the Trappist-1 system
   system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
 
-  # Give `c` a large latitudinal offset in its hotspot just for fun
-  system.c.Phi = Phi
-  system.c.Lambda = Lambda
+  # Give `c` a longitudinal offset in its hotspot so that it's closer to half phase
+  system.c.Lambda = -30
   system.c.nz = 99
+  
+  # Make `b` smaller for better visualization
   system.b.r /= 2
   
   # Give `c` a custom radiance map
+  system.c.symmetry = symmetry
   system.c.radiancemap = radiancemap
 
   # Compute an occultation by `b`

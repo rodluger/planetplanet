@@ -13,7 +13,7 @@ structs.py |github|
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
-from .maps import LimbDarkenedMap, RadiativeEquilibriumMap, NullMap
+from .maps import LimbDarkenedMap, RadiativeEquilibriumMap
 import numba
 import ctypes
 import numpy as np
@@ -77,7 +77,6 @@ class BODY(ctypes.Structure):
     self.nu = 0
     self.tperi0 = 0.
     self.a = 0.
-    self._maptype = MAP_NONE
     
     # Universal params
     self.name = name
@@ -88,57 +87,30 @@ class BODY(ctypes.Structure):
     self.w = kwargs.pop('w', 0.)
     self.Omega = kwargs.pop('Omega', 0.)
     self.inc = kwargs.pop('inc', 90.)
-    self.radiancemap = kwargs.get('radiancemap', None)
 
     # Python stuff
     self._inds = []
     self._computed = False
   
+  def draw_orbit(self, **kwargs):
+    '''
+    
+    '''
+    
+    from .eyeball import DrawOrbit
+    return DrawOrbit(inc = self.inc, Omega = self.Omega, ecc = self.ecc, w = self.w, 
+                     Phi = self.Phi, Lambda = self.Lambda, radiancemap = self.radiancemap, 
+                     **kwargs)   
+  
   @property
   def radiancemap(self):
-    return self._rmap
+    return self._py_radiancemap
   
   @radiancemap.setter
   def radiancemap(self, val):
-    if val is None:
-      if self.symmetry == 'radial':
-        self._maptype = MAP_RADIAL
-        # NOTE: We will have to re-evaluate this when we call `compute()` in case
-        # the user chooses a different wavelength array.
-        self._rmap = LimbDarkenedMap(teff = self.teff, limbdark = self.limbdark)
-        self._radiancemap = self._rmap.ctypes
-        self._recomputeLimbDarkenedMap = True
-      else:
-        self._maptype = MAP_ELLIPTICAL
-        self._rmap = RadiativeEquilibriumMap(albedo = self.albedo, tnight = self.tnight)
-        self._radiancemap = self._rmap.ctypes
-        self._recomputeLimbDarkenedMap = False
-    else:
-      assert type(val) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
-      assert val.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
-      assert val.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
-      if self.symmetry == 'radial':
-        self._maptype = MAP_RADIAL_CUSTOM
-      else:
-        self._maptype = MAP_ELLIPTICAL_CUSTOM
-      self._rmap = val
-      self._radiancemap = self._rmap.ctypes
-      self._recomputeLimbDarkenedMap = False
-  
-  @property
-  def symmetry(self):
-    return self._symmetry
-  
-  @symmetry.setter
-  def symmetry(self, val):
-    try:
-      val.lower()
-    except:
-      raise ValueError("Invalid `symmetry` type.")
-    if val.lower() in ['radial', 'elliptical']:
-      self._symmetry = val.lower()
-    else:
-      raise ValueError("Invalid `symmetry` type.")
+    self._py_radiancemap = val
+    self._radiancemap = val.ctypes
+    self._maptype = val.maptype
     
   @property
   def m(self):
@@ -212,13 +184,7 @@ class BODY(ctypes.Structure):
 
   @teff.setter
   def teff(self, val):
-    '''
-    Can't set this property for the base class, but
-    this is implemented in the `Star` subclass.
-    
-    '''
-    
-    pass
+    self._teff = val
 
   @property
   def t0(self):
@@ -293,9 +259,9 @@ class Planet(BODY):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
+  :param float Lambda: Longitudinal hotspot offset in degrees, with positive values corresponding to a northward \
          shift. Airless bodies only. Default `0.`
-  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
+  :param float Phi: Latitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
          shift. Airless bodies only. Default `0.`
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
@@ -307,7 +273,6 @@ class Planet(BODY):
 
     '''
     
-    self.symmetry = kwargs.pop('symmetry', 'elliptical')
     self.nz = kwargs.pop('nz', 11)
     self._per = kwargs.pop('per', 3.)
     self.albedo = kwargs.pop('albedo', 0.3)
@@ -319,6 +284,7 @@ class Planet(BODY):
     self.phasecurve = kwargs.pop('phasecurve', False)
     self.color = kwargs.pop('color', 'r')
     self.host = 0
+    self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap())
     super(Planet, self).__init__(*args, **kwargs)
   
   @property
@@ -348,9 +314,9 @@ class Moon(BODY):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
+  :param float Lambda: Longitudinal hotspot offset in degrees, with positive values corresponding to a northward \
          shift. Airless bodies only. Default `0.`
-  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
+  :param float Phi: Latitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
          shift. Airless bodies only. Default `0.`
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
@@ -362,7 +328,6 @@ class Moon(BODY):
 
     '''
     
-    self.symmetry = kwargs.pop('symmetry', 'elliptical')
     self.nz = kwargs.pop('nz', 11)
     self._per = kwargs.pop('per', 3.)
     self.albedo = kwargs.pop('albedo', 0.3)
@@ -374,6 +339,7 @@ class Moon(BODY):
     self.phasecurve = kwargs.pop('phasecurve', False)
     self.color = kwargs.pop('colorw', 'b')
     self.host = kwargs.pop('host', None)
+    self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap())
     super(Planet, self).__init__(*args, **kwargs)
   
   @property
@@ -410,7 +376,6 @@ class Star(BODY):
 
     '''
     
-    self._symmetry = 'radial'
     self.nz = kwargs.pop('nz', 31)
     self._per = kwargs.pop('per', 0.)
     self.albedo = 0.
@@ -422,19 +387,12 @@ class Star(BODY):
     self.Phi = 0
     self.color = kwargs.pop('color', 'k')
     self.host = 0
+    self.radiancemap = kwargs.get('radiancemap', LimbDarkenedMap())
     super(Star, self).__init__(*args, **kwargs)
   
   @property
   def body_type(self):
     return 'star'
-  
-  @property
-  def symmetry(self):
-    return self._symmetry
-  
-  @symmetry.setter
-  def symmetry(self, val):
-    pass
 
   @property
   def m(self):
@@ -480,14 +438,6 @@ class Star(BODY):
   @Phi.setter
   def Phi(self, val):
     pass
-
-  @property
-  def teff(self):
-    return self._teff
-
-  @teff.setter
-  def teff(self, val):
-    self._teff = val
 
 class SETTINGS(ctypes.Structure):
   '''

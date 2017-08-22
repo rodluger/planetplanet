@@ -22,28 +22,58 @@ from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 from matplotlib.widgets import Slider
 
-def ZenithColor(z, radiancemap, wavelength, cpad = 0.2, rmax = None, rmin = None, cmap = 'inferno'):
+def LimbDarkenedFlux(lam, z, teff = 2500, limbdark = [1.]):
   '''
-  Returns the color of a given spherical segment of zenith angle `z`.
-  
-  :param float z: The zenith angle in radians
-  :param str cmap: The name of the :py:class:`matplotlib` colormap. Default `inferno`
   
   '''
   
-  if rmax is None or rmin is None:
-    zarr = np.linspace(0, np.pi, 100)
-    rarr = [radiancemap.ctypes(wavelength, za) for za in zarr]
-    rmax = np.max(rarr)
-    rmin = np.min(rarr)
-  rrng = rmax - rmin
-  rmax += cpad * rrng
-  rmin -= cpad * rrng
-  if rrng > 0:
-    val = (radiancemap.ctypes(wavelength, z) - rmin) / (rmax - rmin)
+  # Convert to m
+  lam *= 1e-6
+  
+  # Compute the normalization term, Equation (E5)
+  norm = 0
+  for i, u in enumerate(limbdark):
+    norm += u / ((i + 2) * (i + 3))
+  norm = 1 - 2 * norm
+  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+  b = HPLANCK * CLIGHT / (lam * KBOLTZ * teff)
+  B0 = a / (np.exp(b) - 1.) / norm
+  
+  # Initialize
+  flux = B0
+  cosz = np.cos(z)
+
+  # Loop over the coefficient order
+  for i, u in enumerate(limbdark):
+
+    # The Taylor expansion is in (1 - mu)
+    x = (1 - cosz) ** (i + 1)
+  
+    # Compute the wavelength-dependent intensity
+    flux -= u * B0 * x
+  
+  return flux
+
+def RadiativeEquilibriumFlux(lam, z, albedo = 0.3, tnight = 40., irrad = SEARTH):
+  '''
+  
+  '''
+
+  # Convert to m
+  lam *= 1e-6
+
+  # Compute the temperature
+  if (z < np.pi / 2):
+    temp = ((irrad * np.cos(z) * (1 - albedo)) / SBOLTZ) ** 0.25
+    if (temp < tnight):
+      temp = tnight
   else:
-    val = 1 - cpad
-  return pl.get_cmap(cmap)(val)
+    temp = tnight
+
+  # Compute the radiance
+  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+  b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
+  return a / (np.exp(b) - 1.)
 
 def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
                 draw_terminator = False, draw_outline = True, draw_ellipses = False, rasterize = False,
@@ -83,6 +113,11 @@ def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, o
   transformation into the axis-symmetric eyeball frame
   
   '''
+  
+  # Check the symmetry
+  if (radiancemap.maptype == MAP_RADIAL_DEFAULT) or (radiancemap.maptype == MAP_RADIAL_CUSTOM):
+    theta = np.pi / 2
+    gamma = 0
     
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(gamma) + y * np.sin(gamma), y * np.cos(gamma) - x * np.sin(gamma))
@@ -129,11 +164,27 @@ def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, o
     ax.plot(x, y, color = 'k', zorder = 0, lw = 1, clip_on = False)
     ax.plot(x, -y, color = 'k', zorder = 0, lw = 1, clip_on = False)
 
-  # Get the color normalization
+  # Get the radiance map. If it's one of the default maps,
+  # we need to call their special Python implementations defined
+  # above. Otherwise we use the `ctypes` method of the map.
+  # We will normalize it so that we can use it as a colormap.
+  if radiancemap.maptype == MAP_RADIAL_DEFAULT:
+    func = LimbDarkenedFlux
+  elif radiancemap.maptype == MAP_ELLIPTICAL_DEFAULT:
+    func = RadiativeEquilibriumFlux
+  else:
+    func = radiancemap.ctypes
   zarr = np.linspace(0, np.pi, 100)
-  rarr = [radiancemap.ctypes(wavelength, za) for za in zarr]
+  rarr = [func(wavelength, za) for za in zarr]
   rmax = np.max(rarr)
   rmin = np.min(rarr)
+  rrng = rmax - rmin
+  rmax += cpad * rrng
+  rmin -= cpad * rrng
+  if rrng > 0:
+    color = lambda z: pl.get_cmap(cmap)((func(wavelength, z) - rmin) / (rmax - rmin))
+  else:
+    color = lambda z: pl.get_cmap(cmap)(1 - cpad)
 
   # Plot the zenith angle ellipses
   zarr = np.linspace(0, np.pi, nz + 2)
@@ -177,23 +228,23 @@ def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, o
       
     # Fill the ellipses
     if theta < 0:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = color(zarr[i+1]), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
     else:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = color(zarr[i]), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
     # Fill the ellipses that are cut off by the limb
     if theta < 0:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = color(zarr[i]), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
     else:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], radiancemap, wavelength, cpad = cpad, cmap = cmap, rmin = rmin, rmax = rmax), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = color(zarr[i]), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
   return fig, ax, occ, xy
 
-def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., nphases = 20, size = 1, 
+def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., nphases = 20, size = 1, 
               draw_orbit = True, draw_orbital_vectors = True, plot_phasecurve = False, 
               label_phases = False, figsize = (8, 8), **kwargs):
   '''
@@ -303,12 +354,16 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
     d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
     
     # Get the rotation and phase angles
-    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
-    if (zstar - z) <= 0:
-      theta = np.arccos(d / b._r)
+    if (radiancemap.maptype == MAP_ELLIPTICAL) or (radiancemap.maptype == MAP_ELLIPTICAL_CUSTOM):
+      gamma = np.arctan2(ystar - y, xstar - x) + np.pi
+      if (zstar - z) <= 0:
+        theta = np.arccos(d / b._r)
+      else:
+        theta = -np.arccos(d / b._r)
     else:
-      theta = -np.arccos(d / b._r)
-    
+      gamma = 0
+      theta = np.pi / 2
+      
     # Plot the radial vector
     if draw_orbital_vectors:
       ax.plot([0, x], [0, y], 'k-', alpha = 0.5, lw = 1)
@@ -318,7 +373,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
     xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
     # Draw the planet
-    _, tmp, _, _ = DrawEyeball(xf, yf, 0.015 * size, theta = theta, gamma = gamma, fig = fig, **kwargs)
+    _, tmp, _, _ = DrawEyeball(xf, yf, 0.015 * size, radiancemap, theta = theta, gamma = gamma, fig = fig, **kwargs)
     axes.append(tmp)
     
     # Indicate the orbital phase

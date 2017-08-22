@@ -283,7 +283,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     for (p = 0; p < np; p++) {
       
       // Compute the phase curve for this body?
-      if ((p > 0) && (body[p]->phasecurve) && ((body[p]->maptype == MAP_ELLIPTICAL) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
+      if ((p > 0) && (body[p]->phasecurve) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
         // TODO: Interpolate here to save time!
         
@@ -309,7 +309,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           body[p]->flux[nw * t + w] = tmp[w];          
         }
       
-      } else if ((body[p]->maptype == MAP_RADIAL) || (body[p]->maptype == MAP_RADIAL_CUSTOM)) {
+      } else if ((body[p]->maptype == MAP_RADIAL_DEFAULT) || (body[p]->maptype == MAP_RADIAL_CUSTOM)) {
         
         // The flux is constant because the planet emission is radially
         // symmetrical about the center of the planet disk
@@ -364,7 +364,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       // Now compute the light curve for this planet
       if (no > 0) {
         
-        if ((p > 0) && ((body[p]->maptype == MAP_ELLIPTICAL) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
+        if ((p > 0) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
           // Get the eyeball angles `theta` and `gamma`
           GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
