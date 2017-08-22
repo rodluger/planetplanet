@@ -204,8 +204,18 @@ class System(object):
       elif body.body_type == 'moon':
         if type(body.host) is str:
           body.host = getattr(self, body.host)
+        elif body.host in self.bodies:
+          pass
+        else:
+          raise ValueError("Invalid `host` setting for moon `%s`." % body.name)
         body._host = np.argmax(self._names == body.host.name)
         body.a = ((body.per * DAYSEC) ** 2 * G * (body.host._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
+    
+    # Check for conflicting options
+    for body in self.bodies:
+      if body.symmetry == 'elliptical':
+        if len(body.limbdark):
+          raise ValueError("Body %s's symmetry is elliptical, but its limb darkening coefficients have been specified." % body.name)
 
     # Reset animations
     self._animations = []
@@ -262,21 +272,22 @@ class System(object):
       body._u = np.ctypeslib.as_ctypes(body._u1d)
       
       # Radiance map
-      if body.radiancemap is None:
-        if body.symmetry == 'radial':
-          body._maptype = MAP_RADIAL
-          body.radiancemap = LimbDarkenedMap(teff = body.teff, u = body.limbdark, **kwargs)
+      if body._maptype == MAP_NONE:
+        if body.radiancemap is None:
+          if body.symmetry == 'radial':
+            body._maptype = MAP_RADIAL
+            body.radiancemap = LimbDarkenedMap(teff = body.teff, u = body.limbdark, **kwargs)
+          else:
+            body._maptype = MAP_ELLIPTICAL
+            body.radiancemap = RadiativeEquilibriumMap(albedo = body.albedo, tnight = body.tnight)
         else:
-          body._maptype = MAP_ELLIPTICAL
-          body.radiancemap = RadiativeEquilibriumMap(albedo = body.albedo, tnight = body.tnight)
-      else:
-        assert type(body.radiancemap) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
-        assert body.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
-        assert body.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
-        if body.symmetry == 'radial':
-          body._maptype = MAP_RADIAL_CUSTOM
-        else:
-          body._maptype = MAP_ELLIPTICAL_CUSTOM
+          assert type(body.radiancemap) is numba.ccallback.CFunc, "Parameter `radiancemap` must be a NUMBA C callback function."
+          assert body.radiancemap.ctypes.argtypes == (ctypes.c_double, ctypes.c_double), "The `radiancemap` callback must accept two C doubles."
+          assert body.radiancemap.ctypes.restype == ctypes.c_double, "The `radiancemap` callback must return a C double."
+          if body.symmetry == 'radial':
+            body._maptype = MAP_RADIAL_CUSTOM
+          else:
+            body._maptype = MAP_ELLIPTICAL_CUSTOM
       body._radiancemap = body.radiancemap.ctypes
       
       # Dimensions
@@ -286,7 +297,12 @@ class System(object):
 
     # A pointer to a pointer to `BODY`. This is an array of `n` `BODY` instances,
     # passed by reference. The contents can all be accessed through `bodies`
-    self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
+    # NOTE: Before I subclassed BODY, this used to be
+    # >>> self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
+    # I now case the `Planet`, `Star`, and `Moon` instances as `BODY` pointers, as per
+    # https://stackoverflow.com/a/37827528
+    self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.cast(ctypes.byref(p), ctypes.POINTER(BODY)) for p in self.bodies])
+    
 
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''

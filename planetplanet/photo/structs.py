@@ -60,22 +60,17 @@ class BODY(ctypes.Structure):
               ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, ctypes.c_double)),
               ]
 
-  def __init__(self, name, body_type, **kwargs):
+  def __init__(self, name, **kwargs):
     '''
 
     :param str name: The name of the body.
-    :param str body_type: One of :py:obj:`planet`, :py:obj:`star`, or :py:obj:`moon`.
     :param kwargs: Any body-specific :py:obj:`kwargs`. See :py:func:`Star`, \
     :py:func:`Planet`, and :py:func:`Moon`.
 
     '''
     
-    # Check
+    # Universal params
     self.name = name
-    self.body_type = body_type
-    assert body_type in ['planet', 'star', 'moon'], "Argument `body_type` must be `planet`, `moon`, or `star`."
-
-    # User
     self.m = kwargs.pop('m', 1.)
     self.r = kwargs.pop('r', 1.)
     self.t0 = kwargs.pop('t0', 0.)
@@ -83,56 +78,15 @@ class BODY(ctypes.Structure):
     self.w = kwargs.pop('w', 0.)
     self.Omega = kwargs.pop('Omega', 0.)
     self.inc = kwargs.pop('inc', 90.)
-
-    # These defaults are different depending on body type
-    if self.body_type in ['planet', 'moon']:
-      self.symmetry = kwargs.pop('symmetry', 'elliptical')
-      self.nz = kwargs.pop('nz', 11)
-      self.per = kwargs.pop('per', 3.)
-      self.albedo = kwargs.pop('albedo', 0.3)
-      self.teff = 0
-      if self.symmetry == 'elliptical':
-        self.tnight = kwargs.pop('tnight', 40.)
-        self.limbdark = []
-        self.Lambda = kwargs.pop('Lambda', 0)
-        self.Phi = kwargs.pop('Phi', 0)
-      else:
-        self.tnight = 0
-        self.limbdark = kwargs.pop('limbdark', [])
-        self.Lambda = 0
-        self.Phi = 0
-      self.phasecurve = kwargs.pop('phasecurve', False)
-      self.color = kwargs.pop('color', 'r')
-    elif self.body_type == 'star':
-      self._symmetry = 'radial'
-      self.nz = kwargs.pop('nz', 31)
-      self.per = kwargs.pop('per', 0.)
-      self.albedo = 0.
-      self.tnight = 0.
-      self.teff = kwargs.pop('teff', 5577.)
-      self.limbdark = kwargs.pop('limbdark', [1.])
-      self.phasecurve = False
-      self.Lambda = 0
-      self.Phi = 0
-      self.color = kwargs.pop('color', 'k')
-      
-    # User-defined radiance map
     self.radiancemap = kwargs.get('radiancemap', None)
     
-    # Settings for moons
-    if self.body_type == 'moon':
-      self.host = kwargs.pop('host', None)
-      if not type(self.host) is str:
-        raise ValueError("Please specify the `host` kwarg for all moons.")
-    else:
-      self.host = 0
-
     # C stuff, computed in `System` class
     self.nt = 0
     self.nw = 0
     self.nu = 0
     self.tperi0 = 0.
     self.a = 0.
+    self._maptype = MAP_NONE
 
     # Python stuff
     self._inds = []
@@ -141,61 +95,38 @@ class BODY(ctypes.Structure):
   @property
   def symmetry(self):
     return self._symmetry
-
+  
   @symmetry.setter
   def symmetry(self, val):
-    if self.body_type in ['planet', 'moon']:
-      try:
-        if val.lower() in ['radial', 'elliptical']:
-          self._symmetry = val.lower()
-        else:
-          raise ValueError("Invalid `symmetry` type.")
-      except:
-        raise ValueError("Invalid `symmetry` type.")
-    elif self.body_type == 'star':
-      raise Exception("Can't set this property for the star.")
-
+    try:
+      val.lower()
+    except:
+      raise ValueError("Invalid `symmetry` type.")
+    if val.lower() in ['radial', 'elliptical']:
+      self._symmetry = val.lower()
+    else:
+      raise ValueError("Invalid `symmetry` type.")
+  
   @property
   def m(self):
-    if self.body_type in ['planet', 'moon']:
-      return self._m
-    elif self.body_type == 'star':
-      return self._m / MSUNMEARTH
-
+    return self._m
+  
   @m.setter
   def m(self, val):
-    if self.body_type in ['planet', 'moon']:
-      self._m = val
-    elif self.body_type == 'star':
-      self._m = val * MSUNMEARTH
+    self._m = val
 
   @property
   def r(self):
-    if self.body_type in ['planet', 'moon']:
-      return self._r
-    elif self.body_type == 'star':
-      return self._r / RSUNREARTH
+    return self._r
 
   @r.setter
   def r(self, val):
-    if self.body_type in ['planet', 'moon']:
-      self._r = val
-    elif self.body_type == 'star':
-      self._r = val * RSUNREARTH
-
-  @property
-  def limbdark(self):
-    return self._limbdark
-
-  @limbdark.setter
-  def limbdark(self, val):
-    assert hasattr(val, '__len__'), "Limb darkening coefficients must be provided as a list of scalars or as a list of functions."
-    self._limbdark = val
-
+    self._r = val
+  
   @property
   def phasecurve(self):
     return bool(self._phasecurve)
-
+  
   @phasecurve.setter
   def phasecurve(self, val):
     self._phasecurve = int(val)
@@ -248,9 +179,13 @@ class BODY(ctypes.Structure):
 
   @teff.setter
   def teff(self, val):
-    self._teff = val
-    if self._teff == 0:
-      self.u = []
+    '''
+    Can't set this property for the base class, but
+    this is implemented in the `Star` subclass.
+    
+    '''
+    
+    pass
 
   @property
   def t0(self):
@@ -298,7 +233,228 @@ class BODY(ctypes.Structure):
     '''
 
     return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
+  
+  @property
+  def body_type(self):
+    return None
+  
+class Planet(BODY):
+  '''
+  A planet :py:class:`BODY` class.
 
+  :param str name: A unique identifier for this planet
+  :param float m: Mass in Earth masses. Default `1.`
+  :param float r: Radius in Earth radii. Default `1.`
+  :param float per: Orbital period in days. Default `3.`
+  :param float inc: Orbital inclination in degrees. Default `90.`
+  :param float ecc: Orbital eccentricity. Default `0.`
+  :param float w: Longitude of pericenter in degrees. `0.`
+  :param float Omega: Longitude of ascending node in degrees. `0.`
+  :param float t0: Time of transit in days. Default `0.`
+  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
+  :param float albedo: Planetary albedo (airless limit). Default `0.3`
+  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
+  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
+         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
+         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
+         the star. Each coefficient may either be a scalar, in which case limb darkening is \
+         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
+         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
+         shift. Airless bodies only. Default `0.`
+  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
+         shift. Airless bodies only. Default `0.`
+  :param int nz: Number of zenith angle slices. Default `11`
+  :param str color: Object color (for plotting). Default `r`
+
+  '''
+
+  def __init__(self, *args, **kwargs):
+    '''
+
+    '''
+    
+    super(Planet, self).__init__(*args, **kwargs)
+    self.symmetry = kwargs.pop('symmetry', 'elliptical')
+    self.nz = kwargs.pop('nz', 11)
+    self.per = kwargs.pop('per', 3.)
+    self.albedo = kwargs.pop('albedo', 0.3)
+    self.teff = 0
+    self.tnight = kwargs.pop('tnight', 0.)
+    self.limbdark = []
+    self.Lambda = kwargs.pop('Lambda', 0)
+    self.Phi = kwargs.pop('Phi', 0)
+    self.phasecurve = kwargs.pop('phasecurve', False)
+    self.color = kwargs.pop('color', 'r')
+    self.host = 0
+  
+  @property
+  def body_type(self):
+    return 'planet'
+  
+class Moon(BODY):
+  '''
+  A moon :py:class:`BODY` class.
+
+  :param str name: A unique identifier for this moon
+  :param str host: The name of the moon's host planet. Default :py:obj:`None`
+  :param float m: Mass in Earth masses. Default `1.`
+  :param float r: Radius in Earth radii. Default `1.`
+  :param float per: Orbital period in days. Default `3.`
+  :param float inc: Orbital inclination in degrees. Default `90.`
+  :param float ecc: Orbital eccentricity. Default `0.`
+  :param float w: Longitude of pericenter in degrees. `0.`
+  :param float Omega: Longitude of ascending node in degrees. `0.`
+  :param float t0: Time of transit in days. Default `0.`
+  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
+  :param float albedo: Planetary albedo (airless limit). Default `0.3`
+  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
+  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
+         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
+         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
+         the star. Each coefficient may either be a scalar, in which case limb darkening is \
+         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
+         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
+         shift. Airless bodies only. Default `0.`
+  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
+         shift. Airless bodies only. Default `0.`
+  :param int nz: Number of zenith angle slices. Default `11`
+  :param str color: Object color (for plotting). Default `r`
+
+  '''
+
+  def __init__(self, *args, **kwargs):
+    '''
+
+    '''
+    
+    super(Planet, self).__init__(*args, **kwargs)
+    self.symmetry = kwargs.pop('symmetry', 'elliptical')
+    self.nz = kwargs.pop('nz', 11)
+    self.per = kwargs.pop('per', 3.)
+    self.albedo = kwargs.pop('albedo', 0.3)
+    self.teff = 0
+    self.tnight = kwargs.pop('tnight', 0.)
+    self.limbdark = []
+    self.Lambda = kwargs.pop('Lambda', 0)
+    self.Phi = kwargs.pop('Phi', 0)
+    self.phasecurve = kwargs.pop('phasecurve', False)
+    self.color = kwargs.pop('colorw', 'b')
+    self.host = kwargs.pop('host', None)
+  
+  @property
+  def body_type(self):
+    return 'moon'
+  
+class Star(BODY):
+  '''
+  A star :py:class:`BODY` class.
+
+  :param str name: A unique identifier for this star
+  :param float m: Mass in solar masses. Default `1.`
+  :param float r: Radius in solar radii. Default `1.`
+  :param float per: Orbital period in days. Default `0.`
+  :param float inc: Orbital inclination in degrees. Default `90.`
+  :param float ecc: Orbital eccentricity. Default `0.`
+  :param float w: Longitude of pericenter in degrees. `0.`
+  :param float Omega: Longitude of ascending node in degrees. `0.`
+  :param float t0: Time of primary eclipse in days. Default `0.`
+  :param float teff: The effective temperature of the star in Kelvin. Default `5577.`
+  :param array_like limbdark: The limb darkening coefficients. These are the coefficients \
+         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
+         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
+         the star. Each coefficient may either be a scalar, in which case limb darkening is \
+         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
+         is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param int nz: Number of zenith angle slices. Default `31`
+  :param str color: Object color (for plotting). Default `k`
+
+  '''
+
+  def __init__(self, *args, **kwargs):
+    '''
+
+    '''
+    
+    super(Star, self).__init__(*args, **kwargs)
+    self._symmetry = 'radial'
+    self.nz = kwargs.pop('nz', 31)
+    self.per = kwargs.pop('per', 0.)
+    self.albedo = 0.
+    self.tnight = 0.
+    self.teff = kwargs.pop('teff', 5577.)
+    self.limbdark = kwargs.pop('limbdark', [1.])
+    self.phasecurve = False
+    self.Lambda = 0
+    self.Phi = 0
+    self.color = kwargs.pop('color', 'k')
+    self.host = 0
+  
+  @property
+  def body_type(self):
+    return 'star'
+  
+  @property
+  def symmetry(self):
+    return self._symmetry
+  
+  @symmetry.setter
+  def symmetry(self, val):
+    pass
+
+  @property
+  def m(self):
+    return self._m / MSUNMEARTH
+
+  @m.setter
+  def m(self, val):
+    self._m = val * MSUNMEARTH
+
+  @property
+  def r(self):
+    return self._r / RSUNREARTH
+
+  @r.setter
+  def r(self, val):
+    self._r = val * RSUNREARTH
+
+  @property
+  def phasecurve(self):
+    return bool(self._phasecurve)
+
+  @phasecurve.setter
+  def phasecurve(self, val):
+    '''
+    Can't set this property for the star.
+    
+    '''
+    
+    pass
+
+  @property
+  def Lambda(self):
+    return None
+
+  @Lambda.setter
+  def Lambda(self, val):
+    pass
+
+  @property
+  def Phi(self):
+    return None
+
+  @Phi.setter
+  def Phi(self, val):
+    pass
+
+  @property
+  def teff(self):
+    return self._teff
+
+  @teff.setter
+  def teff(self, val):
+    self._teff = val
 
 class SETTINGS(ctypes.Structure):
   '''
@@ -451,100 +607,3 @@ class SETTINGS(ctypes.Structure):
   @kepsolver.setter
   def kepsolver(self, val):
     self._kepsolver = eval(val.upper())
-
-def Star(name, **kwargs):
-  '''
-
-  Returns a :py:class:`BODY` instance of type :py:obj:`star`.
-
-  :param str name: A unique identifier for this star
-  :param float m: Mass in solar masses. Default `1.`
-  :param float r: Radius in solar radii. Default `1.`
-  :param float per: Orbital period in days. Default `0.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of primary eclipse in days. Default `0.`
-  :param float teff: The effective temperature of the star in Kelvin. Default `5577.`
-  :param array_like limbdark: The limb darkening coefficients. These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param int nz: Number of zenith angle slices. Default `31`
-  :param str color: Object color (for plotting). Default `k`
-
-  '''
-
-  return BODY(name, 'star', **kwargs)
-
-def Planet(name, **kwargs):
-  '''
-
-  Returns a :py:class:`BODY` instance of type :py:obj:`planet`.
-
-  :param str name: A unique identifier for this planet
-  :param float m: Mass in Earth masses. Default `1.`
-  :param float r: Radius in Earth radii. Default `1.`
-  :param float per: Orbital period in days. Default `3.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
-  :param float albedo: Planetary albedo (airless limit). Default `0.3`
-  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
-  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
-         shift. Airless bodies only. Default `0.`
-  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
-         shift. Airless bodies only. Default `0.`
-  :param int nz: Number of zenith angle slices. Default `11`
-  :param str color: Object color (for plotting). Default `r`
-
-  '''
-
-  return BODY(name, 'planet', **kwargs)
-
-def Moon(name, host, **kwargs):
-  '''
-
-  Returns a :py:class:`BODY` instance of type :py:obj:`moon`.
-
-  :param str name: A unique identifier for this moon
-  :param str host: The name of the moon's host planet
-  :param float m: Mass in Earth masses. Default `1.`
-  :param float r: Radius in Earth radii. Default `1.`
-  :param float per: Orbital period in days. Default `3.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
-  :param float albedo: Planetary albedo (airless limit). Default `0.3`
-  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
-  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
-         shift. Airless bodies only. Default `0.`
-  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
-         shift. Airless bodies only. Default `0.`
-  :param int nz: Number of zenith angle slices. Default `11`
-  :param str color: Object color (for plotting). Default `r`
-
-  '''
-
-  return BODY(name, 'moon', host = host, **kwargs)

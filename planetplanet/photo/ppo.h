@@ -11,6 +11,7 @@
 #define QGSL                    3                                                     /**< Use the GSL complex polynomial solver */
 
 // Surface maps
+#define MAP_NONE               -1
 #define MAP_RADIAL              0
 #define MAP_RADIAL_CUSTOM       1
 #define MAP_ELLIPTICAL          2
