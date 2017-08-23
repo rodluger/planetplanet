@@ -35,9 +35,9 @@ if __name__ == '__main__':
   system = Trappist1(sample = True, phasecurve = False, nbody = True, seed = 999)
   
   # Give it an inclination for visualization purposes
-  system.c.inc = 70
+  system.c.inc = 0
   
-  system.c.Lambda = 30
+  system.c.Phi = 30
   system.c.radiancemap = maps.BandedCloudsMap()
   
   # Draw the orbit
