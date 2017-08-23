@@ -25,7 +25,8 @@ for better visualization.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Trappist1
+from planetplanet import Trappist1
+from planetplanet import maps
 import matplotlib.pyplot as pl
 
 if __name__ == '__main__':
@@ -34,7 +35,10 @@ if __name__ == '__main__':
   system = Trappist1(sample = True, phasecurve = False, nbody = True, seed = 999)
   
   # Give it an inclination for visualization purposes
-  system.c.inc = 60
+  system.c.inc = 70
+  
+  system.c.Lambda = 30
+  system.c.radiancemap = maps.BandedCloudsMap()
   
   # Draw the orbit
   system.c.draw_orbit(draw_outline = False, size = 1.5, nz = 51)
