@@ -262,8 +262,8 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
   :param float Omega: The longitude of ascending node in degrees. Default `0.`
   :param float ecc: The orbital eccentricity. Default `0.`
   :param float w: The longitude of pericenter in degrees. Default `0.`
-  :param float Phi: The longitudinal hot spot offset in degrees. Default `0.`
-  :param float Lambda: The latitidinal hot spot offset in degrees. Default `0.`
+  :param float Phi: The latitudinal hot spot offset in degrees. Default `0.`
+  :param float Lambda: The longitudinal hot spot offset in degrees. Default `0.`
   :param int nphases: The number of planets to draw at different phases. Default `20`
   :param float size: The size of the planets in arbitrary units. Default `1.`
   :param bool draw_orbit: Draw the orbit outline? Default :py:obj:`True`
@@ -277,13 +277,14 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
   
   '''
   
-  # HACK: Identically zero inclination causing plotting errors.
+  # HACK: Identically zero inclination causes plotting errors.
   inc = max(0.1, inc)
   
   # Get the orbital elements over a full orbit of the planet
   # We are assuming a period of 10 days, but it doesn't matter for the plot!
+  # We make the star tiny so that secondary eclipse is negligible
   from . import Star, Planet, System
-  star = Star('A')
+  star = Star('A', r = 0.01)
   b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
              Phi = Phi, Lambda = Lambda, airless = True, phasecurve = True)
   system = System(star, b, mintheta = 0.001)
@@ -346,7 +347,7 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
     xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
     ystar = (rxz * yprime + y * zprime) / r
     zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
-        
+    
     # Transform back to the true sky plane
     xstar, ystar = xstar * np.cos(b._Omega) - ystar * np.sin(b._Omega), \
                    ystar * np.cos(b._Omega) + xstar * np.sin(b._Omega)
@@ -416,12 +417,12 @@ class Interact(object):
     self.fig.subplots_adjust(bottom = 0.25)
     self.axtheta = pl.axes([0.3, 0.05, 0.44, 0.03])
     self.theta = Slider(self.axtheta, r'$\theta$', -180., 180., valinit = 90.)
-    self.axpsi = pl.axes([0.3, 0.1, 0.44, 0.03])
-    self.psi = Slider(self.axpsi, r'$\psi$', -90, 90., valinit = 0.)
+    self.axphi = pl.axes([0.3, 0.1, 0.44, 0.03])
+    self.phi = Slider(self.axphi, r'$\Phi$', -90, 90., valinit = 0.)
     self.axlam = pl.axes([0.3, 0.15, 0.44, 0.03])
-    self.lam = Slider(self.axlam, r'$\lambda$', -90, 90., valinit = 0.)
+    self.lam = Slider(self.axlam, r'$\Lambda$', -90, 90., valinit = 0.)
     self.theta.on_changed(self._update)
-    self.psi.on_changed(self._update)
+    self.phi.on_changed(self._update)
     self.lam.on_changed(self._update)
     self._update(90.)
     pl.show()
@@ -433,13 +434,13 @@ class Interact(object):
   
     # Remove all axes except sliders
     for ax in self.fig.get_axes():
-      if ax not in [self.axtheta, self.axpsi, self.axlam]:
+      if ax not in [self.axtheta, self.axphi, self.axlam]:
         ax.remove()
   
     # Get the angles
     theta = self.theta.val * np.pi / 180
-    Lambda = self.psi.val * np.pi / 180
-    Phi = self.lam.val * np.pi / 180
+    Lambda = self.lam.val * np.pi / 180
+    Phi = self.phi.val * np.pi / 180
   
     # The coordinates of the substellar point
     x_ss = -np.cos(theta + Lambda) * np.cos(Phi)
@@ -459,4 +460,4 @@ class Interact(object):
       theta = np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))
     
     # Plot the planet
-    DrawEyeball(0.525, 0.6, 0.3, fig = self.fig, theta = theta, gamma = gamma, **self.kwargs)
+    DrawEyeball(0.525, 0.6, 0.3, RadiativeEquilibriumMap(), fig = self.fig, theta = theta, gamma = gamma, **self.kwargs)

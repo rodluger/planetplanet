@@ -32,17 +32,14 @@ import matplotlib.pyplot as pl
 if __name__ == '__main__':
   
   # Instantiate the TRAPPIST-1 system
-  system = Trappist1(sample = True, phasecurve = False, nbody = True, seed = 999)
+  system = Trappist1(sample = True, phasecurve = True, nbody = True, seed = 999)
   
-  # Give it an inclination for visualization purposes
-  system.c.inc = 0
-  
-  system.c.Phi = 30
-  system.c.radiancemap = maps.BandedCloudsMap()
+  # DEBUG: This is broken!!!
+  system.c.inc = 10
+  system.c.Phi = 60
   
   # Draw the orbit
-  system.c.draw_orbit(draw_outline = False, size = 1.5, nz = 51)
+  system.c.draw_orbit(draw_outline = True, size = 2, nz = 11, plot_phasecurve = True)
   
   # Show!
   pl.show()
-
