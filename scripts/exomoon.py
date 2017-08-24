@@ -16,6 +16,10 @@ how the code can handle moons.
      exomoon.plot()
      pl.show()
 
+  .. warning:: The ability to model moons is still in beta and hasn't been thoroughly tested. \
+               Please `let us know <https://github.com/rodluger/planetplanet/issues>`_ if you find any bugs!
+              
+
   .. role:: raw-html(raw)
      :format: html
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/exomoon.py"><i class="fa fa-github" aria-hidden="true"></i></a>`

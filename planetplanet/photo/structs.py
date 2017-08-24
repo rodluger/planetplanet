@@ -305,7 +305,10 @@ class Planet(BODY):
 class Moon(BODY):
   '''
   A moon :py:class:`BODY` class.
-
+  
+  .. warning:: The ability to model moons is still in beta and hasn't been thoroughly tested. \
+               Please `let us know <https://github.com/rodluger/planetplanet/issues>`_ if you find any bugs!
+  
   :param str name: A unique identifier for this moon
   :param str host: The name of the moon's host planet. Default :py:obj:`None`
   :param float m: Mass in Earth masses. Default `1.`
