@@ -26,10 +26,8 @@ planet-planet occultations.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from planetplanet.constants import *
-from planetplanet.photo import Star, Planet, System
+from planetplanet import Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
 import batman

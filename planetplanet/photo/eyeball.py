@@ -22,14 +22,27 @@ from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 from matplotlib.widgets import Slider
 
+__all__ = ['DrawEyeball', 'DrawOrbit']
+
 def LimbDarkenedFlux(lam, z, teff = 2500, limbdark = [1.]):
   '''
   
   '''
   
+  # Evaluate the limb darkening function if necessary 
+  u = [None for ld in limbdark]
+  for n, ld in enumerate(limbdark):
+    if callable(ld):
+      u[n] = ld(lam)
+    elif not hasattr(ld, '__len__'):
+      u[n] = ld
+    else:
+      raise Exception("Limb darkening coefficients must be provided as a list of scalars or as a list of functions.")
+  limbdark = u
+  
   # Convert to m
   lam *= 1e-6
-  
+    
   # Compute the normalization term, Equation (E5)
   norm = 0
   for i, u in enumerate(limbdark):
@@ -75,19 +88,20 @@ def RadiativeEquilibriumFlux(lam, z, albedo = 0.3, tnight = 40., irrad = SEARTH)
   b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
   return a / (np.exp(b) - 1.)
 
-def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
+def DrawEyeball(x0 = 0.5, y0 = 0.5, r = 0.5, radiancemap = RadiativeEquilibriumMap(), theta = np.pi / 3, nz = 31, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
                 draw_terminator = False, draw_outline = True, draw_ellipses = False, rasterize = False,
-                cpad = 0.2, wavelength = 15.):
+                cpad = 0.2, limbdark = [1.], teff = 2500., wavelength = 15.):
   '''
   Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
   
   .. plot::
      :align: center
      
-     from planetplanet.photo.eyeball import DrawEyeball
+     from planetplanet import DrawEyeball
+     from planetplanet.photo.maps import RadiativeEquilibriumMap
      import matplotlib.pyplot as pl
      fig = pl.figure(figsize = (3,3))
-     DrawEyeball(0.5, 0.5, 0.5, fig = fig)
+     DrawEyeball(radiancemap = RadiativeEquilibriumMap(), fig = fig)
      pl.show()
   
   :param float x0: The `x` position of the center of the planet in figure coordinates
@@ -163,14 +177,16 @@ def DrawEyeball(x0, y0, r, radiancemap, theta = np.pi / 3, nz = 31, gamma = 0, o
   if draw_outline:
     ax.plot(x, y, color = 'k', zorder = 0, lw = 1, clip_on = False)
     ax.plot(x, -y, color = 'k', zorder = 0, lw = 1, clip_on = False)
-
+    
   # Get the radiance map. If it's one of the default maps,
   # we need to call their special Python implementations defined
   # above. Otherwise we use the `ctypes` method of the map.
   # We will normalize it so that we can use it as a colormap.
   if radiancemap.maptype == MAP_RADIAL_DEFAULT:
-    func = LimbDarkenedFlux
+    # Function wrapper to use correct limb darkening parameters
+    func = lambda lam, z: LimbDarkenedFlux(lam, z, teff = teff, limbdark = limbdark)
   elif radiancemap.maptype == MAP_ELLIPTICAL_DEFAULT:
+    # TODO: Technically we should pass the albedo and night side temperature to the function here
     func = RadiativeEquilibriumFlux
   else:
     func = radiancemap.ctypes
@@ -253,7 +269,7 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
   .. plot::
      :align: center
    
-     from planetplanet.photo.eyeball import DrawOrbit
+     from planetplanet import DrawOrbit
      import matplotlib.pyplot as pl
      DrawOrbit(Omega = 45., size = 2, figsize = (6, 6))
      pl.show()

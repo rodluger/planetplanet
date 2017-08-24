@@ -23,7 +23,7 @@ Plots a diagram showing how the occultation integration scheme works.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 cmap = pl.get_cmap('Greys_r')

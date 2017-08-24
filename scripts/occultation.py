@@ -24,7 +24,7 @@ Planet c has a latitudinal hotspot offset, just for fun.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Trappist1
+from planetplanet import Trappist1
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np

@@ -26,7 +26,7 @@ negligible (< 1 percent) error over 1 year.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Trappist1
+from planetplanet import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
 

@@ -22,7 +22,7 @@ See :py:mod:`planetplanet.photo.eyeball`.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import eyeball, Star, Planet, System
+from planetplanet import eyeball, Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
 

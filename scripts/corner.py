@@ -12,7 +12,6 @@ occultations.
    :align: center
    
    import matplotlib.pyplot as pl
-   import matplotlib.pyplot as pl
    from scripts import corner
    samples = np.random.randn(1000000, 3)
    corner.corner(samples, bins = 100)

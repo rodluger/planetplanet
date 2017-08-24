@@ -34,12 +34,11 @@ if __name__ == '__main__':
   # Instantiate the TRAPPIST-1 system
   system = Trappist1(sample = True, phasecurve = True, nbody = True, seed = 999)
   
-  # DEBUG: This is broken!!!
-  system.c.inc = 10
-  system.c.Phi = 60
+  # Give it a non-edge-on inclination
+  system.c.inc = 60
   
   # Draw the orbit
-  system.c.draw_orbit(draw_outline = True, size = 2, nz = 11, plot_phasecurve = True)
+  system.c.draw_orbit(draw_outline = True, size = 2, nz = 11, plot_phasecurve = False)
   
   # Show!
   pl.show()

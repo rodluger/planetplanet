@@ -188,7 +188,9 @@ int funcomp( const void* a, const void* b) {
 /**
 Computes the flux at a given zenith angle on an eyeball planet.
 
+@param lambda The wavelength in m
 @param za The zenith angle in radians, measured from the hotspot
+@param teff The body's equilibrium temperature
 @param tnight The night side temperature in K
 @return The emitted spectral flux density from that point on the surface
 
@@ -213,7 +215,13 @@ double RadiativeEquilibriumMap(double lambda, double za, double teff, double tni
 /**
 Computes the flux at a given zenith angle on a limb-darkened planet.
 
+@param j The index of the wavelength grid
 @param za The zenith angle in radians, measured from the hotspot
+@param teff The body's effective temperature
+@param nu The number of limb-darkening coefficients per wavelength bin
+@param nw The number of wavelength bins
+@param u The limb-darkening coefficient grid
+@param B0 The normalization constant for the radiance at this wavelength
 @return The emitted spectral flux density from that point on the surface
 
 */
@@ -356,12 +364,15 @@ evaluated at a given array of wavelengths.
 
 @param tnight The night side temperature in K (eyeball limit)
 @param teff The effective temperature of the planet (blackbody limit)
+@param maptype The code for the radiance map
+@param radiancemap A pointer to the RADIANCEMAP function
 @param nz The number of zenith angle slices
 @param zenithgrid The zenith angle grid
 @param nw The number of wavelength points
 @param lambda The wavelength array
 @param nu The number of limb darkening coefficients
 @param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
+@param B0 The wavelength-dependent normalization for the limb-darkened case
 @param B The blackbody intensity grid
 
 */
@@ -1038,6 +1049,8 @@ over a grid of wavelengths.
 @param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
 @param lambda The wavelength grid in m
 @param flux The wavelength-dependent light curve computed by this function
+@param maptype The code for the radiance map
+@param radiancemap A pointer to the RADIANCEMAP function
 @param quiet Suppress output?
 @param iErr Flag set if an error occurs
 
@@ -1299,6 +1312,8 @@ of the body.
 @param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
 @param lambda The wavelength grid in m
 @param flux The wavelength-dependent light curve computed by this function
+@param maptype The code for the radiance map
+@param radiancemap A pointer to the RADIANCEMAP function
 @param quiet Suppress output?
 @param iErr Flag set if an error occurs
 

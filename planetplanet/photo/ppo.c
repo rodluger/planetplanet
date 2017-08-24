@@ -309,7 +309,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
           body[p]->flux[nw * t + w] = tmp[w];          
         }
       
-      } else if ((body[p]->maptype == MAP_RADIAL_DEFAULT) || (body[p]->maptype == MAP_RADIAL_CUSTOM)) {
+      } else if ((body[p]->phasecurve) && ((body[p]->maptype == MAP_RADIAL_DEFAULT) || (body[p]->maptype == MAP_RADIAL_CUSTOM))) {
         
         // The flux is constant because the planet emission is radially
         // symmetrical about the center of the planet disk

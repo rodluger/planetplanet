@@ -1208,7 +1208,7 @@ class System(object):
     # Draw the eyeball planet and the occultor(s)
     fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap, theta = theta, gamma = gamma,
                                    occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                                   wavelength = wavelength, **kwargs)
+                                   wavelength = wavelength, teff = occulted.teff, limbdark = occulted.limbdark, **kwargs)
 
     return ax, occ, xy
 

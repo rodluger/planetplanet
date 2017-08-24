@@ -11,11 +11,11 @@
 #define QGSL                    3                                                     /**< Use the GSL complex polynomial solver */
 
 // Surface maps
-#define MAP_NONE               -1
-#define MAP_RADIAL_DEFAULT      0
-#define MAP_RADIAL_CUSTOM       1
-#define MAP_ELLIPTICAL_DEFAULT  2
-#define MAP_ELLIPTICAL_CUSTOM   3
+#define MAP_NONE               -1                                                     /**< No map defined */
+#define MAP_RADIAL_DEFAULT      0                                                     /**< Default radially-symmetric LimbDarkenedMap */
+#define MAP_RADIAL_CUSTOM       1                                                     /**< Custom compiled Python radially-symmetric map */
+#define MAP_ELLIPTICAL_DEFAULT  2                                                     /**< Default elliptically-symmetric RadiativeEquilibriumMap */
+#define MAP_ELLIPTICAL_CUSTOM   3                                                     /**< Custom compiled Python elliptically-symmetric map */
 
 // Errors
 #define ERR_NONE                0                                                     /**< No error occurred */

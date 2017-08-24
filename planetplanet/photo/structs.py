@@ -4,6 +4,11 @@
 structs.py |github|
 -------------------
 
+Contains the :py:obj:`BODY` and :py:obj:`SETTINGS` classes that are passed to C as
+structs, which are for internal use only. All bodies should be instantiated via 
+the :py:class:`Planet`, :py:class:`Moon`, and :py:class:`Star` subclasses. Settings 
+should be passed directly to the :py:class:`planetplanet.photo.System` class.
+
   .. role:: raw-html(raw)
      :format: html
 
@@ -23,8 +28,8 @@ __all__ = ['BODY', 'SETTINGS', 'Star', 'Planet', 'Moon']
 class BODY(ctypes.Structure):
   '''
   The class containing all the input planet/star parameters. This is a :py:mod:`ctypes` interface
-  to the C :py:obj:`BODY` struct. Users should instantiate these via the :py:func:`Star`,
-  :py:func:`Planet`, and :py:func:`Moon` functions.
+  to the C :py:obj:`BODY` struct. Users should instantiate these via the :py:class:`Star`,
+  :py:class:`Planet`, and :py:class:`Moon` classes.
 
   '''
 
@@ -91,17 +96,7 @@ class BODY(ctypes.Structure):
     # Python stuff
     self._inds = []
     self._computed = False
-  
-  def draw_orbit(self, **kwargs):
-    '''
     
-    '''
-    
-    from .eyeball import DrawOrbit
-    return DrawOrbit(inc = self.inc, Omega = self.Omega, ecc = self.ecc, w = self.w, 
-                     Phi = self.Phi, Lambda = self.Lambda, radiancemap = self.radiancemap, 
-                     **kwargs)   
-  
   @property
   def radiancemap(self):
     return self._py_radiancemap
@@ -263,6 +258,10 @@ class Planet(BODY):
          shift. Airless bodies only. Default `0.`
   :param float Phi: Latitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
          shift. Airless bodies only. Default `0.`
+  :param radiancemap: A surface radiance map function. This function must be decorated with a :py:mod:`numba` \
+         :py:func:`cfunc` statement. See :py:class:`planetplanet.photo.maps` for more info. Default \
+         :py:func:`planetplanet.photo.maps.RadiativeEquilibriumMap`
+  :type radiancemap: :py:obj:`function`
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
 
@@ -291,6 +290,18 @@ class Planet(BODY):
   def body_type(self):
     return 'planet'
   
+  def draw_orbit(self, **kwargs):
+    '''
+    Draws the orbit of the planet on the sky. Accepts the keyword arguments taken
+    by :py:func:`planetplanet.photo.eyeball.DrawOrbit`.
+    
+    '''
+    
+    from .eyeball import DrawOrbit
+    return DrawOrbit(inc = self.inc, Omega = self.Omega, ecc = self.ecc, w = self.w, 
+                     Phi = self.Phi, Lambda = self.Lambda, radiancemap = self.radiancemap, 
+                     **kwargs) 
+  
 class Moon(BODY):
   '''
   A moon :py:class:`BODY` class.
@@ -318,6 +329,9 @@ class Moon(BODY):
          shift. Airless bodies only. Default `0.`
   :param float Phi: Latitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
          shift. Airless bodies only. Default `0.`
+  :param radiancemap: A surface radiance map function. This function must be decorated with a :py:mod:`numba` \
+         :py:func:`cfunc` statement. See :py:class:`planetplanet.photo.maps` for more info. Default \
+         :py:func:`planetplanet.photo.maps.RadiativeEquilibriumMap`
   :param int nz: Number of zenith angle slices. Default `11`
   :param str color: Object color (for plotting). Default `r`
 
@@ -340,7 +354,7 @@ class Moon(BODY):
     self.color = kwargs.pop('colorw', 'b')
     self.host = kwargs.pop('host', None)
     self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap())
-    super(Planet, self).__init__(*args, **kwargs)
+    super(Moon, self).__init__(*args, **kwargs)
   
   @property
   def body_type(self):
@@ -366,6 +380,9 @@ class Star(BODY):
          the star. Each coefficient may either be a scalar, in which case limb darkening is \
          assumed to be grey (the same at all wavelengths), or a callable whose single argument \
          is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
+  :param radiancemap: A surface radiance map function. This function must be decorated with a :py:mod:`numba` \
+         :py:func:`cfunc` statement. See :py:class:`planetplanet.photo.maps` for more info. Default \
+         :py:func:`planetplanet.photo.maps.LimbDarkenedMap`
   :param int nz: Number of zenith angle slices. Default `31`
   :param str color: Object color (for plotting). Default `k`
 

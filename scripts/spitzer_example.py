@@ -24,8 +24,8 @@ Sample observations of TRAPPIST-1 PPOs with Spitzer.
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.constants import *
-from planetplanet.photo import Star, Planet, System
-from planetplanet.detect import jwst
+from planetplanet import Star, Planet, System
+from planetplanet import jwst
 import matplotlib.pyplot as pl
 import numpy as np
 

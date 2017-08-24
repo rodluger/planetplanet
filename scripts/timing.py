@@ -31,7 +31,7 @@ this, so stay tuned for updates!
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.constants import *
-from planetplanet.photo import Star, Planet, System
+from planetplanet import Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
 import batman

@@ -15,7 +15,8 @@ of the TRAPPIST-1 planets.
   .. plot::
      :align: center
      
-     from scripts import corner, mutual_node
+     from scripts import corner
+     from scripts import mutual_node
      import matplotlib.pyplot as pl
      mutual_node.plot(niter = 500)
      pl.show()
@@ -28,7 +29,7 @@ of the TRAPPIST-1 planets.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 from tqdm import tqdm
