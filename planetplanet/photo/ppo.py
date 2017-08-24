@@ -31,6 +31,8 @@ import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
 from matplotlib.widgets import Button
+from matplotlib.collections import LineCollection
+from matplotlib.colors import LinearSegmentedColormap
 from scipy.integrate import quad
 from tqdm import tqdm
 import numba
@@ -43,6 +45,24 @@ if suffix is None:
   suffix = ".so"
 dn = os.path.dirname
 libppo = ctypes.cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
+
+def _colorline(ax, x, y, rgb = (0, 0, 0), **kwargs):
+  '''
+  Plots the curve `y(x)` with linearly increasing alpha.
+  Adapted from `http://nbviewer.jupyter.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb`_.
+  
+  '''
+  
+  r, g, b = rgb
+  colors = [(r, g, b, i) for i in np.linspace(0, 1, 3)]
+  cmap = LinearSegmentedColormap.from_list('alphacmap', colors, N = 1000)
+  points = np.array([x, y]).T.reshape(-1, 1, 2)
+  segments = np.concatenate([points[:-1], points[1:]], axis=1)
+  lc = LineCollection(segments, array = np.linspace(0.0, 1.0, len(x)), cmap = cmap, 
+                      norm = pl.Normalize(0.0, 1.0), **kwargs)
+  ax.add_collection(lc)
+  
+  return lc
 
 class _Animation(object):
   '''
@@ -1292,15 +1312,108 @@ class System(object):
             # This keeps track of how many annotations we're trying to squeeze
             # into the same time bin. Add a vertical shift to avoid overlaps
             idx = int(100 * (tmin - body.time_hr[0]) / (body.time_hr[-1] - body.time_hr[0]))
-            dy = -15 * (1 + nann[idx])
-            nann[idx] += 1
-            self._lc_annotations.append(ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
-                                        va = 'center', color = occultor.color, fontweight = 'bold',
-                                        fontsize = 10, xytext = (0, dy), textcoords = 'offset points', clip_on = True))
-            events.append(event_id)
+            if idx < len(nann):
+              dy = -15 * (1 + nann[idx])
+              nann[idx] += 1
+              self._lc_annotations.append(ax.annotate("%s" % body.name, xy = (tmin, fmin), ha = 'center',
+                                          va = 'center', color = occultor.color, fontweight = 'bold',
+                                          fontsize = 10, xytext = (0, dy), textcoords = 'offset points', clip_on = True))
+              events.append(event_id)
 
     return fig, ax
+  
+  def plot_orbits(self, planets = 'all', nper = 1, cmap = 'inferno'):
+    '''
+    Plot the orbits of a given set of planets over `nper` periods.
+    
+    .. plot::
+       :align: center
+       
+       import matplotlib.pyplot as pl
+       import numpy as np
+       import planetplanet as pp
+       T1 = pp.Trappist1()
+       T1.compute_orbits(np.linspace(0,10,10000))
+       fig, ax = T1.plot_orbits()
+       pl.show()
+    
+    :param planets: The planet(s) to plot. Can be a list of strings corresponding to their names \
+           or a list of :py:obj:`Planet <planetplanet.photo.structs.Planet>` instances. 
+           Default is to plot all planets in the system
+    :param int nper: The number of periods over which to draw the orbits. Default `1`
+    :param str cmap: The color map to use when coloring the orbital tracks. Default `inferno`
+    :returns: A figure and an axis instance
+    
+    '''
 
+    # Have we computed the orbits:
+    try:
+      self.time
+    except AttributeError:
+      raise Exception("Please run `compute()` or `compute_orbits()` first.")
+
+    # Get planets
+    if (planets == 'all') or (planets is None):
+      planets = [body for body in self.bodies if body.body_type == 'planet']
+    elif not hasattr(planets, '__len__'):
+      planets = [planets]
+
+    # Color scheme
+    rgb = [pl.get_cmap(cmap)(i)[:3] for i in np.linspace(0,1,len(planets))]
+  
+    # Set up
+    fig, ax = pl.subplots(2,2, figsize = (8,8))
+    fig.subplots_adjust(wspace = 0.2, hspace = 0.2)
+    arrs = np.array([])
+  
+    for i, planet in enumerate(planets):
+    
+      # Ensure we have a planet instance
+      if type(planet) is str:
+        planet = self.bodies[np.argmax([b.name == planet for b in self.bodies])]
+    
+      # Trim the arrays
+      N = min(1, nper / ((planet.time[-1] - planet.time[0]) / planet.per)) * len(planet.time)
+      N = int(N)
+      x = planet.x[-N:]
+      y = planet.y[-N:]
+      z = planet.z[-N:]
+
+      # x-z
+      _colorline(ax[0,0], x, z, lw = 1, rgb = rgb[i])
+      ax[0,0].plot(x[-1], z[-1], '.', color = rgb[i])
+
+      # x-y
+      _colorline(ax[1,0], x, y, lw = 1, rgb = rgb[i])
+      ax[1,0].plot(x[-1], y[-1], '.', color = rgb[i])
+
+      # z-y
+      _colorline(ax[1,1], z, y, lw = 1, rgb = rgb[i])
+      ax[1,1].plot(z[-1], y[-1], '.', color = rgb[i])
+  
+      # Append to running array
+      arrs = np.hstack((arrs, x, y, z))
+  
+    # Appearance
+    ax[0,0].set_ylabel(r'z [R$_\oplus$]', fontsize = 14, fontweight = 'bold')
+    ax[1,0].set_xlabel(r'x [R$_\oplus$]', fontsize = 14, fontweight = 'bold')
+    ax[1,0].set_ylabel(r'y [R$_\oplus$]', fontsize = 14, fontweight = 'bold')
+    ax[1,1].set_xlabel(r'z [R$_\oplus$]', fontsize = 14, fontweight = 'bold')
+    ax[0,1].axis('off')
+    
+    ax[0,0].get_shared_x_axes().join(ax[0,0], ax[1,0])
+    ax[1,0].get_shared_y_axes().join(ax[1,0], ax[1,1])
+    
+    lim = 1.2 * np.max((np.abs(np.min(arrs)), np.abs(np.max(arrs))))
+    for axis in [ax[0,0], ax[1,0], ax[1,1]]:
+      axis.plot(0, 0, 'k', marker = r'$\star$', zorder = -1)
+      for tick in axis.get_xticklabels() + axis.get_yticklabels():
+        tick.set_fontsize(8)
+      axis.set_xlim(-lim, lim)
+      axis.set_ylim(-lim, lim)
+
+    return fig, ax
+  
   def _onpick(self, event):
     '''
     Picker event for interactive light curves

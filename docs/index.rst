@@ -15,6 +15,7 @@ Documentation
    
    overview
    install
+   quickstart
    scripts
    api
    Github <https://github.com/rodluger/planetplanet>

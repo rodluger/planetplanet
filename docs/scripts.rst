@@ -13,12 +13,12 @@ Simple Examples
    
    custom radiance map <scripts/custom_map>
    draw the orbit <scripts/draw_orbit>
-   exomoons <scripts/exomoon>
    hypothetical mutual transit <scripts/mutual_transit>
    interactive eyeball <scripts/eyeball>
    next occultation <scripts/next_occultation>
-   sample occultation of TRAPPIST-1c <scripts/occultation>
+   occultation of TRAPPIST-1c <scripts/occultation>
    sample transit <scripts/transit>
+   TRAPPIST-1 orbits I <scripts/orbitsI>
    
 From the paper
 ~~~~~~~~~~~~~~
@@ -37,7 +37,7 @@ From the paper
    PPO scatter plot <scripts/scatter>
    sample TRAPPIST-1 light curve <scripts/lightcurve>
    Spitzer example <scripts/spitzer_example>
-   TRAPPIST-1 orbits <scripts/orbits>
+   TRAPPIST-1 orbits II <scripts/orbitsII>
    triple mutual transit <scripts/triple_transit>
    
 Miscellaneous
@@ -49,6 +49,7 @@ Miscellaneous
    circle/ellipse intersection points <scripts/intersection>
    code validation <scripts/validation>
    colorful corner plot <scripts/corner>
+   exomoons <scripts/exomoon>
    flower transit <scripts/flower>
    light curve oversampling example <scripts/oversample>
    mutual inclination from PPOs <scripts/mutual_node>

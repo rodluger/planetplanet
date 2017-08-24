@@ -20,4 +20,5 @@ From source:
 
   git clone git@github.com:rodluger/planetplanet.git
   cd planetplanet
+  git submodule init && git submodule update
   python setup.py develop
