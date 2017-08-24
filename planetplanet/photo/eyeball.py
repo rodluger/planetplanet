@@ -13,6 +13,8 @@ Code for plotting and visualizing "eyeball" planets.
 
 '''
 
+from .maps import RadiativeEquilibriumMap, LimbDarkenedMap
+from ..constants import *
 import numpy as np
 np.seterr(invalid = 'ignore')
 import matplotlib.pyplot as pl
@@ -20,29 +22,86 @@ from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 from matplotlib.widgets import Slider
 
-def ZenithColor(z, cmap = 'inferno'):
-  '''
-  Returns the color of a given spherical segment of zenith angle `z`.
-  
-  :param float z: The zenith angle in radians
-  :param str cmap: The name of the :py:class:`matplotlib` colormap. Default `inferno`
-  
-  '''
-  
-  return pl.get_cmap(cmap)(0.2 + 0.4 * (np.cos(z) + 1))
+__all__ = ['DrawEyeball', 'DrawOrbit']
 
-def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
-                draw_terminator = True, draw_outline = True, draw_ellipses = True, rasterize = False):
+def LimbDarkenedFlux(lam, z, teff = 2500, limbdark = [1.]):
+  '''
+  
+  '''
+  
+  # Evaluate the limb darkening function if necessary 
+  u = [None for ld in limbdark]
+  for n, ld in enumerate(limbdark):
+    if callable(ld):
+      u[n] = ld(lam)
+    elif not hasattr(ld, '__len__'):
+      u[n] = ld
+    else:
+      raise Exception("Limb darkening coefficients must be provided as a list of scalars or as a list of functions.")
+  limbdark = u
+  
+  # Convert to m
+  lam *= 1e-6
+    
+  # Compute the normalization term, Equation (E5)
+  norm = 0
+  for i, u in enumerate(limbdark):
+    norm += u / ((i + 2) * (i + 3))
+  norm = 1 - 2 * norm
+  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+  b = HPLANCK * CLIGHT / (lam * KBOLTZ * teff)
+  B0 = a / (np.exp(b) - 1.) / norm
+  
+  # Initialize
+  flux = B0
+  cosz = np.cos(z)
+
+  # Loop over the coefficient order
+  for i, u in enumerate(limbdark):
+
+    # The Taylor expansion is in (1 - mu)
+    x = (1 - cosz) ** (i + 1)
+  
+    # Compute the wavelength-dependent intensity
+    flux -= u * B0 * x
+  
+  return flux
+
+def RadiativeEquilibriumFlux(lam, z, albedo = 0.3, tnight = 40., irrad = SEARTH):
+  '''
+  
+  '''
+
+  # Convert to m
+  lam *= 1e-6
+
+  # Compute the temperature
+  if (z < np.pi / 2):
+    temp = ((irrad * np.cos(z) * (1 - albedo)) / SBOLTZ) ** 0.25
+    if (temp < tnight):
+      temp = tnight
+  else:
+    temp = tnight
+
+  # Compute the radiance
+  a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+  b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
+  return a / (np.exp(b) - 1.)
+
+def DrawEyeball(x0 = 0.5, y0 = 0.5, r = 0.5, radiancemap = RadiativeEquilibriumMap(), theta = np.pi / 3, nz = 31, gamma = 0, occultors = [], cmap = 'inferno', fig = None, 
+                draw_terminator = False, draw_outline = True, draw_ellipses = False, rasterize = False,
+                cpad = 0.2, limbdark = [1.], teff = 2500., wavelength = 15.):
   '''
   Creates a floating axis and draws an "eyeball" planet at given phase and rotation angles.
   
   .. plot::
      :align: center
      
-     from planetplanet.photo.eyeball import DrawEyeball
+     from planetplanet import DrawEyeball
+     from planetplanet.photo.maps import RadiativeEquilibriumMap
      import matplotlib.pyplot as pl
      fig = pl.figure(figsize = (3,3))
-     DrawEyeball(0.5, 0.5, 0.5, fig = fig)
+     DrawEyeball(radiancemap = RadiativeEquilibriumMap(), fig = fig)
      pl.show()
   
   :param float x0: The `x` position of the center of the planet in figure coordinates
@@ -58,9 +117,9 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
   :param str cmap: The name of the :py:class:`matplotlib` colormap. Default `inferno`
   :param fig: The figure object in which to create the axis. Default :py:obj:`None`
   :type fig: :py:class:`matplotlib.Figure`
-  :param bool draw_terminator: Draw the terminator ellipse outline? Default :py:obj:`True`
+  :param bool draw_terminator: Draw the terminator ellipse outline? Default :py:obj:`False`
   :param bool draw_outline: Draw the planet outline(s)? Default :py:obj:`True`
-  :param bool draw_ellipses: Draw the zenith angle ellipse outlines? Default :py:obj:`True`
+  :param bool draw_ellipses: Draw the zenith angle ellipse outlines? Default :py:obj:`False`
   :param bool rasterize: Rasterize the image? Default :py:obj:`False`
   
   :return: **fig**, **ax**, **occ**, **xy**. These are the figure and floating axis instances, a lits of :py:obj:`Circle` \
@@ -69,6 +128,11 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
   
   '''
   
+  # Check the symmetry
+  if (radiancemap.maptype == MAP_RADIAL_DEFAULT) or (radiancemap.maptype == MAP_RADIAL_CUSTOM):
+    theta = np.pi / 2
+    gamma = 0
+    
   # The rotation transformation, Equation (E6) in the paper
   xy = lambda x, y: (x * np.cos(gamma) + y * np.sin(gamma), y * np.cos(gamma) - x * np.sin(gamma))
   
@@ -113,6 +177,30 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
   if draw_outline:
     ax.plot(x, y, color = 'k', zorder = 0, lw = 1, clip_on = False)
     ax.plot(x, -y, color = 'k', zorder = 0, lw = 1, clip_on = False)
+    
+  # Get the radiance map. If it's one of the default maps,
+  # we need to call their special Python implementations defined
+  # above. Otherwise we use the `ctypes` method of the map.
+  # We will normalize it so that we can use it as a colormap.
+  if radiancemap.maptype == MAP_RADIAL_DEFAULT:
+    # Function wrapper to use correct limb darkening parameters
+    func = lambda lam, z: LimbDarkenedFlux(lam, z, teff = teff, limbdark = limbdark)
+  elif radiancemap.maptype == MAP_ELLIPTICAL_DEFAULT:
+    # TODO: Technically we should pass the albedo and night side temperature to the function here
+    func = RadiativeEquilibriumFlux
+  else:
+    func = radiancemap.ctypes
+  zarr = np.linspace(0, np.pi, 100)
+  rarr = [func(wavelength, za) for za in zarr]
+  rmax = np.max(rarr)
+  rmin = np.min(rarr)
+  rrng = rmax - rmin
+  rmax += cpad * rrng
+  rmin -= cpad * rrng
+  if rrng > 0:
+    color = lambda z: pl.get_cmap(cmap)((func(wavelength, z) - rmin) / (rmax - rmin))
+  else:
+    color = lambda z: pl.get_cmap(cmap)(1 - cpad)
 
   # Plot the zenith angle ellipses
   zarr = np.linspace(0, np.pi, nz + 2)
@@ -156,23 +244,23 @@ def DrawEyeball(x0, y0, r, theta = np.pi / 3, nz = 11, gamma = 0, occultors = []
       
     # Fill the ellipses
     if theta < 0:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i+1], cmap = cmap), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = color(zarr[i+1]), zorder = 0.5 * (z / np.pi - 1), clip_on = False)
     else:
-      ax.fill_between(x, -y, y, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x, -y, y, color = color(zarr[i]), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
     # Fill the ellipses that are cut off by the limb
     if theta < 0:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = color(zarr[i]), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
     else:
       x_ = np.linspace(-1, xE - xlimb, 1000)
       y_ = np.sqrt(1 - x_ ** 2)
-      ax.fill_between(x_, -y_, y_, color = ZenithColor(zarr[i], cmap = cmap), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
+      ax.fill_between(x_, -y_, y_, color = color(zarr[i]), zorder = 0.5 * (-z / np.pi - 1), clip_on = False)
   
   return fig, ax, occ, xy
 
-def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., nphases = 20, size = 1, 
+def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., nphases = 20, size = 1, 
               draw_orbit = True, draw_orbital_vectors = True, plot_phasecurve = False, 
               label_phases = False, figsize = (8, 8), **kwargs):
   '''
@@ -181,7 +269,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
   .. plot::
      :align: center
    
-     from planetplanet.photo.eyeball import DrawOrbit
+     from planetplanet import DrawOrbit
      import matplotlib.pyplot as pl
      DrawOrbit(Omega = 45., size = 2, figsize = (6, 6))
      pl.show()
@@ -190,8 +278,8 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
   :param float Omega: The longitude of ascending node in degrees. Default `0.`
   :param float ecc: The orbital eccentricity. Default `0.`
   :param float w: The longitude of pericenter in degrees. Default `0.`
-  :param float Phi: The longitudinal hot spot offset in degrees. Default `0.`
-  :param float Lambda: The latitidinal hot spot offset in degrees. Default `0.`
+  :param float Phi: The latitudinal hot spot offset in degrees. Default `0.`
+  :param float Lambda: The longitudinal hot spot offset in degrees. Default `0.`
   :param int nphases: The number of planets to draw at different phases. Default `20`
   :param float size: The size of the planets in arbitrary units. Default `1.`
   :param bool draw_orbit: Draw the orbit outline? Default :py:obj:`True`
@@ -204,11 +292,15 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
   :returns: `fig`, `axes`, and optionally `figphase`, `axphase`; these are all the figure and axes objects generated by the function
   
   '''
-      
+  
+  # HACK: Identically zero inclination causes plotting errors.
+  inc = max(0.1, inc)
+  
   # Get the orbital elements over a full orbit of the planet
   # We are assuming a period of 10 days, but it doesn't matter for the plot!
+  # We make the star tiny so that secondary eclipse is negligible
   from . import Star, Planet, System
-  star = Star('A')
+  star = Star('A', r = 0.01)
   b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
              Phi = Phi, Lambda = Lambda, airless = True, phasecurve = True)
   system = System(star, b, mintheta = 0.001)
@@ -271,7 +363,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
     xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
     ystar = (rxz * yprime + y * zprime) / r
     zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
-        
+    
     # Transform back to the true sky plane
     xstar, ystar = xstar * np.cos(b._Omega) - ystar * np.sin(b._Omega), \
                    ystar * np.cos(b._Omega) + xstar * np.sin(b._Omega)
@@ -287,7 +379,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
       theta = np.arccos(d / b._r)
     else:
       theta = -np.arccos(d / b._r)
-    
+      
     # Plot the radial vector
     if draw_orbital_vectors:
       ax.plot([0, x], [0, y], 'k-', alpha = 0.5, lw = 1)
@@ -297,7 +389,7 @@ def DrawOrbit(inc = 70., Omega = 0., ecc = 0., w = 0., Phi = 0., Lambda = 0., np
     xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
     # Draw the planet
-    _, tmp, _, _ = DrawEyeball(xf, yf, 0.015 * size, theta = theta, gamma = gamma, fig = fig, **kwargs)
+    _, tmp, _, _ = DrawEyeball(xf, yf, 0.015 * size, radiancemap, theta = theta, gamma = gamma, fig = fig, **kwargs)
     axes.append(tmp)
     
     # Indicate the orbital phase
@@ -341,12 +433,12 @@ class Interact(object):
     self.fig.subplots_adjust(bottom = 0.25)
     self.axtheta = pl.axes([0.3, 0.05, 0.44, 0.03])
     self.theta = Slider(self.axtheta, r'$\theta$', -180., 180., valinit = 90.)
-    self.axpsi = pl.axes([0.3, 0.1, 0.44, 0.03])
-    self.psi = Slider(self.axpsi, r'$\psi$', -90, 90., valinit = 0.)
+    self.axphi = pl.axes([0.3, 0.1, 0.44, 0.03])
+    self.phi = Slider(self.axphi, r'$\Phi$', -90, 90., valinit = 0.)
     self.axlam = pl.axes([0.3, 0.15, 0.44, 0.03])
-    self.lam = Slider(self.axlam, r'$\lambda$', -90, 90., valinit = 0.)
+    self.lam = Slider(self.axlam, r'$\Lambda$', -90, 90., valinit = 0.)
     self.theta.on_changed(self._update)
-    self.psi.on_changed(self._update)
+    self.phi.on_changed(self._update)
     self.lam.on_changed(self._update)
     self._update(90.)
     pl.show()
@@ -358,13 +450,13 @@ class Interact(object):
   
     # Remove all axes except sliders
     for ax in self.fig.get_axes():
-      if ax not in [self.axtheta, self.axpsi, self.axlam]:
+      if ax not in [self.axtheta, self.axphi, self.axlam]:
         ax.remove()
   
     # Get the angles
     theta = self.theta.val * np.pi / 180
-    Lambda = self.psi.val * np.pi / 180
-    Phi = self.lam.val * np.pi / 180
+    Lambda = self.lam.val * np.pi / 180
+    Phi = self.phi.val * np.pi / 180
   
     # The coordinates of the substellar point
     x_ss = -np.cos(theta + Lambda) * np.cos(Phi)
@@ -384,4 +476,4 @@ class Interact(object):
       theta = np.arccos(-x_ss * np.cos(gamma) - y_ss * np.sin(gamma))
     
     # Plot the planet
-    DrawEyeball(0.525, 0.6, 0.3, fig = self.fig, theta = theta, gamma = gamma, **self.kwargs)
+    DrawEyeball(0.525, 0.6, 0.3, RadiativeEquilibriumMap(), fig = self.fig, theta = theta, gamma = gamma, **self.kwargs)

@@ -24,9 +24,7 @@ planets transit the star and occult each other simultaneously.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo import Planet, Star, System, DrawEyeball
+from planetplanet import Planet, Star, System, DrawEyeball, LimbDarkenedMap
 import matplotlib
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
@@ -105,9 +103,9 @@ def plot():
       occ_dict.append(dict(x = occultor.x_hr[t[n]] / star._r, y = occultor.y_hr[t[n]] / star._r, r = occultor._r / star._r, zorder = i + 1, alpha = 1))
   
     # Draw the eyeball planet and the occultors
-    DrawEyeball(px[n], 0.85, r = 0.0425, theta = np.pi / 2, nz = 31, gamma = 0, 
+    DrawEyeball(px[n], 0.85, 0.0425, LimbDarkenedMap(), theta = np.pi / 2, nz = 31, gamma = 0, 
                 occultors = occ_dict, cmap = 'inferno', fig = fig, 
-                draw_ellipses = False)
+                draw_ellipses = False, teff = star.teff, limbdark = star.limbdark)
 
   # Arrows
   axlc.annotate("", xy = (star.time[t[0]] * 1440, 1.006), xycoords = "data", xytext = (-80, 63), textcoords = "offset points", 

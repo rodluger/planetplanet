@@ -23,7 +23,7 @@ is necessary when the exposure time is a non-negligible fraction of the event du
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)

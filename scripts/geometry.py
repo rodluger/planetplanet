@@ -27,7 +27,7 @@ to compute the occultation light curves of airless planets.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 

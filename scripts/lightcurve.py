@@ -27,7 +27,7 @@ Then click on "Play" to animate the event.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Trappist1
+from planetplanet import Trappist1
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -38,7 +38,7 @@ def plot():
   '''
   
   # Instantiate the Trappist-1 system
-  system = Trappist1(sample = True, phasecurve = True, airless = True, nbody = True, seed = 999)
+  system = Trappist1(sample = True, phasecurve = True, nbody = True, seed = 999)
 
   # Get the occultation light curves over 10 random days
   tstart = np.random.random() * 10000

@@ -11,6 +11,8 @@ Simple Examples
 .. toctree::
    :maxdepth: 2
    
+   custom radiance map <scripts/custom_map>
+   draw the orbit <scripts/draw_orbit>
    exomoons <scripts/exomoon>
    hypothetical mutual transit <scripts/mutual_transit>
    interactive eyeball <scripts/eyeball>

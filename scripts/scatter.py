@@ -13,7 +13,7 @@ occulting body, respectively.
   .. plot::
      :align: center
      
-     from planetplanet.photo import Trappist1
+     from planetplanet import Trappist1
      import matplotlib.pyplot as pl
      system = Trappist1(sample = True, nbody = True)
      system.scatter_plot(0, 365 * 3)
@@ -28,7 +28,7 @@ occulting body, respectively.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Trappist1
+from planetplanet import Trappist1
 import matplotlib.pyplot as pl
 import numpy as np
 

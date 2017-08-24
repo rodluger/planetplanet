@@ -16,8 +16,7 @@ occultations in TRAPPIST-1.
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.constants import *
-from planetplanet.photo import Star, Planet, System
-from planetplanet.detect import jwst
+from planetplanet import Star, Planet, System, jwst
 import matplotlib.pyplot as pl
 import numpy as np
 

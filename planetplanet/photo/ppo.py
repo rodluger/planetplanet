@@ -20,10 +20,12 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 from ..constants import *
 from ..detect import jwst
 from .eyeball import DrawEyeball
+from .structs import *
 import ctypes
 import numpy as np
 np.seterr(invalid = 'ignore')
 import os, shutil
+import sysconfig
 from numpy.ctypeslib import ndpointer, as_ctypes
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
@@ -31,22 +33,16 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.widgets import Button
 from scipy.integrate import quad
 from tqdm import tqdm
-rdbu = pl.get_cmap('RdBu_r')
-greys = pl.get_cmap('Greys')
-plasma = pl.get_cmap('plasma')
+import numba
 
-__all__ = ['Star', 'Planet', 'Moon', 'System']
+__all__ = ['System']
 
-# Find system suffix
-import sysconfig
+# Find system suffix and import the shared library
 suffix = sysconfig.get_config_var('EXT_SUFFIX')
 if suffix is None:
   suffix = ".so"
-
-# Import shared library
-from ctypes import cdll
 dn = os.path.dirname
-libppo = cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
+libppo = ctypes.cdll.LoadLibrary(os.path.join(dn(dn(dn(os.path.abspath(__file__)))), "libppo" + suffix))
 
 class _Animation(object):
   '''
@@ -130,547 +126,10 @@ class _Animation(object):
 
         self.occ[k].center = (xo / self.body._r, yo / self.body._r)
 
-      # _Body orbits
+      # BODY orbits
       for k, b in enumerate(self.bodies):
         self.ptb[k].set_xdata(b.x_hr[self.t[j]])
         self.ptb[k].set_ydata(b.z_hr[self.t[j]])
-
-class _Body(ctypes.Structure):
-  '''
-  The class containing all the input planet/star parameters. This is a :py:mod:`ctypes` interface
-  to the C :py:obj:`BODY` struct. Users should instantiate these via the :py:func:`Star`,
-  :py:func:`Planet`, and :py:func:`Moon` functions.
-
-  '''
-
-  #: All the fields
-  _fields_ = [("_m", ctypes.c_double),
-              ("_per", ctypes.c_double),
-              ("_inc", ctypes.c_double),
-              ("_ecc", ctypes.c_double),
-              ("_w", ctypes.c_double),
-              ("_Omega", ctypes.c_double),
-              ("a", ctypes.c_double),
-              ("tperi0", ctypes.c_double),
-              ("_r", ctypes.c_double),
-              ("albedo", ctypes.c_double),
-              ("_teff", ctypes.c_double),
-              ("tnight", ctypes.c_double),
-              ("_phasecurve", ctypes.c_int),
-              ("_blackbody", ctypes.c_int),
-              ("_Lambda", ctypes.c_double),
-              ("_Phi", ctypes.c_double),
-              ("_host", ctypes.c_int),
-              ("nu", ctypes.c_int),
-              ("nz", ctypes.c_int),
-              ("nt", ctypes.c_int),
-              ("nw", ctypes.c_int),
-              ("_u", ctypes.POINTER(ctypes.c_double)),
-              ("_time", ctypes.POINTER(ctypes.c_double)),
-              ("_wavelength", ctypes.POINTER(ctypes.c_double)),
-              ("_x", ctypes.POINTER(ctypes.c_double)),
-              ("_y", ctypes.POINTER(ctypes.c_double)),
-              ("_z", ctypes.POINTER(ctypes.c_double)),
-              ("_occultor", ctypes.POINTER(ctypes.c_int)),
-              ("_flux", ctypes.POINTER(ctypes.c_double)),
-              ("_total_flux", ctypes.POINTER(ctypes.c_double)),
-              ]
-
-  def __init__(self, name, body_type, **kwargs):
-    '''
-
-    :param str name: The name of the body.
-    :param str body_type: One of :py:obj:`planet`, :py:obj:`star`, or :py:obj:`moon`.
-    :param kwargs: Any body-specific :py:obj:`kwargs`. See :py:func:`Star`, \
-    :py:func:`Planet`, and :py:func:`Moon`.
-
-    '''
-
-    # Check
-    self.name = name
-    self.body_type = body_type
-    assert body_type in ['planet', 'star', 'moon'], "Argument `body_type` must be `planet`, `moon`, or `star`."
-
-    # User
-    self.m = kwargs.pop('m', 1.)
-    self.r = kwargs.pop('r', 1.)
-    self.t0 = kwargs.pop('t0', 0.)
-    self.ecc = kwargs.pop('ecc', 0.)
-    self.w = kwargs.pop('w', 0.)
-    self.Omega = kwargs.pop('Omega', 0.)
-    self.inc = kwargs.pop('inc', 90.)
-
-    # These defaults are different depending on body type
-    if self.body_type in ['planet', 'moon']:
-      self.airless = kwargs.pop('airless', True)
-      self.nz = kwargs.pop('nz', 11)
-      self.per = kwargs.pop('per', 3.)
-      self.albedo = kwargs.pop('albedo', 0.3)
-      self.teff = 0
-      if self.airless:
-        self.tnight = kwargs.pop('tnight', 40.)
-        self.limbdark = []
-        self.Lambda = kwargs.pop('Lambda', 0)
-        self.Phi = kwargs.pop('Phi', 0)
-      else:
-        self.tnight = 0
-        self.limbdark = kwargs.pop('limbdark', [])
-        self.Lambda = 0
-        self.Phi = 0
-      self.phasecurve = kwargs.pop('phasecurve', False)
-      self.color = kwargs.pop('color', 'r')
-    elif self.body_type == 'star':
-      self.airless = False
-      self.nz = kwargs.pop('nz', 31)
-      self.per = kwargs.pop('per', 0.)
-      self.albedo = 0.
-      self.tnight = 0.
-      self.teff = kwargs.pop('teff', 5577.)
-      self.limbdark = kwargs.pop('limbdark', [1.])
-      self.phasecurve = False
-      self.Lambda = 0
-      self.Phi = 0
-      self.color = kwargs.pop('color', 'k')
-
-    # Settings for moons
-    if self.body_type == 'moon':
-      self.host = kwargs.pop('host', None)
-      if not type(self.host) is str:
-        raise ValueError("Please specify the `host` kwarg for all moons.")
-    else:
-      self.host = 0
-
-    # C stuff, computed in `System` class
-    self.nt = 0
-    self.nw = 0
-    self.nu = 0
-    self.tperi0 = 0.
-    self.a = 0.
-
-    # Python stuff
-    self._inds = []
-    self._computed = False
-
-  @property
-  def m(self):
-    if self.body_type in ['planet', 'moon']:
-      return self._m
-    elif self.body_type == 'star':
-      return self._m / MSUNMEARTH
-
-  @m.setter
-  def m(self, val):
-    if self.body_type in ['planet', 'moon']:
-      self._m = val
-    elif self.body_type == 'star':
-      self._m = val * MSUNMEARTH
-
-  @property
-  def r(self):
-    if self.body_type in ['planet', 'moon']:
-      return self._r
-    elif self.body_type == 'star':
-      return self._r / RSUNREARTH
-
-  @r.setter
-  def r(self, val):
-    if self.body_type in ['planet', 'moon']:
-      self._r = val
-    elif self.body_type == 'star':
-      self._r = val * RSUNREARTH
-
-  @property
-  def limbdark(self):
-    return self._limbdark
-
-  @limbdark.setter
-  def limbdark(self, val):
-    assert hasattr(val, '__len__'), "Limb darkening coefficients must be provided as a list of scalars or as a list of functions."
-    self._limbdark = val
-
-  @property
-  def phasecurve(self):
-    return bool(self._phasecurve)
-
-  @phasecurve.setter
-  def phasecurve(self, val):
-    self._phasecurve = int(val)
-
-  @property
-  def airless(self):
-    return not bool(self._blackbody)
-
-  @airless.setter
-  def airless(self, val):
-    self._blackbody = int(not bool(val))
-
-  @property
-  def inc(self):
-    return self._inc * 180 / np.pi
-
-  @inc.setter
-  def inc(self, val):
-    self._inc = val * np.pi / 180.
-
-  @property
-  def w(self):
-    return self._w * 180 / np.pi
-
-  @w.setter
-  def w(self, val):
-    self._w = val * np.pi / 180.
-    # Force an update to the time of pericenter passage
-    self.ecc = self._ecc
-
-  @property
-  def Omega(self):
-    return self._Omega * 180 / np.pi
-
-  @Omega.setter
-  def Omega(self, val):
-    self._Omega = val * np.pi / 180.
-
-  @property
-  def Lambda(self):
-    return self._Lambda * 180 / np.pi
-
-  @Lambda.setter
-  def Lambda(self, val):
-    self._Lambda = val * np.pi / 180.
-
-  @property
-  def Phi(self):
-    return self._Phi * 180 / np.pi
-
-  @Phi.setter
-  def Phi(self, val):
-    self._Phi = val * np.pi / 180.
-
-  @property
-  def teff(self):
-    return self._teff
-
-  @teff.setter
-  def teff(self, val):
-    self._teff = val
-    if self._teff == 0:
-      self.u = []
-
-  @property
-  def t0(self):
-    return self._t0
-
-  @t0.setter
-  def t0(self, val):
-    self._t0 = val
-    # Force an update to the time of pericenter passage
-    self.ecc = self._ecc
-
-  @property
-  def per(self):
-    return self._per
-
-  @per.setter
-  def per(self, val):
-    self._per = val
-    # Force an update to the time of pericenter passage
-    self.ecc = self._ecc
-
-  @property
-  def ecc(self):
-    return self._ecc
-
-  @ecc.setter
-  def ecc(self, val):
-    '''
-    We need to update the time of pericenter passage whenever the eccentricty,
-    longitude of pericenter, period, or time of transit changes. See the appendix in
-    Shields et al. (2016).
-
-    '''
-
-    self._ecc = val
-    fi = (3 * np.pi / 2.) - self._w
-    self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) / (2. * np.pi) * (self.ecc * np.sin(fi) /
-             (1. + self.ecc * np.cos(fi)) - 2. / np.sqrt(1. - self.ecc * self.ecc) *
-             np.arctan2(np.sqrt(1. - self.ecc * self.ecc) * np.tan(fi/2.), 1. + self.ecc)))
-
-  def M(self, t):
-    '''
-    The mean anomaly at a time `t`.
-
-    '''
-
-    return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
-
-class _Settings(ctypes.Structure):
-  '''
-  The class that contains the model settings. This class is used internally; settings
-  should be specified as :py:obj:`kwargs` to :py:class:`System` or by assignment once
-  a :py:class:`System` object has been instantiated.
-
-  :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute orbits. Default :py:obj:`False`
-  :param float keptol: Kepler solver tolerance. Default `1.e-15`
-  :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
-  :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
-  :param float timestep: Timestep in days for the N-body solver. Default `0.01`
-  :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
-  :param bool quiet: Suppress output? Default :py:obj:`False`
-  :param float mintheta: Absolute value of the minimum phase angle in degrees. Below this \
-         angle, elliptical boundaries of constant surface brightness on the planet surface are \
-         treated as vertical lines. Default `1.`
-  :param int maxvertices: Maximum number of vertices allowed in the area computation. Default `999`
-  :param int maxfunctions: Maximum number of functions allowed in the area computation. Default `999`
-  :param int oversample: Oversampling factor for each exposure. Default `1`
-  :param float distance: Distance to the system in parsecs. Default `10.`
-  :param bool circleopt: Solve the simpler quadratic problem for circle-ellipse intersections when \
-         the axes of the ellipse are equal to within :math:`10^{-10}`? Default :py:obj:`True`
-  :param bool batmanopt: Use the :py:mod:`batman` algorithm to compute light curves of radially \
-         symmetric bodies? This can significantly speed up the code. Default :py:obj:`True`
-  :param str integrator: The N-body integrator (:py:obj:`whfast` | :py:obj:`ias15`) to use. Default :py:obj:`whfast`
-
-  '''
-
-  _fields_ = [("_nbody", ctypes.c_int),
-              ("_integrator", ctypes.c_int),
-              ("keptol", ctypes.c_double),
-              ("maxkepiter", ctypes.c_int),
-              ("_kepsolver", ctypes.c_int),
-              ("timestep", ctypes.c_double),
-              ("_adaptive", ctypes.c_int),
-              ("_circleopt", ctypes.c_int),
-              ("_batmanopt", ctypes.c_int),
-              ("_quarticsolver", ctypes.c_int),
-              ("_quiet", ctypes.c_int),
-              ("_mintheta", ctypes.c_double),
-              ("maxvertices", ctypes.c_int),
-              ("maxfunctions", ctypes.c_int),
-              ("distance", ctypes.c_double)]
-
-  def __init__(self, **kwargs):
-    self.nbody = kwargs.pop('nbody', False)
-    self.integrator = kwargs.pop('integrator', 'whfast')
-    self.keptol = kwargs.pop('keptol', 1.e-15)
-    self.maxkepiter = kwargs.pop('maxkepiter', 100)
-    self.kepsolver = kwargs.pop('kepsolver', 'newton')
-    self.polyeps1 = kwargs.pop('polyeps1', 1.0e-8)
-    self.polyeps2 = kwargs.pop('polyeps2', 1.0e-15)
-    self.maxpolyiter = kwargs.pop('maxpolyiter', 100)
-    self.timestep = kwargs.pop('timestep', 0.01)
-    self.adaptive = kwargs.pop('adaptive', True)
-    self.circleopt = kwargs.pop('circleopt', True)
-    self.batmanopt = kwargs.pop('batmanopt', True)
-    self.quarticsolver = kwargs.pop('quarticsolver', 'gsl')
-    self.quiet = kwargs.pop('quiet', False)
-    self.mintheta = kwargs.pop('mintheta', 1.)
-    self.maxvertices = kwargs.pop('maxvertices', 999)
-    self.maxfunctions = kwargs.pop('maxfunctions', 999)
-    self.oversample = max(1, kwargs.pop('oversample', 1))
-    self.distance = kwargs.pop('distance', 10.)
-
-  @property
-  def params(self):
-    return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
-            'timestep', 'adaptive', 'circleopt', 'batmanopt', 'quarticsolver', 'quiet', 
-            'mintheta', 'maxvertices', 'maxfunctions', 'oversample', 'distance']
-
-  @property
-  def mintheta(self):
-    return self._mintheta * 180 / np.pi
-
-  @mintheta.setter
-  def mintheta(self, val):
-    self._mintheta = val * np.pi / 180.
-
-  @property
-  def nbody(self):
-    return bool(self._nbody)
-
-  @nbody.setter
-  def nbody(self, val):
-    self._nbody = int(val)
-
-  @property
-  def adaptive(self):
-    return bool(self._adaptive)
-
-  @adaptive.setter
-  def adaptive(self, val):
-    self._adaptive = int(val)
-
-  @property
-  def circleopt(self):
-    return bool(self._circleopt)
-
-  @circleopt.setter
-  def circleopt(self, val):
-    self._circleopt = int(val)
-
-  @property
-  def batmanopt(self):
-    return bool(self._batmanopt)
-
-  @batmanopt.setter
-  def batmanopt(self, val):
-    self._batmanopt = int(val)
-
-  @property
-  def integrator(self):
-    if self._integrator == REB_INTEGRATOR_WHFAST:
-      return 'whfast'
-    elif self._integrator == REB_INTEGRATOR_IAS15:
-      return 'ias15'
-
-  @integrator.setter
-  def integrator(self, val):
-    if val.lower() == 'whfast':
-      self._integrator = REB_INTEGRATOR_WHFAST
-    elif val.lower() == 'ias15':
-      self._integrator = REB_INTEGRATOR_IAS15
-    else:
-      raise ValueError("Unsupported integrator.")
-  
-  @property
-  def quarticsolver(self):
-    if self._quarticsolver == QGSL:
-      return 'gsl'
-      
-  @quarticsolver.setter
-  def quarticsolver(self, val):
-    if val.lower() == 'gsl':
-      self._quarticsolver = QGSL
-    else:		
-      raise ValueError("Unsupported solver.")
-
-  @property
-  def quiet(self):
-    return bool(self._quiet)
-
-  @quiet.setter
-  def quiet(self, val):
-    self._quiet = int(val)
-
-  @property
-  def kepsolver(self):
-    return self._kepsolver
-
-  @kepsolver.setter
-  def kepsolver(self, val):
-    self._kepsolver = eval(val.upper())
-
-def Star(name, **kwargs):
-  '''
-
-  Returns a :py:class:`_Body` instance of type :py:obj:`star`.
-
-  :param str name: A unique identifier for this star
-  :param float m: Mass in solar masses. Default `1.`
-  :param float r: Radius in solar radii. Default `1.`
-  :param float per: Orbital period in days. Default `0.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of primary eclipse in days. Default `0.`
-  :param float teff: The effective temperature of the star in Kelvin. Default `5577.`
-  :param array_like limbdark: The limb darkening coefficients. These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength array in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param int nz: Number of zenith angle slices. Default `31`
-  :param str color: Object color (for plotting). Default `k`
-
-  '''
-
-  return _Body(name, 'star', **kwargs)
-
-def Planet(name, **kwargs):
-  '''
-
-  Returns a :py:class:`_Body` instance of type :py:obj:`planet`.
-
-  :param str name: A unique identifier for this planet
-  :param float m: Mass in Earth masses. Default `1.`
-  :param float r: Radius in Earth radii. Default `1.`
-  :param float per: Orbital period in days. Default `3.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
-  :param bool airless: Treat this as an airless planet? If :py:obj:`True`, computes light curves \
-         in the instant re-radiation limit, where the surface brightness is proportional \
-         to the cosine of the zenith angle (the angle between the line connecting \
-         the centers of the planet and the star and the line connecting the center of the \
-         planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If :py:obj:`False`, treats the planet as a limb-darkened blackbody. \
-         Default :py:obj:`True`
-  :param float albedo: Planetary albedo (airless limit). Default `0.3`
-  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
-  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
-         shift. Airless bodies only. Default `0.`
-  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
-         shift. Airless bodies only. Default `0.`
-  :param int nz: Number of zenith angle slices. Default `11`
-  :param str color: Object color (for plotting). Default `r`
-
-  '''
-
-  return _Body(name, 'planet', **kwargs)
-
-def Moon(name, host, **kwargs):
-  '''
-
-  Returns a :py:class:`_Body` instance of type :py:obj:`moon`.
-
-  :param str name: A unique identifier for this moon
-  :param str host: The name of the moon's host planet
-  :param float m: Mass in Earth masses. Default `1.`
-  :param float r: Radius in Earth radii. Default `1.`
-  :param float per: Orbital period in days. Default `3.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default :py:obj:`False`
-  :param bool airless: Treat this as an airless planet? If :py:obj:`True`, computes light curves \
-         in the instant re-radiation limit, where the surface brightness is proportional \
-         to the cosine of the zenith angle (the angle between the line connecting \
-         the centers of the planet and the star and the line connecting the center of the \
-         planet and a given point on its surface. A fixed nightside temperature may be specified \
-         via the `tnight` kwarg. If :py:obj:`False`, treats the planet as a limb-darkened blackbody. \
-         Default :py:obj:`True`
-  :param float albedo: Planetary albedo (airless limit). Default `0.3`
-  :param float tnight: Nightside temperature in Kelvin (airless limit). Default `40`
-  :param array_like limbdark: The limb darkening coefficients (thick atmosphere limit). These are the coefficients \
-         in the Taylor expansion of `(1 - mu)`, starting with the first order (linear) \
-         coefficient, where `mu = cos(theta)` is the radial coordinate on the surface of \
-         the star. Each coefficient may either be a scalar, in which case limb darkening is \
-         assumed to be grey (the same at all wavelengths), or a callable whose single argument \
-         is the wavelength in microns. Default is `[1.0]`, a grey linear limb darkening law.
-  :param float Lambda: Latitudinal hotspot offset in degrees, with positive values corresponding to a northward \
-         shift. Airless bodies only. Default `0.`
-  :param float Phi: Longitudinal hotspot offset in degrees, with positive values corresponding to an eastward \
-         shift. Airless bodies only. Default `0.`
-  :param int nz: Number of zenith angle slices. Default `11`
-  :param str color: Object color (for plotting). Default `r`
-
-  '''
-
-  return _Body(name, 'moon', host = host, **kwargs)
 
 class System(object):
   '''
@@ -684,9 +143,6 @@ class System(object):
   :param float keptol: Kepler solver tolerance. Default `1.e-15`
   :param int maxkepiter: Maximum number of Kepler solver iterations. Default `100`
   :param str kepsolver: Kepler solver (`newton` | `mdfast`). Default `newton`
-  :param float polyeps1: Tolerance in the polynomial root-finding routine. Default `1.0e-8`
-  :param float polyeps2: Tolerance in the polynomial root-finding routine. Default `1.0e-15`
-  :param int maxpolyiter: Maximum number of root finding iterations. Default `100`
   :param float timestep: Timestep in days for the N-body solver. Default `0.01`
   :param bool adaptive: Adaptive grid for limb-darkened bodies? Default :py:obj:`True`
   :param bool quiet: Suppress output? Default :py:obj:`False`
@@ -713,7 +169,7 @@ class System(object):
 
     # Initialize
     self.bodies = bodies
-    self.settings = _Settings(**kwargs)
+    self.settings = SETTINGS(**kwargs)
     self._reset()
 
   def _reset(self):
@@ -747,6 +203,10 @@ class System(object):
       elif body.body_type == 'moon':
         if type(body.host) is str:
           body.host = getattr(self, body.host)
+        elif body.host in self.bodies:
+          pass
+        else:
+          raise ValueError("Invalid `host` setting for moon `%s`." % body.name)
         body._host = np.argmax(self._names == body.host.name)
         body.a = ((body.per * DAYSEC) ** 2 * G * (body.host._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
 
@@ -761,20 +221,24 @@ class System(object):
     Allocate memory for all the C arrays.
 
     '''
-
+      
+    # Check that the first body is a star and that there are no other stars (for now)
+    assert self.bodies[0].body_type == 'star', 'The first body must be a :py:class:`Star`.'  
+    assert 'star' not in [b.body_type for b in self.bodies[1:]], 'Multiple-star systems not yet implemented.'  
+    
     # Initialize the C interface
     self._Orbits = libppo.Orbits
     self._Orbits.restype = ctypes.c_int
     self._Orbits.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
-                             ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                             _Settings]
+                             ctypes.c_int, ctypes.POINTER(ctypes.POINTER(BODY)),
+                             SETTINGS]
 
     self._Flux = libppo.Flux
     self._Flux.restype = ctypes.c_int
     self._Flux.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
                            ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
-                           ctypes.c_int, ctypes.POINTER(ctypes.POINTER(_Body)),
-                           _Settings]
+                           ctypes.c_int, ctypes.POINTER(ctypes.POINTER(BODY)),
+                           SETTINGS]
 
     # Allocate memory for all the arrays
     for body in self.bodies:
@@ -792,23 +256,30 @@ class System(object):
       body._occultor = np.ctypeslib.as_ctypes(body.occultor)
       body.total_flux = np.zeros(nw)
       body._total_flux = np.ctypeslib.as_ctypes(body.total_flux)
+      
       # HACK: The fact that flux is 2d is a nightmare for ctypes. We will
       # treat it as a 1d array within C and keep track of the row/column
       # indices by hand...
       body.flux = np.zeros((nt, nw))
       body._flux1d = body.flux.reshape(-1)
       body._flux = np.ctypeslib.as_ctypes(body._flux1d)
+      
       # HACK: Same for the limb darkening coefficients
       body._u1d = body.u.reshape(-1)
       body._u = np.ctypeslib.as_ctypes(body._u1d)
+            
       # Dimensions
       body.nu = len(body.u)
       body.nt = nt
       body.nw = nw
 
-    # A pointer to a pointer to `_Body`. This is an array of `n` `_Body` instances,
+    # A pointer to a pointer to `BODY`. This is an array of `n` `BODY` instances,
     # passed by reference. The contents can all be accessed through `bodies`
-    self._ptr_bodies = (ctypes.POINTER(_Body) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
+    # NOTE: Before I subclassed BODY, this used to be
+    # >>> self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.pointer(p) for p in self.bodies])
+    # I now case the `Planet`, `Star`, and `Moon` instances as `BODY` pointers, as per
+    # https://stackoverflow.com/a/37827528
+    self._ptr_bodies = (ctypes.POINTER(BODY) * len(self.bodies))(*[ctypes.cast(ctypes.byref(p), ctypes.POINTER(BODY)) for p in self.bodies])
 
   def compute(self, time, lambda1 = 5, lambda2 = 15, R = 100):
     '''
@@ -847,7 +318,7 @@ class System(object):
 
     # Convert from microns to meters
     wavelength *= 1e-6
-
+            
     # Oversample the time array to generate light curves observed w/ finite exposure time.
     # Ensure `oversample` is odd.
     if self.settings.oversample % 2 == 0:
@@ -1382,9 +853,9 @@ class System(object):
 
     :param float tstart: The time at which to start the occultation search (days)
     :param occulted: The occulted body
-    :type occulted: :py:class:`_Body`
+    :type occulted: :py:class:`BODY`
     :param occultor: The occultor(s). If :py:obj:`None`, occultations by any body are considered. Default :py:obj:`None`
-    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :type occultor: :py:class:`BODY` or :py:obj:`list`
     :param float min_duration: Minimum occultation duration in **minutes**. Default `10`
     :param float max_impact: The maximum impact parameter. Default `0.5`
     :param int maxruns: Maximum number of 100-day runs to search for the occultation. Default `100`
@@ -1451,16 +922,19 @@ class System(object):
     self.settings.quiet = quiet
     return np.nan
 
-  def plot_occultation(self, body, time, interval = 50, gifname = None, spectral = True, **kwargs):
+  def plot_occultation(self, body, time, wavelength = 15., interval = 50, gifname = None, spectral = False, **kwargs):
     '''
-
+    Plots and animates an occultation event.
+    
     :param body: The occulted body
-    :type body: :py:class:`_Body`
+    :type body: :py:class:`BODY`
     :param float time: The time of the occultation event in days
+    :param float wavelength: The wavelength in microns at which to plot the light curve. \
+           Must be within the wavelength grid. Default `15`
     :param int interval: The interval between frames in the animation in ms. Default `50`
     :param str gifname: If specified, saves the occultation animation as a :py:obj:`gif` in the current directory. Default :py:obj:`None`
     :param bool spectral: Plot the light curve at different wavelengths? If :py:obj:`True`, plots the first, middle, \
-           and last wavelength in the wavelength grid. If :py:obj:`False`, plots the middle wavelength. Default :py:obj:`True`
+           and last wavelength in the wavelength grid. If :py:obj:`False`, plots the specified `wavelength`. Default :py:obj:`True`
     :param kwargs: Any additional keyword arguments to be passed to :py:func:`plot_image`
 
     :returns: :py:obj:`(fig, ax1, ax2, ax3)`, a figure instance and its three axes
@@ -1477,7 +951,11 @@ class System(object):
 
     # Have we computed the light curves?
     assert self._computed, "Please run `compute()` first."
-
+    
+    # Get the wavelength index
+    assert (wavelength >= self.bodies[0].wavelength[0]) and (wavelength >= self.bodies[0].wavelength[-1]), "Wavelength value outside of computed grid."
+    w = np.argmax(1e-6 * wavelength <= self.bodies[0].wavelength)
+    
     # Check file name
     if gifname is not None:
       if gifname.endswith(".gif"):
@@ -1509,27 +987,33 @@ class System(object):
     # Set up the figure
     fig = pl.figure(figsize = (7, 8))
     fig.subplots_adjust(left = 0.175)
-
-    # Plot three different wavelengths (first, mid, and last)
     axlc = pl.subplot2grid((5, 3), (3, 0), colspan = 3, rowspan = 2)
     ti = t[0]
     tf = t[-1]
-    fluxb = body.flux_hr[t, 0] / body.total_flux[0]
-    fluxg = body.flux_hr[t, body.flux_hr.shape[-1] // 2] / body.total_flux[body.flux.shape[-1] // 2]
-    fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
-
-    # Add a baseline?
-    if not (body.phasecurve or body.body_type == 'star'):
-      fluxg += 1
-      fluxr += 1
-      fluxb += 1
-
+    
+    # Plot three different wavelengths (first, mid, and last)
     if spectral:
+      fluxb = body.flux_hr[t, 0] / body.total_flux[0]
+      fluxg = body.flux_hr[t, body.flux_hr.shape[-1] // 2] / body.total_flux[body.flux.shape[-1] // 2]
+      fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
+
+      # Add a baseline?
+      if not (body.phasecurve or body.body_type == 'star'):
+        fluxg += 1
+        fluxr += 1
+        fluxb += 1
+
+      # Plot
       axlc.plot(body.time_hr[t], fluxb, 'b-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
       axlc.plot(body.time_hr[t], fluxg, 'g-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
       axlc.plot(body.time_hr[t], fluxr, 'r-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[-1])) + r"\ \mu\mathrm{m}$")
     else:
-      axlc.plot(body.time_hr[t], fluxg, 'k-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[body.flux.shape[-1] // 2])) + r"\ \mu\mathrm{m}$")
+      
+      fluxw = body.flux_hr[t, w] / body.total_flux[w]
+      if not (body.phasecurve or body.body_type == 'star'):
+        fluxw += 1
+      axlc.plot(body.time_hr[t], fluxw, 'k-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
+
     axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
     axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
     axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -1591,7 +1075,7 @@ class System(object):
     axxz.axis('off')
 
     # Plot the image
-    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig, **kwargs)
+    axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig, wavelength = wavelength, **kwargs)
     bodies = [self.bodies[o] for o in occultors] + [body]
     xmin = min(np.concatenate([o.x_hr[t] - body.x_hr[t] - 1.1 * o._r for o in bodies]))
     xmax = max(np.concatenate([o.x_hr[t] - body.x_hr[t] + 1.1 * o._r for o in bodies]))
@@ -1629,7 +1113,7 @@ class System(object):
 
     return fig, axlc, axxz, axim
 
-  def plot_image(self, t, occulted, occultor = None, fig = None, figx = 0.535, figy = 0.5, figr = 0.05, **kwargs):
+  def plot_image(self, t, occulted, occultor = None, wavelength = 15., fig = None, figx = 0.535, figy = 0.5, figr = 0.05, **kwargs):
     '''
     Plots an image of the `occulted` body and its occultor(s) at a given index of the `time_hr` array `t`.
 
@@ -1644,9 +1128,11 @@ class System(object):
 
     :param int t: The index of the occultation in the high resolution time array `time_hr`
     :param occulted: The occulted body instance
-    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :type occultor: :py:class:`BODY` or :py:obj:`list`
     :param occultor: The occultor(s). Default :py:obj:`None`
-    :type occultor: :py:class:`_Body` or :py:obj:`list`
+    :type occultor: :py:class:`BODY` or :py:obj:`list`
+    :param float wavelength: The wavelength in microns at which to plot the light curve. \
+           Must be within the wavelength grid. Default `15`
     :param fig: The figure on which to plot the image
     :type fig: :py:class:`matplotlib.Figure`
     :param float figx: The x coordinate of the image in figure units. Default `0.535`
@@ -1654,7 +1140,7 @@ class System(object):
     :param float figr: The radius of the image in figure units. Default `0.05`
 
     '''
-
+    
     # Set up the plot
     if fig is None:
       fig = pl.gcf()
@@ -1666,45 +1152,38 @@ class System(object):
     z0 = occulted.z_hr[t]
 
     # Get the angles
-    if (occulted.nu == 0) and not (occulted.body_type in ['planet', 'moon'] and occulted.airless == False):
+    x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
+    y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
+    z = z0
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
 
-      x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
-      y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
-      z = z0
-      r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    # Coordinates of the hotspot in a frame where the planet is
+    # at x, y, z = (0, 0, r), at full phase
+    xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
+    yprime = occulted._r * np.sin(occulted._Phi)
+    zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
 
-      # Coordinates of the hotspot in a frame where the planet is
-      # at x, y, z = (0, 0, r), at full phase
-      xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
-      yprime = occulted._r * np.sin(occulted._Phi)
-      zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
+    # Transform to the rotated sky plane
+    rxz = np.sqrt(x ** 2 + z ** 2)
+    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
+    ystar = (rxz * yprime + y * zprime) / r
+    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
 
-      # Transform to the rotated sky plane
-      rxz = np.sqrt(x ** 2 + z ** 2)
-      xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
-      ystar = (rxz * yprime + y * zprime) / r
-      zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
+    # Transform back to the true sky plane
+    xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
+                   ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
+    x = x0
+    y = y0
 
-      # Transform back to the true sky plane
-      xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
-                     ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
-      x = x0
-      y = y0
+    # Distance from planet center to hotspot
+    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
 
-      # Distance from planet center to hotspot
-      d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
-
-      # Get the rotation and phase angles
-      gamma = np.arctan2(ystar - y, xstar - x) + np.pi
-      if (zstar - z) <= 0:
-        theta = np.arccos(d / occulted._r)
-      else:
-        theta = -np.arccos(d / occulted._r)
-
+    # Get the rotation and phase angles
+    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
+    if (zstar - z) <= 0:
+      theta = np.arccos(d / occulted._r)
     else:
-
-      theta = np.pi / 2
-      gamma = 0
+      theta = -np.arccos(d / occulted._r)
 
     # Get the occultor
     if occultor is None:
@@ -1715,7 +1194,7 @@ class System(object):
     elif not hasattr(occultor, '__len__'):
       occultor = [occultor]
 
-    # If they are _Body instances, turn them into indices
+    # If they are BODY instances, turn them into indices
     for i, occ in enumerate(occultor):
       if occ in self.bodies:
         occultor[i] = np.argmax([b == occ for b in self.bodies])
@@ -1727,8 +1206,9 @@ class System(object):
       occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp, y = (occultor.y_hr[t] - y0) / rp, r = occultor._r / rp, zorder = i + 1, alpha = 1))
 
     # Draw the eyeball planet and the occultor(s)
-    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, theta = theta, gamma = gamma,
-                                   occultors = occ_dict, cmap = 'inferno', fig = fig, **kwargs)
+    fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap, theta = theta, gamma = gamma,
+                                   occultors = occ_dict, cmap = 'inferno', fig = fig, 
+                                   wavelength = wavelength, teff = occulted.teff, limbdark = occulted.limbdark, **kwargs)
 
     return ax, occ, xy
 

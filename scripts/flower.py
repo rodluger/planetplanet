@@ -26,9 +26,7 @@ mutual transits.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)

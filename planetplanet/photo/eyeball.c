@@ -186,28 +186,64 @@ int funcomp( const void* a, const void* b) {
 }
 
 /**
-Computes the temperature at a given zenith angle on an eyeball planet.
+Computes the flux at a given zenith angle on an eyeball planet.
 
+@param lambda The wavelength in m
 @param za The zenith angle in radians, measured from the hotspot
-@param irrad The irradiation from the star
-@param albedo The body's albedo
+@param teff The body's equilibrium temperature
 @param tnight The night side temperature in K
-@return The temperature in K
+@return The emitted spectral flux density from that point on the surface
 
 */
-double EyeballTemperature(double za, double irrad, double albedo, double tnight) {
+double RadiativeEquilibriumMap(double lambda, double za, double teff, double tnight) {
   
   double temp;
   
   if (za < PI / 2) {
-    temp = pow((irrad * cos(za) * (1 - albedo)) / SBOLTZ, 0.25);
-    if (temp > tnight)
-      return temp;
-    else
-      return tnight;
+    temp = teff * pow(4 * cos(za), 0.25);
+    if (temp < tnight)
+      temp = tnight;
   } else {
-    return tnight;
+    temp = tnight;
   }
+  
+  // Return the flux
+  return Blackbody(lambda, temp);
+  
+}
+
+/**
+Computes the flux at a given zenith angle on a limb-darkened planet.
+
+@param j The index of the wavelength grid
+@param za The zenith angle in radians, measured from the hotspot
+@param teff The body's effective temperature
+@param nu The number of limb-darkening coefficients per wavelength bin
+@param nw The number of wavelength bins
+@param u The limb-darkening coefficient grid
+@param B0 The normalization constant for the radiance at this wavelength
+@return The emitted spectral flux density from that point on the surface
+
+*/
+double LimbDarkenedMap(int j, double za, double teff, int nu, int nw, double u[nu * nw], double B0) {
+  
+  int k;
+  double x;
+  double B = B0;
+  double cosza = cos(za);
+  
+  // Loop over the coefficient order
+  for (k = 0; k < nu; k++) {
+  
+    // The Taylor expansion is in (1 - mu)
+    x = pow(1 - cosza, k + 1);
+    B -= u[nw * k + j] * B0 * x;
+    
+  } 
+  
+  // Return the flux
+  return B;
+  
 }
 
 /**
@@ -326,27 +362,24 @@ double ZenithAngle(double x, double y, double r, double theta) {
 Computes the blackbody intensity at the center of each zenith_angle slice 
 evaluated at a given array of wavelengths.
 
-@param albedo The planet's albedo
-@param irrad The irradiation on the planet
 @param tnight The night side temperature in K (eyeball limit)
 @param teff The effective temperature of the planet (blackbody limit)
+@param maptype The code for the radiance map
+@param radiancemap A pointer to the RADIANCEMAP function
 @param nz The number of zenith angle slices
 @param zenithgrid The zenith angle grid
 @param nw The number of wavelength points
 @param lambda The wavelength array
 @param nu The number of limb darkening coefficients
 @param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
+@param B0 The wavelength-dependent normalization for the limb-darkened case
 @param B The blackbody intensity grid
 
 */
-void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B[nz + 1][nw]) {
+void SurfaceIntensity(double tnight, double teff, int maptype, RADIANCEMAP radiancemap, int nz, double zenithgrid[nz], int nw, double lambda[nw], int nu, double u[nu * nw], double B0[nw], double B[nz + 1][nw]) {
   
-  int i, j, k;
-  double zenith_angle, cosza;
-  double T = 0.;
-  double B0[nw];
-  double x;
-  double norm;
+  int i, j;
+  double zenith_angle;
   
   // Loop over each slice
   for (i = 0; i < nz + 1; i++) {
@@ -365,55 +398,16 @@ void SurfaceIntensity(double albedo, double irrad, double tnight, double teff, i
     } else
       zenith_angle = 0.5 * (zenithgrid[i] + zenithgrid[i - 1]);
 
-    // Get its blackbody temperature
-    if (teff == 0) {
-      
-      // No limb darkening
-      T = EyeballTemperature(zenith_angle, irrad, albedo, tnight);
-
-      // Loop over each wavelength bin
-      for (j = 0; j < nw; j++) {
-        
-        // Get the blackbody intensity (W / m^2 / m / sr)
-        B[i][j] = Blackbody(lambda[j], T);
-      
-      }
-    
-    } else {
-    
-      // TODO: Do this outside of the *i* loop.
-    
-      // Normalized polynomial limb darkening
-      // Equation (15) in Luger et al. (2017)
-      for (j = 0; j < nw; j++) {
-        
-        // Compute the normalization term, Equation (E5)
-        norm = 0;
-        for (k = 0; k < nu; k++) {
-          norm += u[nw * k + j] / ((k + 2) * (k + 3));
-        }
-        norm = 1 - 2 * norm;
-        B0[j] = Blackbody(lambda[j], teff) / norm;
-        B[i][j] = B0[j];
-      
-      }
-      
-      // Pre-compute mu
-      cosza = cos(zenith_angle);
-      
-      // Loop over the coefficient order
-      for (k = 0; k < nu; k++) {
-      
-        // The Taylor expansion is in (1 - mu)
-        x = pow(1 - cosza, k + 1);
-        
-        // Compute the wavelength-dependent intensity
-        for (j = 0; j < nw; j++) {
-          B[i][j] -= u[nw * k + j] * B0[j] * x;
-        } 
-      } 
+    // Get the flux      
+    for (j = 0; j < nw; j++) {
+      if (maptype == MAP_ELLIPTICAL_DEFAULT)
+        B[i][j] = RadiativeEquilibriumMap(lambda[j], zenith_angle, teff, tnight);
+      else if (maptype == MAP_RADIAL_DEFAULT)
+        B[i][j] = LimbDarkenedMap(j, zenith_angle, teff, nu, nw, u, B0[j]);
+      else
+        B[i][j] = radiancemap(lambda[j], zenith_angle);
     }
-  }   
+  } 
 }
 
 /**
@@ -1037,8 +1031,6 @@ over a grid of wavelengths.
 @param y0 The y coordinate of the center of each occulting body
 @param ro The radius of each occulting body
 @param theta The eyeball phase angle
-@param albedo The planet's albedo
-@param irrad The planet's irradiation
 @param tnight The planet's night side temperature in K (airless limit only)
 @param teff The planet's effective temperature in K (blackbody limit only)
 @param distance The distance to the system in parsecs
@@ -1057,12 +1049,14 @@ over a grid of wavelengths.
 @param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
 @param lambda The wavelength grid in m
 @param flux The wavelength-dependent light curve computed by this function
+@param maptype The code for the radiance map
+@param radiancemap A pointer to the RADIANCEMAP function
 @param quiet Suppress output?
 @param iErr Flag set if an error occurs
 
 */
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo,  double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
-  
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw,  double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr) {
+
   int i, j, k, m;
   int oob;
   int b = 0;
@@ -1079,6 +1073,8 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
     ro2[i] = ro[i] * ro[i];
     ro2[i] += SMALL * ro2[i];
   }
+  double norm;
+  double B0[nw];
   double d2 = distance * distance * PARSEC * PARSEC;
   *iErr = ERR_NONE;
   
@@ -1086,21 +1082,15 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   for (m = 0; m < nw; m++) 
     flux[m] = 0.;
   
-  // Initial theta checks
-  if (teff > 0) {
-  
-    // If we're doing limb darkening, theta must be pi/2 (full phase)
-    theta = PI / 2.;
+  // Can we optimize this with the *batman* algorithm?
+  // TODO: Adapt this to work with custom radial maps?
+  if ((no == 1) && (batmanopt) && (maptype == MAP_RADIAL_DEFAULT)) {
+    BatmanFlux(r, x0[0], y0[0], ro[0], teff, distance, nu, nz, nw, u, lambda, flux);
+    return;
+  }
     
-    // Can we optimize this with the *batman* algorithm?
-    if ((no == 1) && (batmanopt)) {
-      
-      BatmanFlux(r, x0[0], y0[0], ro[0], teff, distance, nu, nz, nw, u, lambda, flux);
-      return;
-      
-    }
-    
-  } else if (theta < MINCRESCENT) {
+  // Handle numerical issues
+  if (theta < MINCRESCENT) {
   
     // Numerical issues pop up when the crescent is too thin and
     // the nightside is dark, so let's increase the number of grid slices
@@ -1120,13 +1110,13 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
   FUNCTION boundaries[maxfunctions];
   double B[nz * no + 1][nw];
   double zenithgrid[nz * no];
-
+  
   // Generate all the shapes and get their vertices and curves
   AddOccultors(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f);     
   AddOcculted(r, no, x0, y0, ro, maxvertices, maxfunctions, vertices, &v, functions, &f); 
   
   // Compute the zenith_angle grid
-  if (adaptive && (teff > 0)) {
+  if (adaptive && ((maptype == MAP_RADIAL_DEFAULT) || (maptype == MAP_RADIAL_CUSTOM))) {
   
     // Adaptive zenith_angle grid
     // Loop over each occultor
@@ -1179,9 +1169,21 @@ void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no],
       AddZenithAngleEllipse(zenithgrid[i], r, no, x0, y0, ro, theta, quarticsolver, maxvertices, maxfunctions, vertices, &v, functions, &f);
   
   }
+   
+  // Pre-compute the blackbody normalization if necessary
+  if (maptype == MAP_RADIAL_DEFAULT) {
+    for (j = 0; j < nw; j++) {
+      norm = 0;
+      for (k = 0; k < nu; k++) {
+        norm += u[nw * k + j] / ((k + 2) * (k + 3));
+      }
+      norm = 1 - 2 * norm;
+      B0[j] = Blackbody(lambda[j], teff) / norm;
+    }
+  }
   
   // Pre-compute the surface intensity in each zenith_angle slice
-  SurfaceIntensity(albedo, irrad, tnight, teff, nz * no, zenithgrid, nw, lambda, nu, u, B);
+  SurfaceIntensity(tnight, teff, maptype, radiancemap, nz * no, zenithgrid, nw, lambda, nu, u, B0, B);
   
   // Sort the vertices
   qsort(vertices, v, sizeof(double), dblcomp);
@@ -1292,8 +1294,6 @@ of the body.
 
 @param r The radius of the occulted planet
 @param theta The eyeball phase angle
-@param albedo The planet's albedo
-@param irrad The planet's irradiation
 @param tnight The planet's night side temperature in K (airless limit only)
 @param teff The planet's effective temperature in K (blackbody limit only)
 @param distance The distance to the system in parsecs
@@ -1312,17 +1312,19 @@ of the body.
 @param u The limb darkening coefficient grid: \a nu coefficients at each wavelength
 @param lambda The wavelength grid in m
 @param flux The wavelength-dependent light curve computed by this function
+@param maptype The code for the radiance map
+@param radiancemap A pointer to the RADIANCEMAP function
 @param quiet Suppress output?
 @param iErr Flag set if an error occurs
 
 */
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr) {
+void UnoccultedFlux(double r, double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt,  int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr) {
 
   double x0[1] = {0};
   double y0[1] = {0};
   double ro[1] = {2 * r};
   
   // Hack: compute the occulted flux with a single huge occultor
-  OccultedFlux(r, 1, x0, y0, ro, theta, albedo, irrad, tnight, teff, distance, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, quiet, iErr);
+  OccultedFlux(r, 1, x0, y0, ro, theta, tnight, teff, distance, mintheta, maxvertices, maxfunctions, adaptive, circleopt, batmanopt, quarticsolver, nu, nz, nw, u, lambda, flux, maptype, radiancemap, quiet, iErr);
     
 }

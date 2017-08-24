@@ -35,7 +35,7 @@ one Earth year.
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os
 import planetplanet
-from planetplanet.photo import Trappist1
+from planetplanet import Trappist1
 from planetplanet.constants import *
 import matplotlib
 import matplotlib.pyplot as pl

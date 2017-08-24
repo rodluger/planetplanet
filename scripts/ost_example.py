@@ -16,8 +16,7 @@ occultations in TRAPPIST-1.
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.constants import *
-from planetplanet.photo import Star, Planet, System
-from planetplanet.detect import create_tophat_filter
+from planetplanet import Star, Planet, System, create_tophat_filter
 import matplotlib.pyplot as pl
 import numpy as np
 
@@ -29,9 +28,9 @@ def Triple_bc():
     .. plot::
      :align: center
      
-     from scripts import jwst_example
+     from scripts import ost_example
      import matplotlib.pyplot as pl
-     jwst_example.Triple_bc()
+     ost_example.Triple_bc()
      pl.show()
   
   '''

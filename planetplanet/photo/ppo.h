@@ -10,6 +10,13 @@
 #define NEWTON                  1                                                     /**< Use the standard Newton Kepler solver */
 #define QGSL                    3                                                     /**< Use the GSL complex polynomial solver */
 
+// Surface maps
+#define MAP_NONE               -1                                                     /**< No map defined */
+#define MAP_RADIAL_DEFAULT      0                                                     /**< Default radially-symmetric LimbDarkenedMap */
+#define MAP_RADIAL_CUSTOM       1                                                     /**< Custom compiled Python radially-symmetric map */
+#define MAP_ELLIPTICAL_DEFAULT  2                                                     /**< Default elliptically-symmetric RadiativeEquilibriumMap */
+#define MAP_ELLIPTICAL_CUSTOM   3                                                     /**< Custom compiled Python elliptically-symmetric map */
+
 // Errors
 #define ERR_NONE                0                                                     /**< No error occurred */
 #define ERR_NOT_IMPLEMENTED     1                                                     /**< Function/option not yet implemented */
@@ -40,6 +47,12 @@
 #define CRESCENTNZ              31                                                    /**< Number of zenith slices in the tiny crescent limit */
 
 /**
+A radiance map function of the wavelength and the zenith angle. 
+
+*/
+typedef double (*RADIANCEMAP)(double, double);
+
+/**
 Struct containing all the information pertaining to a body (star, planet, or moon) in the system.
 
 */
@@ -54,12 +67,11 @@ typedef struct {
   double tperi0;                                                                      /**< Time of pericenter passage in days */
   double r;                                                                           /**< Body radius in Earth radii */
   double albedo;                                                                      /**< Body albedo */
-  double teff;                                                                        /**< Effective temperature in K (if blackbody) */
-  double tnight;                                                                      /**< Night side temperature in K (if eyeball) */
+  double teff;                                                                        /**< Effective temperature in K */
+  double tnight;                                                                      /**< Night side temperature in K */
   int phasecurve;                                                                     /**< Compute the phase curve for this body? */
-  int blackbody;                                                                      /**< Is this body a blackbody? */
-  double Phi;                                                                         /**< Longitudinal hotspot offset in radians */
-  double Lambda;                                                                      /**< Latitudinal hotspot offset in radians */
+  double Lambda;                                                                      /**< Longitudinal hotspot offset in radians */
+  double Phi;                                                                         /**< Latitudinal hotspot offset in radians */
   int host;                                                                           /**< The index of this body's host (host star if planet; host planet if moon) */
   int nu;                                                                             /**< Number of limb darkening coefficients (per wavelength) */
   int nz;                                                                             /**< Number of zenith angle slices */
@@ -74,6 +86,8 @@ typedef struct {
   int *occultor;                                                                      /**< The array of occultor bit flags */
   double *flux;                                                                       /**< The grid of observed flux from this body in time/wavelength */
   double *total_flux;                                                                 /**< The total unocculted flux of this body at full phase */
+  int maptype;                                                                        /**< Which radiance map to use? */
+  RADIANCEMAP radiancemap;                                                            /**< A function that returns a radiance map for the body's surface */
 } BODY;
 
 /**
@@ -140,7 +154,7 @@ typedef struct {
 double Blackbody(double lambda, double T);
 int NBody(int np, BODY **body, SETTINGS settings);
 int Kepler(int np, BODY **body, SETTINGS settings);
-void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
-void UnoccultedFlux(double r, double theta, double albedo, double irrad, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int quiet, int *iErr);
+void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr);
+void UnoccultedFlux(double r, double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);

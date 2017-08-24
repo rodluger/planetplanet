@@ -23,7 +23,7 @@ planets transit the star and occult each other simultaneously.
 '''
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)
@@ -63,7 +63,7 @@ def plot():
   # Get the occultation light curves
   time = np.linspace(-0.6, 0.6, 10000)
   system.compute(time)
-  fig, axlc, axxz, axim = system.plot_occultation('A', -0.05) #, gifname = 'mutual')
+  fig, axlc, axxz, axim = system.plot_occultation('A', -0.05)
 
   return fig, axlc, axxz, axim
   

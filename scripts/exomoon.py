@@ -25,7 +25,7 @@ how the code can handle moons.
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo import Planet, Star, Moon, System
+from planetplanet import Planet, Star, Moon, System
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
@@ -43,7 +43,7 @@ def plot():
              nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = True, color = 'r')
            
   # Moon
-  m = Moon('bI', 'b', m = 0., per = 0.1, inc = 90., r = 0.5, t0 = 0.5, 
+  m = Moon('bI', host = 'b', m = 0., per = 0.1, inc = 90., r = 0.5, t0 = 0.5, 
            nz = 11, Omega = 10, w = 0., ecc = 0., phasecurve = True, color = 'b')
 
   # Compute the light curve

@@ -25,7 +25,7 @@ A simple transit light curve. Here we compare it to one generated with :py:obj:`
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo import Planet, Star, System
+from planetplanet import Planet, Star, System
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
@@ -49,8 +49,7 @@ def plot():
   flux1 = system.star.flux[:,0] / system.star.flux[0,0]
 
   # Plot it
-  system.plot_occultation('star', 0, nz = 51, draw_ellipses = False, spectral = False, 
-                          draw_outline = False, draw_terminator = False)
+  system.plot_occultation('star', 0, spectral = False)
 
   # Compute the light curve w/ batman optimization
   system = System(star, planet, batmanopt = True)

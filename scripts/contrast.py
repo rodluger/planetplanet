@@ -26,7 +26,7 @@ planet.
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from planetplanet.photo.ppo import Planet, Star, System, DrawEyeball
+from planetplanet import Planet, Star, System, DrawEyeball, LimbDarkenedMap, RadiativeEquilibriumMap, UniformMap
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
@@ -60,14 +60,14 @@ def plot():
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67 - 0.05, r = r, t0 = 0, 
                Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., albedo = 0.3, 
-               airless = True, phasecurve = False, nz = 31)
+               phasecurve = False, nz = 31)
 
     # Instantiate `d`
     RpRs = np.sqrt(0.367 / 100)
     r = RpRs * rstar * RSUN / REARTH    
     d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75 + 0.16, r = r, t0 = 0, 
                Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., albedo = 0.3, 
-               airless = True, phasecurve = False)
+               phasecurve = False)
   
     # Instantiate the system
     system = System(star, c, d, distance = 12, oversample = 1)
@@ -78,7 +78,10 @@ def plot():
   
     # System
     system = System(star, c, d)
-    system.c.airless = airless
+    if airless:
+      system.c.radiancemap = RadiativeEquilibriumMap()
+    else:
+      system.c.radiancemap = LimbDarkenedMap()
     system.compute(time, lambda2 = 15)
     flux = np.array(c.flux[:,-1])
 
@@ -143,7 +146,7 @@ def plot():
       theta = -np.arccos(dist / c._r)
     occ_dict = [dict(x = (d.x_hr[t] - x0) / c._r, y = (d.y_hr[t] - y0) / c._r, r = d._r / c._r, zorder = i + 1, alpha = 1)]
     DrawEyeball(px[i], 0.85, 0.025, theta = theta, nz = 31, gamma = gamma, 
-                draw_ellipses = False,
+                draw_ellipses = False, radiancemap = c.radiancemap,
                 occultors = occ_dict, cmap = 'inferno', fig = fig, rasterize = True)
 
   # Arrows

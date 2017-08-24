@@ -21,3 +21,4 @@ if not __PLANETPLANET_SETUP__:
   from . import photo, detect
   from .photo import *
   from .photo.trappist1 import *
+  from .detect import *

@@ -10,7 +10,9 @@ Python interface
    :maxdepth: 2
    
    eyeball.py <eyeball>
+   maps.py <maps>
    ppo.py <ppo>
+   structs.py <structs>
    theta.py <theta>
    trappist1.py <trappist1>
 
