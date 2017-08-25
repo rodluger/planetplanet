@@ -6,7 +6,8 @@ exomoon.py |github|
 
 A silly example of a star-planet-moon system. The
 orbital parameters are unrealistic, but this showcases
-how the code can handle moons.
+how the code can handle moons. Click on an event to 
+see it in detail.
 
   .. plot::
      :align: center
@@ -14,12 +15,10 @@ how the code can handle moons.
      from scripts import exomoon
      import matplotlib.pyplot as pl
      exomoon.plot()
-     pl.show()
 
   .. warning:: The ability to model moons is still in beta and hasn't been thoroughly tested. \
                Please `let us know <https://github.com/rodluger/planetplanet/issues>`_ if you find any bugs!
               
-
   .. role:: raw-html(raw)
      :format: html
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/exomoon.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
@@ -56,8 +55,7 @@ def plot():
   system.compute(time, lambda2 = 100)
 
   # Plot
-  system.plot_lightcurve(wavelength = 100)
+  system.plot_lightcurve(wavelength = 100, interactive = True)
 
 if __name__ == '__main__':
   plot()
-  pl.show()

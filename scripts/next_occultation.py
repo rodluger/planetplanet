@@ -5,7 +5,8 @@ next_occultation.py |github|
 ----------------------------
 
 Compute the time of the next occultation of a given planet
-and plot the light curve.
+and plot the light curve. Click on the event to see an
+animation.
 
   .. plot::
      :align: center
@@ -13,7 +14,6 @@ and plot the light curve.
      from scripts import next_occultation
      import matplotlib.pyplot as pl
      next_occultation.plot()
-     pl.show()
 
   .. role:: raw-html(raw)
      :format: html
@@ -44,9 +44,7 @@ def plot():
   time = np.linspace(t - 0.05, t + 0.05, 1000)
 
   system.compute(time)
-  fig, ax = system.plot_lightcurve()
-  return fig, ax
+  system.plot_lightcurve(interactive = True)
   
 if __name__ == '__main__':
-  fig, ax = plot()
-  pl.show()
+  plot()
