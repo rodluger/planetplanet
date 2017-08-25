@@ -1232,7 +1232,7 @@ class System(object):
 
     return ax, occ, xy
 
-  def plot_lightcurve(self, wavelength = 15.):
+  def plot_lightcurve(self, wavelength = 15., interactive = True):
     '''
 
     Plot the light curve of the system after running :py:func:`compute`.
@@ -1247,8 +1247,9 @@ class System(object):
 
     :param float wavelength: The wavelength in microns at which to plot the light curve. \
            Must be within the wavelength grid. Default `15`
-
-    :returns: :py:obj:`(fig, ax)`
+    :param bool interactive: Interactive (clickable) plot? Default :py:obj:`True`. If :py:obj:`False`, \
+           returns a :py:obj:`fig` and an :py:obj:`axis` instance.
+    :returns: :py:obj:`(fig, ax)` if :py:obj:`interactive` = :py:obj:`False`
 
     '''
 
@@ -1319,8 +1320,12 @@ class System(object):
                                           va = 'center', color = occultor.color, fontweight = 'bold',
                                           fontsize = 10, xytext = (0, dy), textcoords = 'offset points', clip_on = True))
               events.append(event_id)
-
-    return fig, ax
+    
+    # Interactive?
+    if interactive:
+      pl.show()
+    else:  
+      return fig, ax
   
   def plot_orbits(self, planets = 'all', nper = 1, cmap = 'inferno'):
     '''
