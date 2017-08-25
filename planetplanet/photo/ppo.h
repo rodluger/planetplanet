@@ -22,6 +22,7 @@
 #define ERR_NOT_IMPLEMENTED     1                                                     /**< Function/option not yet implemented */
 #define ERR_KEPLER              2                                                     /**< Error in the Kepler solver; probably didn't converge */
 #define ERR_INPUT               3                                                     /**< Bad input value */
+#define ERR_TOO_FEW_OCCS        4                                                     /**< No or too few occultations detected over the specified time interval */
 #define ERR_OOB                 -1                                                    /**< Warning: out of bounds */
 
 // Constants
@@ -152,7 +153,8 @@ typedef struct {
 
 // Global functions
 double Blackbody(double lambda, double T);
-int NBody(int np, BODY **body, SETTINGS settings);
+int NextOccultation(int nt, double time[nt], int np, BODY **body, SETTINGS settings, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]);
+int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]);
 int Kepler(int np, BODY **body, SETTINGS settings);
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr);
 void UnoccultedFlux(double r, double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr);

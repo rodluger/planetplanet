@@ -238,18 +238,33 @@ planets using the REBOUND N-Body code.
 @param np The number of particles (bodies) in the system
 @param body An array of BODY pointers to each of the bodies in the system
 @param settings An instance of the SETTINGS class
+@param halt_on_occultation Halt when a certain number of occultations of a given body have occurred?
+@param occulted The index of the body being occulted (only used if `halt_on_occultation` = 1)
+@param noccultors Size of occultor array (only used if `halt_on_occultation` = 1)
+@param occultors The indices of the occultors of `occulted` (only used if `halt_on_occultation` = 1)
+@param noccultations The number of occultations to look for (only used if `halt_on_occultation` = 1)
+@param occultation_times The times of each of the occultations, computed by this function (only used if `halt_on_occultation` = 1)
+@param occultation_inds The indices of the occultors corresponding to each of the occultations identified by this function (only used if `halt_on_occultation` = 1)
+@param occultation_durs The duration of each of the occultations identified by this function (only used if `halt_on_occultation` = 1)
 @return The error code
 
 */
-int NBody(int np, BODY **body, SETTINGS settings) {
-
-  int p, t, i;
+int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]) {
+    
+  int p, t, i, o, icenter;
   double M, E, f, d;
+  double dx, dy, dz;
   double cwf, swf, co, so, ci, si;
   int last_t;
   int moons = 0;
+  int ocount = 0;
   struct reb_simulation* r = reb_create_simulation();
   progress_t *progress = progress_new(body[0]->nt, 50);
+  int istart[noccultors];
+  if (halt_on_occultation) {
+    for (i = 0; i < noccultors; i++)
+      istart[i] = -1;
+  }
   
   if (!settings.quiet) {
     progress->fmt = "[:bar] :percent :elapsed";
@@ -328,7 +343,8 @@ int NBody(int np, BODY **body, SETTINGS settings) {
         // Go back and compute the ones we skipped
         // with a Keplerian solver using the current
         // osculating elements
-        // NOTE: I am unable to assign a planet as the primary here! Leads to terrible orbital errors. Need to investigate why.
+        // TODO: I am unable to assign a planet as the primary here! 
+        // Leads to terrible orbital errors. Need to investigate why.
         struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary);
 
         for (i = last_t + 1; i < t; i++) {
@@ -373,16 +389,78 @@ int NBody(int np, BODY **body, SETTINGS settings) {
             body[p]->z[i] = d * swf * si;
           
           }
-          
+            
         }
         
+      }
+      
+      // SPECIAL: Are we checking for occultations?
+      if (halt_on_occultation) {
+        
+        // Loop over the last set of Kepler steps
+        for (i = last_t + 1; i <= t; i++) {
+                    
+          // Loop over all possible occultors
+          for (o = 0; o < noccultors; o++) {
+      
+            // Skip self
+            if (occultors[o] == occulted) continue;
+      
+            // Compute the body-body separation between the two bodies
+            dx = body[occultors[o]]->x[i] - body[occulted]->x[i];
+            dy = body[occultors[o]]->y[i] - body[occulted]->y[i];
+            dz = body[occultors[o]]->z[i] - body[occulted]->z[i];
+            d = sqrt(dx * dx + dy * dy);
+      
+            // Is an occultation occurring?
+            if ((d <= body[occulted]->r + body[occultors[o]]->r) && (dz < 0)){
+              
+              // YES. Is this the first index of the occultation?
+              if (istart[o] < 0) {
+              
+                // YES. Let's keep track of it
+                istart[o] = i;
+                
+              }
+        
+            } else if (istart[o] > 0) {
+            
+              // NO. But one just ended!
+              // The index of the center of the occultation is...
+              icenter = (i + istart[o]) / 2;
+              
+              // Log the time of the occultation and the occultor index
+              occultation_times[ocount] = body[0]->time[icenter];
+              occultation_inds[ocount] = occultors[o];
+              occultation_durs[ocount++] = body[0]->time[i] - body[0]->time[istart[o]];
+      
+              // Check if we've already found `noccultations` occultations
+              if (ocount == noccultations) {
+        
+                // Return!
+                if (!settings.quiet)
+                  printf("\nFound %d occultations. Returning...\n", noccultations);
+                progress_free(progress);
+                return 0;
+        
+              }
+            
+              // Reset the occultation flag for this occultor
+              istart[o] = -1;
+
+            }
+      
+          }
+  
+        }
+      
       }
 
 	    // Reset
 	    last_t = t;
 	    
 	  }
-	  
+	    
 	  // Display the progress
 	  if (!settings.quiet) {
 	    if (t % 1000 == 0) 
@@ -391,9 +469,7 @@ int NBody(int np, BODY **body, SETTINGS settings) {
 
   }
   
-  
-  // BUG: The orbital elements for moons are screwed up.
-  
+  // TODO: BUG: The orbital elements for moons are screwed up.
 
   // Update the orbital elements of all the bodies
   for (p = 0; p < np; p++) {
@@ -409,11 +485,22 @@ int NBody(int np, BODY **body, SETTINGS settings) {
     
   } 
 
-    
-  if (!settings.quiet)
+  // Log
+  if (!settings.quiet) {
     printf("\n");
-  
+    if (halt_on_occultation) {
+      if (ocount > 0)
+        printf("Requested %d occultations, but only %d found.\n", noccultations, ocount);
+      else
+        printf("No occultations found over the specified time interval.\n");
+    } 
+  }
+
+  // Return!
   progress_free(progress);
-  return 0;
+  if (halt_on_occultation)
+    return ERR_TOO_FEW_OCCS;
+  else
+    return 0;
   
 }
