@@ -111,6 +111,41 @@ int ipow(int base, int exp){
 }
 
 /**
+Computes the time(s) of the next occultation(s) of the body of index
+`occulted` by the body(ies) of index(ices) `occultors`.
+
+@param nt The size of the time array
+@param time The array of times at which to evaluate the orbits
+@param np The number of particles (bodies) in the system
+@param body An array of BODY pointers corresponding to all the bodies in the system
+@param settings An instance of the SETTINGS class containing all settings
+@param occulted The index of the body being occulted
+@param noccultors Size of occultor array
+@param occultors The indices of the occultors of `occulted`
+@param noccultations The number of occultations to look for
+@param occultation_times The times of each of the occultations, computed by this function
+@param occultation_inds The indices of the occultors corresponding to each of the occultations identified by this function
+@param occultation_durs The duration of each of the occultations identified by this function
+@return The error code
+
+*/
+int NextOccultation(int nt, double time[nt], int np, BODY **body, SETTINGS settings, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]){
+    
+  int t, p;
+  
+  // Initialize the arrays for each body
+  for (p = 0; p < np; p++) {
+    body[p]->nt = nt;
+    for (t = 0; t < nt; t++)
+      body[p]->time[t] = time[t];
+  }
+  
+  // Find the occultations
+  return NBody(np, body, settings, 1, occulted, noccultors, occultors, noccultations, occultation_times, occultation_inds, occultation_durs);
+
+}
+
+/**
 Evolves the orbital positions of all bodies forward in time with either a Keplerian
 or an N-body solver.
 
@@ -119,6 +154,7 @@ or an N-body solver.
 @param np The number of particles (bodies) in the system
 @param body An array of BODY pointers corresponding to all the bodies in the system
 @param settings An instance of the SETTINGS class containing all settings
+@return The error code
 
 */
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
@@ -126,6 +162,8 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
   int t, p, o;
   double dx, dy, d;
   int iErr = ERR_NONE;
+  int dummyInt[0];
+  double dummyDouble[0];
   
   // Initialize the arrays for each body
   for (p = 0; p < np; p++) {
@@ -136,7 +174,7 @@ int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings){
   
   // Solve for the orbits
   if (settings.nbody)
-    iErr = NBody(np, body, settings);
+    iErr = NBody(np, body, settings, 0, 0, 0, dummyInt, 0, dummyDouble, dummyInt, dummyDouble);
   else
     iErr = Kepler(np, body, settings);
   if (iErr != ERR_NONE) return iErr;
@@ -198,6 +236,7 @@ Computes the full light curve for all bodies in the system.
 @param np The number of particles (bodies) in the system
 @param body An array of BODY pointers corresponding to all the bodies in the system
 @param settings An instance of the SETTINGS class containing all settings
+@return The error code
 
 */
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings){
@@ -212,6 +251,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
   double tmpx, tmpy;
   int t, p, o, w;
   int iErr = ERR_NONE;
+  int dummyInt[0];
+  double dummyDouble[0];
   double norm, sflx;
     
   // Initialize the arrays for each body
@@ -227,7 +268,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
     
   // Solve for the orbits
   if (settings.nbody)
-    iErr = NBody(np, body, settings);
+    iErr = NBody(np, body, settings, 0, 0, 0, dummyInt, 0, dummyDouble, dummyInt, dummyDouble);
   else
     iErr = Kepler(np, body, settings);
   if (iErr != ERR_NONE) {

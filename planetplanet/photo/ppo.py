@@ -236,7 +236,7 @@ class System(object):
     # Reset flag
     self._computed = False
 
-  def _malloc(self, nt, nw):
+  def _malloc(self, nt, nw, noccultors = 0, noccultations = 0):
     '''
     Allocate memory for all the C arrays.
 
@@ -259,7 +259,19 @@ class System(object):
                            ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nw),
                            ctypes.c_int, ctypes.POINTER(ctypes.POINTER(BODY)),
                            SETTINGS]
-
+    
+    # Are we just checking for occultations?
+    if (noccultors > 0) and (noccultations > 0):
+      self._NextOccultation = libppo.NextOccultation
+      self._NextOccultation.restype = ctypes.c_int
+      self._NextOccultation.argtypes = [ctypes.c_int, ctypes.ARRAY(ctypes.c_double, nt),
+                                        ctypes.c_int, ctypes.POINTER(ctypes.POINTER(BODY)),
+                                        SETTINGS, ctypes.c_int, ctypes.c_int, 
+                                        ctypes.ARRAY(ctypes.c_int, noccultors),
+                                        ctypes.c_int, ctypes.ARRAY(ctypes.c_double, noccultations),
+                                        ctypes.ARRAY(ctypes.c_int, noccultations),
+                                        ctypes.ARRAY(ctypes.c_double, noccultations)]
+    
     # Allocate memory for all the arrays
     for body in self.bodies:
       body.time = np.zeros(nt)
@@ -867,80 +879,99 @@ class System(object):
 
     return hist
 
-  def next_occultation(self, tstart, occulted, min_duration = 10, max_impact = 0.5, occultor = None, maxruns = 100, dt = 0.001):
+  def next_occultation(self, occulted, occultors = None, tstart = 0, tend = 100, dt = 0.001, noccultations = 1):
     '''
     Computes the time of the next occultation of body `occulted`.
-
-    :param float tstart: The time at which to start the occultation search (days)
-    :param occulted: The occulted body
-    :type occulted: :py:class:`BODY`
-    :param occultor: The occultor(s). If :py:obj:`None`, occultations by any body are considered. Default :py:obj:`None`
-    :type occultor: :py:class:`BODY` or :py:obj:`list`
-    :param float min_duration: Minimum occultation duration in **minutes**. Default `10`
-    :param float max_impact: The maximum impact parameter. Default `0.5`
-    :param int maxruns: Maximum number of 100-day runs to search for the occultation. Default `100`
-    :param float dt: The integration timestep
-
-    :returns: The time of the occultation. If no occultation was found, returns :py:class:`np.nan`
-
+    
+    :param occulted: The occulted body, passed as a string corresponding to the body name, the body instance, or \
+           the index of the body.
+    :param occultors: The occultor(s), passed as a list of strings, body instances, or indices. Default is to 
+           consider occultations by all bodies in the system.
+    :param float tstart: Time at which to start searching for occultations in days. Default `0.`
+    :param float tend: Time at which to end the search if fewer than `noccultations` occultations have been found (in days). Default `100.`
+    :param float dt: The search timestep in days. Occultations shorter than this value will be missed. Default `0.001` (about 2 minutes)
+    :param int noccultations: The number of occultations to search for. Once this many occultations have been found, halts the N-body \
+           integration and returns. Default `1`
+    :returns: Arrays corresponding to the times of the occultations (in days), the occulting bodies, and the durations (in minutes)
+    
     '''
-
-    # Quiet?
-    quiet = self.settings.quiet
-    self.settings.quiet = True
-    if quiet:
-      iterator = lambda x: range(x)
+    
+    assert tend > tstart, "The end time must be larger than the start time!"
+    
+    # Convert `occulted` to an index
+    if type(occulted) is str:
+      occulted = np.argmax([b.name == occulted for b in self.bodies])
+    elif occulted in self.bodies:
+      occulted = np.argmax(np.array(self.bodies) == occulted)
     else:
-      iterator = lambda x: tqdm(range(x))
+      try:
+        if occulted < len(self.bodies):
+          pass
+        else:
+          raise TypeError("")
+      except TypeError:
+        raise ValueError("Invalid value for `occulted`.")
 
-    # Convert occultors to indices if necessary
-    if occultor is None:
-      occultor = list(range(1, len(self.bodies)))
-    elif not hasattr(occultor, '__len__'):
-      occultor = [occultor]
-    for i, occ in enumerate(occultor):
-      if occ in self.bodies:
-        occultor[i] = np.argmax([b == occ for b in self.bodies])
-
-    # Loop until we find one
-    for n in iterator(maxruns):
-
-      # Compute the orbits, 100 days at a time
-      time = np.arange(tstart + n * 100., tstart + (n + 1) * 100., dt)
-      self.compute_orbits(time)
-
-      # Identify the different planet-planet events
-      inds = np.where(occulted.occultor > 0)[0]
-      difs = np.where(np.diff(inds) > 1)[0]
-
-      # Loop over individual ones
-      for i in inds[difs]:
-
-        # Loop over possible planet occultors
-        for occ in occultor:
-
-          # Is body `occ` occulting (but not behind the star)?
-          if (occulted.occultor[i] & 2 ** occ) and ((occ == 0) or (occulted.occultor[i] & 1 == 0)):
-
-            # Note that `i` is the last index of the occultation
-            duration = np.argmax(occulted.occultor[:i][::-1] & 2 ** occ == 0)
-            if duration * dt * 1440 >= min_duration:
-
-              # Compute the minimum impact parameter
-              idx = range(i - duration, i + 1)
-              b = np.sqrt((self.bodies[occ].x[idx] - occulted.x[idx]) ** 2 + (self.bodies[occ].y[idx] - occulted.y[idx]) ** 2) / (self.bodies[occ]._r + occulted._r)
-              ind = np.argmin(b)
-              if b[ind] <= max_impact:
-                if not quiet:
-                  print("The next occultation of %s by %s is at t = %.2f days." % (occulted.name, self.bodies[occ].name, time[idx[ind]]))
-                self.settings.quiet = quiet
-                return time[idx[ind]]
-
-    # Nothing found...
-    if not quiet:
-      print("No occultation of %s by %s found." % (occulted.name, self.bodies[occ].name))
-    self.settings.quiet = quiet
-    return np.nan
+    # If not set, default to occultations by all bodies
+    if occultors is None:
+      occultors = np.arange(len(self.bodies))
+    
+    # Convert `occultors` to an array of indices
+    occultors = np.atleast_1d(occultors)
+    for i, occultor in enumerate(occultors):
+      if type(occultor) is str:
+        occultors[i] = np.argmax([b.name == occultor for b in self.bodies])
+      elif occultor in self.bodies:
+        occultors[i] = np.argmax(np.array(self.bodies) == occultor)
+      else:
+        try:
+          if occultor < len(self.bodies):
+            pass
+          else:
+            raise TypeError("")
+        except TypeError:
+          raise ValueError("Invalid value for `occultors`.")
+    occultors = np.array(occultors, dtype = 'int32')
+    noccultors = len(occultors)
+    
+    # Get the time array
+    time = np.arange(tstart, tend, dt)
+    
+    # Construct empty occultation arrays
+    occultation_times = np.zeros(noccultations, dtype = 'float64') * np.nan
+    occultation_inds = np.zeros(noccultations, dtype = 'int32')
+    occultation_durs = np.zeros(noccultations, dtype = 'float64')
+    
+    # Reset and allocate memory
+    self._reset()
+    for body in self.bodies:
+      body.u = np.array([], dtype = float)
+    self._malloc(len(time), 1, noccultors = noccultors, noccultations = noccultations)
+    
+    # Final check: currently only supported for the N-body integrator.
+    # TODO: Make this work for the Keplerian integrator.
+    assert self.settings.nbody, "Currently, `next_occultation` works only with the N-Body solver. Please set `nbody = True`."
+    
+    # Call the orbit routine
+    err = self._NextOccultation(len(time), np.ctypeslib.as_ctypes(time), len(self.bodies),
+                                self._ptr_bodies, self.settings, occulted, noccultors,
+                                np.ctypeslib.as_ctypes(occultors), noccultations, 
+                                np.ctypeslib.as_ctypes(occultation_times),
+                                np.ctypeslib.as_ctypes(occultation_inds),
+                                np.ctypeslib.as_ctypes(occultation_durs))
+    
+    times = []
+    occultors = []
+    durations = []
+    for t, i, d in zip(occultation_times, occultation_inds, occultation_durs):
+      if not np.isnan(t):
+        if not self.settings.quiet:
+          print("%s occulted by %s at t = %8.3f days lasting %5.2f minutes." % (self.bodies[occulted].name, self.bodies[i].name, t, d / MINUTE))
+        times.append(t)
+        occultors.append(self.bodies[i])
+        durations.append(d / MINUTE)
+      
+    return times, occultors, durations          
 
   def plot_occultation(self, body, time, wavelength = 15., interval = 50, gifname = None, spectral = False, **kwargs):
     '''

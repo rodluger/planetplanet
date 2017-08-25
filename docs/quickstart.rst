@@ -362,7 +362,21 @@ b at 1.3 and 1.87 days. If we click on the one at 1.87 days, we can see its ligh
 Note that by default we display the flux normalized to the planet's total emission at full phase. The 
 :py:obj:`flux` attribute of planet c contains the actual flux in :math:`\mathrm{W/m^2}` if that's what
 you need.
-   
+
+Hunting for occultations
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The last thing we'll go over here is how to use :py:obj:`planetplanet` to predict when PPOs occur. We
+make this easy via the :py:obj:`next_occultation() <planetplanet.photo.System.next_occultation>` method,
+which returns the times (and durations) of the next :py:obj:`N` occultations of a given body in the system.
+This `example script <scripts/next_occultation.html>`_ shows how to do this. You can easily sort the results
+to find the longest upcoming occultation, which for a given instance of the system can reveal fun events like
+this prograde-retrograde occultation of TRAPPIST-1c by TRAPPIST-1b lasting *5 hours*!
+
+.. image:: /retro.gif
+   :width: 400px
+   :align: center
+
 Simulating observations
 ~~~~~~~~~~~~~~~~~~~~~~~
 
