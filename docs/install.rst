@@ -1,12 +1,13 @@
 Installation
 ============
 
+.. note:: Installation via `pip` will be available only once the paper is published.
+
 Using :py:obj:`pip`:
 
 .. code-block:: bash
 
    pip install planetplanet
-
 
 To upgrade:
 

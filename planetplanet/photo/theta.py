@@ -4,9 +4,9 @@
 theta.py |github|
 -----------------
 
-This module enables sampling from the :math:`\theta` distribution for the
+This module enables sampling from the :math:`\\theta` distribution for the
 TRAPPIST-1 planets derived using the Monte Carlo method described in the 
-paper. :math:`\theta` is the polar angle of the angular momentum vector; we 
+paper. :math:`\\theta` is the polar angle of the angular momentum vector; we 
 assume all planets in the TRAPPIST-1 system have angular momentum vectors with 
 polar angle drawn from this distribution.
 
