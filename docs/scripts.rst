@@ -15,6 +15,7 @@ Simple Examples
    draw the orbit <scripts/draw_orbit>
    hypothetical mutual transit <scripts/mutual_transit>
    interactive eyeball <scripts/eyeball>
+   MCMC example <scripts/mcmc_example>
    next occultation <scripts/next_occultation>
    occultation of TRAPPIST-1c <scripts/occultation>
    sample transit <scripts/transit>
