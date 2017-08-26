@@ -77,6 +77,7 @@ def Triple_bc():
   fig.set_size_inches(12, 6)
   fig.subplots_adjust(top = 0.7)
   ax.set_title("")
+  ax.set_xlabel("Time [days]", fontweight = 'bold', fontsize = 10)
 
   # Plot the orbits of all bodies
   colors = ['k', 'firebrick', 'coral']
@@ -184,6 +185,7 @@ def Stacked_bc(N = 10):
   # Center on the event
   ax.set_xlim(-0.1, 0.1)
   ax.set_title("")
+  ax.set_xlabel("Time [days]", fontweight = 'bold', fontsize = 10)
 
   # Plot the orbits of all bodies
   colors = ['k', 'firebrick', 'coral']

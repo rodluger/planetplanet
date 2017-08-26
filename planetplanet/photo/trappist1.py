@@ -84,13 +84,21 @@ def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
              (12.35294, 0.12e-3), 
              (18.767, 0.004)]
   
-  transits = [(7322.51736, 0.00010), 
-              (7282.80728, 0.00019), 
-              (7670.14165, 0.00035), 
-              (7660.37859, 0.00038),
-              (7671.39767, 0.00023), 
-              (7665.34937, 0.00021), 
-              (7662.55284, 0.00037)]
+  # Transit times, t0 − 2,450,000 (BJD_{TDB})
+  # These were taken from the Excel source data corresponding
+  # to Extended Data Figure 4 of Gillon et al. (2017), downloaded from
+  # http://www.nature.com/nature/journal/v542/n7642/source_data/nature21360-sf4.xlsx
+  # These are the *last* transit times measured in the discovery paper.
+  # Note that photodynamical integrations will only be accurate for integrations
+  # starting close to this time (7670 corresponds to 12:00:00 UT October 8, 2016).
+  # We will update these ephemerides as more TTV data becomes available.
+  transits = [(7671.52876, 0.00033), 
+              (7670.29869, 0.00035), 
+              (7670.14198, 0.00066), 
+              (7672.5793, 0.0026),
+              (7671.39279, 0.00072), 
+              (7665.35151, 0.00028), 
+              (7662.55463, 0.00056)]
   
   masses = [(0.85, 0.72), 
             (1.38, 0.61), 

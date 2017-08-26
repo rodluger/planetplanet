@@ -13,7 +13,6 @@ planets transit the star and occult each other simultaneously.
      from scripts import mutual_transit
      import matplotlib.pyplot as pl
      mutual_transit.plot()
-     pl.show()
 
   .. role:: raw-html(raw)
      :format: html
@@ -64,9 +63,7 @@ def plot():
   time = np.linspace(-0.6, 0.6, 10000)
   system.compute(time)
   fig, axlc, axxz, axim = system.plot_occultation('A', -0.05)
-
-  return fig, axlc, axxz, axim
+  pl.show()
   
 if __name__ == '__main__':
   plot()
-  pl.show()

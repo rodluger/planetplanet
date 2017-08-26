@@ -3,7 +3,7 @@ Scripts
 
 A collection of scripts that use :py:obj:`planetplanet` in various ways to compute
 and plot occultations, transits, phase curves, etc. Several of these were used to
-generate the figures in the `paper <#>`_.
+generate the figures in the `paper <PPOs.pdf>`_.
 
 Simple Examples
 ~~~~~~~~~~~~~~~

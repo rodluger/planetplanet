@@ -13,4 +13,4 @@ it natively supports the computation of transit light curves, secondary eclipse 
 and planetary phase curves, as well as occultations of planets by moons and mutual transits of planets
 across the face of their host star.
 
-Check out our `paper <#>`_ for more information.
+Check out our `paper <PPOs.pdf>`_ for more information.

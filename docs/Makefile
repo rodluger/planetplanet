@@ -19,7 +19,7 @@ help:
 %: Makefile
 # Copy title image
 	@cp title.png .build/html/_images/title.png
-#@cp transit.gif .build/html/_images/transit.gif
+	@cp PPOs.pdf .build/html/PPOs.pdf
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 ifdef PLANETPLANET_DOCS
 # Export to server
