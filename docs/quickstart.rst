@@ -7,8 +7,6 @@ encouraged to also check out the `scripts <scripts.html>`_ page for a collection
 including several of the scripts used to plot the figures in the paper. Those scripts cover most
 of the functionality of :py:obj:`planetplanet`.
 
-.. todo:: This guide is still under development.
-
 Instantiating a planetary system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -230,6 +228,7 @@ set the attribute directly:
 .. code-block:: python
    
    >>> planet.phasecurve = True
+   >>> system.compute(time, lambda1 = 0.1, lambda2 = 15, R = 1000)
    >>> system.plot_lightcurve(wavelength = 10)
    
 .. plot::
@@ -327,7 +326,7 @@ and Agol (2017) for the planets' mutual inclinations. First, let's look at the o
    time = np.arange(0, 10, 0.001)
    system = pp.Trappist1(sample = True)
    system.compute(time)
-   system.plot_orbits()
+   system.plot_orbits(cmap = 'jet_r')
    pl.show()
 
 The plot in the lower left-hand corner is the view from Earth. We can also plot the full system light curve as before:
