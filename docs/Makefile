@@ -19,11 +19,12 @@ help:
 %: Makefile
 # Copy title image
 	@cp title.png .build/html/_images/title.png
-#@cp transit.gif .build/html/_images/transit.gif
+	@cp PPOs.pdf .build/html/PPOs.pdf
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 ifdef PLANETPLANET_DOCS
 # Export to server
 	@mkdir -p .build/html/_images/
 	@rsync -aP --times --delete --exclude='*.pdf' --exclude='*.hires.png' .build/html/ $(PLANETPLANET_DOCS)
+	@rsync --times .build/html/PPOs.pdf $(PLANETPLANET_DOCS)
 	@echo "Export finished."
 endif

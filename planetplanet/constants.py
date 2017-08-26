@@ -48,6 +48,9 @@ SECOND = 1. / DAYSEC
 #: Days in 1 minute
 MINUTE = 1. / 1440.
 
+#: Noon UT on October 8, 2016 in BJD − 2,450,000
+OCTOBER_08_2016 = 7670.
+
 #: 1 AU in Earth radii
 AUREARTH = AUM / REARTH
 #: 1 solar mass in Earth masses

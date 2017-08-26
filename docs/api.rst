@@ -7,6 +7,6 @@ Detailed documentation of the Python and C code.
    :maxdepth: 3
    
    constants.py <api/constants>
-   api/dynamics
+   dynamics <api/dynamics>
    api/photo
    api/detect

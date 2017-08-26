@@ -39,6 +39,9 @@ def plot():
   system = Trappist1(sample = True, nbody = True, seed = 1234)
 
   # Get the next 10 occultations of c
+  # I'm starting the integration on May 26, 2017. The ephemerides aren't really accurate
+  # given the transit times from Gillon et al. (2017), which are from October 2016.
+  # But that's ok for this example.
   times, _, durations = system.next_occultation(system.c, occultors = system.b, noccultations = 10, tstart = 7900., tend = 8000.)
   
   # Grab the longest one

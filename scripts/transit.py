@@ -12,8 +12,7 @@ A simple transit light curve. Here we compare it to one generated with :py:obj:`
      from scripts import transit
      import matplotlib.pyplot as pl
      transit.plot()
-     pl.show()
-  
+     
   .. role:: raw-html(raw)
      :format: html
      
@@ -47,10 +46,7 @@ def plot():
   time = np.arange(-0.025, 0.025, 0.1 * MINUTE)
   system.compute(time, lambda1 = 0.5, lambda2 = 2.)
   flux1 = system.star.flux[:,0] / system.star.flux[0,0]
-
-  # Plot it
-  system.plot_occultation('star', 0, spectral = False)
-
+  
   # Compute the light curve w/ batman optimization
   system = System(star, planet, batmanopt = True)
   system.compute(time, lambda1 = 0.5, lambda2 = 2.)
@@ -58,10 +54,14 @@ def plot():
 
   # Plot it
   fig = pl.figure()
-  pl.plot(system.star.time, flux1, label = 'Standard')
-  pl.plot(system.star.time, flux2, '--', label = 'Batman')
+  pl.plot(system.star.time, flux1, label = 'planetplanet')
+  pl.plot(system.star.time, flux2, '--', label = 'batman')
   pl.legend()
+
+  # Plot it interactively
+  _, ax, _, _ = system.plot_occultation('star', 0, spectral = False)
+  ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
+  pl.show()
 
 if __name__ == '__main__':
   plot()
-  pl.show()

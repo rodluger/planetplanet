@@ -13,7 +13,6 @@ planets transit the star and occult each other simultaneously.
      from scripts import triple_transit
      import matplotlib.pyplot as pl
      triple_transit.plot()
-     pl.show()
 
   .. role:: raw-html(raw)
      :format: html
@@ -122,13 +121,17 @@ def plot():
 
   axlc.annotate("", xy = (star.time[t[4]] * 1440, 1.006), xycoords = "data", xytext = (80, 63), textcoords = "offset points", 
                 clip_on = False, arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-    
+
+  # Save it if we're running this as a script
+  if __name__ == '__main__':
+    fig.savefig('triple.pdf', bbox_inches = 'tight')
+
   # Animate!
   fig2, axlc, axxz, axim = system.plot_occultation('A', -0.05, nz = 51, draw_ellipses = False, draw_terminator = False) #, gifname = 'triple')
-
-  return fig, fig2
+  axlc.set_xlabel('Time [days]', fontsize = 10, fontweight = 'bold')
+  
+  # Show both plots
+  pl.show()
 
 if __name__ == '__main__':
-  fig1, fig2 = plot()
-  fig1.savefig('triple.pdf', bbox_inches = 'tight')
-  pl.show()
+  plot()

@@ -41,6 +41,7 @@ def plot():
   system.c.Phi = 30
 
   # Compute an occultation by `b`
+  # This would be on December 3, 2021
   time = np.linspace(9552.9364, 9552.9564, 100)
   system.compute(time)
 

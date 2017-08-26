@@ -320,7 +320,7 @@ class System(object):
     photodynamical core, populates all bodies with their individual light curves,
     and flags all occultation events.
 
-    :param array_like time: The times at which to evaluate the light curve in days
+    :param array_like time: The times at which to evaluate the light curve (BJD − 2,450,000)
     :param float lambda1: The start point of the wavelength grid in microns. Default `5`
     :param float lambda2: The end point of the wavelength grid in microns. Default `15`
     :param float R: The spectrum resolution, :math:`R = \\frac{\lambda}{\Delta\lambda}`. Default `100`
@@ -437,7 +437,7 @@ class System(object):
     Run the dynamical code to compute the positions of all bodies over a given `time`
     array. This method does not compute light curves, but it does check for occultations.
 
-    :param array_like time: The times at which to store the body positions in days
+    :param array_like time: The times at which to store the body positions (BJD − 2,450,000)
 
     '''
 
@@ -507,7 +507,7 @@ class System(object):
     fig, ax = pl.subplots(figsize = (12,4))
     ax.set_title(r"%s" % self.filter.name)
     ax.set_ylabel("Relative Flux", fontweight = 'bold', fontsize = 10)
-    ax.set_xlabel("Time [days]", fontweight = 'bold', fontsize = 10)
+    ax.set_xlabel("Time [BJD − 2,450,000]", fontweight = 'bold', fontsize = 10)
 
     # Plot lightcurve
     self.filter.lightcurve.plot(ax0 = ax)
@@ -649,8 +649,8 @@ class System(object):
        system.scatter_plot(0, 365 * 3)
        pl.show()
 
-    :param float tstart: The integration start time in days
-    :param float tend: The integration end time in days
+    :param float tstart: The integration start time (BJD − 2,450,000)
+    :param float tend: The integration end time (BJD − 2,450,000)
     :param float dt: The time resolution in days. Occultations shorter than this \
            will not be registered.
 
@@ -813,8 +813,8 @@ class System(object):
          pl.close(fig)
        pl.show()
 
-    :param float tstart: The integration start time in days
-    :param float tend: The integration end time in days
+    :param float tstart: The integration start time (BJD − 2,450,000)
+    :param float tend: The integration end time (BJD − 2,450,000)
     :param float dt: The time resolution in days. Occultations shorter than this \
            will not be registered.
 
@@ -879,7 +879,7 @@ class System(object):
 
     return hist
 
-  def next_occultation(self, occulted, occultors = None, tstart = 0, tend = 100, dt = 0.001, noccultations = 1):
+  def next_occultation(self, occulted, occultors = None, tstart = OCTOBER_08_2016, tend = OCTOBER_08_2016 + 100, dt = 0.001, noccultations = 1):
     '''
     Computes the time of the next occultation of body `occulted`.
     
@@ -887,12 +887,12 @@ class System(object):
            the index of the body.
     :param occultors: The occultor(s), passed as a list of strings, body instances, or indices. Default is to 
            consider occultations by all bodies in the system.
-    :param float tstart: Time at which to start searching for occultations in days. Default `0.`
-    :param float tend: Time at which to end the search if fewer than `noccultations` occultations have been found (in days). Default `100.`
+    :param float tstart: Time at which to start searching for occultations (BJD − 2,450,000). Default `8000.` (12:00:00 UT October 8, 2016)
+    :param float tend: Time at which to end the search if fewer than `noccultations` occultations have been found (BJD − 2,450,000). Default `8100.`
     :param float dt: The search timestep in days. Occultations shorter than this value will be missed. Default `0.001` (about 2 minutes)
     :param int noccultations: The number of occultations to search for. Once this many occultations have been found, halts the N-body \
            integration and returns. Default `1`
-    :returns: Arrays corresponding to the times of the occultations (in days), the occulting bodies, and the durations (in minutes)
+    :returns: Arrays corresponding to the times of the occultations (BJD − 2,450,000), the occulting bodies, and the durations (in minutes)
     
     '''
     
@@ -919,7 +919,7 @@ class System(object):
     # Convert `occultors` to an array of indices
     occultors = np.atleast_1d(occultors)
     for i, occultor in enumerate(occultors):
-      if type(occultor) is str:
+      if (type(occultor) is str) or (type(occultor) is np.str_):
         occultors[i] = np.argmax([b.name == occultor for b in self.bodies])
       elif occultor in self.bodies:
         occultors[i] = np.argmax(np.array(self.bodies) == occultor)
@@ -979,7 +979,7 @@ class System(object):
     
     :param body: The occulted body
     :type body: :py:class:`BODY`
-    :param float time: The time of the occultation event in days
+    :param float time: The time of the occultation event (BJD − 2,450,000)
     :param float wavelength: The wavelength in microns at which to plot the light curve. \
            Must be within the wavelength grid. Default `15`
     :param int interval: The interval between frames in the animation in ms. Default `50`
@@ -1065,7 +1065,7 @@ class System(object):
         fluxw += 1
       axlc.plot(body.time_hr[t], fluxw, 'k-', label = r"$" + '{:.4s}'.format('{:0.2f}'.format(1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
 
-    axlc.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
+    axlc.set_xlabel('Time [BJD − 2,450,000]', fontweight = 'bold', fontsize = 10)
     axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
     axlc.get_yaxis().set_major_locator(MaxNLocator(4))
     axlc.get_xaxis().set_major_locator(MaxNLocator(4))
@@ -1303,7 +1303,7 @@ class System(object):
     fig.canvas.mpl_connect('pick_event', self._onpick)
 
     # Appearance
-    ax.set_xlabel('Time [days]', fontweight = 'bold', fontsize = 10)
+    ax.set_xlabel('Time [BJD − 2,450,000]', fontweight = 'bold', fontsize = 10)
     ax.set_ylabel(r'Normalized Flux @ %.1f$\mathbf{\mu}$m' % wavelength, fontweight = 'bold', fontsize = 10)
     ax.get_yaxis().set_major_locator(MaxNLocator(4))
     ax.get_xaxis().set_major_locator(MaxNLocator(4))
@@ -1475,7 +1475,7 @@ class System(object):
   @property
   def time(self):
     '''
-    Time array in days.
+    Time array in days, BJD − 2,450,000
 
     '''
 
@@ -1493,7 +1493,7 @@ class System(object):
   @property
   def time_hr(self):
     '''
-    High-resolution time array in days.
+    High-resolution time array in days, BJD − 2,450,000
 
     '''
 

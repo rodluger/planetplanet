@@ -19,6 +19,7 @@ Documentation
    scripts
    api
    Github <https://github.com/rodluger/planetplanet>
+   Submit an issue <https://github.com/rodluger/planetplanet/issues>
    
 Indices and tables
 ==================
