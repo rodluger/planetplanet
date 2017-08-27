@@ -19,7 +19,7 @@ eclipses, phase curves, mutual transits, planet-moon events, and more.
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
 from ..detect import jwst
-from .eyeball import DrawEyeball
+from .eyeball import DrawEyeball, GetAngles
 from .structs import *
 import ctypes
 import numpy as np
@@ -1213,41 +1213,13 @@ class System(object):
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
     z0 = occulted.z_hr[t]
+    vx0 = occulted.vx_hr[t]
+    vy0 = occulted.vy_hr[t]
+    vz0 = occulted.vz_hr[t]
 
     # Get the angles
-    x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
-    y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
-    z = z0
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-
-    # Coordinates of the hotspot in a frame where the planet is
-    # at x, y, z = (0, 0, r), at full phase
-    xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
-    yprime = occulted._r * np.sin(occulted._Phi)
-    zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
-
-    # Transform to the rotated sky plane
-    rxz = np.sqrt(x ** 2 + z ** 2)
-    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
-    ystar = (rxz * yprime + y * zprime) / r
-    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
-
-    # Transform back to the true sky plane
-    xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
-                   ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
-    x = x0
-    y = y0
-
-    # Distance from planet center to hotspot
-    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
-
-    # Get the rotation and phase angles
-    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
-    if (zstar - z) <= 0:
-      theta = np.arccos(d / occulted._r)
-    else:
-      theta = -np.arccos(d / occulted._r)
-
+    theta, gamma = GetAngles(x0, y0, z0, vx0, vy0, vz0, Lambda = occulted._Lambda, Phi = occulted._Phi)
+    
     # Get the occultor
     if occultor is None:
       occultor = []

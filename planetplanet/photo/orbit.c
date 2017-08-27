@@ -205,6 +205,12 @@ int Kepler(int np, BODY **body, SETTINGS settings){
       body[p]->y[t] = r * (so * cwf + co * swf * ci);
       body[p]->z[t] = r * swf * si;
       
+      // Sky velocity. CURRENTLY NOT WORKING.
+      // TODO: Update with expressions from Murray and Dermott
+      body[p]->vx[t] = 0;
+      body[p]->vy[t] = 0;
+      body[p]->vz[t] = 0;
+      
     }
   
     // Display the progress
