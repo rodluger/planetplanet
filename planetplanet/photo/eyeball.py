@@ -387,9 +387,9 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
     # Get the rotation and phase angles
     gamma = np.arctan2(ystar, xstar) + np.pi
     if zstar <= 0:
-      theta = np.arccos(d / b._r)
+      theta = np.arccos(d)
     else:
-      theta = -np.arccos(d / b._r)
+      theta = -np.arccos(d)
       
     # Plot the radial vector
     if draw_orbital_vectors:
