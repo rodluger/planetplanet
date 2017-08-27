@@ -322,6 +322,9 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
 	  body[p]->x[0] = r->particles[p].x;
 	  body[p]->y[0] = r->particles[p].y;
 	  body[p]->z[0] = r->particles[p].z;
+	  body[p]->vx[0] = r->particles[p].vx;
+	  body[p]->vy[0] = r->particles[p].vy;
+	  body[p]->vz[0] = r->particles[p].vz;
 	}
 	
 	// Integrate!
@@ -339,6 +342,9 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
         body[p]->x[t] = r->particles[p].x;
         body[p]->y[t] = r->particles[p].y;
         body[p]->z[t] = r->particles[p].z;
+        body[p]->vx[t] = r->particles[p].vx;
+        body[p]->vy[t] = r->particles[p].vy;
+        body[p]->vz[t] = r->particles[p].vz;
         
         // Go back and compute the ones we skipped
         // with a Keplerian solver using the current
@@ -356,6 +362,9 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
             body[p]->x[i] = body[p]->x[t];
             body[p]->y[i] = body[p]->y[t];
             body[p]->z[i] = body[p]->z[t];
+            body[p]->vx[i] = body[p]->vx[t];
+            body[p]->vy[i] = body[p]->vy[t];
+            body[p]->vz[i] = body[p]->vz[t];
             
           } else {
           
@@ -387,6 +396,12 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
             body[p]->x[i] = d * (co * cwf - so * swf * ci);
             body[p]->y[i] = d * (so * cwf + co * swf * ci);
             body[p]->z[i] = d * swf * si;
+            
+            // Sky velocity. Currently assuming constant
+            // TODO: Update with correct expressions from Murray and Dermott
+            body[p]->vx[i] = body[p]->vx[t];
+            body[p]->vy[i] = body[p]->vy[t];
+            body[p]->vz[i] = body[p]->vz[t];
           
           }
             

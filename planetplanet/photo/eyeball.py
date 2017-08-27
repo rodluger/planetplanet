@@ -24,6 +24,14 @@ from matplotlib.widgets import Slider
 
 __all__ = ['DrawEyeball', 'DrawOrbit']
 
+def rodrigues(v, k, theta):
+  return v * np.cos(theta) + np.cross(k, v) * np.sin(theta) + np.dot(k, v) * (1 - np.cos(theta))
+
+def ucross(u, v):
+  res = np.cross(u, v)
+  res /= np.sqrt(np.sum(res ** 2))
+  return res
+
 def LimbDarkenedFlux(lam, z, teff = 2500, limbdark = [1.]):
   '''
   
@@ -187,6 +195,9 @@ def DrawEyeball(x0 = 0.5, y0 = 0.5, r = 0.5, radiancemap = RadiativeEquilibriumM
     func = lambda lam, z: LimbDarkenedFlux(lam, z, teff = teff, limbdark = limbdark)
   elif radiancemap.maptype == MAP_ELLIPTICAL_DEFAULT:
     # TODO: Technically we should pass the albedo and night side temperature to the function here
+    # But the albedo doesn't matter for drawing because of the normalization; the night side
+    # temperature could matter, but only if it's comparable to the dayside temperature, otherwise
+    # the nightside is dark no matter what.
     func = RadiativeEquilibriumFlux
   else:
     func = radiancemap.ctypes
@@ -303,7 +314,7 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
   star = Star('A', r = 0.01)
   b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
              Phi = Phi, Lambda = Lambda, airless = True, phasecurve = True)
-  system = System(star, b, mintheta = 0.001)
+  system = System(star, b, mintheta = 0.001, nbody = True) # DEBUG!!!
   time = np.linspace(-5, 5, 1000)
   if plot_phasecurve:
     system.compute(time)
@@ -346,46 +357,46 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
   axes = [ax]
   for i in inds:
     
-    # The position of the planet in the rotated sky plane
-    x = b.x[i] * np.cos(b._Omega) + b.y[i] * np.sin(b._Omega)
-    y = b.y[i] * np.cos(b._Omega) - b.x[i] * np.sin(b._Omega)
-    z = b.z[i]
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-        
-    # Coordinates of the hotspot in a frame where the planet is
-    # at x, y, z = (0, 0, r), at full phase
-    xprime = b._r * np.cos(b._Phi) * np.sin(b._Lambda)
-    yprime = b._r * np.sin(b._Phi)
-    zprime = r - b._r * np.cos(b._Phi) * np.cos(b._Lambda)
-
-    # Transform to the rotated sky plane
-    rxz = np.sqrt(x ** 2 + z ** 2)
-    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
-    ystar = (rxz * yprime + y * zprime) / r
-    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
+    # The position vector of the center of the planet
+    r = np.array([b.x[i], b.y[i], b.z[i]])
     
-    # Transform back to the true sky plane
-    xstar, ystar = xstar * np.cos(b._Omega) - ystar * np.sin(b._Omega), \
-                   ystar * np.cos(b._Omega) + xstar * np.sin(b._Omega)
-    x = b.x[i]
-    y = b.y[i]
+    # The velocity vector of the planet
+    v = np.array([b.vx[i], b.vy[i], b.vz[i]])
+    
+    # The position vector of the substellar point,
+    # relative to the planet center
+    rstar = -r / np.sqrt(r ** 2).sum()
+    
+    '''
+    # Longitudinal offset: rotate about the (r x v) axis
+    k = ucross(r, v)
+    rstar = rodrigues(rstar, k, Lambda * np.pi / 180)
+    
+    # Latitudinal offset: rotate about the (r x v) x r axis
+    k = ucross(k, r)
+    rstar = rodrigues(rstar, k, -Phi * np.pi / 180)
+    '''
+    
+    # The Cartesian coordinates of the hotspot,
+    # relative to the planet center
+    xstar, ystar, zstar = rstar
     
     # Distance from planet center to hotspot
-    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
+    d = np.sqrt(xstar ** 2 + ystar ** 2)
     
     # Get the rotation and phase angles
-    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
-    if (zstar - z) <= 0:
+    gamma = np.arctan2(ystar, xstar) + np.pi
+    if zstar <= 0:
       theta = np.arccos(d / b._r)
     else:
       theta = -np.arccos(d / b._r)
       
     # Plot the radial vector
     if draw_orbital_vectors:
-      ax.plot([0, x], [0, y], 'k-', alpha = 0.5, lw = 1)
+      ax.plot([0, b.x[i]], [0, b.y[i]], 'k-', alpha = 0.5, lw = 1)
   
     # Get the figure coordinates of the point
-    disp_coords = ax.transData.transform((x, y))
+    disp_coords = ax.transData.transform((b.x[i], b.y[i]))
     xf, yf = fig.transFigure.inverted().transform(disp_coords)
   
     # Draw the planet
@@ -394,8 +405,8 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
     
     # Indicate the orbital phase
     if label_phases:
-      dx = x / r
-      dy = y / r
+      dx = b.x[i] / r
+      dy = b.y[i] / r
       dr = np.sqrt(dx ** 2 + dy ** 2)
       dx *= 16 * size / dr
       dy *= 16 * size / dr

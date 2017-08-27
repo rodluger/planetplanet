@@ -84,6 +84,9 @@ typedef struct {
   double *x;                                                                          /**< The Cartesian x position on the sky (right positive) */
   double *y;                                                                          /**< The Cartesian y position on the sky (up positive) */
   double *z;                                                                          /**< The Cartesian z position on the sky (into sky positive) */
+  double *vx;                                                                         /**< The Cartesian x velocity on the sky (right positive) */
+  double *vy;                                                                         /**< The Cartesian y velocity on the sky (up positive) */
+  double *vz;                                                                         /**< The Cartesian z velocity on the sky (into sky positive) */  
   int *occultor;                                                                      /**< The array of occultor bit flags */
   double *flux;                                                                       /**< The grid of observed flux from this body in time/wavelength */
   double *total_flux;                                                                 /**< The total unocculted flux of this body at full phase */

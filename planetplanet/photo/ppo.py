@@ -284,6 +284,12 @@ class System(object):
       body._y = np.ctypeslib.as_ctypes(body.y)
       body.z = np.zeros(nt)
       body._z = np.ctypeslib.as_ctypes(body.z)
+      body.vx = np.zeros(nt)
+      body._vx = np.ctypeslib.as_ctypes(body.vx)
+      body.vy = np.zeros(nt)
+      body._vy = np.ctypeslib.as_ctypes(body.vy)
+      body.vz = np.zeros(nt)
+      body._vz = np.ctypeslib.as_ctypes(body.vz)
       body.occultor = np.zeros(nt, dtype = 'int32')
       body._occultor = np.ctypeslib.as_ctypes(body.occultor)
       body.total_flux = np.zeros(nw)
@@ -385,6 +391,9 @@ class System(object):
       body.x_hr = np.array(body.x)
       body.y_hr = np.array(body.y)
       body.z_hr = np.array(body.z)
+      body.vx_hr = np.array(body.vx)
+      body.vy_hr = np.array(body.vy)
+      body.vz_hr = np.array(body.vz)
 
       # Store the binned light curve
       if self.settings.oversample > 1:
@@ -399,7 +408,10 @@ class System(object):
         body.x = body.x[oversample // 2::oversample]
         body.y = body.y[oversample // 2::oversample]
         body.z = body.z[oversample // 2::oversample]
-
+        body.vx = body.vx[oversample // 2::oversample]
+        body.vy = body.vy[oversample // 2::oversample]
+        body.vz = body.vz[oversample // 2::oversample]
+        
         # Get all bodies that occult at some point over the exposure
         # The operation `bitwise_or.reduce` is *magical*
         body.occultor = np.bitwise_or.reduce(body.occultor.reshape(-1, oversample), axis = 1)
