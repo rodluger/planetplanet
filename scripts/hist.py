@@ -102,10 +102,10 @@ def Plot():
   # Load
   print("Loading...")
   for n in tqdm(range(1000)):
-    try:
+    if os.path.exists(os.path.join(datapath, 'hist%03d.npz' % n)):
       data = np.load(os.path.join(datapath, 'hist%03d.npz' % n))
       data['hist'][0]
-    except FileNotFoundError:
+    else:
       if n == 0:
         raise Exception("Please run `Compute()` first.")
       break
