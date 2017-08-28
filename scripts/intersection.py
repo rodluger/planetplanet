@@ -27,7 +27,11 @@ import numpy as np
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider
 from scipy.optimize import brentq, minimize_scalar
-import timeit, builtins
+import timeit
+try:
+  import builtins
+except:
+  import __builtin__ as builtins
 tol = 1e-5
 
 def _test():
