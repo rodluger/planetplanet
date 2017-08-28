@@ -381,8 +381,7 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0., ec
   star = Star('A', r = 0.01)
   b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, w = w, 
              Phi = Phi, Lambda = Lambda, airless = True, phasecurve = True)
-  # TODO: Use the Kepler solver below eventually
-  system = System(star, b, mintheta = 0.001, nbody = True)
+  system = System(star, b, mintheta = 0.001)
   time = np.linspace(-5, 5, 1000)
   if plot_phasecurve:
     system.compute(time)

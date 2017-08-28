@@ -154,7 +154,7 @@ planets with a simple multi-Keplerian solver.
 int Kepler(int np, BODY **body, SETTINGS settings){
   
   double M, E, f, r;
-  double  cwf, swf, co, so, ci, si;
+  double cwf, swf, co, so, ci, si, ecw, esw, amp;
   int iErr = ERR_NONE;
   int t, p;
   progress_t *progress = progress_new(body[0]->nt, 50);
@@ -205,11 +205,14 @@ int Kepler(int np, BODY **body, SETTINGS settings){
       body[p]->y[t] = r * (so * cwf + co * swf * ci);
       body[p]->z[t] = r * swf * si;
       
-      // Sky velocity. CURRENTLY NOT WORKING.
-      // TODO: Update with expressions from Murray and Dermott
-      body[p]->vx[t] = 0;
-      body[p]->vy[t] = 0;
-      body[p]->vz[t] = 0;
+      // Sky velocity. Based on differentiating the
+      // expression on p. 51 of Murray and Dermott
+      ecw = body[p]->ecc * cos(body[p]->w);
+      esw = body[p]->ecc * sin(body[p]->w);
+      amp = (2. * PI / body[p]->per) * body[p]->a / sqrt(1 - body[p]->ecc * body[p]->ecc);
+      body[p]->vx[t] = -amp * (co * (esw + swf) - ci * so * (ecw + cwf));
+      body[p]->vy[t] = amp * (ci * co * (ecw + cwf) - so * (esw + swf));
+      body[p]->vz[t] = amp * si * (ecw + cwf);
       
     }
   
@@ -260,7 +263,7 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
   int p, t, i, o, icenter;
   double M, E, f, d;
   double dx, dy, dz;
-  double cwf, swf, co, so, ci, si;
+  double cwf, swf, co, so, ci, si, ecw, esw, amp;
   int last_t;
   int moons = 0;
   int ocount = 0;
@@ -403,11 +406,14 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
             body[p]->y[i] = d * (so * cwf + co * swf * ci);
             body[p]->z[i] = d * swf * si;
             
-            // Sky velocity. Currently assuming constant
-            // TODO: Update with correct expressions from Murray and Dermott
-            body[p]->vx[i] = body[p]->vx[t];
-            body[p]->vy[i] = body[p]->vy[t];
-            body[p]->vz[i] = body[p]->vz[t];
+            // Sky velocity. Based on differentiating the
+            // expression on p. 51 of Murray and Dermott
+            ecw = orbit.e * cos(orbit.omega);
+            esw = orbit.e * sin(orbit.omega);
+            amp = orbit.n * orbit.a / sqrt(1 - orbit.e * orbit.e);
+            body[p]->vx[i] = -amp * (co * (esw + swf) - ci * so * (ecw + cwf));
+            body[p]->vy[i] = amp * (ci * co * (ecw + cwf) - so * (esw + swf));
+            body[p]->vz[i] = amp * si * (ecw + cwf);
           
           }
             
