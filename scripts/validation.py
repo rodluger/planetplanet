@@ -27,7 +27,10 @@ from planetplanet.constants import *
 from planetplanet import Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
-import batman
+try:
+  import batman
+except:
+  batman = None
 from tqdm import tqdm
 
 def _test():
@@ -94,6 +97,10 @@ def ValidateTransits():
   '''
   
   '''
+  
+  if batman is None:
+    print("Please install the `batman` package.")
+    return
   
   # System params
   time = np.arange(-0.12, 0.12, 0.001)
