@@ -168,11 +168,12 @@ def GetRootsPolynomial(a, b, xE, yE, xC, yC, r):
   roots = [r.real + xC for r in np.roots([c4, c3, c2, c1, c0]) if np.abs(r.imag) < tol]
   return roots
 
-def GetRoots(*args, method = 'numerical'):
+def GetRoots(*args, **kwargs):
   '''
   
   '''
   
+  method = kwargs.get('method', 'numerical')
   if method.lower() == 'numerical':
     return GetRootsNumerical(*args)
   elif method.lower() == 'polynomial':
