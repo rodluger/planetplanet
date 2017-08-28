@@ -23,7 +23,7 @@ that is symmetric about the hotspot.
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import
 import matplotlib.pyplot as pl
 from planetplanet import DrawEyeball, Planet, Star, System
 from planetplanet.constants import *
