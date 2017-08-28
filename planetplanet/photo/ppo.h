@@ -155,6 +155,7 @@ typedef struct {
 } FUNCTION;
 
 // Global functions
+void GetAngles(double x, double y, double z, double vx, double vy, double vz, double Lambda, double Phi, double *theta, double *gamma);
 double Blackbody(double lambda, double T);
 int NextOccultation(int nt, double time[nt], int np, BODY **body, SETTINGS settings, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]);
 int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]);

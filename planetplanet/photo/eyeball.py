@@ -30,8 +30,8 @@ def rodrigues(v, k, theta):
   normal to the plane of rotation, and the angle of rotation `theta` in radians.
   
   '''
-  
-  return v * np.cos(theta) + np.cross(k, v) * np.sin(theta) + np.dot(k, v) * (1 - np.cos(theta))
+    
+  return v * np.cos(theta) + np.cross(k, v) * np.sin(theta) + k * np.dot(k, v) * (1 - np.cos(theta))
 
 def ucross(u, v):
   '''
@@ -60,22 +60,24 @@ def GetAngles(x, y, z, vx, vy, vz, Lambda = 0., Phi = 0.):
   
   '''
   
-  # The position vector of the center of the planet
+  # The position vector of the center of the planet and its magnitude
   r = np.array([x, y, z])
-
-  # The velocity vector of the planet
+  R = np.sqrt(np.sum(r ** 2))
+  
+  # The velocity vector of the planet and its magnitude
   v = np.array([vx, vy, vz])
+  V = np.sqrt(np.sum(v ** 2))
 
   # The position vector of the substellar point,
   # relative to the planet center, normalized to 1
-  rstar = -r / np.sqrt(np.sum(r ** 2))
+  rstar = -r / R
   
   # Vector normal to the longitudinal plane
-  vlon = ucross(r, v)
-  
+  vlon = ucross(r / R, v / V)
+    
   # Apply the longitudinal offset
   rstar = rodrigues(rstar, vlon, Lambda)
-  
+
   # Vector normal to the latitudinal plane
   vlat = ucross(vlon, rstar)
   
@@ -86,7 +88,7 @@ def GetAngles(x, y, z, vx, vy, vz, Lambda = 0., Phi = 0.):
   # relative to the planet center, normalized to 1
   xstar, ystar, zstar = rstar
 
-  # Distance from planet center to hotspot, normalized to 1
+  # Projected distance from planet center to hotspot, normalized to 1
   d = min(1, np.sqrt(xstar ** 2 + ystar ** 2))
   
   # Get the rotation and phase angles
@@ -95,7 +97,7 @@ def GetAngles(x, y, z, vx, vy, vz, Lambda = 0., Phi = 0.):
     theta = np.arccos(d)
   else:
     theta = -np.arccos(d)
-    
+
   return theta, gamma
   
 def LimbDarkenedFlux(lam, z, teff = 2500, limbdark = [1.]):

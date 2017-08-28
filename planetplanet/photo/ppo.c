@@ -9,13 +9,45 @@
 #include "ppo.h"
 
 /**
+The Rodrigues rotation formula in 3D, given a vector \a v, a unit vector \a k
+normal to the plane of rotation, and the angle of rotation \a theta in radians.
+The rotation is applied in-place to the vector \a v.
+
+@param vx The x coordinate of the vector \a v
+@param vy The y coordinate of the vector \a v
+@param vz The z coordinate of the vector \a v
+@param kx The x coordinate of the unit vector \a k
+@param ky The y coordinate of the unit vector \a k
+@param kz The z coordinate of the unit vector \a k
+
+*/
+void Rodrigues(double *vx, double *vy, double *vz, double kx, double ky, double kz, double theta) {
+  
+  double ct = cos(theta);
+  double st = sin(theta);
+  double rx, ry, rz;
+  double kdotv = (kx * *vx) + (ky * *vy) + (kz * *vz);
+  
+  rx = *vx * ct + (ky * *vz - kz * *vy) * st + kx * kdotv * (1 - ct);
+  ry = *vy * ct + (kz * *vx - kx * *vz) * st + ky * kdotv * (1 - ct);
+  rz = *vz * ct + (kx * *vy - ky * *vx) * st + kz * kdotv * (1 - ct);
+  
+  *vx = rx;
+  *vy = ry;
+  *vz = rz;
+  
+}
+
+/**
 Computes the phase angle \a theta and the rotation angle \a gamma at a given
 point in a planet's orbit.
 
-@param x0 The x coordinate of the planet's position on the sky in Earth radii
-@param y0 The y coordinate of the planet's position on the sky in Earth radii
-@param z0 The z coordinate of the planet's position on the sky in Earth radii
-@param rp The radius of the planet in Earth radii
+@param x The x coordinate of the planet's position on the sky 
+@param y The y coordinate of the planet's position on the sky 
+@param z The z coordinate of the planet's position on the sky 
+@param vx The x coordinate of the planet's velocity on the sky 
+@param vy The y coordinate of the planet's velocity on the sky 
+@param vz The z coordinate of the planet's velocity on the sky 
 @param Omega The longitude of ascending node in radians
 @param Lambda The latitudinal hotspot offset in radians (north positive)
 @param Phi The longitudinal hotspot offset in radians (east positive)
@@ -23,69 +55,71 @@ point in a planet's orbit.
 @param gamma The eyeball rotation angle
 
 */
-void GetAngles(double x0, double y0, double z0, double rp, double Omega, double Lambda, double Phi, double *theta, double *gamma) {
+void GetAngles(double x, double y, double z, double vx, double vy, double vz, double Lambda, double Phi, double *theta, double *gamma) {
  
-  double r = sqrt(x0 * x0 + y0 * y0 + z0 * z0);
-  double d, xstar, ystar, zstar;
+  double r, xstar, ystar, zstar, v, d;
   
-  // The "easy" case, with no hotspot offset
-  if ((Lambda == 0) && (Phi == 0)) {
+  // The orbital radius
+  r = sqrt(x * x + y * y + z * z);
   
-    // The coordinates of the sub-stellar point on the sky
-    xstar = x0 * (1 - rp / r);
-    ystar = y0 * (1 - rp / r);
-    zstar = z0 * (1 - rp / r);
+  // The orbital speed
+  v = sqrt(vx * vx + vy * vy + vz * vz);
   
-  // The general case   
-  } else {
-    
-    double x, y, z;
-    double xprime, yprime, zprime;
-    double rxz;
-    double tmpx, tmpy;
-    double cosO = cos(Omega);
-    double sinO = sin(Omega);
-    double cosl = cos(Lambda);
-    double sinl = sin(Lambda);
-    double cosp = cos(Phi);
-    double sinp = sin(Phi);
-    
-    // The position of the planet in the rotated sky plane
-    x = x0 * cosO + y0 * sinO;
-    y = y0 * cosO - x0 * sinO;
-    z = z0;
-        
-    // Coordinates of the hotspot in a frame where the planet is
-    // at x, y, z = (0, 0, r), at full phase
-    xprime = rp * cosp * sinl;
-    yprime = rp * sinp;
-    zprime = r - rp * cosp * cosl;
+  // Normalize the vectors
+  x /= r;
+  y /= r;
+  z /= r;
+  vx /= v;
+  vy /= v;
+  vz /= v;
+  
+  // The position vector of the substellar point,
+  // relative to the planet center, normalized to 1
+  xstar = -x;
+  ystar = -y;
+  zstar = -z;
+  
+  // Do we need to apply a hotspot offset?
+  if ((Lambda != 0) || (Phi != 0)) {
+  
+    double vlon, vlonx, vlony, vlonz;
+    double vlat, vlatx, vlaty, vlatz;
 
-    // Transform to the rotated sky plane
-    rxz = sqrt(x * x + z * z);
-    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz);
-    ystar = (rxz * yprime + y * zprime) / r;
-    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz);
-        
-    // Transform back to the true sky plane
-    tmpx = xstar * cosO - ystar * sinO;
-    tmpy = ystar * cosO + xstar * sinO;
-    xstar = tmpx;
-    ystar = tmpy;
-                   
+    // Unit vector normal to the longitudinal plane
+    vlonx = (y * vz - z * vy);
+    vlony = (z * vx - x * vz);
+    vlonz = (x * vy - y * vx);
+    vlon = sqrt(vlonx * vlonx + vlony * vlony + vlonz * vlonz);
+    vlonx /= vlon;
+    vlony /= vlon;
+    vlonz /= vlon;    
+    
+    // Apply the longitudinal offset
+    Rodrigues(&xstar, &ystar, &zstar, vlonx, vlony, vlonz, Lambda);
+
+    // Unit vector normal to the latitudinal plane
+    vlatx = (vlony * zstar - vlonz * ystar);
+    vlaty = (vlonz * xstar - vlonx * zstar);
+    vlatz = (vlonx * ystar - vlony * xstar);
+    vlat = sqrt(vlatx * vlatx + vlaty * vlaty + vlatz * vlatz);
+    vlatx /= vlat;
+    vlaty /= vlat;
+    vlatz /= vlat;
+  
+    // Apply the latitudinal offset
+    Rodrigues(&xstar, &ystar, &zstar, vlatx, vlaty, vlatz, Phi);
+
   }
   
-  // The rotation angle
-  *gamma = PI + atan2(ystar - y0, xstar - x0);
+  // Projected distance from planet center to hotspot
+  d = sqrt(xstar * xstar + ystar * ystar);
   
-  // The distance from the center of the planet disk to the substellar point
-  d = sqrt((xstar - x0) * (xstar - x0) + (ystar - y0) * (ystar - y0));
-  
-  // The phase angle
-  if (zstar - z0 <= 0)
-    *theta = acos(d / rp);
+  // Get the rotation and phase angles
+  *gamma = atan2(ystar, xstar) + PI;
+  if (zstar <= 0)
+    *theta = acos(d);
   else
-    *theta = -acos(d / rp);
+    *theta = -acos(d);
   
 }
 
@@ -330,7 +364,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
         // Get the eyeball angles `theta` and `gamma`
         // Note that `gamma` does not matter for phase curves.
-        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
+        GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->vx[t], body[p]->vy[t], body[p]->vz[t], body[p]->Lambda, body[p]->Phi, &theta, &gamma);
         
         // The planet effective temperature from radiation balance
         dx = (body[0]->x[t] - body[p]->x[t]);
@@ -408,8 +442,8 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         if ((p > 0) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
           // Get the eyeball angles `theta` and `gamma`
-          GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->r, body[p]->Omega, body[p]->Lambda, body[p]->Phi, &theta, &gamma);
-        
+          GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->vx[t], body[p]->vy[t], body[p]->vz[t], body[p]->Lambda, body[p]->Phi, &theta, &gamma);
+
           // Rotate the occultors to a frame in which the ellipses are symmetric about the x axis
           for (o = 0; o < no; o++) {
             tmpx = xo[o] * cos(gamma) + yo[o] * sin(gamma);
