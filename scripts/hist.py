@@ -37,7 +37,6 @@ import matplotlib.pyplot as pl
 import numpy as np
 import corner
 from tqdm import tqdm
-from zipfile import BadZipFile
 from scipy.stats import norm
 datapath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(planetplanet.__file__))), 'scripts', 'data')
 if not os.path.exists(datapath):
@@ -110,9 +109,6 @@ def Plot():
       if n == 0:
         raise Exception("Please run `Compute()` first.")
       break
-    except BadZipFile:
-      print("Bad zip file: %d." % n)
-      continue
     if n == 0:
       hist = data['hist']
       count = data['count']
