@@ -32,7 +32,10 @@ from planetplanet.constants import *
 from planetplanet import Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
-import batman
+try:
+  import batman
+except:
+  batman = None
 try:
   import pysyzygy as ps
 except:
@@ -130,12 +133,14 @@ def plot():
   tps = np.zeros_like(Narr)
   for i, N in enumerate(Narr):
     tpp[i] = timeit.timeit('run_pp(%d)' % N, number = 10) / 10.
-    tbm[i] = timeit.timeit('run_bm(%d)' % N, number = 10) / 10.
+    if batman is not None:
+      tbm[i] = timeit.timeit('run_bm(%d)' % N, number = 10) / 10.
     if ps is not None:
       tps[i] = timeit.timeit('run_ps(%d)' % N, number = 10) / 10.
   
   pl.plot(Narr, tpp, '-o', label = 'planetplanet')
-  pl.plot(Narr, tbm, '-o', label = 'batman')
+  if batman is not None:
+    pl.plot(Narr, tbm, '-o', label = 'batman')
   if ps is not None:
     pl.plot(Narr, tps, '-o', label = 'pysyzygy')
   pl.legend()
