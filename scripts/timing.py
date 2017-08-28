@@ -33,7 +33,10 @@ from planetplanet import Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
 import batman
-import pysyzygy as ps
+try:
+  import pysyzygy as ps
+except:
+  ps = None
 from tqdm import tqdm
 import timeit
 try:
@@ -101,7 +104,7 @@ def run_ps(N = 1000):
   '''
   
   '''
-  
+
   # pysyzygy
   time = np.linspace(-0.2, 0.2, N)
   a = ((per) ** 2 * GEARTH * (mstar * MSUNMEARTH) / (4 * np.pi ** 2)) ** (1. / 3.) / (rstar * RSUNREARTH)
@@ -128,11 +131,13 @@ def plot():
   for i, N in enumerate(Narr):
     tpp[i] = timeit.timeit('run_pp(%d)' % N, number = 10) / 10.
     tbm[i] = timeit.timeit('run_bm(%d)' % N, number = 10) / 10.
-    tps[i] = timeit.timeit('run_ps(%d)' % N, number = 10) / 10.
+    if ps is not None:
+      tps[i] = timeit.timeit('run_ps(%d)' % N, number = 10) / 10.
   
   pl.plot(Narr, tpp, '-o', label = 'planetplanet')
   pl.plot(Narr, tbm, '-o', label = 'batman')
-  pl.plot(Narr, tps, '-o', label = 'pysyzygy')
+  if ps is not None:
+    pl.plot(Narr, tps, '-o', label = 'pysyzygy')
   pl.legend()
   pl.yscale('log')
   pl.xscale('log')
