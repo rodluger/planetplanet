@@ -12,8 +12,7 @@ Planet c has a latitudinal hotspot offset, just for fun.
      :align: center
      
      from scripts import occultation
-     import matplotlib.pyplot as pl
-     occultation.plot()
+     occultation._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -28,6 +27,13 @@ from planetplanet.constants import *
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def plot():
   '''

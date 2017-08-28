@@ -10,12 +10,8 @@ for better visualization.
   .. plot::
      :align: center
      
-     from planetplanet.photo import Trappist1
-     import matplotlib.pyplot as pl
-     system = Trappist1(sample = True, phasecurve = False, nbody = True, seed = 999)
-     system.c.inc = 60
-     system.c.draw_orbit(draw_outline = False, size = 1.5, nz = 51)
-     pl.show()
+     from scripts import draw_orbit
+     draw_orbit._test()
   
   .. role:: raw-html(raw)
      :format: html
@@ -29,7 +25,14 @@ from planetplanet import Trappist1
 from planetplanet import maps
 import matplotlib.pyplot as pl
 
-if __name__ == '__main__':
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+
+def plot():
   
   # Instantiate the TRAPPIST-1 system
   system = Trappist1(sample = True, phasecurve = True, nbody = True, seed = 999)
@@ -42,3 +45,6 @@ if __name__ == '__main__':
   
   # Show!
   pl.show()
+
+if __name__ == '__main__':
+  plot()

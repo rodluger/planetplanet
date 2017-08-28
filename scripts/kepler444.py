@@ -11,10 +11,7 @@ in the Kepler-444 system with JWST.
      :align: center
      
      from scripts import kepler444
-     import matplotlib.pyplot as pl
-     fig1, _, fig2, _ = kepler444.compute()
-     pl.close(fig2)
-     pl.show()
+     kepler444._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -29,6 +26,15 @@ from planetplanet import Star, Planet, System, jwst
 import matplotlib.pyplot as pl
 import numpy as np
 import astropy.units as u
+
+def _test():
+  '''
+  
+  '''
+  
+  fig1, _, fig2, _ = compute()
+  pl.close(fig2)
+  pl.show()
 
 def compute():
   

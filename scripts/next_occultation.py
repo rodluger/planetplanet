@@ -10,8 +10,7 @@ Compute the time of the next occultation of a given planet and plot its light cu
      :align: center
      
      from scripts import next_occultation
-     import matplotlib.pyplot as pl
-     next_occultation.plot()
+     next_occultation._test()
 
 This is a **double** occultation of `c`, as `b` goes into retrograde halfway through
 the event! The duration is 300 minutes, or about 5 hours (!)
@@ -29,6 +28,13 @@ from planetplanet import Trappist1
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def plot():
   '''

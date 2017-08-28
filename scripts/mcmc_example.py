@@ -13,10 +13,8 @@ PPOs.
   .. plot::
      :align: center
      
-     #from scripts import mcmc_example
-     #import matplotlib.pyplot as pl
-     #mcmc_example.plot()
-     #pl.show()
+     from scripts import mcmc_example
+     mcmc_example._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -31,6 +29,13 @@ from planetplanet import LimbDarkenedMap
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  pass
 
 def plot():
   '''

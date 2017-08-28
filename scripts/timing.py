@@ -18,9 +18,7 @@ this, so stay tuned for updates!
      :align: center
      
      from scripts import timing
-     import matplotlib.pyplot as pl
-     timing.plot()
-     pl.show()
+     timing._test()
   
   .. role:: raw-html(raw)
      :format: html
@@ -49,6 +47,14 @@ r = 10.
 t0 = 0.
 w = 60.
 ecc = 0.3
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+  pl.show()
 
 def run_pp(N = 1000):
   '''

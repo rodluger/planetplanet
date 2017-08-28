@@ -13,11 +13,8 @@ occulting body, respectively.
   .. plot::
      :align: center
      
-     from planetplanet import Trappist1
-     import matplotlib.pyplot as pl
-     system = Trappist1(sample = True, nbody = True)
-     system.scatter_plot(0, 365 * 3)
-     pl.show()
+     from scripts import scatter
+     scatter._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -32,6 +29,15 @@ from planetplanet import Trappist1
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+
+  system = Trappist1(sample = True, nbody = True)
+  system.scatter_plot(OCTOBER_08_2016, OCTOBER_08_2016 + 365 * 3)
+  pl.show()
 
 if __name__ == '__main__':
 

@@ -15,16 +15,11 @@ one Earth year.
           batches. A brain-dead way of doing it is to instantiate a bunch of **screen** \
           sessions: `screen -dm python -c "import hist; hist.Compute(nsamp = 100)"`
           
-
 .. plot::
    :align: center
    
    from scripts import hist
-   import matplotlib.pyplot as pl
-   figs = hist.Plot()
-   for fig in figs[:-1]:
-     pl.close(fig)
-   pl.show()
+   hist._test()
 
 .. role:: raw-html(raw)
    :format: html
@@ -47,7 +42,19 @@ from scipy.stats import norm
 datapath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(planetplanet.__file__))), 'scripts', 'data')
 if not os.path.exists(datapath):
   os.makedirs(datapath)
+
+def _test():
+  '''
   
+  '''
+  
+  if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
+    Compute(nsamp = 1)
+  figs = Plot()
+  for fig in figs[:-1]:
+    pl.close(fig)
+  pl.show()
+
 def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
   '''
   

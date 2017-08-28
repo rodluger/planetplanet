@@ -14,9 +14,7 @@ Then click on "Play" to animate the event.
      :align: center
      
      from scripts import lightcurve
-     import matplotlib.pyplot as pl
-     lightcurve.plot()
-     pl.show()
+     lightcurve._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -31,6 +29,14 @@ from planetplanet import Trappist1
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+  pl.show()
 
 def plot(interactive = True):
   '''

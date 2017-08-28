@@ -13,8 +13,7 @@ adopt a faster solver for this.
      :align: center
      
      from scripts import intersection
-     import matplotlib.pyplot as pl
-     intersection.Interactor()
+     intersection._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -30,6 +29,13 @@ from matplotlib.widgets import Slider
 from scipy.optimize import brentq, minimize_scalar
 import timeit, builtins
 tol = 1e-5
+
+def _test():
+  '''
+  
+  '''
+  
+  Interactor()
 
 def Circle(x, sgnC, xC, yC, r):
   '''

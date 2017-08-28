@@ -19,6 +19,7 @@ The rotation is applied in-place to the vector \a v.
 @param kx The x coordinate of the unit vector \a k
 @param ky The y coordinate of the unit vector \a k
 @param kz The z coordinate of the unit vector \a k
+@param theta The angle of rotation in radians
 
 */
 void Rodrigues(double *vx, double *vy, double *vz, double kx, double ky, double kz, double theta) {
@@ -47,8 +48,7 @@ point in a planet's orbit.
 @param z The z coordinate of the planet's position on the sky 
 @param vx The x coordinate of the planet's velocity on the sky 
 @param vy The y coordinate of the planet's velocity on the sky 
-@param vz The z coordinate of the planet's velocity on the sky 
-@param Omega The longitude of ascending node in radians
+@param vz The z coordinate of the planet's velocity on the sky
 @param Lambda The latitudinal hotspot offset in radians (north positive)
 @param Phi The longitudinal hotspot offset in radians (east positive)
 @param theta The eyeball phase angle

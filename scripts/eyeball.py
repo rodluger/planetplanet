@@ -9,10 +9,8 @@ Interactive eyeball planet visualizer. See :py:mod:`planetplanet.photo.eyeball`.
   .. plot::
      :align: center
      
-     from planetplanet.photo import eyeball
-     import matplotlib.pyplot as pl
-     eyeball.Interact()
-     pl.show()
+     from scripts import eyeball
+     eyeball._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -23,4 +21,12 @@ Interactive eyeball planet visualizer. See :py:mod:`planetplanet.photo.eyeball`.
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet.photo import eyeball
 
-eyeball.Interact()
+def _test():
+  '''
+  
+  '''
+  
+  eyeball.Interact()
+  
+if __name__ == '__main__':
+  eyeball.Interact()

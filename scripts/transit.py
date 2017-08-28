@@ -10,8 +10,7 @@ A simple transit light curve. Here we compare it to one generated with :py:obj:`
      :align: center
      
      from scripts import transit
-     import matplotlib.pyplot as pl
-     transit.plot()
+     transit._test()
      
   .. role:: raw-html(raw)
      :format: html
@@ -28,6 +27,13 @@ from planetplanet import Planet, Star, System
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def plot():
   '''

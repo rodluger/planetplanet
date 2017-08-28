@@ -12,10 +12,7 @@ planet-planet occultations.
      :align: center
      
      from scripts import validation
-     import matplotlib.pyplot as pl
-     validation.ValidateTransits()
-     validation.ValidateOccultations()
-     pl.show()
+     validation._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -33,6 +30,15 @@ import numpy as np
 import batman
 from tqdm import tqdm
 
+def _test():
+  '''
+  
+  '''
+  
+  ValidateTransits()
+  ValidateOccultations()
+  pl.show()
+  
 def ZenithAngle(x, y, r, theta):
   '''
   Compute the zenith angle.
@@ -123,7 +129,10 @@ def ValidateTransits():
   params.a = ((b.per) ** 2 * GEARTH * (mstar * MSUNMEARTH) / (4 * np.pi ** 2)) ** (1. / 3.) / (rstar * RSUNREARTH)
   m = batman.TransitModel(params, time)
   flux_bm = m.light_curve(params)
-
+  
+  # Ensure the two are equal to within 0.1 ppm
+  assert np.max(np.abs((flux_pp - flux_bm) * 1e6)) < 0.1, "Flux mismatch between `planetplanet` and `batman`."
+  
   # Plot the comparison
   fig, ax = pl.subplots(2, sharex = True)
   ax[0].plot(time, flux_pp, color = 'b', label = 'planetplanet (pp)')
@@ -214,6 +223,9 @@ def ValidateOccultations():
   dbf = -np.min(flux_bf)
   dpp = 1 - np.min(flux_pp)
   flux_bf = flux_bf * dpp / dbf + 1
+  
+  # Ensure the two are equal to within one percent
+  assert np.max(np.abs((flux_pp - flux_bf))) < 0.01, "Flux mismatch between `planetplanet` and brute force integration."
   
   # Plot the light curve
   fig = pl.figure()

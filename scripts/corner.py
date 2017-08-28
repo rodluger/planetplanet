@@ -11,11 +11,8 @@ occultations.
 .. plot::
    :align: center
    
-   import matplotlib.pyplot as pl
    from scripts import corner
-   samples = np.random.randn(1000000, 3)
-   corner.corner(samples, bins = 100)
-   pl.show()
+   corner._test()
 
 .. role:: raw-html(raw)
    :format: html
@@ -61,7 +58,15 @@ try:
 except ImportError:
     gaussian_filter = None
 
-
+def _test():
+  '''
+  
+  '''
+  
+  samples = np.random.randn(1000000, 3)
+  corner(samples, bins = 100)
+  pl.show()
+  
 def corner(xs, bins=20, range=None, weights=None, color="k",
            smooth=None, smooth1d=None,
            labels=None, label_kwargs=None,

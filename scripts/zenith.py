@@ -12,9 +12,7 @@ to calculate the radiance map of occulted planets.
      :align: center
      
      from scripts import zenith
-     import matplotlib.pyplot as pl
-     zenith.plot()
-     pl.show()
+     zenith._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -28,6 +26,14 @@ import numpy as np
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider
 cmap = pl.get_cmap('inferno_r')
+
+def _test():
+  '''
+  
+  '''
+
+  plot()
+  pl.show()
 
 def ZenithAngle(x, y, r, theta):
   '''

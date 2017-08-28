@@ -10,9 +10,7 @@ Plot the TRAPPIST-1 planet orbits from different viewing angles.
      :align: center
      
      from scripts import plot_orbits
-     import matplotlib.pyplot as pl
-     plot_orbits.plot()
-     pl.show()
+     plot_orbits._test()
      
   .. role:: raw-html(raw)
      :format: html
@@ -26,6 +24,14 @@ import planetplanet as pp
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+  pl.show()
 
 def plot():
   '''

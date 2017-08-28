@@ -15,11 +15,8 @@ of the TRAPPIST-1 planets.
   .. plot::
      :align: center
      
-     from scripts import corner
      from scripts import mutual_node
-     import matplotlib.pyplot as pl
-     mutual_node.plot(niter = 500)
-     pl.show()
+     mutual_node._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -37,6 +34,14 @@ import corner
 np.random.seed(1234)
 RSUN = 6.957e8
 REARTH = 6.3781e6
+
+def _test():
+  '''
+  
+  '''
+  
+  plot(niter = 50)
+  pl.show()
 
 def plot(niter = 10000):
   '''

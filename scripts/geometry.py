@@ -10,14 +10,8 @@ to compute the occultation light curves of airless planets.
   .. plot::
      :align: center
      
-     from scripts.geometry import Observer, Side, Top
-     import matplotlib.pyplot as pl
-     
-     fig, ax = pl.subplots(3, figsize = (8, 24))
-     Observer(ax[0]); ax[0].set_title('Observer View', fontweight = 'bold', fontsize = 20)
-     Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
-     Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
-     pl.show()
+     from scripts import geometry
+     geometry._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -30,6 +24,17 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  fig, ax = pl.subplots(3, figsize = (8, 24))
+  Observer(ax[0]); ax[0].set_title('Observer View', fontweight = 'bold', fontsize = 20)
+  Side(ax[1]); ax[1].set_title('Side View', fontweight = 'bold', fontsize = 20)
+  Top(ax[2]); ax[2].set_title('Top View', fontweight = 'bold', fontsize = 20)
+  pl.show()
 
 def Observer(ax, r = 1, theta = np.pi / 8, za = np.pi / 4):
   '''
