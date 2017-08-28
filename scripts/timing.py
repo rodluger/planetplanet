@@ -35,7 +35,11 @@ import numpy as np
 import batman
 import pysyzygy as ps
 from tqdm import tqdm
-import timeit, builtins
+import timeit
+try:
+  import builtins
+except:
+  import __builtin__ as builtins
 
 # System params
 mstar = 1.
