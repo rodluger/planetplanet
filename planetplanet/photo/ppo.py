@@ -35,6 +35,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.integrate import quad
 from tqdm import tqdm
+from six import string_types
 import numba
 
 __all__ = ['System']
@@ -221,7 +222,7 @@ class System(object):
       if body.body_type == 'planet':
         body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
       elif body.body_type == 'moon':
-        if type(body.host) is str:
+        if isinstance(body.host, string_types):
           body.host = getattr(self, body.host)
         elif body.host in self.bodies:
           pass
@@ -911,7 +912,7 @@ class System(object):
     assert tend > tstart, "The end time must be larger than the start time!"
     
     # Convert `occulted` to an index
-    if type(occulted) is str:
+    if isinstance(occulted, string_types):
       occulted = np.argmax([b.name == occulted for b in self.bodies])
     elif occulted in self.bodies:
       occulted = np.argmax(np.array(self.bodies) == occulted)
@@ -931,7 +932,7 @@ class System(object):
     # Convert `occultors` to an array of indices
     occultors = np.atleast_1d(occultors)
     for i, occultor in enumerate(occultors):
-      if (type(occultor) is str) or (type(occultor) is np.str_):
+      if isinstance(occultor, string_types) or (type(occultor) is np.str_):
         occultors[i] = np.argmax([b.name == occultor for b in self.bodies])
       elif occultor in self.bodies:
         occultors[i] = np.argmax(np.array(self.bodies) == occultor)
@@ -1025,7 +1026,7 @@ class System(object):
         gifname = gifname[:-4]
 
     # Get the occulted body
-    if type(body) is str:
+    if isinstance(body, string_types):
       p = np.argmax(self._names == body)
       body = self.bodies[p]
     else:
@@ -1389,7 +1390,7 @@ class System(object):
     for i, planet in enumerate(planets):
     
       # Ensure we have a planet instance
-      if type(planet) is str:
+      if isinstance(planet, string_types):
         planet = self.bodies[np.argmax([b.name == planet for b in self.bodies])]
     
       # Trim the arrays
