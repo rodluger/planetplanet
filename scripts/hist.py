@@ -128,6 +128,11 @@ def Plot():
   # Corner plot
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):  
     samples = np.array(hist[k])
+    
+    # But first check if we have enough samples
+    if samples.shape[0] <= samples.shape[1]:
+      continue
+    
     figs[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Longitude [deg]", "Impact parameter", "Duration [min]"], bins = 30)
     for i, ax in enumerate(figs[k].axes):
       ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
