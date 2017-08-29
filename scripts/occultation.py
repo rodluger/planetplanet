@@ -12,9 +12,7 @@ Planet c has a latitudinal hotspot offset, just for fun.
      :align: center
      
      from scripts import occultation
-     import matplotlib.pyplot as pl
-     occultation.plot()
-     pl.show()
+     occultation._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -25,9 +23,17 @@ Planet c has a latitudinal hotspot offset, just for fun.
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 from planetplanet import Trappist1
+from planetplanet.constants import *
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def plot():
   '''
@@ -39,7 +45,7 @@ def plot():
 
   # Give `c` a large latitudinal offset in its hotspot just for fun
   system.c.Phi = 30
-
+  
   # Compute an occultation by `b`
   # This would be on December 3, 2021
   time = np.linspace(9552.9364, 9552.9564, 100)
@@ -47,9 +53,8 @@ def plot():
 
   # Plot the occultation
   fig, axlc, axxz, axim = system.plot_occultation('c', 9552.95)
-  return fig, axlc, axxz, axim
+  pl.show()
 
 if __name__ == '__main__':
   plot()
-  pl.show()
-
+  

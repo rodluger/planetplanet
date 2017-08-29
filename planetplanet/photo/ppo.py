@@ -19,7 +19,7 @@ eclipses, phase curves, mutual transits, planet-moon events, and more.
 from __future__ import division, print_function, absolute_import, unicode_literals
 from ..constants import *
 from ..detect import jwst
-from .eyeball import DrawEyeball
+from .eyeball import DrawEyeball, GetAngles
 from .structs import *
 import ctypes
 import numpy as np
@@ -35,6 +35,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.integrate import quad
 from tqdm import tqdm
+from six import string_types
 import numba
 
 __all__ = ['System']
@@ -221,7 +222,7 @@ class System(object):
       if body.body_type == 'planet':
         body.a = ((body.per * DAYSEC) ** 2 * G * (self.primary._m + body._m) * MEARTH / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
       elif body.body_type == 'moon':
-        if type(body.host) is str:
+        if isinstance(body.host, string_types):
           body.host = getattr(self, body.host)
         elif body.host in self.bodies:
           pass
@@ -284,6 +285,12 @@ class System(object):
       body._y = np.ctypeslib.as_ctypes(body.y)
       body.z = np.zeros(nt)
       body._z = np.ctypeslib.as_ctypes(body.z)
+      body.vx = np.zeros(nt)
+      body._vx = np.ctypeslib.as_ctypes(body.vx)
+      body.vy = np.zeros(nt)
+      body._vy = np.ctypeslib.as_ctypes(body.vy)
+      body.vz = np.zeros(nt)
+      body._vz = np.ctypeslib.as_ctypes(body.vz)
       body.occultor = np.zeros(nt, dtype = 'int32')
       body._occultor = np.ctypeslib.as_ctypes(body.occultor)
       body.total_flux = np.zeros(nw)
@@ -385,6 +392,9 @@ class System(object):
       body.x_hr = np.array(body.x)
       body.y_hr = np.array(body.y)
       body.z_hr = np.array(body.z)
+      body.vx_hr = np.array(body.vx)
+      body.vy_hr = np.array(body.vy)
+      body.vz_hr = np.array(body.vz)
 
       # Store the binned light curve
       if self.settings.oversample > 1:
@@ -399,7 +409,10 @@ class System(object):
         body.x = body.x[oversample // 2::oversample]
         body.y = body.y[oversample // 2::oversample]
         body.z = body.z[oversample // 2::oversample]
-
+        body.vx = body.vx[oversample // 2::oversample]
+        body.vy = body.vy[oversample // 2::oversample]
+        body.vz = body.vz[oversample // 2::oversample]
+        
         # Get all bodies that occult at some point over the exposure
         # The operation `bitwise_or.reduce` is *magical*
         body.occultor = np.bitwise_or.reduce(body.occultor.reshape(-1, oversample), axis = 1)
@@ -899,7 +912,7 @@ class System(object):
     assert tend > tstart, "The end time must be larger than the start time!"
     
     # Convert `occulted` to an index
-    if type(occulted) is str:
+    if isinstance(occulted, string_types):
       occulted = np.argmax([b.name == occulted for b in self.bodies])
     elif occulted in self.bodies:
       occulted = np.argmax(np.array(self.bodies) == occulted)
@@ -919,7 +932,7 @@ class System(object):
     # Convert `occultors` to an array of indices
     occultors = np.atleast_1d(occultors)
     for i, occultor in enumerate(occultors):
-      if (type(occultor) is str) or (type(occultor) is np.str_):
+      if isinstance(occultor, string_types) or (type(occultor) is np.str_):
         occultors[i] = np.argmax([b.name == occultor for b in self.bodies])
       elif occultor in self.bodies:
         occultors[i] = np.argmax(np.array(self.bodies) == occultor)
@@ -1013,7 +1026,7 @@ class System(object):
         gifname = gifname[:-4]
 
     # Get the occulted body
-    if type(body) is str:
+    if isinstance(body, string_types):
       p = np.argmax(self._names == body)
       body = self.bodies[p]
     else:
@@ -1201,41 +1214,13 @@ class System(object):
     x0 = occulted.x_hr[t]
     y0 = occulted.y_hr[t]
     z0 = occulted.z_hr[t]
+    vx0 = occulted.vx_hr[t]
+    vy0 = occulted.vy_hr[t]
+    vz0 = occulted.vz_hr[t]
 
     # Get the angles
-    x = x0 * np.cos(occulted._Omega) + y0 * np.sin(occulted._Omega)
-    y = y0 * np.cos(occulted._Omega) - x0 * np.sin(occulted._Omega)
-    z = z0
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-
-    # Coordinates of the hotspot in a frame where the planet is
-    # at x, y, z = (0, 0, r), at full phase
-    xprime = occulted._r * np.cos(occulted._Phi) * np.sin(occulted._Lambda)
-    yprime = occulted._r * np.sin(occulted._Phi)
-    zprime = r - occulted._r * np.cos(occulted._Phi) * np.cos(occulted._Lambda)
-
-    # Transform to the rotated sky plane
-    rxz = np.sqrt(x ** 2 + z ** 2)
-    xstar = ((z * r) * xprime - (x * y) * yprime + (x * rxz) * zprime) / (r * rxz)
-    ystar = (rxz * yprime + y * zprime) / r
-    zstar = (-(x * r) * xprime - (y * z) * yprime + (z * rxz) * zprime) / (r * rxz)
-
-    # Transform back to the true sky plane
-    xstar, ystar = xstar * np.cos(occulted._Omega) - ystar * np.sin(occulted._Omega), \
-                   ystar * np.cos(occulted._Omega) + xstar * np.sin(occulted._Omega)
-    x = x0
-    y = y0
-
-    # Distance from planet center to hotspot
-    d = np.sqrt((xstar - x) ** 2 + (ystar - y) ** 2)
-
-    # Get the rotation and phase angles
-    gamma = np.arctan2(ystar - y, xstar - x) + np.pi
-    if (zstar - z) <= 0:
-      theta = np.arccos(d / occulted._r)
-    else:
-      theta = -np.arccos(d / occulted._r)
-
+    theta, gamma = GetAngles(x0, y0, z0, vx0, vy0, vz0, Lambda = occulted._Lambda, Phi = occulted._Phi)
+    
     # Get the occultor
     if occultor is None:
       occultor = []
@@ -1405,7 +1390,7 @@ class System(object):
     for i, planet in enumerate(planets):
     
       # Ensure we have a planet instance
-      if type(planet) is str:
+      if isinstance(planet, string_types):
         planet = self.bodies[np.argmax([b.name == planet for b in self.bodies])]
     
       # Trim the arrays

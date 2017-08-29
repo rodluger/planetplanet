@@ -10,10 +10,8 @@ See :py:mod:`planetplanet.photo.eyeball`.
   .. plot::
      :align: center
      
-     from planetplanet.photo.eyeball import DrawOrbit
-     import matplotlib.pyplot as pl
-     DrawOrbit(inc = 60., Omega = 0., ecc = 0.5, size = 2, figsize = (6, 6))
-     pl.show()
+     from scripts import eyeball_orbit
+     eyeball_orbit._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -25,6 +23,14 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 from planetplanet import eyeball, Star, Planet, System
 import matplotlib.pyplot as pl
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  eyeball.DrawOrbit(inc = 60., Omega = 0., ecc = 0.5, size = 2, figsize = (6, 6))
+  pl.show()
 
 if __name__ == '__main__':
 

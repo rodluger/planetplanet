@@ -13,8 +13,7 @@ adopt a faster solver for this.
      :align: center
      
      from scripts import intersection
-     import matplotlib.pyplot as pl
-     intersection.Interactor()
+     intersection._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -28,8 +27,19 @@ import numpy as np
 import matplotlib.pyplot as pl
 from matplotlib.widgets import Slider
 from scipy.optimize import brentq, minimize_scalar
-import timeit, builtins
+import timeit
+try:
+  import builtins
+except:
+  import __builtin__ as builtins
 tol = 1e-5
+
+def _test():
+  '''
+  
+  '''
+  
+  Interactor()
 
 def Circle(x, sgnC, xC, yC, r):
   '''
@@ -162,11 +172,12 @@ def GetRootsPolynomial(a, b, xE, yE, xC, yC, r):
   roots = [r.real + xC for r in np.roots([c4, c3, c2, c1, c0]) if np.abs(r.imag) < tol]
   return roots
 
-def GetRoots(*args, method = 'numerical'):
+def GetRoots(*args, **kwargs):
   '''
   
   '''
   
+  method = kwargs.get('method', 'numerical')
   if method.lower() == 'numerical':
     return GetRootsNumerical(*args)
   elif method.lower() == 'polynomial':

@@ -6,3 +6,4 @@ include planetplanet/photo/*.c
 include planetplanet/photo/*.h
 include planetplanet/photo/posteriors.dat
 include planetplanet/detect/filter_files/*
+include scripts/*.py

@@ -67,9 +67,11 @@ setup(name = 'planetplanet',
                           'numpy>=1.8',
                           'scipy',
                           'matplotlib',
+                          'six',
                           'tqdm',
                           'astropy',
-                          'numba>=0.34'
+                          'numba>=0.34',
+                          'pandas'
                          ],
       include_package_data = True,
       zip_safe = False,

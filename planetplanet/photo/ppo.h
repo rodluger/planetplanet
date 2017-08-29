@@ -84,6 +84,9 @@ typedef struct {
   double *x;                                                                          /**< The Cartesian x position on the sky (right positive) */
   double *y;                                                                          /**< The Cartesian y position on the sky (up positive) */
   double *z;                                                                          /**< The Cartesian z position on the sky (into sky positive) */
+  double *vx;                                                                         /**< The Cartesian x velocity on the sky (right positive) */
+  double *vy;                                                                         /**< The Cartesian y velocity on the sky (up positive) */
+  double *vz;                                                                         /**< The Cartesian z velocity on the sky (into sky positive) */  
   int *occultor;                                                                      /**< The array of occultor bit flags */
   double *flux;                                                                       /**< The grid of observed flux from this body in time/wavelength */
   double *total_flux;                                                                 /**< The total unocculted flux of this body at full phase */
@@ -152,6 +155,7 @@ typedef struct {
 } FUNCTION;
 
 // Global functions
+void GetAngles(double x, double y, double z, double vx, double vy, double vz, double Lambda, double Phi, double *theta, double *gamma);
 double Blackbody(double lambda, double T);
 int NextOccultation(int nt, double time[nt], int np, BODY **body, SETTINGS settings, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]);
 int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int occulted, int noccultors, int occultors[noccultors], int noccultations, double occultation_times[noccultations], int occultation_inds[noccultations], double occultation_durs[noccultations]);

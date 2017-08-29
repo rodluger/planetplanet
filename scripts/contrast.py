@@ -13,9 +13,7 @@ planet.
      :align: center
      
      from scripts import contrast
-     import matplotlib.pyplot as pl
-     contrast.plot()
-     pl.show()
+     contrast._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -32,6 +30,14 @@ import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 np.random.seed(1234)
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+  pl.show()
 
 def plot():
   '''

@@ -20,6 +20,14 @@ from planetplanet import Star, Planet, System, jwst
 import matplotlib.pyplot as pl
 import numpy as np
 
+def _test():
+  '''
+  
+  '''
+  
+  Triple_bc()
+  pl.show()
+  
 def Triple_bc():
   '''
   Simulate an observation of a triple occultation of TRAPPIST-1 `c` by `b`

@@ -11,9 +11,7 @@ is necessary when the exposure time is a non-negligible fraction of the event du
      :align: center
      
      from scripts import oversample
-     import matplotlib.pyplot as pl
-     oversample.plot()
-     pl.show()
+     oversample._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -27,6 +25,14 @@ from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+  pl.show()
 
 def plot():
   '''

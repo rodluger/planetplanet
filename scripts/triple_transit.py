@@ -11,8 +11,7 @@ planets transit the star and occult each other simultaneously.
      :align: center
      
      from scripts import triple_transit
-     import matplotlib.pyplot as pl
-     triple_transit.plot()
+     triple_transit._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -29,6 +28,13 @@ import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 np.random.seed(1234)
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def u1(lam):
   '''

@@ -14,10 +14,7 @@ that is symmetric about the hotspot.
      :align: center
      
      from scripts import custom_map
-     import matplotlib.pyplot as pl
-     custom_map.view_planet()
-     custom_map.secondary_eclipse()
-     pl.show()
+     custom_map._test()
      
   .. role:: raw-html(raw)
      :format: html
@@ -26,12 +23,21 @@ that is symmetric about the hotspot.
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import
 import matplotlib.pyplot as pl
 from planetplanet import DrawEyeball, Planet, Star, System
 from planetplanet.constants import *
 from numba import cfunc
 import numpy as np
+
+def _test():
+  '''
+  
+  '''
+  
+  view_planet()
+  secondary_eclipse()
+  pl.show()
 
 def CustomMap(fwhm = 30, temp = 500):
   '''

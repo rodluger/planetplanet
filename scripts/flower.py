@@ -13,9 +13,7 @@ mutual transits.
      :align: center
      
      from scripts import flower
-     import matplotlib.pyplot as pl
-     flower.plot()
-     pl.show()
+     flower._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -30,6 +28,13 @@ from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def u1(lam):
   '''
@@ -75,7 +80,7 @@ def plot():
   time = np.linspace(-0.02, 0.02, 100)
   system.compute(time)
   system.plot_occultation('A', 0.) #, gifname = 'flower')
+  pl.show()
 
 if __name__ == '__main__':
   plot()
-  pl.show()

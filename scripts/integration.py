@@ -10,9 +10,7 @@ Plots a diagram showing how the occultation integration scheme works.
      :align: center
      
      from scripts import integration
-     import matplotlib.pyplot as pl
-     integration.plot()
-     pl.show()
+     integration._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -27,6 +25,14 @@ from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 cmap = pl.get_cmap('Greys_r')
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
+  pl.show()
 
 def plot():
   '''

@@ -11,8 +11,7 @@ planets transit the star and occult each other simultaneously.
      :align: center
      
      from scripts import mutual_transit
-     import matplotlib.pyplot as pl
-     mutual_transit.plot()
+     mutual_transit._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -26,6 +25,13 @@ from planetplanet import Planet, Star, System
 import matplotlib.pyplot as pl
 import numpy as np
 np.random.seed(1234)
+
+def _test():
+  '''
+  
+  '''
+  
+  plot()
 
 def u1(lam):
   '''
