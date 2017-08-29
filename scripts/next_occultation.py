@@ -13,7 +13,7 @@ Compute the time of the next occultation of a given planet and plot its light cu
      next_occultation._test()
 
 This is a **double** occultation of `c`, as `b` goes into retrograde halfway through
-the event! The duration is 300 minutes, or about 5 hours (!)
+the event! The duration is 157 minutes, or nearly 3 hours (!)
 
   .. role:: raw-html(raw)
      :format: html
