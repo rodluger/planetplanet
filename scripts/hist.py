@@ -131,6 +131,7 @@ def Plot():
     
     # But first check if we have enough samples
     if samples.shape[0] <= samples.shape[1]:
+      figs[k] = pl.figure()
       continue
     
     figs[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, range = [(-180,180), (0,1), (0, 3)], labels = ["Longitude [deg]", "Impact parameter", "Duration [min]"], bins = 30)
