@@ -1,9 +1,14 @@
-# planetplanet
+<div align="center"> 
+<img src="http://staff.washington.edu/rodluger/planetplanet/_images/title.gif" width="400px">
+</img>
+<br/>
 <p><a href="https://travis-ci.com/rodluger/planetplanet"><img src="https://travis-ci.com/rodluger/planetplanet.svg?token=jABaFLLgJNHTWSqkT7CM&branch=master"/></a>
 <a href="https://raw.githubusercontent.com/rodluger/planetplanet/master/LICENSE?token=AI5FKxGMJTv55h2EE_AuXW2gofnIaRDeks5Zm0unwA%3D%3D"><img src="https://img.shields.io/badge/license-GPL-3399ff.svg?style=flat"/></a>
 <a href="http://staff.washington.edu/rodluger/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-ff69b4.svg?style=flat"/></a>
 <a href="http://staff.washington.edu/rodluger/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"/></a>
 </p>
+</div>
+
 Generates planet-planet occultation light curves in Python. To install:
 
 ```
