@@ -5,6 +5,7 @@ old/
 pdf/*
 scripts/debug
 docs/.build
+misc/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

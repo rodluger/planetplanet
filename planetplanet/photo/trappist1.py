@@ -61,9 +61,18 @@ def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
   # Account for the uncertainty?
   if not sample:
     N = lambda mu, sigma: mu
+    
+    # Fix the inclinations at their mean values
+    inclinations = [89.65, 89.67, 89.75, 89.86, 89.680, 89.710, 89.80]
+    
   else: 
     N = lambda mu, sigma: mu + sigma * np.random.randn()
-    
+
+    # Draw from the joint inclination distribution
+    PATH = os.path.dirname(os.path.abspath(__file__))
+    samples = np.loadtxt(os.path.join(PATH, "inclination.dat"))
+    inclinations = samples[np.random.randint(len(samples))]
+
   # Instantiate the star; radius from Burgasser & Mamajek (2017)
   mstar = N(0.0802, 0.0073)
   rstar = N(0.121, 0.003)
@@ -107,15 +116,7 @@ def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
             (0.68, 0.18), 
             (1.34, 0.88), 
             (0.4, 0.3)]
-            
-  inclinations = [(89.65, 0.245), 
-                  (89.67, 0.17), 
-                  (89.75, 0.16), 
-                  (89.86, 0.11), 
-                  (89.680, 0.034),
-                  (89.710, 0.025), 
-                  (89.80, 0.075)]
-                  
+                              
   depths = [(0.7266, 0.0088), 
             (0.687, 0.010), 
             (0.367, 0.017), 
@@ -158,7 +159,7 @@ def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
       m = N(*masses[i])
   
     # Inclination in range [0, 90]
-    inc = N(*inclinations[i])
+    inc = inclinations[i]
     if inc > 90:
       inc = 180 - inc
     

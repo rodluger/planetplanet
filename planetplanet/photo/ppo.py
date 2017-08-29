@@ -1044,7 +1044,7 @@ class System(object):
         print("No occultation occurs at the given time.")
       return None
     t = body._inds[iind]
-
+        
     if not self.settings.quiet:
       print("Plotting the occultation...")
 
@@ -1055,6 +1055,15 @@ class System(object):
     ti = t[0]
     tf = t[-1]
     
+    # Get the duration in minutes. We find the occultor(s)
+    # at the exact time requested by the user, and compute how
+    # many cadences this occultation lasts. Note that this kind
+    # of assumes a constant cadence and doesn't work that well
+    # for mutual transits and other weird events.
+    occultor = body.occultor_hr[tind]
+    ncad = np.count_nonzero(body.occultor_hr[ti:tf] == occultor)
+    duration = ncad * np.nanmedian(np.diff(body.time_hr[ti:tf])) * 1440.
+
     # Plot three different wavelengths (first, mid, and last)
     if spectral:
       fluxb = body.flux_hr[t, 0] / body.total_flux[0]
@@ -1161,7 +1170,7 @@ class System(object):
                        xy = (0.5, 1.25),
                        xycoords = "axes fraction", ha = 'center', va = 'center',
                        fontweight = 'bold', fontsize = 12)
-    axxz.annotate("Duration: %.2f minutes" % ((body.time_hr[tf] - body.time_hr[ti]) * 1440.),
+    axxz.annotate("Duration: %.2f minutes" % duration,
                      xy = (0.5, 1.1), ha = 'center', va = 'center', xycoords = 'axes fraction',
                      fontsize = 10, style = 'italic')
 
