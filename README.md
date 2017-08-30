@@ -12,7 +12,7 @@
 Generates planet-planet occultation (PPO) light curves in Python. During a PPO, a planet
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
-We developed this package with the [TRAPPIST-1](www.trappist.one) planetary system in mind, but `planetplanet`
+We developed this package with the [TRAPPIST-1](http://www.trappist.one) planetary system in mind, but `planetplanet`
 is generally applicable to any exoplanet system. The `planetplanet` package also computes transit light curves, secondary eclipse light curves, and planetary phase curves, as well as occultations of planets by moons and mutual transits of planets
 across the face of their host star.
 
