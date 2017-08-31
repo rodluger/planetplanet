@@ -157,14 +157,17 @@ def Plot():
     figs[k].axes[8].set_xticklabels([1, 10, 100, 1000])
     figs[k].axes[6].set_yticks([0, 1, 2, 3])
     figs[k].axes[6].set_yticklabels([1, 10, 100, 1000])
-    
+  
   # Frequency histogram
   matplotlib.rcParams['mathtext.fontset'] = 'cm'
-  figs[-1], ax = pl.subplots(1, figsize = (8, 6))
+  figs[-1] = pl.figure(figsize = (7, 8))
+  figs[-1].subplots_adjust(hspace = 0.075)
+  ax = pl.subplot2grid((5, 1), (1, 0), rowspan = 4)
+  axt = pl.subplot2grid((5, 1), (0, 0), rowspan = 1, sharex = ax, zorder = -99)
   system = Trappist1(sample = True, nbody = False, quiet = True)
   for k, planet in enumerate(system.bodies[1:]): 
       
-    # Fit a gaussians
+    # Fit a gaussian
     mu, sig = norm.fit(count[k])
     mu = '%.1f' % mu
     if len(mu) == 3: 
@@ -175,15 +178,37 @@ def Plot():
     # Plot
     ax.hist(count[k], color = planet.color, edgecolor = 'none', alpha = 0.25, histtype = 'stepfilled', normed = True, range = (0,50), zorder = 0, label = label, bins = 50)
     ax.hist(count[k], color = planet.color, histtype = 'step', normed = True, range = (0,50), zorder = 1, lw = 2, bins = 50)
-  
-  leg = ax.legend(loc = 'upper right', fontsize = 15)
+    
+    # HACK: Force a broken axis for planet `f`
+    if planet.name == 'f':
+      axt.hist(count[k], color = planet.color, edgecolor = 'none', alpha = 0.25, histtype = 'stepfilled', normed = True, range = (0,50), zorder = 0, label = label, bins = 50)
+      axt.hist(count[k], color = planet.color, histtype = 'step', normed = True, range = (0,50), zorder = 1, lw = 2, bins = 50)
+    
+  leg = ax.legend(loc = 'upper right', fontsize = 15, bbox_to_anchor=(0.89, 0.865), bbox_transform = figs[-1].transFigure)
   ax.set_xlabel('Occultations per year', fontsize = 16, fontweight = 'bold')
   ax.set_ylabel('Probability', fontsize = 16, fontweight = 'bold')
-  for tick in ax.get_xticklabels() + ax.get_yticklabels():
+  ax.yaxis.set_label_coords(-0.1, 0.6)
+  
+  for tick in ax.get_xticklabels() + ax.get_yticklabels() + axt.get_yticklabels():
     tick.set_fontsize(12)
   
-  return figs
+  # HACK: Force a broken axis for planet `f`
+  ax.set_ylim(0, 0.32)
+  axt.set_ylim(0.4725, 0.55)
+  axt.spines['bottom'].set_visible(False)
+  ax.spines['top'].set_visible(False)
+  axt.tick_params(bottom='off',labelbottom='off')
+  axt.set_yticks([0.5, 0.55])
+  d = .015
+  kwargs = dict(transform=axt.transAxes, color='k', clip_on=False, lw = 1)
+  axt.plot((-d, +d), (-d, +d), **kwargs)
+  axt.plot((1 - d, 1 + d), (-d, +d), **kwargs)
+  kwargs.update(transform=ax.transAxes)
+  ax.plot((-d, +d), (1 - 0.25 * d, 1 + 0.25 * d), **kwargs)
+  ax.plot((1 - d, 1 + d), (1 - 0.25 * d, 1 + 0.25 * d), **kwargs)
   
+  return figs
+
 if __name__ == '__main__':
   if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
     Compute()
