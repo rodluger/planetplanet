@@ -117,8 +117,12 @@ def Plot():
         hist[k] = np.vstack((hist[k], data['hist'][k]))
       count = np.hstack((count, data['count']))
   
+  # For reference, total number of systems instantiated (samples)
+  print("Total number of samples: %d" % len(count[0]))
+
   # For reference, the average number of occultations *per day* is
   occ_day = np.sum([hist[n].shape[0] for n in range(7)]) / count.shape[1] / 365
+  print("Average number of occultations per day: %.2f" % occ_day)
   # I get 1.1 (!) These are occultations at all impact parameters and durations,
   # so most are grazing / not really detectable.
   
@@ -181,7 +185,8 @@ def Plot():
   return figs
   
 if __name__ == '__main__':
-  Compute()
+  if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
+    Compute()
   figs = Plot()
   for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
     figs[k].savefig('%s.corner.pdf' % planet, bbox_inches = 'tight')
