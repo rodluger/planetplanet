@@ -6,6 +6,7 @@ pdf/*
 scripts/debug
 docs/.build
 misc/*
+.counter
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
