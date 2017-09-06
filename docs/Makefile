@@ -23,8 +23,8 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 ifdef PLANETPLANET_DOCS
 # Export to server
-	@mkdir -p .build/html/_images/
-	@rsync -aP --times --delete --exclude='*.pdf' --exclude='*.hires.png' .build/html/ $(PLANETPLANET_DOCS)
-	@rsync --times .build/html/PPOs.pdf $(PLANETPLANET_DOCS)
+	#@mkdir -p .build/html/_images/
+	#@rsync -aP --times --delete --exclude='*.pdf' --exclude='*.hires.png' .build/html/ $(PLANETPLANET_DOCS)
+	#@rsync --times .build/html/PPOs.pdf $(PLANETPLANET_DOCS)
 	@echo "Export finished."
 endif
