@@ -45,13 +45,13 @@ echo "Building docs from ${branch} branch..."
 # Get git hash
 rev=$(git rev-parse --short HEAD)
 
-# Switch to gh-pages branch
-git checkout gh-pages
-
-# Move stuff to top-level directory
-mv .build/html/* ../
-
-# Stage the docs
+# Copy the html folder to a temporary location, initialize
+# a new git repo there, add the necessary files, and force-push 
+# to planetplanet/gh-pages
+cd .build
+cp -r html tmp_html
+cd tmp_html
+git init
 touch .nojekyll
 git add -f .nojekyll
 git add -f *.html
@@ -60,10 +60,9 @@ git add -f _sources
 git add -f _static
 git add -f scripts/*.html
 git add -f api/*.html
+git -c user.name='sphinx' -c user.email='sphinx' commit -m "rebuild gh-pages at ${rev}"
+git push -f https://github.com/rodluger/planetplanet.git HEAD:gh-pages
 
-# Commit and force push!
-git -c user.name='Rodrigo Luger' -c user.email='rodluger@gmail.com' commit -m "rebuild gh-pages at ${rev}"
-git push -q -f origin gh-pages
-
-# Go back to original branch
-git checkout $branch
+# Remove the temporary directory
+cd ..
+rm -rf tmp_html
