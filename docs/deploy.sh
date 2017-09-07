@@ -63,6 +63,7 @@ git add -f _static
 git add -f _images
 git add -f scripts/*.html
 git add -f api/*.html
+git add -f PPOs.pdf
 git -c user.name='sphinx' -c user.email='sphinx' commit -m "rebuild gh-pages at ${rev}"
 git push -f https://github.com/rodluger/planetplanet.git HEAD:gh-pages
 
