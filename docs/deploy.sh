@@ -50,6 +50,8 @@ rev=$(git rev-parse --short HEAD)
 # to planetplanet/gh-pages
 cd .build
 cp -r html tmp_html
+cp ../title.png tmp_html/_images/title.png
+cp ../PPOs.pdf tmp_html/PPOs.pdf
 cd tmp_html
 git init
 touch .nojekyll
@@ -58,6 +60,7 @@ git add -f *.html
 git add -f *.js
 git add -f _sources
 git add -f _static
+git add -f _images
 git add -f scripts/*.html
 git add -f api/*.html
 git -c user.name='sphinx' -c user.email='sphinx' commit -m "rebuild gh-pages at ${rev}"
