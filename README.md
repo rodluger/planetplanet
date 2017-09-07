@@ -4,8 +4,8 @@
 <br/><br/>
 <p><a href="https://travis-ci.com/rodluger/planetplanet"><img src="https://travis-ci.com/rodluger/planetplanet.svg?token=jABaFLLgJNHTWSqkT7CM&branch=master"/></a>
 <a href="https://raw.githubusercontent.com/rodluger/planetplanet/master/LICENSE?token=AI5FKxGMJTv55h2EE_AuXW2gofnIaRDeks5Zm0unwA%3D%3D"><img src="https://img.shields.io/badge/license-GPL-3399ff.svg?style=flat"/></a>
-<a href="http://staff.washington.edu/rodluger/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-ff69b4.svg?style=flat"/></a>
-<a href="http://staff.washington.edu/rodluger/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"/></a>
+<a href="https://rodluger.github.io/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-ff69b4.svg?style=flat"/></a>
+<a href="https://rodluger.github.io/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"/></a>
 </p>
 </div>
 
@@ -32,4 +32,4 @@ You may need to install the [GNU Scientific Library](https://www.gnu.org/softwar
 brew install gsl
 ```
 
-Please check out the [documentation](http://staff.washington.edu/rodluger/planetplanet/index.html) or read the [paper](http://staff.washington.edu/rodluger/planetplanet/PPOs.pdf) for more information.
+Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
