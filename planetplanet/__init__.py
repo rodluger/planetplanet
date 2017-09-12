@@ -25,13 +25,6 @@ if not __PLANETPLANET_SETUP__:
   from .photo.trappist1 import *
   from .detect import *
   
-  # Check for updates every tenth time
-  file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.counter')
-  with open(file, 'a+') as f:  
-    f.write('+')
-    f.seek(0)
-    counts = len(f.read())
-  if counts >= 10:
+  # Check for updates?
+  if not os.environ.get('PLANETPLANET_SKIP_VERSION_CHECK'):
     VersionCheck()
-    os.remove(file)
-  del file

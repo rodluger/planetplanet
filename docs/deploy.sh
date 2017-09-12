@@ -51,6 +51,7 @@ rev=$(git rev-parse --short HEAD)
 cd .build
 cp -r html tmp_html
 cp ../title.png tmp_html/_images/title.png
+cp ../title.gif tmp_html/_images/title.gif
 cp ../PPOs.pdf tmp_html/PPOs.pdf
 cd tmp_html
 git init
