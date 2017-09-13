@@ -44,7 +44,7 @@ def test_mutual(tol = 1e-10):
              nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, color = 'b')
 
   # System
-  system = System(star, b, c, quiet = True)
+  system = System(star, b, c, quiet = True, nbody = False)
 
   # Get the occultation light curves
   time = np.linspace(-0.06, 0.06, 1000)
