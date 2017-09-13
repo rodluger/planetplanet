@@ -943,7 +943,8 @@ class System(object):
 
         return figp
 
-    def histogram(self, tstart, tend, dt = 0.0001):
+    def histogram(self, tstart, tend, dt = 0.0001, photo = False,
+                  lambda1 = 5, lambda2 = 15, R = 100):
         '''
 
         Computes statistical properties of planet-planet occultations that 
@@ -967,7 +968,20 @@ class System(object):
         :param float tend: The integration end time (BJD − 2,450,000)
         :param float dt: The time resolution in days. Occultations shorter \
                than this will not be registered.
-
+        :param bool photo: Run the full photodynamical routine? Default \
+               :py:obj:`False`, in which case only dynamical properties \
+               (durations, impact parameters, and phases) are computed. \
+               If :py:obj:`True`, computes photometric statistics, including \
+               occultation depths and SNRs. Note that calling the full \
+               photodynamical code is much more computationally expensive.    
+        :param float lambda1: The start point of the wavelength grid in \
+               microns. Used only if `photo` is :py:obj:`True`. Default `5`
+        :param float lambda2: The end point of the wavelength grid in \
+               microns. Used only if `photo` is :py:obj:`True`. Default `15`
+        :param float R: The spectrum resolution, \
+               :math:`R = \\frac{\lambda}{\Delta\lambda}`. \
+                Used only if `photo` is :py:obj:`True`. Default `100`
+        
         :returns: A list of \
                   :py:obj:`(phase angle, impact parameter, duration)` tuples \
                   for each planet in the system. The phase angle is measured \
@@ -981,16 +995,60 @@ class System(object):
 
         # Reset
         self._reset()
-        for body in self.bodies:
-            body.u = np.array([], dtype = float)
-        time = np.arange(tstart, tend, dt)
-        self._malloc(len(time), 1)
+        
+        # Dynamics only
+        if not self.photo:
+        
+            for body in self.bodies:
+                body.u = np.array([], dtype = float)
+            time = np.arange(tstart, tend, dt)
+            self._malloc(len(time), 1)
 
-        # Call the orbit routine
-        err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), 
-                           len(self.bodies), self._ptr_bodies, self.settings)
-        assert err <= 0, "Error in C routine `Orbits` (%d)." % err
+            # Call the orbit routine
+            err = self._Orbits(len(time), np.ctypeslib.as_ctypes(time), 
+                               len(self.bodies), self._ptr_bodies, 
+                               self.settings)
+            assert err <= 0, "Error in C routine `Orbits` (%d)." % err
+        
+        # Full photodynamical model
+        else:
+        
+            # Compute the wavelength grid
+            wav = [lambda1]
+            while(wav[-1] < lambda2):
+                wav.append(wav[-1] + wav[-1] / R)
+            wavelength = np.array(wav)
 
+            # Compute all limb darkening coefficients
+            for body in self.bodies:
+                body.u = [None for ld in body.limbdark]
+                for n, ld in enumerate(body.limbdark):
+                    if callable(ld):
+                        body.u[n] = ld(wavelength)
+                    elif not hasattr(ld, '__len__'):
+                        body.u[n] = ld * np.ones_like(wavelength)
+                    else:
+                        raise Exception("Limb darkening coefficients must be "
+                                        + "provided as a list of scalars or "
+                                        + "as a list of functions.")
+                body.u = np.array(body.u)
+
+            # Convert from microns to meters
+            wavelength *= 1e-6
+                        
+            # No oversampling
+            time_hr = np.array(time)
+
+            # Allocate memory
+            self._malloc(len(time_hr), len(wavelength))
+
+            # Call the light curve routine
+            err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
+                             len(wavelength), 
+                             np.ctypeslib.as_ctypes(wavelength), 
+                             len(self.bodies), self._ptr_bodies, self.settings)
+            assert err <= 0, "Error in C routine `Flux` (%d)." % err
+        
         # A histogram of the distribution of phases, 
         # impact parameters, and durations
         hist = [[] for body in self.bodies[1:]]
@@ -1148,10 +1206,9 @@ class System(object):
                            occultation_durs):
             if not np.isnan(t):
                 if not self.settings.quiet:
-                    print("%s occulted by %s at t = %8.3f days lasting " +
-                          "%5.2f minutes." % (self.bodies[occulted].name, 
-                                              self.bodies[i].name, t, 
-                                              d / MINUTE))
+                    print(self.bodies[occulted].name + " occulted by " +
+                          self.bodies[i].name + " at t = %8.3f days" % t +
+                          " lasting %5.2f minutes." % (d / MINUTE))
                 times.append(t)
                 occultors.append(self.bodies[i])
                 durations.append(d / MINUTE)
