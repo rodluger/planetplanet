@@ -441,8 +441,14 @@ class System(object):
                          len(self.bodies), self._ptr_bodies, self.settings)
         assert err <= 0, "Error in C routine `Flux` (%d)." % err
         self._computed = True
-
-        # Downbin to original time array
+        
+        # Downbin the continuum flux to the original time array
+        self._continuum_hr = np.array(self._continuum)
+        if self.settings.oversample > 1:
+            self._continuum = np.mean(self._continuum.reshape(-1, oversample, 
+                                      len(wavelength)), axis = 1)
+        
+        # Downbin other arrays to original time array
         for body in self.bodies:
 
             # Store the oversampled light curve
@@ -533,7 +539,7 @@ class System(object):
         assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     def observe(self, save = None, filter = 'f1500w', stack = 1, 
-                instrument = 'jwst', deg = 3):
+                instrument = 'jwst', deg = 3, alpha_err = 0.7):
         '''
         Run telescope observability calculations for a system that has had its 
         lightcurve computed. Calculates a synthetic noised lightcurve in the 
@@ -597,7 +603,7 @@ class System(object):
             raise ValueError("Invalid filter.")
 
         # Compute lightcurve in this filter
-        self.filter.compute_lightcurve(self.flux, self.time, 
+        self.filter.compute_lightcurve(self.time, self.flux, self.continuum, 
                                        self.wavelength, stack = stack,
                                        time_hr = self.time_hr, 
                                        flux_hr = self.flux_hr,
@@ -611,7 +617,7 @@ class System(object):
                       fontsize = 10)
 
         # Plot lightcurve
-        self.filter.lightcurve.plot(ax0 = ax)
+        self.filter.lightcurve.plot(ax0 = ax, alpha_err = alpha_err)
 
         # Determine average precision attained in lightcurve
         ppm = np.mean(self.filter.lightcurve.sig 
@@ -627,20 +633,6 @@ class System(object):
                                        for planet in self.bodies])
         outmask = ~inmask
         arr = np.arange(len(inmask))
-
-        # Determine continuum flux if there were no event
-        # Compute for plot
-        x = self.filter.lightcurve.time[inmask]
-        xp = self.filter.lightcurve.time[outmask]
-        yp = self.filter.lightcurve.obs[outmask]
-        zp = np.polyfit(xp,yp,deg)
-        p1 = np.poly1d(zp)
-        
-        # Compute for photons
-        xp = self.filter.lightcurve.time[outmask]
-        yp = self.filter.lightcurve.Nphot[outmask]
-        zp = np.polyfit(xp,yp,deg)
-        p2 = np.poly1d(zp)
 
         # Break lightcurve mask into event chunks
         n = 0
@@ -666,19 +658,21 @@ class System(object):
         noise = []
         for i in range(n):
         
+            # In-event indices
             mask = events[i]
+            
             # System photons over event
-            Nsys = self.filter.lightcurve.Nphot[mask]
+            Nsys = self.filter.lightcurve.Nsys[mask]
             
             # Background photons over event
             Nback = self.filter.lightcurve.Nback[mask]
             
             # Polynomial fit to continuum over event
-            Ncont = p2(self.filter.lightcurve.time[mask])
+            Ncont = self.filter.lightcurve.Ncont[mask]
                 
             # Compute signal of and noise on the event
-            S = np.sum(np.fabs(Ncont - Nsys)) / np.sum(Nsys) * 1e6
-            N = np.sqrt(np.sum(Nsys + Nback)) / np.sum(Nsys) * 1e6
+            S = np.sum(np.fabs(Ncont - Nsys)) / np.sum(Nsys + Nback) * 1e6
+            N = np.sqrt(np.sum(Nsys + Nback)) / np.sum(Nsys + Nback) * 1e6
             signal.append(S)
             noise.append(N)
             

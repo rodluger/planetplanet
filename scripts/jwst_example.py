@@ -71,18 +71,18 @@ def Triple_bc():
     system = System(star, b, c, distance = 12, oversample = 10)
 
     # There's a triple occultation of `c` at this time
-    time = np.arange(252.75, 253.50, 10 * MINUTE)
+    time = np.arange(252.75, 253.50, 5 * MINUTE)
 
     # Compute the light curve
     system.compute(time, lambda1 = 1, lambda2 = 35)
-
+    
     # Let's re-center the time array for a prettier x axis
     system.A.time_hr -= time[0]
     system.A.time -= time[0]
 
     # Observe it (one exposure)
     np.random.seed(1234)
-    fig, ax = system.observe(stack = 1, filter = 'f1500w')
+    fig, ax = system.observe(stack = 1, filter = 'f1500w', alpha_err = 0.5)
     fig.set_size_inches(12, 6)
     fig.subplots_adjust(top = 0.7)
     ax.set_title("")

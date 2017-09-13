@@ -237,17 +237,25 @@ class Filter(object):
 
         return F
 
-    def compute_lightcurve(self, flux, time, lam, stack = 1, atel = 25., thermal = True, time_hr = None, flux_hr = None):
+    def compute_lightcurve(self, time, flux, continuum, lam, stack = 1, 
+                           atel = 25., thermal = True, time_hr = None, 
+                           flux_hr = None):
         """
         Computes an observed lightcurve in the :py:func:`Filter`.
-
-        :param array_like flux: Observed flux grid (`time` by `lam`) [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+        
         :param array_like time: Time grid [days]
+        :param array_like flux: Observed flux grid (`time` by `lam`) \
+               [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+        :param array_like continuum: Observed *continuum* flux grid (no \
+               occultations, shape `time` by `lam`) \
+               [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
         :param array_like lam: Wavelength [:math:`\mu \mathrm{m}`]
         :param int stack: Number of exposures to stack. Default `1`
-        :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default `25`
+        :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. \
+               Default `25`
         :param bool thermal: Compute thermal noise. Default :py:obj:`True`
-        :param array_like time_hr: High-res time grid [Days]. Default :py:obj:`None`
+        :param array_like time_hr: High-res time grid [Days]. \
+               Default :py:obj:`None`
         :param array_like flux_hr: High-res flux grid. Default :py:obj:`None`
         
         """
@@ -265,11 +273,11 @@ class Filter(object):
 
         # Hi-res exposure time array
         if time_hr is not None:
-          zeros = np.where(np.diff(time_hr) == 0)[0]
-          time_hr = np.delete(time_hr, zeros)
-          flux_hr = np.delete(flux_hr, zeros, axis = 0)
-          dthr = time_hr[1:] - time_hr[:-1]
-          dthr = np.hstack([dthr, dthr[-1]])
+            zeros = np.where(np.diff(time_hr) == 0)[0]
+            time_hr = np.delete(time_hr, zeros)
+            flux_hr = np.delete(flux_hr, zeros, axis = 0)
+            dthr = time_hr[1:] - time_hr[:-1]
+            dthr = np.hstack([dthr, dthr[-1]])
 
         # Calculate jwst background flux
         if thermal:
@@ -281,28 +289,34 @@ class Filter(object):
         tint = dtlr * 3600. * 24
 
         # Calculate SYSTEM photons
-        Nphot = stack * tint * self.photon_rate(lam, flux[:,:], atel = atel)
-
+        Nsys = stack * tint * self.photon_rate(lam, flux[:,:], atel = atel)
+        
+        # Calculate CONTINUUM photons
+        Ncont = stack * tint * self.photon_rate(lam, continuum[:,:], 
+                                                atel = atel)
+        
         # Hi-res light curve
         if flux_hr is not None:
-          tint_hr = dthr * 3600. * 24
-          Nphot_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:], atel = atel)
-          norm_hr = np.median(Nphot_hr)
+            tint_hr = dthr * 3600. * 24
+            Nsys_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:], 
+                                                         atel = atel)
+            norm_hr = np.median(Nsys_hr)
 
         # Calculate BACKGROUND photons
         Nback = stack * tint * self.photon_rate(lam, Fback, atel = atel)
 
         # Signal-to-noise
-        SNR = Nphot / np.sqrt(Nphot + Nback)
+        SNR = Nsys / np.sqrt(Nsys + Nback)
 
         # Generate synthetic data points
-        norm = np.median(Nphot)
-        sig = np.sqrt(Nphot + Nback) / norm
-        obs = random_draw(Nphot / norm, sig)
+        norm = np.median(Nsys)
+        sig = np.sqrt(Nsys + Nback) / norm
+        obs = random_draw(Nsys / norm, sig)
 
         # Create lightcurve object to hold observed quantities
         self.lightcurve = Lightcurve(time = time,
-                                     Nphot = Nphot,
+                                     Nsys = Nsys,
+                                     Ncont = Ncont,
                                      Nback = Nback,
                                      SNR = SNR,
                                      obs = obs,
@@ -311,31 +325,36 @@ class Filter(object):
                                      tint = tint,
                                      stack = stack,
                                      time_hr = time_hr,
-                                     Nphot_hr = Nphot_hr,
+                                     Nsys_hr = Nsys_hr,
                                      norm_hr = norm_hr)
 
         return
 
-################################################################################
+###############################################################################
 
 class Lightcurve(object):
     """
-    A lightcurve class to contain all outputs from a snythetic lightcurve observation.
+    A lightcurve class to contain all outputs from a snythetic 
+    lightcurve observation.
 
     :param array_like time: Observed time grid [days]
-    :param array_like Nphot: Number of photons from `System`
+    :param array_like Nsys: Number of photons from `System`
+    :param array_like Ncont: Number of continuum photons from `System`
     :param array_like Nback: Number of photons from background
     :param array_like SNR: Signal-to-noise on `System`
     :param array_like obs: Observed photon signal (normalized)
     :param array_like sig: 1-sigma errors on signal (normalized)
     :param float norm: Normalization constant (median of lightcurve)
     :param array_like tint: Integration time [mins]
+    
     """
-    def __init__(self, time = None, Nphot = None, Nback = None, SNR = None,
-                 obs = None, sig = None, norm = None, tint = None, stack = None,
-                 time_hr = None, Nphot_hr = None, norm_hr = None):
+    def __init__(self, time = None, Nsys = None, Ncont = None, Nback = None, 
+                 SNR = None, obs = None, sig = None, norm = None, tint = None, 
+                 stack = None, time_hr = None, Nsys_hr = None, 
+                 norm_hr = None):
         self.time = time
-        self.Nphot = Nphot
+        self.Nsys = Nsys
+        self.Ncont = Ncont
         self.Nback = Nback
         self.SNR = SNR
         self.obs = obs
@@ -344,16 +363,17 @@ class Lightcurve(object):
         self.tint = tint
         self.stack = stack
         self.time_hr = time_hr
-        self.Nphot_hr = Nphot_hr
+        self.Nsys_hr = Nsys_hr
         self.norm_hr = norm_hr
 
-    def plot(self, ax0=None, title=""):
+    def plot(self, ax0=None, title="", alpha_err = 0.7):
         '''
         Plots the synthetic lightcurve.
 
         :param ax0: User provided plot :py:obj:`axis`. Default :py:obj:`None`
         :type ax0: :py:obj:`axis`
         :param str title: Plot title. Defult ""
+        
         '''
 
         # Create new fig if axis is not user provided
@@ -366,14 +386,18 @@ class Lightcurve(object):
             ax = ax0
 
         # Plot
-        ax.plot(self.time, self.Nphot/self.norm, label='Binned', zorder=11, alpha=0.75, lw = 1.5, color = 'b')
+        ax.plot(self.time, self.Nsys / self.norm, label='Binned', zorder = 11, 
+                 alpha=0.75, lw = 1.5, color = 'b')
 
-        if (self.time_hr is not None) and (self.Nphot_hr is not None):
-          ax.plot(self.time_hr, self.Nphot_hr /  self.norm_hr, zorder=11, alpha=0.75, lw = 1, label = 'Unbinned', color = 'g')
+        if (self.time_hr is not None) and (self.Nsys_hr is not None):
+          ax.plot(self.time_hr, self.Nsys_hr /  self.norm_hr, zorder = 11, 
+                  alpha=0.75, lw = 1, label = 'Unbinned', color = 'g')
 
-        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, alpha=0.7, zorder=10, lw = 1)
-        ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins ($\times$ %d)" %(self.tint[0]/60., self.stack),
-                ha="left", va="top", transform=ax.transAxes,
+        ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2, 
+                    alpha=alpha_err, zorder=10, lw = 1)
+        ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins ($\times$ %d)" 
+                % (self.tint[0]/60., self.stack),
+                ha="left", va="top", transform = ax.transAxes,
                 fontsize=12)
         ax.legend(loc = 'upper right')
         ax.ticklabel_format(useOffset = False)
