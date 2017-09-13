@@ -27,7 +27,6 @@ __all__ = ['Trappist1']
 
 def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
     '''
-    
     Returns an instance of :py:obj:`planetplanet.photo.System` for the full 
     TRAPPIST-1 system. Star and planet parameters are drawn from their 
     respective prior distributions, which are based on the observed values 
@@ -42,8 +41,8 @@ def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
            Default :py:obj:`12`
     :param int seed: Random number generator seed. Default :py:obj:`None`
     :param kwargs: Any other :py:obj:`kwargs` to be passed to \
-           :py:func:`planetplanet.Star`,
-    :py:func:`planetplanet.Planet`, and :py:func:`planetplanet.System`.
+           :py:func:`planetplanet.Star`, \
+           :py:func:`planetplanet.Planet`, and :py:func:`planetplanet.System`.
     
     .. plot::
          :align: center
