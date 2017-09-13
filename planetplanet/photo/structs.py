@@ -509,7 +509,7 @@ class SETTINGS(ctypes.Structure):
     :param float mintheta: Absolute value of the minimum phase angle in \
            degrees. Below this angle, elliptical boundaries of constant \
            surface brightness on the planet surface are treated as vertical \
-           lines. Default `1.`
+           lines. Default `0.01`
     :param int maxvertices: Maximum number of vertices allowed in the area \
            computation. Default `999`
     :param int maxfunctions: Maximum number of functions allowed in the area \
@@ -556,7 +556,7 @@ class SETTINGS(ctypes.Structure):
         self.batmanopt = kwargs.pop('batmanopt', True)
         self.quarticsolver = kwargs.pop('quarticsolver', 'gsl')
         self.quiet = kwargs.pop('quiet', False)
-        self.mintheta = kwargs.pop('mintheta', 1.)
+        self.mintheta = kwargs.pop('mintheta', 0.01)
         self.maxvertices = kwargs.pop('maxvertices', 999)
         self.maxfunctions = kwargs.pop('maxfunctions', 999)
         self.oversample = max(1, kwargs.pop('oversample', 1))

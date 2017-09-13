@@ -300,7 +300,14 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
       body[p]->time[t] = time[t];
     }    
   }
-    
+  
+  // Initialize the continuum flux
+  for (t = 0; t < nt; t++) {
+    for (w = 0; w < nw; w++) {
+      continuum[nw * t + w] = 0;
+    }
+  }
+  
   // Solve for the orbits
   if (settings.nbody)
     iErr = NBody(np, body, settings, 0, 0, 0, dummyInt, 0, dummyDouble, dummyInt, dummyDouble);
@@ -402,8 +409,10 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
         
       }
         
-      //
-        
+      // Add to the continuum flux
+      for (w = 0; w < nw; w++) {
+        continuum[nw * t + w] += body[p]->flux[nw * t + w];
+      }
              
       // Default is no occultation
       no = 0;

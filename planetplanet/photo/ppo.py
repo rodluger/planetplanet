@@ -255,7 +255,10 @@ class System(object):
                 body.a = ((body.per * DAYSEC) ** 2 * G 
                           * (body.host._m + body._m) * MEARTH 
                           / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-
+        
+        # Reset continuum
+        self._continuum = np.empty((0,), dtype = 'float64')
+        
         # Reset animations
         self._animations = []
 
@@ -426,7 +429,7 @@ class System(object):
             time_hr = np.concatenate(time_hr)
         
         # Continuum flux
-        continuum = np.zeros(len(time_hr) * len(wavelength))
+        self._continuum = np.zeros(len(time_hr) * len(wavelength))
         
         # Allocate memory
         self._malloc(len(time_hr), len(wavelength))
@@ -434,7 +437,7 @@ class System(object):
         # Call the light curve routine
         err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
                          len(wavelength), np.ctypeslib.as_ctypes(wavelength), 
-                         np.ctypeslib.as_ctypes(continuum),
+                         np.ctypeslib.as_ctypes(self._continuum),
                          len(self.bodies), self._ptr_bodies, self.settings)
         assert err <= 0, "Error in C routine `Flux` (%d)." % err
         self._computed = True
@@ -1025,7 +1028,7 @@ class System(object):
             time_hr = np.array(time)
             
             # Continuum flux
-            continuum = np.zeros(len(time_hr) * len(wavelength))
+            self._continuum = np.zeros(len(time_hr) * len(wavelength))
             
             # Allocate memory
             self._malloc(len(time_hr), len(wavelength))
@@ -1034,7 +1037,7 @@ class System(object):
             err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
                              len(wavelength), 
                              np.ctypeslib.as_ctypes(wavelength), 
-                             np.ctypeslib.as_ctypes(continuum), 
+                             np.ctypeslib.as_ctypes(self._continuum), 
                              len(self.bodies), self._ptr_bodies, self.settings)
             assert err <= 0, "Error in C routine `Flux` (%d)." % err
         
@@ -1784,7 +1787,18 @@ class System(object):
         '''
 
         return np.sum([b.flux for b in self.bodies], axis = 0)
+    
+    @property
+    def continuum(self):
+        '''
+        The total *continuum* flux of the system computed on a 
+        grid of time and wavelength. This is the same as :py:attr:`flux`,
+        but without any occultations/transits.
 
+        '''
+
+        return self._continuum.reshape(self.bodies[0].flux.shape)
+    
     @property
     def time(self):
         '''

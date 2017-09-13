@@ -52,7 +52,7 @@ def plot(interactive = True):
     tstart = np.random.random() * 10000
     time = np.linspace(tstart, tstart + 10., 10000)
     system.compute(time)
-
+    
     # Normalize the time array
     for body in system.bodies:
         body.time -= body.time[0]
