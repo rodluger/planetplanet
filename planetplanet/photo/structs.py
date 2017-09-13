@@ -496,7 +496,7 @@ class SETTINGS(ctypes.Structure):
     by assignment once a :py:class:`System` object has been instantiated.
 
     :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute \
-           orbits. Default :py:obj:`False`
+           orbits. Default :py:obj:`True`
     :param float keptol: Kepler solver tolerance. Default `1.e-15`
     :param int maxkepiter: Maximum number of Kepler solver iterations. \
            Default `100`
@@ -545,7 +545,7 @@ class SETTINGS(ctypes.Structure):
                 ("distance", ctypes.c_double)]
 
     def __init__(self, **kwargs):
-        self.nbody = kwargs.pop('nbody', False)
+        self.nbody = kwargs.pop('nbody', True)
         self.integrator = kwargs.pop('integrator', 'whfast')
         self.keptol = kwargs.pop('keptol', 1.e-15)
         self.maxkepiter = kwargs.pop('maxkepiter', 100)

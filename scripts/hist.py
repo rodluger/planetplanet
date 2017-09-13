@@ -72,7 +72,7 @@ def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
         system = Trappist1(sample = True, nbody = nbody, quiet = True)
         system.settings.timestep = 1. / 24.
         try:
-            h = system.histogram(OCTOBER_08_2016, OCTOBER_08_2016 + 365)
+            h = system.histogram(OCTOBER_08_2016, OCTOBER_08_2016 + 365, photo = True)
         except:
             continue
             

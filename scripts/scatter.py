@@ -24,26 +24,27 @@ occulting body, respectively.
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+                       unicode_literals
 from planetplanet import Trappist1
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
 
 def _test():
-  '''
-  
-  '''
+    '''
 
-  system = Trappist1(sample = True, nbody = True)
-  system.scatter_plot(OCTOBER_08_2016, OCTOBER_08_2016 + 365 * 3)
-  pl.show()
+    '''
+
+    system = Trappist1(sample = True, nbody = True)
+    system.scatter_plot(OCTOBER_08_2016, OCTOBER_08_2016 + 365 * 3)
+    pl.show()
 
 if __name__ == '__main__':
 
-  # Instantiate the Trappist-1 system
-  # Plot all occultations from October 2016 to October 2019
-  system = Trappist1(sample = True, nbody = True)
-  fig = system.scatter_plot(OCTOBER_08_2016, OCTOBER_08_2016 + 365 * 3)
-  fig.savefig("scatter.pdf", bbox_inches = 'tight')
-  pl.show()
+    # Instantiate the Trappist-1 system
+    # Plot all occultations from October 2016 to October 2019
+    system = Trappist1(sample = True, nbody = True)
+    fig = system.scatter_plot(OCTOBER_08_2016, OCTOBER_08_2016 + 365 * 3)
+    fig.savefig("scatter.pdf", bbox_inches = 'tight')
+    pl.show()

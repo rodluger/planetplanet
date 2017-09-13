@@ -169,7 +169,7 @@ class System(object):
            :py:func:`Star` instances comprising all the bodies in the system. \
            The first body is assumed to be the primary.
     :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute \
-           orbits. Default :py:obj:`False`
+           orbits. Default :py:obj:`True`
     :param float keptol: Kepler solver tolerance. Default `1.e-15`
     :param int maxkepiter: Maximum number of Kepler solver iterations. \
            Default `100`
@@ -525,7 +525,7 @@ class System(object):
         assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     def observe(self, save = None, filter = 'f1500w', stack = 1, 
-                instrument = 'jwst'):
+                instrument = 'jwst', deg = 3):
         '''
         Run telescope observability calculations for a system that has had its 
         lightcurve computed. Calculates a synthetic noised lightcurve in the 
@@ -537,6 +537,8 @@ class System(object):
         :type filter: str or :py:func:`Filter`
         :param int stack: Number of exposures to stack. Default `1`
         :param str instrument: Telescope instrument to use. Default `'jwst'`
+        :param int deg: Polynomial degree for fitting the continuum. \
+                        Default `3`
         
         '''
 
@@ -557,8 +559,8 @@ class System(object):
             # create new filter for 50 microns
             filt50 = jwst.create_tophat_filter(47.5, 52.5, dlam=0.1, 
                                                Tput=0.3, name="OST50")
-            # Will have mirror between 8-15m, let's say: 12m
-            atel = 144.0
+            # Will have mirror between 8-15m, let's say: 13.5m
+            atel = np.pi * (13.541/2.) ** 2
             # No thermal noise
             thermal = False
             
@@ -611,8 +613,6 @@ class System(object):
         """
         Determine SNR on each event:
         """
-        # Use polynomial fit to continuum
-        method = "poly"
 
         # Mask in and out of occultation times
         inmask = np.logical_or.reduce([planet.occultor > 0 
@@ -621,32 +621,18 @@ class System(object):
         arr = np.arange(len(inmask))
 
         # Determine continuum flux if there were no event
-        if method == "interp":
+        # Compute for plot
+        x = self.filter.lightcurve.time[inmask]
+        xp = self.filter.lightcurve.time[outmask]
+        yp = self.filter.lightcurve.obs[outmask]
+        zp = np.polyfit(xp,yp,deg)
+        p1 = np.poly1d(zp)
         
-            # Interpolation
-            x = self.filter.lightcurve.time[inmask]
-            xp = self.filter.lightcurve.time[outmask]
-            fp = self.filter.lightcurve.obs[outmask]
-            vals = np.interp(x, xp, fp)
-            
-        elif method == "poly":
-        
-            # Poly
-            deg = 3
-            
-            # Compute for plot
-            x = self.filter.lightcurve.time[inmask]
-            xp = self.filter.lightcurve.time[outmask]
-            yp = self.filter.lightcurve.obs[outmask]
-            zp = np.polyfit(xp,yp,deg)
-            p1 = np.poly1d(zp)
-            vals = p1(x)
-            
-            # Compute for photons
-            xp = self.filter.lightcurve.time[outmask]
-            yp = self.filter.lightcurve.Nphot[outmask]
-            zp = np.polyfit(xp,yp,deg)
-            p2 = np.poly1d(zp)
+        # Compute for photons
+        xp = self.filter.lightcurve.time[outmask]
+        yp = self.filter.lightcurve.Nphot[outmask]
+        zp = np.polyfit(xp,yp,deg)
+        p2 = np.poly1d(zp)
 
         # Break lightcurve mask into event chunks
         n = 0
@@ -675,28 +661,21 @@ class System(object):
             mask = events[i]
             # System photons over event
             Nsys = self.filter.lightcurve.Nphot[mask]
+            
             # Background photons over event
             Nback = self.filter.lightcurve.Nback[mask]
             
-            if method == "interp":
-            
-                # Interpolated continuum photons over event
-                Ncont = np.interp(self.filter.lightcurve.time[mask],
-                                  self.filter.lightcurve.time[outmask],
-                                  self.filter.lightcurve.Nphot[outmask])
-                                  
-            elif method == "poly":
-            
-                # Polynomial fit to continuum over event
-                Ncont = p2(self.filter.lightcurve.time[mask])
+            # Polynomial fit to continuum over event
+            Ncont = p2(self.filter.lightcurve.time[mask])
                 
             # Compute signal of and noise on the event
-            signal.append(np.sum(np.fabs(Ncont - Nsys))/np.sum(Nsys) * 1e6)
-            noise.append(np.sqrt(np.sum(Nsys + Nback))/np.sum(Nsys) * 1e6)
-            #imax = np.argmax(Ncont - Nsys)
-            #amp.append(np.sum(Ncont - Nsys)/np.sum(Ncont)*1e6)
+            S = np.sum(np.fabs(Ncont - Nsys)) / np.sum(Nsys) * 1e6
+            N = np.sqrt(np.sum(Nsys + Nback)) / np.sum(Nsys) * 1e6
+            signal.append(S)
+            noise.append(N)
+            
             # Compute SNR on event
-            SNR = np.sum(np.fabs(Ncont - Nsys)) / np.sqrt(np.sum(Nsys + Nback))
+            SNR = S / N
             SNRs.append(SNR)
 
         # Annotate event SNRs on each event
