@@ -995,13 +995,14 @@ class System(object):
 
         # Reset
         self._reset()
+        time = np.arange(tstart, tend, dt)
         
         # Dynamics only
-        if not self.photo:
+        if not photo:
         
             for body in self.bodies:
                 body.u = np.array([], dtype = float)
-            time = np.arange(tstart, tend, dt)
+                
             self._malloc(len(time), 1)
 
             # Call the orbit routine
