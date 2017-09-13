@@ -13,20 +13,20 @@ if suffix is None:
 # module in "setup" mode. Stolen from `kplr`
 import sys
 if sys.version_info[0] < 3:
-  import __builtin__ as builtins
+    import __builtin__ as builtins
 else:
-  import builtins
+    import builtins
 builtins.__PLANETPLANET_SETUP__ = True
 import planetplanet
 
 # PLANETPLANET C EXTENSION. Borrowing heavily from REBOUND here.
 if sys.platform == 'darwin':
-  from distutils import sysconfig
-  vars = sysconfig.get_config_vars()
-  vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
-  extra_link_args=['-L/usr/local/lib', '-Wl,-install_name,@rpath/libppo' + suffix]
+    from distutils import sysconfig
+    vars = sysconfig.get_config_vars()
+    vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
+    extra_link_args=['-L/usr/local/lib', '-Wl,-install_name,@rpath/libppo' + suffix]
 else:
-  extra_link_args=['-L/usr/local/lib']
+    extra_link_args=['-L/usr/local/lib']
 libppomodule = Extension('libppo',
                    sources = glob.glob('rebound/src/*.c') + \
                              ['progress/progress.c',

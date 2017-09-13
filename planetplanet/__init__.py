@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+                       unicode_literals
 import os, subprocess
 
 # Version number
@@ -12,19 +13,19 @@ __url__ = "https://raw.githubusercontent.com/rodluger/planetplanet/master/planet
 
 # Was everest imported from setup.py?
 try:
-  __PLANETPLANET_SETUP__
+    __PLANETPLANET_SETUP__
 except NameError:
-  __PLANETPLANET_SETUP__ = False
+    __PLANETPLANET_SETUP__ = False
 
 if not __PLANETPLANET_SETUP__:
+        
+    # Import stuff
+    from . import photo, detect, constants
+    from .version import VersionCheck
+    from .photo import *
+    from .photo.trappist1 import *
+    from .detect import *
     
-  # Import stuff
-  from . import photo, detect, constants
-  from .version import VersionCheck
-  from .photo import *
-  from .photo.trappist1 import *
-  from .detect import *
-  
-  # Check for updates?
-  if not os.environ.get('PLANETPLANET_SKIP_VERSION_CHECK'):
-    VersionCheck()
+    # Check for updates?
+    if not os.environ.get('PLANETPLANET_SKIP_VERSION_CHECK'):
+        VersionCheck()
