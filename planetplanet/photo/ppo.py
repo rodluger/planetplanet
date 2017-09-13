@@ -290,6 +290,7 @@ class System(object):
                                ctypes.ARRAY(ctypes.c_double, nt),
                                ctypes.c_int, 
                                ctypes.ARRAY(ctypes.c_double, nw),
+                               ctypes.ARRAY(ctypes.c_double, nw * nt),
                                ctypes.c_int, 
                                ctypes.POINTER(ctypes.POINTER(BODY)),
                                SETTINGS]
@@ -423,13 +424,17 @@ class System(object):
             time_hr = [np.linspace(tmid[i], tmid[i + 1], oversample) 
                        for i in range(len(tmid) - 1)]
             time_hr = np.concatenate(time_hr)
-
+        
+        # Continuum flux
+        continuum = np.zeros(len(time_hr) * len(wavelength))
+        
         # Allocate memory
         self._malloc(len(time_hr), len(wavelength))
 
         # Call the light curve routine
         err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
                          len(wavelength), np.ctypeslib.as_ctypes(wavelength), 
+                         np.ctypeslib.as_ctypes(continuum),
                          len(self.bodies), self._ptr_bodies, self.settings)
         assert err <= 0, "Error in C routine `Flux` (%d)." % err
         self._computed = True
@@ -1018,7 +1023,10 @@ class System(object):
                         
             # No oversampling
             time_hr = np.array(time)
-
+            
+            # Continuum flux
+            continuum = np.zeros(len(time_hr) * len(wavelength))
+            
             # Allocate memory
             self._malloc(len(time_hr), len(wavelength))
 
@@ -1026,6 +1034,7 @@ class System(object):
             err = self._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
                              len(wavelength), 
                              np.ctypeslib.as_ctypes(wavelength), 
+                             np.ctypeslib.as_ctypes(continuum), 
                              len(self.bodies), self._ptr_bodies, self.settings)
             assert err <= 0, "Error in C routine `Flux` (%d)." % err
         

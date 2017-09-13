@@ -163,4 +163,4 @@ int Kepler(int np, BODY **body, SETTINGS settings);
 void OccultedFlux(double r, int no, double x0[no], double y0[no], double ro[no], double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr);
 void UnoccultedFlux(double r, double theta, double tnight, double teff, double distance, double mintheta, int maxvertices, int maxfunctions, int adaptive, int circleopt, int batmanopt, int quarticsolver, int nu, int nz, int nw, double u[nu * nw], double lambda[nw], double flux[nw], int maptype, RADIANCEMAP radiancemap, int quiet, int *iErr);
 int Orbits(int nt, double time[nt], int np, BODY **body, SETTINGS settings);
-int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings);
+int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuum[nt * nw], int np, BODY **body, SETTINGS settings);

@@ -267,13 +267,14 @@ Computes the full light curve for all bodies in the system.
 @param time The array of times at which to evaluate the orbits
 @param nw The size of the wavelength grid
 @param wavelength The wavelength grid in microns
+@param continuum The continuum flux (i.e., the total flux without occultations) of the system on a time/wavelength grid
 @param np The number of particles (bodies) in the system
 @param body An array of BODY pointers corresponding to all the bodies in the system
 @param settings An instance of the SETTINGS class containing all settings
 @return The error code
 
 */
-int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings){
+int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuum[nt * nw], int np, BODY **body, SETTINGS settings){
 
   double d, dx, dy, dz, d2;
   double lum, irrad;
@@ -400,7 +401,10 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         }
         
       }
-            
+        
+      //
+        
+             
       // Default is no occultation
       no = 0;
       body[p]->occultor[t] = 0;
@@ -482,7 +486,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       }
       
     }    
-  
+    
   }
 
   // Log

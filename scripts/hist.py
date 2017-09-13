@@ -52,13 +52,13 @@ def _test():
     '''
     
     if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
-        Compute(nsamp = 1)
+        Compute(nsamp = 1, photo = False)
     figs = Plot()
     for fig in figs[:-1]:
         pl.close(fig)
     pl.show()
 
-def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
+def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True, photo = True):
     '''
     
     '''
@@ -72,7 +72,8 @@ def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True):
         system = Trappist1(sample = True, nbody = nbody, quiet = True)
         system.settings.timestep = 1. / 24.
         try:
-            h = system.histogram(OCTOBER_08_2016, OCTOBER_08_2016 + 365, photo = True)
+            h = system.histogram(OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
+                                 photo = photo)
         except:
             continue
             
