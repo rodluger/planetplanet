@@ -432,6 +432,7 @@ def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
         
         # Run!
         try:
+            print("Running histogram...")
             h = histogram(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
                           photo = photo)
         except:
