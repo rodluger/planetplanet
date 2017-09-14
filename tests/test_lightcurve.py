@@ -52,18 +52,18 @@ def test_mutual(tol = 1e-10):
     time = np.linspace(-0.06, 0.06, 1000)
     system.compute(time)
     
-    # Benchmarked values (8/26/17)
-    truths = [7.69636872134e-15,
-                        1.14956644064e-16,
-                        8.59304867308e-12,
-                        1.24774758808e-13]
+    # Benchmarked values (9/14/17)
+    truths = [7.7051008403414675e-15, 
+              1.1572016180648231e-16, 
+              8.6017807920845231e-12, 
+              1.255382765512072e-13]
     
     # Computed values
     values = [system.flux[500,0],
-                        system.flux[500,-1],
-                        np.sum(system.flux[:,0]),
-                        np.sum(system.flux[:,-1])]
-
+              system.flux[500,-1],
+              np.sum(system.flux[:,0]),
+              np.sum(system.flux[:,-1])]
+    
     # Check!
     assert np.abs(values[0] - truths[0]) / truths[0] < tol, \
            "Incorrect flux: %.10e != %.10e." % (values[0], truths[0])
@@ -162,7 +162,7 @@ def test_occultation(tol = 1e-10):
               0.610017214445,
               0.961393535643,
               0.93457810666]
-         
+    
     # Check!
     assert (flux1min - truths[0]) / truths[0] < tol, \
            "Incorrect flux: %.10e != %.10e" % (flux1min, truths[0])

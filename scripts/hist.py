@@ -79,11 +79,15 @@ Marginal distributions
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+                       unicode_literals
 import os
+import subprocess
 import planetplanet
+from planetplanet import jwst
 from planetplanet import Trappist1
 from planetplanet.constants import *
+from planetplanet.pool import Pool
 import matplotlib
 import matplotlib.pyplot as pl
 import numpy as np
@@ -93,9 +97,12 @@ from scipy.stats import norm
 datapath = os.path.join(os.path.dirname(os.path.dirname(
                         os.path.abspath(planetplanet.__file__))), 
                         'scripts', 'data')
+histpath = os.path.join(os.path.dirname(os.path.dirname(
+                        os.path.abspath(planetplanet.__file__))), 
+                        'scripts')
 if not os.path.exists(datapath):
     os.makedirs(datapath)
-
+                        
 def _test():
     '''
     
@@ -108,8 +115,281 @@ def _test():
         pl.close(fig)
     pl.show()
 
-def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True, photo = True,
-            **kwargs):
+def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
+           nsamp = 50000, photo = True, eyeball = True):
+    '''
+    Submits a PBS cluster job to run :py:func:`Compute` in parallel.
+
+    :param str queue: The name of the queue to submit to. \
+           Default :py:obj:`None`
+    :param str email: The email to send job status notifications to. \
+           Default :py:obj:`None`
+    :param int walltime: The number of hours to request. Default `8`
+    :param int nodes: The number of nodes to request. Default `5`
+    :param int ppn: The number of processors per node to request. Default `12`
+    :param int nsamp: The number of prior samples to draw. Default `50,000`
+    :param bool photo: Run the full photodynamical model? \
+           Default :py:obj:`True`
+    :param bool eyeball: Use the radiative equilibrium surface map? \
+           Default :py:obj:`True`
+    '''
+
+    str_w = 'walltime=%d:00:00' % walltime
+    str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)
+    str_v = 'HISTPATH=%d,NSAMP=%d,PHOTO=%d,EYEBALL=%d' % \
+            (histpath, nsamp, int(photo), int(eyeball))
+    str_name = 'planetplanet_hist'
+    str_out = 'hist.log'
+    qsub_args = ['qsub', 'hist.pbs', 
+                 '-v', str_v, 
+                 '-o', str_out,
+                 '-j', 'oe', 
+                 '-N', str_name,
+                 '-l', str_n,
+                 '-l', str_w]
+    if email is not None: 
+        qsub_args.append(['-M', email, '-m', 'ae'])
+    if queue is not None:
+        qsub_args += ['-q', queue] 
+    print("Submitting the job...")
+    subprocess.call(qsub_args)
+
+class _FunctionWrapper(object):
+    '''
+    A simple function wrapper class. Stores :py:obj:`args` and :py:obj:`kwargs` 
+    and allows an arbitrary function to be called with no arguments.
+    
+    '''
+    
+    def __init__(self, f, *args, **kwargs):
+        '''
+        
+        '''
+        
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+    
+    def __call__(self):
+        '''
+        
+        '''
+        
+        return self.f(*self.args, **self.kwargs)
+
+def _Parallelize(nsamp, photo, eyeball):
+    '''
+    
+    '''
+    
+    # Choose the correct radiance map
+    if eyeball:
+        radiancemap = planetplanet.RadiativeEquilibriumMap()
+    else:
+        radiancemap = planetplanet.LimbDarkenedMap()
+    
+    # Get our function wrapper
+    m = _FunctionWrapper(Compute, nsamp = 100, photo = bool(photo), 
+                         radiancemap = radiancemap, progress_bar = False)
+    
+    # Parallelize. We will run `N` iterations of 100 samples each 
+    N = nsamp // 100
+    with Pool() as pool:
+        pool.map(m, range(N))
+
+def histogram(system, tstart, tend, dt = 0.0001, photo = False):
+    '''
+
+    Computes statistical properties of planet-planet occultations that 
+    occur over a given interval. Computes the frequency of occultations as 
+    a function of orbital phase, duration, and impact parameter, as well 
+    as the fully marginalized occultation frequency for each planet in the 
+    system. Occultations by the star are not included, nor are occultations
+    occuring behind the star, which are not visible to the observer.
+
+    :param float tstart: The integration start time (BJD − 2,450,000)
+    :param float tend: The integration end time (BJD − 2,450,000)
+    :param float dt: The time resolution in days. Occultations shorter \
+           than this will not be registered.
+    :param bool photo: Run the full photodynamical routine? Default \
+           :py:obj:`False`, in which case only dynamical properties \
+           (durations, impact parameters, and phases) are computed. \
+           If :py:obj:`True`, computes photometric statistics, including \
+           occultation depths and SNRs. Note that calling the full \
+           photodynamical code is much more computationally expensive.    
+    
+    :returns: A list of \
+              :py:obj:`(phase angle, impact parameter, duration)` tuples \
+              for each planet in the system. The phase angle is measured \
+              in degrees and the duration is measured in days.
+
+    .. warning:: This routine computes the **orbital phase angle**, which \
+                 is measured from **transit**. This is different from the \
+                 mean longitude by :math:`\pi/2`
+
+    '''
+
+    # Reset
+    system._reset()
+    time = np.arange(tstart, tend, dt)
+    
+    # Dynamics only
+    if not photo:
+    
+        for body in system.bodies:
+            body.u = np.array([], dtype = float)
+            
+        system._malloc(len(time), 1)
+
+        # Call the orbit routine
+        err = system._Orbits(len(time), np.ctypeslib.as_ctypes(time), 
+                           len(system.bodies), system._ptr_bodies, 
+                           system.settings)
+        assert err <= 0, "Error in C routine `Orbits` (%d)." % err
+    
+    # Full photodynamical model
+    else:
+    
+        # Compute the wavelength grid. We are hard-coding the
+        # 15 micron JWST MIRI band here.
+        lambda1 = 12.5
+        lambda2 = 17.5
+        R = 50
+        wav = [lambda1]
+        while(wav[-1] < lambda2):
+            wav.append(wav[-1] + wav[-1] / R)
+        wavelength = np.array(wav)
+        
+        # Compute all limb darkening coefficients
+        for body in system.bodies:
+            body.u = [None for ld in body.limbdark]
+            for n, ld in enumerate(body.limbdark):
+                if callable(ld):
+                    body.u[n] = ld(wavelength)
+                elif not hasattr(ld, '__len__'):
+                    body.u[n] = ld * np.ones_like(wavelength)
+                else:
+                    raise Exception("Limb darkening coefficients must be "
+                                    + "provided as a list of scalars or "
+                                    + "as a list of functions.")
+            body.u = np.array(body.u)
+            
+            # HACK: Disable phase curves. The code would take *way*
+            # too long to run, and they don't affect these statistics.
+            body.phasecurve = False
+
+        # Convert from microns to meters
+        wavelength *= 1e-6
+                    
+        # No oversampling
+        time_hr = np.array(time)
+        
+        # Continuum flux
+        system._continuum = np.zeros(len(time_hr) * len(wavelength))
+        
+        # Allocate memory
+        system._malloc(len(time_hr), len(wavelength))
+
+        # Call the light curve routine
+        err = system._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
+                         len(wavelength), 
+                         np.ctypeslib.as_ctypes(wavelength), 
+                         np.ctypeslib.as_ctypes(system._continuum), 
+                         len(system.bodies), system._ptr_bodies, 
+                         system.settings)
+        assert err <= 0, "Error in C routine `Flux` (%d)." % err
+        
+    # A histogram of the distribution of phases, 
+    # impact parameters, and durations
+    hist = [[] for body in system.bodies[1:]]
+    for k, body in enumerate(system.bodies[1:]):
+        
+        # Full photo model?
+        if photo:
+        
+            # Simulate an observation w/ JWST at 15 microns
+            # Same syntax as in `observe()`
+            w = jwst.get_miri_filter_wheel()
+            filter = w[np.argmax([f.name.lower() == 'f1500w' for f in w])]
+            filter.compute_lightcurve(time, body.flux, 
+                                      system.continuum, 
+                                      system.wavelength, 
+                                      stack = 1,
+                                      atel = 25., 
+                                      thermal = True,
+                                      quiet = True)
+        
+        # Identify the different planet-planet events
+        inds = np.where(body.occultor > 0)[0]
+        difs = np.where(np.diff(inds) > 1)[0]
+
+        # Loop over individual ones
+        for i in inds[difs]:
+            
+            # Loop over possible occultors
+            for occ in range(1, len(system.bodies)):
+
+                # Is body `occ` occulting (but not behind the star)?
+                if (body.occultor[i] & 2 ** occ) and \
+                   (body.occultor[i] & 1 == 0):
+
+                    # Note that `i` is the last index of the occultation
+                    duration = np.argmax(body.occultor[:i][::-1] 
+                                         & 2 ** occ == 0)
+                    if duration > 0:
+
+                        # Orbital phase, **measured from transit**
+                        # At transit, phase = 0; at secondary, phase = 180.
+                        phase = np.arctan2(body.x[i], 
+                                          -body.z[i]) * 180 / np.pi
+
+                        # Indices of the occultation
+                        idx = range(i - duration, i + 1)
+                        
+                        # Compute the minimum impact parameter
+                        impact = np.min(np.sqrt((system.bodies[occ].x[idx] 
+                                                 - body.x[idx]) ** 2 +
+                                                (system.bodies[occ].y[idx] 
+                                                - body.y[idx]) ** 2)) \
+                                                / (system.bodies[occ]._r 
+                                                   + body._r)
+
+                        # Convert duration to log
+                        duration = np.log10(duration * dt * 1440)
+                        
+                        # Are we done?
+                        if not photo:
+                        
+                            # Running list
+                            hist[k].append((phase, impact, duration))
+                        
+                        # No. Let's get some photometric info
+                        else:
+
+                            # Planet, background, and star photons
+                            Nplan = filter.lightcurve.Nsys[idx]
+                            Nback = filter.lightcurve.Nback[idx]
+                            Nstar = filter.lightcurve.Ncont[idx]
+                            
+                            # Compute the number of photons *missing*
+                            Nplan = np.nanmedian(Nplan) - Nplan
+                            
+                            # Compute signal of and noise on the event
+                            # in parts per million
+                            norm = 1.e6 / np.sum(Nstar + Nback)
+                            signal = norm * np.sum(np.fabs(Nplan)) 
+                            noise = norm * np.sqrt(np.sum(Nstar + Nback))
+                            
+                            # Running list
+                            hist[k].append((phase, impact, duration,
+                                            signal, noise))
+        # Make into array
+        hist[k] = np.array(hist[k])
+        
+    return hist
+    
+def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
+            progress_bar = True, **kwargs):
     '''
     
     '''
@@ -117,17 +397,21 @@ def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True, photo = True,
     # Draw samples from the prior
     hist = [[] for k in range(7)]
     count = [np.zeros(nsamp) for k in range(7)]
-    for n in tqdm(range(nsamp)):
+    if progress_bar:
+        wrap = tqdm
+    else:
+        wrap = lambda x: x
+    for n in wrap(range(nsamp)):
 
         # Instantiate the Trappist-1 system
         system = Trappist1(sample = True, nbody = nbody, 
                            quiet = True, **kwargs)
         system.settings.timestep = 1. / 24.
-        try:
-            h = system.histogram(OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
-                                 photo = photo)
-        except:
-            continue
+        #try:
+        h = histogram(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
+                          photo = photo)
+        #except:
+        #    continue
             
         # Loop over the planets
         for k in range(7):

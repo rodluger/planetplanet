@@ -20,7 +20,7 @@ except NameError:
 if not __PLANETPLANET_SETUP__:
         
     # Import stuff
-    from . import photo, detect, constants
+    from . import photo, detect, constants, pool
     from .version import VersionCheck
     from .photo import *
     from .photo.trappist1 import *
