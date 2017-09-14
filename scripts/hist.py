@@ -117,7 +117,8 @@ def _test():
     pl.show()
 
 def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
-           nsamp = 50000, photo = True, eyeball = True, batch_size = 100):
+           mpn = None, nsamp = 50000, photo = True, eyeball = True, 
+           batch_size = 100, nproc = None):
     '''
     Submits a PBS cluster job to run :py:func:`Compute` in parallel.
 
@@ -135,12 +136,21 @@ def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
            Default :py:obj:`True`
     :param int batch_size: Size of each batch used in the parallelization. \
            Default `100`
+    :param int mpn: Memory per node in gb to request. Default no setting.
+    :param int nproc: Number of processes to spawn. Default is the number of \
+           core.
     '''
         
+    if nproc is None:
+        nproc = ppn * nodes
     str_w = 'walltime=%d:00:00' % walltime
-    str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)
-    str_v = 'HISTPATH=%s,NSAMP=%d,PHOTO=%d,EYEBALL=%d,BATCHSZ=%d' % \
-            (histpath, nsamp, int(photo), int(eyeball), batch_size)
+    if mpn is not None:
+        str_n = 'nodes=%d:ppn=%d,feature=%dcore,mem=%dgb' % \
+                (nodes, ppn, ppn, mpn * nodes)
+    else:
+        str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)    
+    str_v = 'NPROC=%d,HISTPATH=%s,NSAMP=%d,PHOTO=%d,EYEBALL=%d,BATCHSZ=%d' % \
+            (nproc, histpath, nsamp, int(photo), int(eyeball), batch_size)
     str_name = 'planetplanet'
     str_out = 'hist.log'
     qsub_args = ['qsub', 'hist.pbs', 

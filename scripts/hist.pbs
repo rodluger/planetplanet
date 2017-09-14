@@ -11,5 +11,5 @@ if [ $NODES -eq 1 ]; then
     python -c "import hist; hist._Parallelize($NSAMP, $PHOTO, $EYEBALL, $BATCHSZ)"
 else
     # Run on multiple nodes with MPI
-    mpirun -np $PBS_NP python -c "import hist; hist._Parallelize($NSAMP, $PHOTO, $EYEBALL, $BATCHSZ)" 
+    mpirun -np $NPROC python -c "import hist; hist._Parallelize($NSAMP, $PHOTO, $EYEBALL, $BATCHSZ)" 
 fi
