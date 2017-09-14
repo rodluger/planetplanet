@@ -97,7 +97,7 @@ def plot():
         else:
             system.c.radiancemap = LimbDarkenedMap()
         system.compute(time, lambda2 = 15)
-        flux = np.array(c.flux[:,-1])
+        flux = np.array(c.flux[:,-1]) - np.nanmedian(c.flux[:,-1])
 
         # Stellar baseline
         norm = np.nanmedian(star.flux[:,-1])
