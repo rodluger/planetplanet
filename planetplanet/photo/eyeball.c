@@ -8,6 +8,7 @@
 #include <math.h>
 #include "ppo.h"
 #include <gsl/gsl_poly.h>
+#include <gsl/gsl_errno.h>
 
 /**
 Computes the blackbody intensity (W / m^2 / m / sr).
@@ -276,7 +277,14 @@ void GetRootsGSL(double a, double b, double xE, double yE, double xC, double yC,
   double y0 = yE - yC;
   double y2 = y0 * y0;
   double x2 = x0 * x0;
-      
+  int iErr;
+  
+  // Initialize the roots
+  roots[0] = NAN;
+  roots[1] = NAN;
+  roots[2] = NAN;
+  roots[3] = NAN;
+   
   // Get the quartic coefficients
   A = a2b2 - 1.;
   B = -2. * x0 * a2b2;
@@ -290,20 +298,28 @@ void GetRootsGSL(double a, double b, double xE, double yE, double xC, double yC,
                   A * A 
                 };
   
+  // Turn off the default error handler
+  gsl_set_error_handler_off();
+  
   // Allocate memory
   gsl_poly_complex_workspace *w = gsl_poly_complex_workspace_alloc(5);
   
   // Solve the polynomial
-  gsl_poly_complex_solve (c, 5, w, z);
+  iErr = gsl_poly_complex_solve (c, 5, w, z);
+  
+  // TODO: These errors pop up here and there. I'm issuing a warning
+  // and ignoring them so we don't cause large jobs to fail. This needs
+  // to be investigated in the future. I suspect it's due to occultations
+  // of planets that are very close to quadrature.
+  if (iErr == GSL_EFAILED) {
+    printf("WARNING: Circle/ellipse intersection point finder failed to converge.\n");
+    return;
+  }
   
   // Free the memory
   gsl_poly_complex_workspace_free (w);
   
   // Get the real roots (up to 4)
-  roots[0] = NAN;
-  roots[1] = NAN;
-  roots[2] = NAN;
-  roots[3] = NAN;
   j = 0;
   for (i = 0; i < 8; i+=2) {
     if (!(isnan(z[i])) && (fabs(z[i + 1]) < MAXIM)) {
