@@ -231,7 +231,9 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
     :returns: A list of \
               :py:obj:`(phase angle, impact parameter, duration)` tuples \
               for each planet in the system. The phase angle is measured \
-              in degrees and the duration is measured in days.
+              in degrees and the duration is measured in days. If `photo` \
+              is :py:obj:`True`, the tuples contain two additional floats: \
+              :py:obj:`signal` and :py:obj:`noise`, both measured in ppm.
 
     .. warning:: This routine computes the **orbital phase angle**, which \
                  is measured from **transit**. This is different from the \
