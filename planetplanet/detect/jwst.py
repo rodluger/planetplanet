@@ -14,7 +14,8 @@ Webb Space Telescope (JWST).
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+                       unicode_literals
 import numpy as np
 import matplotlib as mpl
 from matplotlib import rc
@@ -38,10 +39,13 @@ def readin_miri_filters(f=MIRI_PATH):
     '''
     Function to read-in MIRI photometic filters
 
-    :param str f: File location/name of JWST/MIRI photometric filter file. Default is relative to file.
+    :param str f: File location/name of JWST/MIRI photometric filter file. \
+                  Default is relative to file.
 
-    :returns: array_like wl_filt: Wavelength grid for filter throughputs [:math:`\mu \mathrm{m}`]
-    :returns: array_like dwl_filt: Wavelength bin widths for filter throughputs [:math:`\mu \mathrm{m}`]
+    :returns: array_like wl_filt: Wavelength grid for filter throughputs \
+              [:math:`\mu \mathrm{m}`]
+    :returns: array_like dwl_filt: Wavelength bin widths for filter \
+              throughputs [:math:`\mu \mathrm{m}`]
     :returns: array_like tputs: Filter throughputs
     :returns: list tputs: List of MIRI filter names
     '''
@@ -68,7 +72,8 @@ def readin_miri_filters(f=MIRI_PATH):
 
 def get_spitzer_filter_wheel(warm = True):
     """
-    Read-in and instantiate list of Spitzer IRAC filters as :py:func:`Filter` objects
+    Read-in and instantiate list of Spitzer IRAC filters as 
+    :py:func:`Filter` objects
 
     :param bool warm: If :py:obj:`True` uses only Warm Spitzer filters
 
@@ -82,21 +87,22 @@ def get_spitzer_filter_wheel(warm = True):
         N = 4
 
     # Read-in Spitzer IRAC filters
-    data1 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch1trans_full.txt"), skip_header=3)
-    data2 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch2trans_full.txt"), skip_header=3)
-    data3 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch3trans_full.txt"), skip_header=3)
-    data4 = np.genfromtxt(os.path.join(HERE, "filter_files", "080924ch4trans_full.txt"), skip_header=3)
+    data1 = np.genfromtxt(os.path.join(HERE, "filter_files", 
+                          "080924ch1trans_full.txt"), skip_header=3)
+    data2 = np.genfromtxt(os.path.join(HERE, "filter_files", 
+                          "080924ch2trans_full.txt"), skip_header=3)
+    data3 = np.genfromtxt(os.path.join(HERE, "filter_files", 
+                          "080924ch3trans_full.txt"), skip_header=3)
+    data4 = np.genfromtxt(os.path.join(HERE, "filter_files", 
+                          "080924ch4trans_full.txt"), skip_header=3)
 
     spitzer_names = ["IRAC3.6", "IRAC4.5", "IRAC5.8", "IRAC8.0"]
     spitzer_data = [data1, data2, data3, data4]
 
     # Construct filter wheel
-    wheel = [
-        Filter(
-            name = spitzer_names[i], wl=spitzer_data[i][:,0], throughput=spitzer_data[i][:,1]
-        )
-        for i in range(N)
-    ]
+    wheel = [Filter(name = spitzer_names[i], wl=spitzer_data[i][:,0], 
+                    throughput=spitzer_data[i][:,1])
+             for i in range(N)]
 
     return wheel
 
@@ -110,11 +116,13 @@ class Filter(object):
     :param str name: Name of the filter
     :param array_like wl: Wavelength grid for filter [:math:`\mu \mathrm{m}`]
     :param array_like throughput: Filter throughput
-    :param array_like dwl: Wavelength width grid for filter [:math:`\mu \mathrm{m}`]
+    :param array_like dwl: Wavelength width grid for filter \
+           [:math:`\mu \mathrm{m}`]
     :param float eff_wl: Effective filter wavelenth [:math:`\mu \mathrm{m}`]
     :param float eff_dwl: Effective filter width [:math:`\mu \mathrm{m}`]
     '''
-    def __init__(self, name=None, wl=None, throughput=None, dwl=None, eff_wl=None, eff_dwl=None):
+    def __init__(self, name=None, wl=None, throughput=None, dwl=None, 
+                 eff_wl=None, eff_dwl=None):
         '''
         Instantiate the class.
         '''
@@ -187,18 +195,22 @@ class Filter(object):
             axi = ax
 
         axi.plot(self.wl, self.throughput)
-        #axi.errorbar(self.eff_wl, np.max(self.throughput)/2, xerr=self.eff_dwl/2, fmt="o", c="k", ms=5)
+        #axi.errorbar(self.eff_wl, np.max(self.throughput)/2, 
+        # xerr=self.eff_dwl/2, fmt="o", c="k", ms=5)
 
-        plt.show();
+        plt.show()
 
     def photon_rate(self, lam, flux, atel=25.0, dlam=None):
         '''
         Compute the photon count rate registered by the detector.
 
         :param array_like lam: High-res wavelengths [:math:`\mu \mathrm{m}`]
-        :param array_like flux: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
-        :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default is `25`
-        :param array_like dlam: Delta-wavelength grid. Default is :py:obj:`None` and is calculated
+        :param array_like flux: Spectral flux density \
+               [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+        :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. \
+               Default is `25`
+        :param array_like dlam: Delta-wavelength grid. Default is \
+               :py:obj:`None` and is calculated
 
         :returns array_like cphot: Photon count rate [:math:`\mathrm{s}^{-1}`]
         
@@ -223,7 +235,8 @@ class Filter(object):
         Convolve flux with normalized filter throughput.
 
         :param array_like lam: High-res wavelength grid [:math:`\mu \mathrm{m}`]
-        :param array_like flux:  High-res flux grid [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+        :param array_like flux:  High-res flux grid \
+               [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
 
         :returns array_like F: Flux convolved with normalized throughput
         
@@ -239,7 +252,7 @@ class Filter(object):
 
     def compute_lightcurve(self, time, flux, continuum, lam, stack = 1, 
                            atel = 25., thermal = True, time_hr = None, 
-                           flux_hr = None):
+                           flux_hr = None, quiet = False):
         """
         Computes an observed lightcurve in the :py:func:`Filter`.
         
@@ -259,8 +272,9 @@ class Filter(object):
         :param array_like flux_hr: High-res flux grid. Default :py:obj:`None`
         
         """
-
-        print("Computing observed light curve in %s filter..." % self.name)
+        
+        if not quiet:
+            print("Computing observed light curve in %s filter..." % self.name)
 
         Ntime = len(time)
         Nlam = len(lam)
@@ -301,7 +315,10 @@ class Filter(object):
             Nsys_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:], 
                                                          atel = atel)
             norm_hr = np.median(Nsys_hr)
-
+        else:
+            Nsys_hr = None
+            norm_hr = None
+            
         # Calculate BACKGROUND photons
         Nback = stack * tint * self.photon_rate(lam, Fback, atel = atel)
 
@@ -352,6 +369,10 @@ class Lightcurve(object):
                  SNR = None, obs = None, sig = None, norm = None, tint = None, 
                  stack = None, time_hr = None, Nsys_hr = None, 
                  norm_hr = None):
+        '''
+        
+        '''
+        
         self.time = time
         self.Nsys = Nsys
         self.Ncont = Ncont
@@ -417,14 +438,19 @@ def planck(temp, wav):
     :param float or array_like temp: Temperature [K]
     :param float or array_like wav: Wavelength [:math:`\mu \mathrm{m}`]
 
-    :returns array_like B_lambda: Planck function [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+    :returns array_like B_lambda: Planck function \
+             [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+             
     '''
+    
     h = 6.62607e-34       # Planck constant (J * s)
     c = 2.998e8           # Speed of light (m / s)
     k = 1.3807e-23        # Boltzmann constant (J / K)
     wav = wav * 1e-6
+    
     # Returns B_lambda [W/m^2/um/sr]
-    return 1e-6 * (2. * h * c**2) / (wav**5) / (np.exp(h * c / (wav * k * temp)) - 1.0)
+    return 1e-6 * (2. * h * c**2) / (wav**5) / \
+           (np.exp(h * c / (wav * k * temp)) - 1.0)
 
 def plot_miri_filters(ax, wl, filters, names, ylim=(0.0,1.0), leg=True):
     """
@@ -436,7 +462,9 @@ def plot_miri_filters(ax, wl, filters, names, ylim=(0.0,1.0), leg=True):
     :param list names: Names of filters
     :param tuple ylim: y-axis limits. Default `(0.0, 1.0)`
     :param bool leg: Add a legend to the plot. Default :py:obj:`True`
+    
     """
+    
     ax1 = ax.twinx()
     for i in range(len(names)):
         # Plot filter throughputs
@@ -453,7 +481,8 @@ def jwst_background(wl):
 
     :param array_like wl: Wavelength grid [:math:`\mu \mathrm{m}`]
 
-    :returns array_like Fback: Spectral flux density [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
+    :returns array_like Fback: Spectral flux density \
+             [:math:`\mathrm{W/m}^2 / \mu \mathrm{m}`]
     """
 
     # Solid angle
@@ -473,39 +502,37 @@ def jwst_background(wl):
 
     return Fback
 
-def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.0, Nlam = 10000,
-                         Tstar = 2560., Tplan = 400., Rs = 0.12, Rp = 1.086, d = 12.2,
+def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, 
+                         lammax = 30.0, Nlam = 10000, Tstar = 2560., 
+                         Tplan = 400., Rs = 0.12, Rp = 1.086, d = 12.2,
                          atel = 25.0, verbose=True, plot=True, thermal = True):
     """
-    Estimate the signal-to-noise on the detection of secondary eclipses in JWST/MIRI
-    photometric filters.
+    Estimate the signal-to-noise on the detection of secondary eclipses in 
+    JWST/MIRI photometric filters.
 
     :param float tint: Exposure time [s]. Default `36.4*60.`
-    :param float nout: Out-of-transit time observed [transit durations]. Default `4`
-    :param float lammin: Wavelength minimum [:math:`\mu \mathrm{m}`]. Default `1.0`
-    :param float lammax: Wavelength maximum [:math:`\mu \mathrm{m}`]. Default `30.0`
+    :param float nout: Out-of-transit time observed [transit durations]. \
+           Default `4`
+    :param float lammin: Wavelength minimum [:math:`\mu \mathrm{m}`]. \
+           Default `1.0`
+    :param float lammax: Wavelength maximum [:math:`\mu \mathrm{m}`]. \
+           Default `30.0`
     :param int Nlam: Number of wavelengths. Default `10000`
     :param float Tstar: Stellar effective temperature [K]. Default `2560`
     :param float Tplan: Planet equilibrium temperature [K]. Default `400`
     :param float Rs: Stellar radius [solar radii]. Default `0.12`
     :param float Rp: Planet radius [Earth radii]. Default `1.086`
     :param float d: System distance [pc]. Default `12.2`
-    :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. Default `25`
+    :param float atel: Telescope collecting area [:math:`\mathrm{m}^2`]. \
+           Default `25`
     :param verbose: Print things. Default `True`
     :param plot: Make a plot. Detault `True`
     :param thermal: Include thermal noise. Default `True`
+    
     """
 
-    # Physical params
-    """
-    Tstar = 2560.
-    Tplan = 400.
-    Rs = 0.12
-    Rp = 1.086
-    d = 12.2
-    """
-
-    # Integration time is eclipse duration for planet b (assume same duration as transit):
+    # Integration time is eclipse duration for planet b 
+    # (assume same duration as transit):
     #tint = 36.4 * 60. # sec
     # Number of out-of-eclipse transit durations observed (with planet + star):
     #nout = 4.0
@@ -521,7 +548,8 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
 
     # solid angle in steradians
     omega_star = np.pi*(Rs*u.Rsun.in_units(u.km)/(d*u.pc.in_units(u.km)))**2.
-    omega_planet = np.pi*(Rp*u.Rearth.in_units(u.km)/(d*u.pc.in_units(u.km)))**2.
+    omega_planet = np.pi*(Rp*u.Rearth.in_units(u.km)/
+                         (d*u.pc.in_units(u.km)))**2.
 
     # fluxes at earth [W/m^2/um]
     Fstar = Bstar * omega_star
@@ -550,19 +578,20 @@ def estimate_eclipse_snr(tint = 36.4*60., nout = 4.0, lammin = 1.0, lammax = 30.
     for i in range(nfilt):
 
         # Count STELLAR photons
-        Nphot_star = tint * wheel[i].photon_rate(lam, Fstar, atel = atel)#filter_photon_rate(lam, Fstar, wheel[i], dlam=dlam)
+        Nphot_star = tint * wheel[i].photon_rate(lam, Fstar, atel = atel)
 
         # Count PLANET photons
-        Nphot_planet = tint * wheel[i].photon_rate(lam, Fplan, atel = atel)#filter_photon_rate(lam, Fplan, wheel[i], dlam=dlam)
+        Nphot_planet = tint * wheel[i].photon_rate(lam, Fplan, atel = atel)
 
         # Count BACKGROUND photons
         if thermal:
-            Nphot_bg = tint * wheel[i].photon_rate(lam, Fback, atel = atel)#filter_photon_rate(lam, Fback, wheel[i], dlam=dlam)
+            Nphot_bg = tint * wheel[i].photon_rate(lam, Fback, atel = atel)
         else:
             Nphot_bg = np.zeros_like(Nphot_planet)
 
         # Calculate SNR on planet photons
-        SNR = Nphot_planet / np.sqrt((1+1./nout)*Nphot_star + 1./nout*Nphot_planet+(1+1./nout)*Nphot_bg)
+        SNR = Nphot_planet / np.sqrt((1+1./nout)*Nphot_star 
+                             + 1./nout*Nphot_planet+(1+1./nout)*Nphot_bg)
 
         # Optionally print
         if verbose:
@@ -593,10 +622,12 @@ def fake_time_func(t, factor=0.01):
     return 1.0 + factor*(f/np.max(f))
 
 
-def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, tmax=4.0,
-                     Tstar = 2560., Tplan=400., Rs=0.12, Rp=1.086, d=12.2, tfact=0.01):
+def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, 
+                     tmax=4.0, Tstar = 2560., Tplan=400., Rs=0.12, Rp=1.086, 
+                     d=12.2, tfact=0.01):
     """
-    Creates a fake flux dataset as a function of wavelength and time for testing.
+    Creates a fake flux dataset as a function of wavelength and 
+    time for testing.
 
     :param int Nlam: Number of wavelengths. Default `4000`
     :param int Ntime: Number of times. Default `4000`
@@ -631,7 +662,8 @@ def create_fake_data(Nlam=4000, Ntime=4000, lammin=1.0, lammax=30.0, tmin=0.0, t
 
     # solid angle in steradians
     omega_star = np.pi*(Rs*u.Rsun.in_units(u.km)/(d*u.pc.in_units(u.km)))**2.
-    omega_planet = np.pi*(Rp*u.Rearth.in_units(u.km)/(d*u.pc.in_units(u.km)))**2.
+    omega_planet = np.pi*(Rp*u.Rearth.in_units(u.km)/
+                         (d*u.pc.in_units(u.km)))**2.
     omega_background = np.pi*(.42/206265.*lam/10.)**2.
 
     # fluxes at earth [W/m^2/um]
@@ -714,7 +746,7 @@ def random_draw(val, sig):
     Draw fake data points from model `val` with errors `sig`
 
     :param float or array_like val: Mean of Gaussian to sample from
-    :param float or array_like sig: Standard deviation of Gaussian to sample from
+    :param float or array_like sig: Standard dev. of Gaussian to sample from
 
     :returns float or array_like: Randomly sampled fake data points
     """
@@ -748,7 +780,8 @@ def create_tophat_filter(lammin, lammax, dlam=0.1, Tput=0.3, name="custom"):
 
     :param float lammin: Wavelength minimum [:math:`\mu \mathrm{m}`]
     :param float lammax: Wavelength maximum [:math:`\mu \mathrm{m}`]
-    :param float dlam: Wavelength resolution [:math:`\mu \mathrm{m}`]. Default `0.1`
+    :param float dlam: Wavelength resolution [:math:`\mu \mathrm{m}`]. \
+           Default `0.1`
     :param float Tput: Filter throughput. Default `0.3`
     :param str name: Name of filter. Default "custom"
 

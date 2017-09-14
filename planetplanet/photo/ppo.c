@@ -402,9 +402,14 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
         
       } else if (p > 0) {
         
-        // Initialize to zero at all wavelengths
+        // NOTE: If phase curves are turned off, I set the body's
+        // flux to be the flux at full phase. This is obviously
+        // incorrect for an eyeball planet but has a negligible effect on 
+        // the total light curve. Recall that occultations are differential 
+        // measurements and the continuum is set by the star. If this is
+        // ever an issue, just turn phase curves on!
         for (w = 0; w < nw; w++) {
-          body[p]->flux[nw * t + w] = 0;
+          body[p]->flux[nw * t + w] = body[p]->total_flux[w];
         }
         
       }

@@ -539,7 +539,7 @@ class System(object):
         assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     def observe(self, save = None, filter = 'f1500w', stack = 1, 
-                instrument = 'jwst', deg = 3, alpha_err = 0.7):
+                instrument = 'jwst', alpha_err = 0.7):
         '''
         Run telescope observability calculations for a system that has had its 
         lightcurve computed. Calculates a synthetic noised lightcurve in the 
@@ -551,8 +551,6 @@ class System(object):
         :type filter: str or :py:func:`Filter`
         :param int stack: Number of exposures to stack. Default `1`
         :param str instrument: Telescope instrument to use. Default `'jwst'`
-        :param int deg: Polynomial degree for fitting the continuum. \
-                        Default `3`
         
         '''
 
@@ -574,14 +572,15 @@ class System(object):
             filt50 = jwst.create_tophat_filter(47.5, 52.5, dlam=0.1, 
                                                Tput=0.3, name="OST50")
             # Will have mirror between 8-15m, let's say: 13.5m
-            atel = np.pi * (13.541/2.) ** 2
+            # This gives a telescope area of 144 m^2
+            atel = np.pi * (13.5 / 2.) ** 2
             # No thermal noise
             thermal = False
             
         elif instrument.lower() == 'spitzer':
         
             wheel = jwst.get_spitzer_filter_wheel()
-            atel = np.pi * (0.85/2.)**2
+            atel = np.pi * (0.85 / 2.) ** 2
             thermal = False
             
         else:
@@ -667,7 +666,7 @@ class System(object):
             # Background photons over event
             Nback = self.filter.lightcurve.Nback[mask]
             
-            # Polynomial fit to continuum over event
+            # Continuum photons over event
             Ncont = self.filter.lightcurve.Ncont[mask]
                 
             # Compute signal of and noise on the event
@@ -924,8 +923,7 @@ class System(object):
 
         return figp
 
-    def histogram(self, tstart, tend, dt = 0.0001, photo = False,
-                  lambda1 = 5, lambda2 = 15, R = 100):
+    def histogram(self, tstart, tend, dt = 0.0001, photo = False):
         '''
 
         Computes statistical properties of planet-planet occultations that 
@@ -955,13 +953,6 @@ class System(object):
                If :py:obj:`True`, computes photometric statistics, including \
                occultation depths and SNRs. Note that calling the full \
                photodynamical code is much more computationally expensive.    
-        :param float lambda1: The start point of the wavelength grid in \
-               microns. Used only if `photo` is :py:obj:`True`. Default `5`
-        :param float lambda2: The end point of the wavelength grid in \
-               microns. Used only if `photo` is :py:obj:`True`. Default `15`
-        :param float R: The spectrum resolution, \
-               :math:`R = \\frac{\lambda}{\Delta\lambda}`. \
-                Used only if `photo` is :py:obj:`True`. Default `100`
         
         :returns: A list of \
                   :py:obj:`(phase angle, impact parameter, duration)` tuples \
@@ -995,12 +986,16 @@ class System(object):
         # Full photodynamical model
         else:
         
-            # Compute the wavelength grid
+            # Compute the wavelength grid. We are hard-coding the
+            # 15 micron JWST MIRI band here.
+            lambda1 = 12.5
+            lambda2 = 17.5
+            R = 50
             wav = [lambda1]
             while(wav[-1] < lambda2):
                 wav.append(wav[-1] + wav[-1] / R)
             wavelength = np.array(wav)
-
+            
             # Compute all limb darkening coefficients
             for body in self.bodies:
                 body.u = [None for ld in body.limbdark]
@@ -1014,6 +1009,10 @@ class System(object):
                                         + "provided as a list of scalars or "
                                         + "as a list of functions.")
                 body.u = np.array(body.u)
+                
+                # HACK: Disable phase curves. The code would take *way*
+                # too long to run, and they don't affect these statistics.
+                body.phasecurve = False
 
             # Convert from microns to meters
             wavelength *= 1e-6
@@ -1034,19 +1033,34 @@ class System(object):
                              np.ctypeslib.as_ctypes(self._continuum), 
                              len(self.bodies), self._ptr_bodies, self.settings)
             assert err <= 0, "Error in C routine `Flux` (%d)." % err
-        
+            
         # A histogram of the distribution of phases, 
         # impact parameters, and durations
         hist = [[] for body in self.bodies[1:]]
         for k, body in enumerate(self.bodies[1:]):
-
+            
+            # debug
+            print(k)
+            
+            # Simulate an observation w/ JWST at 15 microns
+            # Same syntax as in `observe()`
+            w = jwst.get_miri_filter_wheel()
+            filter = w[np.argmax([f.name.lower() == 'f1500w' for f in w])]
+            filter.compute_lightcurve(time, body.flux, 
+                                      self.continuum, 
+                                      self.wavelength, 
+                                      stack = 1,
+                                      atel = 25., 
+                                      thermal = True,
+                                      quiet = True)
+            
             # Identify the different planet-planet events
             inds = np.where(body.occultor > 0)[0]
             difs = np.where(np.diff(inds) > 1)[0]
 
             # Loop over individual ones
             for i in inds[difs]:
-
+                
                 # Loop over possible occultors
                 for occ in range(1, len(self.bodies)):
 
@@ -1064,8 +1078,10 @@ class System(object):
                             phase = np.arctan2(body.x[i], 
                                               -body.z[i]) * 180 / np.pi
 
-                            # Compute the minimum impact parameter
+                            # Indices of the occultation
                             idx = range(i - duration, i + 1)
+                            
+                            # Compute the minimum impact parameter
                             impact = np.min(np.sqrt((self.bodies[occ].x[idx] 
                                                      - body.x[idx]) ** 2 +
                                                     (self.bodies[occ].y[idx] 
@@ -1075,10 +1091,33 @@ class System(object):
 
                             # Convert duration to log
                             duration = np.log10(duration * dt * 1440)
+                            
+                            # Are we done?
+                            if not photo:
+                            
+                                # Running list
+                                hist[k].append((phase, impact, duration))
+                            
+                            # No. Let's get some photometric info
+                            else:
 
-                            # Running list
-                            hist[k].append((phase, impact, duration))
-
+                                # Planet, background, and star photons
+                                Nplan = filter.lightcurve.Nsys[idx]
+                                Nback = filter.lightcurve.Nback[idx]
+                                Nstar = filter.lightcurve.Ncont[idx]
+                                
+                                # Compute the number of photons *missing*
+                                Nplan = np.nanmedian(Nplan) - Nplan
+                                
+                                # Compute signal of and noise on the event
+                                # in parts per million
+                                norm = 1.e6 / np.sum(Nstar + Nback)
+                                signal = norm * np.sum(np.fabs(Nplan)) 
+                                noise = norm * np.sqrt(np.sum(Nstar + Nback))
+                                
+                                # Running list
+                                hist[k].append((phase, impact, duration,
+                                                signal, noise))
             # Make into array
             hist[k] = np.array(hist[k])
 

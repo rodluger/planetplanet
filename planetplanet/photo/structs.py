@@ -4,10 +4,11 @@
 structs.py |github|
 -------------------
 
-Contains the :py:obj:`BODY` and :py:obj:`SETTINGS` classes that are passed to C as
-structs, which are for internal use only. All bodies should be instantiated via 
-the :py:class:`Planet`, :py:class:`Moon`, and :py:class:`Star` subclasses. Settings 
-should be passed directly to the :py:class:`planetplanet.photo.System` class.
+Contains the :py:obj:`BODY` and :py:obj:`SETTINGS` classes that are passed to C 
+as structs, which are for internal use only. All bodies should be instantiated 
+via the :py:class:`Planet`, :py:class:`Moon`, and :py:class:`Star` subclasses. 
+Settings should be passed directly to the :py:class:`planetplanet.photo.System` 
+class.
 
   .. role:: raw-html(raw)
      :format: html
@@ -28,9 +29,10 @@ __all__ = ['BODY', 'SETTINGS', 'Star', 'Planet', 'Moon']
 
 class BODY(ctypes.Structure):
     '''
-    The class containing all the input planet/star parameters. This is a :py:mod:`ctypes` interface
-    to the C :py:obj:`BODY` struct. Users should instantiate these via the :py:class:`Star`,
-    :py:class:`Planet`, and :py:class:`Moon` classes.
+    The class containing all the input planet/star parameters. This is a 
+    :py:mod:`ctypes` interface to the C :py:obj:`BODY` struct. Users should 
+    instantiate these via the :py:class:`Star`, :py:class:`Planet`, and 
+    :py:class:`Moon` classes.
         
     :param str name: The name of the body.
     :param kwargs: Any body-specific :py:obj:`kwargs`. See :py:func:`Star`, \
@@ -72,7 +74,8 @@ class BODY(ctypes.Structure):
                 ("_flux", ctypes.POINTER(ctypes.c_double)),
                 ("_total_flux", ctypes.POINTER(ctypes.c_double)),
                 ("_maptype", ctypes.c_int),
-                ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, ctypes.c_double)),
+                ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double, 
+                                 ctypes.c_double, ctypes.c_double)),
                 ]
 
     def __init__(self, name, **kwargs):

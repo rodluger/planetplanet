@@ -53,23 +53,25 @@ def _test():
     
     if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
         Compute(nsamp = 1, photo = False)
-    figs = Plot()
-    for fig in figs[:-1]:
+    fig_corner, _, fig_hist = Plot()
+    for fig in fig_corner:
         pl.close(fig)
     pl.show()
 
-def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True, photo = True):
+def Compute(nsamp = 3000, mind = 10., maxb = 0.5, nbody = True, photo = True,
+            **kwargs):
     '''
     
     '''
-    
+        
     # Draw samples from the prior
     hist = [[] for k in range(7)]
     count = [np.zeros(nsamp) for k in range(7)]
     for n in tqdm(range(nsamp)):
 
         # Instantiate the Trappist-1 system
-        system = Trappist1(sample = True, nbody = nbody, quiet = True)
+        system = Trappist1(sample = True, nbody = nbody, 
+                           quiet = True, **kwargs)
         system.settings.timestep = 1. / 24.
         try:
             h = system.histogram(OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
@@ -133,25 +135,47 @@ def Plot():
     print("Average number of occultations per day: %.2f" % occ_day)
     # I get 1.1 (!) These are occultations at all impact parameters 
     # and durations, so most are grazing / not really detectable.
-    
-    # We will plot 8 different figures
-    figs = [None for i in range(8)]
-    
+        
+    # All the figures we'll plot
+    fig_corner = [None for i in range(7)]
+    fig_snr = [None for i in range(7)]
+    fig_hist = None
+
     # Corner plot
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):    
         samples = np.array(hist[k])
         
+        # Did we run the full photodynamical model?
+        if samples.shape[1] == 5:
+            signal = samples[:,3]
+            noise = samples[:,4]
+            fig_snr[k], ax = pl.subplots(1)
+            color = 'cornflowerblue'
+            ax.hist(signal / noise, 
+                    weights = np.ones_like(signal) / len(count[0]),
+                    color = color, edgecolor = 'none', 
+                    alpha = 0.5, histtype = 'stepfilled', 
+                    bins = 50)
+            ax.hist(signal / noise, 
+                    weights = np.ones_like(signal) / len(count[0]),
+                    color = color, histtype = 'step', 
+                    lw = 2, bins = 50)
+            ax.set_xlabel('SNR', fontsize = 14, fontweight = 'bold')
+            ax.set_ylabel(r'Occultations [yr$^{-1}$]', fontsize = 14, 
+                          fontweight = 'bold')
+            samples = samples[:,:3]
+                 
         # But first check if we have enough samples
         if samples.shape[0] <= samples.shape[1]:
-            figs[k] = pl.figure()
+            fig_corner[k] = pl.figure()
             continue
         
-        figs[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, 
+        fig_corner[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, 
                                 range = [(-180,180), (0,1), (0, 3)], 
                                 labels = ["Longitude [deg]", 
                                           "Impact parameter", 
                                           "Duration [min]"], bins = 30)
-        for i, ax in enumerate(figs[k].axes):
+        for i, ax in enumerate(fig_corner[k].axes):
             ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
             ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
             for tick in ax.get_xticklabels() + ax.get_yticklabels():
@@ -163,20 +187,20 @@ def Plot():
             # is measured from *quadrature*, so there's a 90 deg offset we 
             # must apply. Order is secondary eclipse, quadrature left, 
             # transit, quadrature right, secondary eclipse
-            figs[k].axes[i].set_xticks([-180, -90, 0, 90, 180])
-        figs[k].axes[6].set_xticklabels([r"$+$90", r"$\pm$180", 
-                                         r"$-$90", "0", r"$+$90"])
-        figs[k].axes[3].set_yticks([0.2, 0.4, 0.6, 0.8])
-        figs[k].axes[7].set_xticks([0.2, 0.4, 0.6, 0.8])
-        figs[k].axes[8].set_xticks([0, 1, 2, 3])
-        figs[k].axes[8].set_xticklabels([1, 10, 100, 1000])
-        figs[k].axes[6].set_yticks([0, 1, 2, 3])
-        figs[k].axes[6].set_yticklabels([1, 10, 100, 1000])
+            fig_corner[k].axes[i].set_xticks([-180, -90, 0, 90, 180])
+        fig_corner[k].axes[6].set_xticklabels([r"$+$90", r"$\pm$180", 
+                                               r"$-$90", "0", r"$+$90"])
+        fig_corner[k].axes[3].set_yticks([0.2, 0.4, 0.6, 0.8])
+        fig_corner[k].axes[7].set_xticks([0.2, 0.4, 0.6, 0.8])
+        fig_corner[k].axes[8].set_xticks([0, 1, 2, 3])
+        fig_corner[k].axes[8].set_xticklabels([1, 10, 100, 1000])
+        fig_corner[k].axes[6].set_yticks([0, 1, 2, 3])
+        fig_corner[k].axes[6].set_yticklabels([1, 10, 100, 1000])
     
     # Frequency histogram
     matplotlib.rcParams['mathtext.fontset'] = 'cm'
-    figs[-1] = pl.figure(figsize = (7, 8))
-    figs[-1].subplots_adjust(hspace = 0.075)
+    fig_hist = pl.figure(figsize = (7, 8))
+    fig_hist.subplots_adjust(hspace = 0.075)
     ax = pl.subplot2grid((5, 1), (1, 0), rowspan = 4)
     axt = pl.subplot2grid((5, 1), (0, 0), rowspan = 1, 
                           sharex = ax, zorder = -99)
@@ -211,7 +235,7 @@ def Plot():
         
     leg = ax.legend(loc = 'upper right', fontsize = 15, 
                     bbox_to_anchor = (0.89, 0.865), 
-                    bbox_transform = figs[-1].transFigure)
+                    bbox_transform = fig_hist.transFigure)
     ax.set_xlabel('Occultations per year', fontsize = 16, fontweight = 'bold')
     ax.set_ylabel('Probability', fontsize = 16, fontweight = 'bold')
     ax.yaxis.set_label_coords(-0.1, 0.6)
@@ -235,14 +259,16 @@ def Plot():
     ax.plot((-d, +d), (1 - 0.25 * d, 1 + 0.25 * d), **kwargs)
     ax.plot((1 - d, 1 + d), (1 - 0.25 * d, 1 + 0.25 * d), **kwargs)
     
-    return figs
+    return fig_corner, fig_snr, fig_hist
 
 if __name__ == '__main__':
 
     if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
         Compute()
-    figs = Plot()
+    fig_corner, fig_snr, fig_hist = Plot()
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
-        figs[k].savefig('%s.corner.pdf' % planet, bbox_inches = 'tight')
-    figs[-1].savefig('hist.pdf', bbox_inches = 'tight')
+        fig_corner[k].savefig('%s.corner.pdf' % planet, bbox_inches = 'tight')
+        if fig_snr is not None:
+            fig_snr[k].savefig('%s.snr.pdf' % planet, bbox_inches = 'tight')
+    fig_hist.savefig('hist.pdf', bbox_inches = 'tight')
     pl.close()

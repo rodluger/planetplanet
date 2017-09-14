@@ -159,9 +159,9 @@ def test_occultation(tol = 1e-10):
     
     # Benchmarked values (8/26/17)
     truths = [0.675336713222,
-                        0.610017214445,
-                        0.961393535643,
-                        0.93457810666]
+              0.610017214445,
+              0.961393535643,
+              0.93457810666]
          
     # Check!
     assert (flux1min - truths[0]) / truths[0] < tol, \

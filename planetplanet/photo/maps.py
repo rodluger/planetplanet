@@ -108,7 +108,8 @@ from ..constants import *
 import numpy as np
 from numba import cfunc
 
-__all__ = ['LimbDarkenedMap', 'RadiativeEquilibriumMap', 'BandedCloudsMap', 'UniformMap']
+__all__ = ['LimbDarkenedMap', 'RadiativeEquilibriumMap', 
+           'BandedCloudsMap', 'UniformMap']
 
 def LimbDarkenedMap():
     '''
