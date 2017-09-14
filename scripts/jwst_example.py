@@ -81,7 +81,7 @@ def Triple_bc():
     system.A.time -= time[0]
 
     # Observe it (one exposure)
-    np.random.seed(1234)
+    np.random.seed(1234567)
     fig, ax = system.observe(stack = 1, filter = 'f1500w', alpha_err = 0.5)
     fig.set_size_inches(12, 6)
     fig.subplots_adjust(top = 0.7)

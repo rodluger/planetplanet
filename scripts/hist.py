@@ -232,8 +232,9 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
               :py:obj:`(phase angle, impact parameter, duration)` tuples \
               for each planet in the system. The phase angle is measured \
               in degrees and the duration is measured in days. If `photo` \
-              is :py:obj:`True`, the tuples contain two additional floats: \
-              :py:obj:`signal` and :py:obj:`noise`, both measured in ppm.
+              is :py:obj:`True`, the tuples contain three additional floats: \
+              :py:obj:`signal`, :py:obj:`noise`, :py:obj:`snr`; the first two \
+              are measured in ppm.
 
     .. warning:: This routine computes the **orbital phase angle**, which \
                  is measured from **transit**. This is different from the \
@@ -392,9 +393,16 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
                             signal = norm * np.sum(np.fabs(Nplan)) 
                             noise = norm * np.sqrt(np.sum(Nstar + Nback))
                             
+                            # Compute the actual SNR on event. Note that this 
+                            # is NOT the sum of the signals divided by the sum 
+                            # of the noises! We need to add the SNR of each 
+                            # *datapoint* individually in quadrature.
+                            snr = np.sqrt(np.sum((Nplan) ** 2 
+                                          / (Nstar + Nback)))
+                            
                             # Running list
                             hist[k].append((phase, impact, duration,
-                                            signal, noise))
+                                            signal, noise, snr))
         # Make into array
         hist[k] = np.array(hist[k])
         
@@ -520,19 +528,23 @@ def Plot(photo = True, eyeball = True):
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):    
         samples = np.array(hist[k])
         
+        # But first check if we have enough samples
+        if not len(samples):
+            fig_snr[k] = pl.figure()
+            continue
+        
         # Did we run the full photodynamical model?
-        if samples.shape[1] == 5:
-            signal = samples[:,3]
-            noise = samples[:,4]
+        if samples.shape[1] == 6:
+            snr = samples[:,5]
             fig_snr[k], ax = pl.subplots(1)
             color = 'cornflowerblue'
-            ax.hist(signal / noise, 
-                    weights = np.ones_like(signal) / len(count[0]),
+            ax.hist(snr, 
+                    weights = np.ones_like(snr) / len(count[0]),
                     color = color, edgecolor = 'none', 
                     alpha = 0.5, histtype = 'stepfilled', 
                     bins = 50)
-            ax.hist(signal / noise, 
-                    weights = np.ones_like(signal) / len(count[0]),
+            ax.hist(snr, 
+                    weights = np.ones_like(snr) / len(count[0]),
                     color = color, histtype = 'step', 
                     lw = 2, bins = 50)
             ax.set_xlabel('SNR', fontsize = 14, fontweight = 'bold')

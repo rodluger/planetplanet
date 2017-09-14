@@ -675,8 +675,11 @@ class System(object):
             signal.append(S)
             noise.append(N)
             
-            # Compute SNR on event
-            SNR = S / N
+            # Compute the actual SNR on event. Note that this is NOT
+            # the sum of the signals divided by the sum of the noises!
+            # We need to add the SNR of each *datapoint* individually
+            # in quadrature.
+            SNR = np.sqrt(np.sum((Ncont - Nsys) ** 2 / (Nsys + Nback)))
             SNRs.append(SNR)
 
         # Annotate event SNRs on each event
