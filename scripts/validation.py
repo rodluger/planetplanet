@@ -192,7 +192,7 @@ def ValidateOccultations():
     # Compute the light curve using planetplanet
     system = System(star, c, d)
     system.compute(time, lambda2 = 15)
-    flux_pp = 1 + np.array(c.flux[:,-1]) / c.total_flux[-1]
+    flux_pp = np.array(c.flux[:,-1]) / c.total_flux[-1]
     
     # Rescale the time array
     time = (time - np.nanmedian(time)) / MINUTE
