@@ -16,12 +16,62 @@ planet-planet occultations in one Earth year.
           way of doing it is to instantiate a bunch of **screen** \
           sessions: \
           `screen -dm python -c "import hist; hist.Compute(nsamp = 100)"`
+
+TRAPPIST-1b
+~~~~~~~~~~~
           
-.. plot::
+.. image:: /b.corner.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1c
+~~~~~~~~~~~
+          
+.. image:: /c.corner.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1d
+~~~~~~~~~~~
+          
+.. image:: /d.corner.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1e
+~~~~~~~~~~~
+          
+.. image:: /e.corner.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1f
+~~~~~~~~~~~
+          
+.. image:: /f.corner.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1g
+~~~~~~~~~~~
+          
+.. image:: /g.corner.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1h
+~~~~~~~~~~~
+          
+.. image:: /h.corner.jpg
+   :width: 400px
    :align: center
    
-   from scripts import hist
-   hist._test()
+Marginal distributions
+~~~~~~~~~~~~~~~~~~~~~~
+          
+.. image:: /hist.jpg
+   :width: 400px
+   :align: center
 
 .. role:: raw-html(raw)
    :format: html
