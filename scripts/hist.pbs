@@ -8,8 +8,8 @@ cd ${HISTPATH}
 
 if [ $NODES -eq 1 ]; then
     # Run on a single node with Python multiprocessing
-    python -c "import hist; hist._Parallelize($NSAMP, $PHOTO, $EYEBALL)"
+    python -c "import hist; hist._Parallelize($NAME, $NSAMP, $PHOTO, $EYEBALL, $BATCHSZ)"
 else
     # Run on multiple nodes with MPI
-    mpirun -np $PBS_NP python -c "import hist; hist._Parallelize($NSAMP, $PHOTO, $EYEBALL)" 
+    mpirun -np $PBS_NP python -c "import hist; hist._Parallelize($NAME, $NSAMP, $PHOTO, $EYEBALL, $BATCHSZ)" 
 fi

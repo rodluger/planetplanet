@@ -1,1 +1,2 @@
-.. automodule:: scripts.hist 
+.. automodule:: scripts.hist
+   :members: 

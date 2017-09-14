@@ -10,12 +10,13 @@ marginalized histogram of the total number of potentially detectable
 planet-planet occultations in one Earth year.
 
 .. note:: When I sample too many times from the prior in a single run, the \
-          code often hangs. There is likely a memory leak somewhere, but I \
+          code often hangs. There may be a memory leak somewhere, but I \
           haven't been able to find it yet. If you want to run large \
-          ensembles, I recommend parallelizing smaller batches. A brain-dead \
+          ensembles, I recommend using the parallelization scheme I \
+          implemented below. Alternatively, a brain-dead \
           way of doing it is to instantiate a bunch of **screen** \
           sessions: \
-          `screen -dm python -c "import hist; hist.Compute(nsamp = 100)"`
+          :py:obj:`screen -dm python -c "import hist; hist.Compute(nsamp = 100)"`
 
 TRAPPIST-1b
 ~~~~~~~~~~~
@@ -108,15 +109,15 @@ def _test():
     
     '''
     
-    if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
+    if not os.path.exists(os.path.join(datapath, 'hist_d000.npz')):
         Compute(nsamp = 1, photo = False)
-    fig_corner, _, fig_hist = Plot()
+    fig_corner, _, fig_hist = Plot(photo = False)
     for fig in fig_corner:
         pl.close(fig)
     pl.show()
 
 def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
-           nsamp = 50000, photo = True, eyeball = True):
+           nsamp = 50000, photo = True, eyeball = True, batch_size = 100):
     '''
     Submits a PBS cluster job to run :py:func:`Compute` in parallel.
 
@@ -132,13 +133,15 @@ def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
            Default :py:obj:`True`
     :param bool eyeball: Use the radiative equilibrium surface map? \
            Default :py:obj:`True`
+    :param int batch_size: Size of each batch used in the parallelization. \
+           Default `100`
     '''
-
+        
     str_w = 'walltime=%d:00:00' % walltime
     str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)
-    str_v = 'HISTPATH=%d,NSAMP=%d,PHOTO=%d,EYEBALL=%d' % \
-            (histpath, nsamp, int(photo), int(eyeball))
-    str_name = 'planetplanet_hist'
+    str_v = 'HISTPATH=%s,NSAMP=%d,PHOTO=%d,EYEBALL=%d,BATCHSZ=%d' % \
+            (histpath, nsamp, int(photo), int(eyeball), batch_size)
+    str_name = 'planetplanet'
     str_out = 'hist.log'
     qsub_args = ['qsub', 'hist.pbs', 
                  '-v', str_v, 
@@ -157,7 +160,8 @@ def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
 class _FunctionWrapper(object):
     '''
     A simple function wrapper class. Stores :py:obj:`args` and :py:obj:`kwargs` 
-    and allows an arbitrary function to be called with no arguments.
+    and allows an arbitrary function to be called via :py:func:`map`.
+    Used internally.
     
     '''
     
@@ -170,36 +174,30 @@ class _FunctionWrapper(object):
         self.args = args
         self.kwargs = kwargs
     
-    def __call__(self):
+    def __call__(self, x):
         '''
         
         '''
         
         return self.f(*self.args, **self.kwargs)
 
-def _Parallelize(nsamp, photo, eyeball):
+def _Parallelize(nsamp, photo, eyeball, batch_size):
     '''
+    Runs the actual parallelized computations. Used internally.
     
     '''
-    
-    # Choose the correct radiance map
-    if eyeball:
-        radiancemap = planetplanet.RadiativeEquilibriumMap()
-    else:
-        radiancemap = planetplanet.LimbDarkenedMap()
-    
+
     # Get our function wrapper
-    m = _FunctionWrapper(Compute, nsamp = 100, photo = bool(photo), 
-                         radiancemap = radiancemap, progress_bar = False)
+    m = _FunctionWrapper(Compute, nsamp = batch_size, photo = bool(photo), 
+                         eyeball = eyeball, progress_bar = False)
     
-    # Parallelize. We will run `N` iterations of 100 samples each 
-    N = nsamp // 100
+    # Parallelize. We will run `N` iterations
+    N = int(np.ceil(nsamp / batch_size))
     with Pool() as pool:
         pool.map(m, range(N))
 
 def histogram(system, tstart, tend, dt = 0.0001, photo = False):
     '''
-
     Computes statistical properties of planet-planet occultations that 
     occur over a given interval. Computes the frequency of occultations as 
     a function of orbital phase, duration, and impact parameter, as well 
@@ -207,6 +205,8 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
     system. Occultations by the star are not included, nor are occultations
     occuring behind the star, which are not visible to the observer.
 
+    :param system: A system instance.
+    :type system: :py:obj:`planetplanet.structs.System`
     :param float tstart: The integration start time (BJD − 2,450,000)
     :param float tend: The integration end time (BJD − 2,450,000)
     :param float dt: The time resolution in days. Occultations shorter \
@@ -216,8 +216,8 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
            (durations, impact parameters, and phases) are computed. \
            If :py:obj:`True`, computes photometric statistics, including \
            occultation depths and SNRs. Note that calling the full \
-           photodynamical code is much more computationally expensive.    
-    
+           photodynamical code is much more computationally expensive.
+           
     :returns: A list of \
               :py:obj:`(phase angle, impact parameter, duration)` tuples \
               for each planet in the system. The phase angle is measured \
@@ -389,10 +389,26 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
     return hist
     
 def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
-            progress_bar = True, **kwargs):
+            progress_bar = True, eyeball = True, **kwargs):
     '''
+    Compute occultation histograms by drawing `nsamp` draws from the 
+    system prior. Saves the results to `data/histXXX.npz`.
+    
+    :param int nsamp: The number of prior samples to draw. Default `300`
+    :param float mind: The minimum occultation duration in minutes to include\
+           in the tally. Default `10.`
+    :param float maxb: The maximum occultation impact parameter to include\
+           in the tally. Default `0.5`
+    :param bool nbody: Use the N-Body solver? Default :py:obj:`True`
+    :param bool nbody: Run the full photodynamical code? Default :py:obj:`True`
+    :param bool progress_bar: Display a progress bar? Default :py:obj:`True`
+    :param bool eyeball: Assume eyeball planets? Default :py:obj:`True`. If
+           :py:obj:`False`, uses the limb darkened surface map.
     
     '''
+       
+    # The dataset name
+    name = 'hist_' + ('p' + ('e' if eyeball else 'l') if photo else 'd')   
         
     # Draw samples from the prior
     hist = [[] for k in range(7)]
@@ -407,11 +423,20 @@ def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
         system = Trappist1(sample = True, nbody = nbody, 
                            quiet = True, **kwargs)
         system.settings.timestep = 1. / 24.
-        #try:
-        h = histogram(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
+        
+        # Choose the correct radiance map
+        if eyeball:
+            radiancemap = planetplanet.RadiativeEquilibriumMap()
+        else:
+            radiancemap = planetplanet.LimbDarkenedMap()
+        
+        # Run!
+        try:
+            h = histogram(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
                           photo = photo)
-        #except:
-        #    continue
+        except:
+            print("ERROR in routine `hist.Compute()`")
+            continue
             
         # Loop over the planets
         for k in range(7):
@@ -432,21 +457,25 @@ def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
     # Save
     n = 0
     
-    while os.path.exists(os.path.join(datapath, 'hist%03d.npz' % n)): 
+    while os.path.exists(os.path.join(datapath, '%s%03d.npz' % (name, n))): 
         n += 1
-    np.savez(os.path.join(datapath, 'hist%03d.npz' % n), 
+    np.savez(os.path.join(datapath, '%s%03d.npz' % (name, n)), 
              hist = hist, count = count)
 
-def Plot():
+def Plot(photo = True, eyeball = True):
     '''
+    Plots the results of a `Compute()` run and returns several figures.
     
     '''
+    
+    # The dataset name
+    name = 'hist_' + ('p' + ('e' if eyeball else 'l') if photo else 'd')  
     
     # Load
     print("Loading...")
     for n in tqdm(range(1000)):
-        if os.path.exists(os.path.join(datapath, 'hist%03d.npz' % n)):
-            data = np.load(os.path.join(datapath, 'hist%03d.npz' % n))
+        if os.path.exists(os.path.join(datapath, '%s%03d.npz' % (name, n))):
+            data = np.load(os.path.join(datapath, '%s%03d.npz' % (name, n)))
             data['hist'][0]
         else:
             if n == 0:
@@ -595,14 +624,22 @@ def Plot():
     
     return fig_corner, fig_snr, fig_hist
 
-if __name__ == '__main__':
-
-    if not os.path.exists(os.path.join(datapath, 'hist000.npz')):
-        Compute()
-    fig_corner, fig_snr, fig_hist = Plot()
+def MakeFigures(photo = True, eyeball = True):
+    '''
+    Plots all histogram figures for the paper.
+    
+    '''
+    
+    # Plot all figures   
+    fig_corner, fig_snr, fig_hist = Plot(photo = photo, eyeball = eyeball)
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
         fig_corner[k].savefig('%s.corner.pdf' % planet, bbox_inches = 'tight')
         if fig_snr is not None:
-            fig_snr[k].savefig('%s.snr.pdf' % planet, bbox_inches = 'tight')
+            if eyeball:
+                fig_snr[k].savefig('%s.snr.eyeball.pdf' % planet, 
+                                   bbox_inches = 'tight')
+            else:
+                fig_snr[k].savefig('%s.snr.limbdark.pdf' % planet, 
+                                   bbox_inches = 'tight')
     fig_hist.savefig('hist.pdf', bbox_inches = 'tight')
     pl.close()
