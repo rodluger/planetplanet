@@ -56,7 +56,7 @@ def Triple_bc():
     r = RpRs * rstar * RSUN / REARTH
     b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
                          Omega = 0, w = 0, ecc = 0, color = 'firebrick', 
-                         tnight = 40., albedo = 0.3,
+                         tnight = 40., albedo = 0.,
                          airless = True, phasecurve = True)
 
     # Instantiate `c`
@@ -64,7 +64,7 @@ def Triple_bc():
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
                          Omega = 0, w = 0, ecc = 0, color = 'coral', 
-                         tnight = 40., albedo = 0.3,
+                         tnight = 40., albedo = 0.,
                          airless = True, phasecurve = True)
 
     # Instantiate the system
@@ -157,7 +157,7 @@ def Stacked_bc(N = 10):
     r = RpRs * rstar * RSUN / REARTH
     b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
                          Omega = 0, w = 0, ecc = 0, color = 'firebrick', 
-                         tnight = 40., albedo = 0.3,
+                         tnight = 40., albedo = 0.,
                          airless = True, phasecurve = False)
 
     # Instantiate `c`
@@ -165,7 +165,7 @@ def Stacked_bc(N = 10):
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
                          Omega = 0, w = 0, ecc = 0, color = 'coral', 
-                         tnight = 40., albedo = 0.3,
+                         tnight = 40., albedo = 0.,
                          airless = True, phasecurve = False)
 
     # Instantiate the system
@@ -274,14 +274,14 @@ def Stacked_bc_all_filters():
      r = RpRs * rstar * RSUN / REARTH
      b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
                 Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., 
-                albedo = 0.3, airless = True, phasecurve = False)
+                albedo = 0., airless = True, phasecurve = False)
 
      # Instantiate `c`
      RpRs = np.sqrt(0.687 / 100)
      r = RpRs * rstar * RSUN / REARTH
      c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
                 Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., 
-                albedo = 0.3, airless = True, phasecurve = False)
+                albedo = 0., airless = True, phasecurve = False)
 
      # Instantiate the system
      system = System(star, b, c, distance = 12, oversample = 10)

@@ -91,6 +91,7 @@ from planetplanet.constants import *
 from planetplanet.pool import Pool
 import matplotlib
 import matplotlib.pyplot as pl
+from matplotlib.ticker import FuncFormatter
 import numpy as np
 import corner
 from tqdm import tqdm
@@ -106,18 +107,15 @@ if not os.path.exists(datapath):
                         
 def _test():
     '''
+    This routine is too expensive to test on Travis, so I'm
+    bypassing it for now.
     
     '''
     
-    if not os.path.exists(os.path.join(datapath, 'hist_d000.npz')):
-        Compute(nsamp = 1, photo = False)
-    fig_corner, _, fig_hist = Plot(photo = False)
-    for fig in fig_corner:
-        pl.close(fig)
-    pl.show()
+    pass
 
 def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
-           mpn = None, nsamp = 50000, photo = True, eyeball = True, 
+           mpn = None, nsamp = 50000, eyeball = True, 
            batch_size = 100, nproc = None):
     '''
     Submits a PBS cluster job to run :py:func:`Compute` in parallel.
@@ -130,8 +128,6 @@ def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
     :param int nodes: The number of nodes to request. Default `5`
     :param int ppn: The number of processors per node to request. Default `12`
     :param int nsamp: The number of prior samples to draw. Default `50,000`
-    :param bool photo: Run the full photodynamical model? \
-           Default :py:obj:`True`
     :param bool eyeball: Use the radiative equilibrium surface map? \
            Default :py:obj:`True`
     :param int batch_size: Size of each batch used in the parallelization. \
@@ -149,8 +145,8 @@ def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
                 (nodes, ppn, ppn, mpn * nodes)
     else:
         str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)    
-    str_v = 'NPROC=%d,HISTPATH=%s,NSAMP=%d,PHOTO=%d,EYEBALL=%d,BATCHSZ=%d' % \
-            (nproc, histpath, nsamp, int(photo), int(eyeball), batch_size)
+    str_v = 'NPROC=%d,HISTPATH=%s,NSAMP=%d,EYEBALL=%d,BATCHSZ=%d' % \
+            (nproc, histpath, nsamp, int(eyeball), batch_size)
     str_name = 'planetplanet'
     str_out = 'hist.log'
     qsub_args = ['qsub', 'hist.pbs', 
@@ -191,14 +187,14 @@ class _FunctionWrapper(object):
         
         return self.f(*self.args, **self.kwargs)
 
-def _Parallelize(nsamp, photo, eyeball, batch_size):
+def _Parallelize(nsamp, eyeball, batch_size):
     '''
     Runs the actual parallelized computations. Used internally.
     
     '''
 
     # Get our function wrapper
-    m = _FunctionWrapper(Compute, nsamp = batch_size, photo = bool(photo), 
+    m = _FunctionWrapper(Compute, nsamp = batch_size,
                          eyeball = eyeball, progress_bar = False)
     
     # Parallelize. We will run `N` iterations
@@ -206,11 +202,11 @@ def _Parallelize(nsamp, photo, eyeball, batch_size):
     with Pool() as pool:
         pool.map(m, range(N))
 
-def histogram(system, tstart, tend, dt = 0.0001, photo = False):
+def histogram(system, tstart, tend, dt = 0.0001):
     '''
     Computes statistical properties of planet-planet occultations that 
     occur over a given interval. Computes the frequency of occultations as 
-    a function of orbital phase, duration, and impact parameter, as well 
+    a function of orbital phase, duration, and signal-to-noise ratio, as well 
     as the fully marginalized occultation frequency for each planet in the 
     system. Occultations by the star are not included, nor are occultations
     occuring behind the star, which are not visible to the observer.
@@ -221,20 +217,12 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
     :param float tend: The integration end time (BJD − 2,450,000)
     :param float dt: The time resolution in days. Occultations shorter \
            than this will not be registered.
-    :param bool photo: Run the full photodynamical routine? Default \
-           :py:obj:`False`, in which case only dynamical properties \
-           (durations, impact parameters, and phases) are computed. \
-           If :py:obj:`True`, computes photometric statistics, including \
-           occultation depths and SNRs. Note that calling the full \
-           photodynamical code is much more computationally expensive.
            
     :returns: A list of \
-              :py:obj:`(phase angle, impact parameter, duration)` tuples \
+              :py:obj:`(phase, impact, duration, signal, noise, snr)` tuples \
               for each planet in the system. The phase angle is measured \
-              in degrees and the duration is measured in days. If `photo` \
-              is :py:obj:`True`, the tuples contain three additional floats: \
-              :py:obj:`signal`, :py:obj:`noise`, :py:obj:`snr`; the first two \
-              are measured in ppm.
+              in degrees and the duration is measured in days. The signal and \
+              noise are measured in ppm.
 
     .. warning:: This routine computes the **orbital phase angle**, which \
                  is measured from **transit**. This is different from the \
@@ -246,91 +234,71 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
     system._reset()
     time = np.arange(tstart, tend, dt)
     
-    # Dynamics only
-    if not photo:
+    # Compute the wavelength grid. We are hard-coding the
+    # 15 micron JWST MIRI band here.
+    lambda1 = 12.5
+    lambda2 = 17.5
+    R = 50
+    wav = [lambda1]
+    while(wav[-1] < lambda2):
+        wav.append(wav[-1] + wav[-1] / R)
+    wavelength = np.array(wav)
     
-        for body in system.bodies:
-            body.u = np.array([], dtype = float)
-            
-        system._malloc(len(time), 1)
+    # Compute all limb darkening coefficients
+    for body in system.bodies:
+        body.u = [None for ld in body.limbdark]
+        for n, ld in enumerate(body.limbdark):
+            if callable(ld):
+                body.u[n] = ld(wavelength)
+            elif not hasattr(ld, '__len__'):
+                body.u[n] = ld * np.ones_like(wavelength)
+            else:
+                raise Exception("Limb darkening coefficients must be "
+                                + "provided as a list of scalars or "
+                                + "as a list of functions.")
+        body.u = np.array(body.u)
+        
+        # HACK: Disable phase curves. The code would take *way*
+        # too long to run, and they don't affect these statistics.
+        body.phasecurve = False
 
-        # Call the orbit routine
-        err = system._Orbits(len(time), np.ctypeslib.as_ctypes(time), 
-                           len(system.bodies), system._ptr_bodies, 
-                           system.settings)
-        assert err <= 0, "Error in C routine `Orbits` (%d)." % err
+    # Convert from microns to meters
+    wavelength *= 1e-6
+                
+    # No oversampling
+    time_hr = np.array(time)
     
-    # Full photodynamical model
-    else:
+    # Continuum flux
+    system._continuum = np.zeros(len(time_hr) * len(wavelength))
     
-        # Compute the wavelength grid. We are hard-coding the
-        # 15 micron JWST MIRI band here.
-        lambda1 = 12.5
-        lambda2 = 17.5
-        R = 50
-        wav = [lambda1]
-        while(wav[-1] < lambda2):
-            wav.append(wav[-1] + wav[-1] / R)
-        wavelength = np.array(wav)
-        
-        # Compute all limb darkening coefficients
-        for body in system.bodies:
-            body.u = [None for ld in body.limbdark]
-            for n, ld in enumerate(body.limbdark):
-                if callable(ld):
-                    body.u[n] = ld(wavelength)
-                elif not hasattr(ld, '__len__'):
-                    body.u[n] = ld * np.ones_like(wavelength)
-                else:
-                    raise Exception("Limb darkening coefficients must be "
-                                    + "provided as a list of scalars or "
-                                    + "as a list of functions.")
-            body.u = np.array(body.u)
-            
-            # HACK: Disable phase curves. The code would take *way*
-            # too long to run, and they don't affect these statistics.
-            body.phasecurve = False
-
-        # Convert from microns to meters
-        wavelength *= 1e-6
-                    
-        # No oversampling
-        time_hr = np.array(time)
-        
-        # Continuum flux
-        system._continuum = np.zeros(len(time_hr) * len(wavelength))
-        
-        # Allocate memory
-        system._malloc(len(time_hr), len(wavelength))
-
-        # Call the light curve routine
-        err = system._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
-                         len(wavelength), 
-                         np.ctypeslib.as_ctypes(wavelength), 
-                         np.ctypeslib.as_ctypes(system._continuum), 
-                         len(system.bodies), system._ptr_bodies, 
-                         system.settings)
-        assert err <= 0, "Error in C routine `Flux` (%d)." % err
+    # Allocate memory
+    system._malloc(len(time_hr), len(wavelength))
+    
+    # Call the light curve routine
+    err = system._Flux(len(time_hr), np.ctypeslib.as_ctypes(time_hr), 
+                     len(wavelength), 
+                     np.ctypeslib.as_ctypes(wavelength), 
+                     np.ctypeslib.as_ctypes(system._continuum), 
+                     len(system.bodies), system._ptr_bodies, 
+                     system.settings)
+    assert err <= 0, "Error in C routine `Flux` (%d)." % err
         
     # A histogram of the distribution of phases, 
     # impact parameters, and durations
     hist = [[] for body in system.bodies[1:]]
     for k, body in enumerate(system.bodies[1:]):
         
-        # Full photo model?
-        if photo:
-        
-            # Simulate an observation w/ JWST at 15 microns
-            # Same syntax as in `observe()`
-            w = jwst.get_miri_filter_wheel()
-            filter = w[np.argmax([f.name.lower() == 'f1500w' for f in w])]
-            filter.compute_lightcurve(time, body.flux, 
-                                      system.continuum, 
-                                      system.wavelength, 
-                                      stack = 1,
-                                      atel = 25., 
-                                      thermal = True,
-                                      quiet = True)
+        # Simulate an observation w/ JWST at 15 microns
+        # Same syntax as in `observe()`
+        w = jwst.get_miri_filter_wheel()
+        filter = w[np.argmax([f.name.lower() == 'f1500w' for f in w])]
+        filter.compute_lightcurve(time, body.flux, 
+                                  system.continuum, 
+                                  system.wavelength, 
+                                  stack = 1,
+                                  atel = 25., 
+                                  thermal = True,
+                                  quiet = True)
         
         # Identify the different planet-planet events
         inds = np.where(body.occultor > 0)[0]
@@ -370,57 +338,43 @@ def histogram(system, tstart, tend, dt = 0.0001, photo = False):
                         # Convert duration to log
                         duration = np.log10(duration * dt * 1440)
                         
-                        # Are we done?
-                        if not photo:
+                        # Planet, background, and star photons
+                        Nplan = filter.lightcurve.Nsys[idx]
+                        Nback = filter.lightcurve.Nback[idx]
+                        Nstar = filter.lightcurve.Ncont[idx]
                         
-                            # Running list
-                            hist[k].append((phase, impact, duration))
+                        # Compute the number of photons *missing*
+                        Nplan = np.nanmedian(Nplan) - Nplan
                         
-                        # No. Let's get some photometric info
-                        else:
-
-                            # Planet, background, and star photons
-                            Nplan = filter.lightcurve.Nsys[idx]
-                            Nback = filter.lightcurve.Nback[idx]
-                            Nstar = filter.lightcurve.Ncont[idx]
-                            
-                            # Compute the number of photons *missing*
-                            Nplan = np.nanmedian(Nplan) - Nplan
-                            
-                            # Compute signal of and noise on the event
-                            # in parts per million
-                            norm = 1.e6 / np.sum(Nstar + Nback)
-                            signal = norm * np.sum(np.fabs(Nplan)) 
-                            noise = norm * np.sqrt(np.sum(Nstar + Nback))
-                            
-                            # Compute the actual SNR on event. Note that this 
-                            # is NOT the sum of the signals divided by the sum 
-                            # of the noises! We need to add the SNR of each 
-                            # *datapoint* individually in quadrature.
-                            snr = np.sqrt(np.sum((Nplan) ** 2 
-                                          / (Nstar + Nback)))
-                            
-                            # Running list
-                            hist[k].append((phase, impact, duration,
-                                            signal, noise, snr))
+                        # Compute signal of and noise on the event
+                        # in parts per million
+                        norm = 1.e6 / np.sum(Nstar + Nback)
+                        signal = norm * np.sum(np.fabs(Nplan)) 
+                        noise = norm * np.sqrt(np.sum(Nstar + Nback))
+                        
+                        # Compute the actual SNR on event. Note that this 
+                        # is NOT the sum of the signals divided by the sum 
+                        # of the noises! We need to add the SNR of each 
+                        # *datapoint* individually in quadrature.
+                        snr = np.sqrt(np.sum((Nplan) ** 2 / (Nstar + Nback)))
+                        
+                        # Running list
+                        hist[k].append((phase, impact, duration,
+                                        signal, noise, snr))
         # Make into array
         hist[k] = np.array(hist[k])
         
     return hist
     
-def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
+def Compute(nsamp = 300, minsnr = 0.5, nbody = True,
             progress_bar = True, eyeball = True, **kwargs):
     '''
     Compute occultation histograms by drawing `nsamp` draws from the 
     system prior. Saves the results to `data/histXXX.npz`.
     
     :param int nsamp: The number of prior samples to draw. Default `300`
-    :param float mind: The minimum occultation duration in minutes to include\
-           in the tally. Default `10.`
-    :param float maxb: The maximum occultation impact parameter to include\
-           in the tally. Default `0.5`
+    :param float minsnr: The minimum SNR to include in the tally. Default `10.`
     :param bool nbody: Use the N-Body solver? Default :py:obj:`True`
-    :param bool nbody: Run the full photodynamical code? Default :py:obj:`True`
     :param bool progress_bar: Display a progress bar? Default :py:obj:`True`
     :param bool eyeball: Assume eyeball planets? Default :py:obj:`True`. If
            :py:obj:`False`, uses the limb darkened surface map.
@@ -428,7 +382,7 @@ def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
     '''
        
     # The dataset name
-    name = 'hist_' + ('p' + ('e' if eyeball else 'l') if photo else 'd')   
+    name = 'hist_' + ('e' if eyeball else 'l')
         
     # Draw samples from the prior
     hist = [[] for k in range(7)]
@@ -452,20 +406,17 @@ def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
         
         # Run!
         try:
-            h = histogram(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365, 
-                          photo = photo)
+            h = histogram(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365)
         except:
             print("ERROR in routine `hist.Compute()`")
             continue
-            
+
         # Loop over the planets
         for k in range(7):
     
-            # Count the number of events longer than `mind`
-            # and with impact parameter below `minb`
+            # Count the number of events with SNR higher than `minsnr`
             if len(h[k]):
-                count[k][n] = len(np.where((h[k][:,1] < maxb) & 
-                                 (h[k][:,2] > np.log10(mind)))[0])
+                count[k][n] = len(np.where(h[k][:,5] >= minsnr)[0])
         
             # Append to cumulative histogram
             hist[k].extend(list(h[k]))
@@ -482,21 +433,53 @@ def Compute(nsamp = 300, mind = 10., maxb = 0.5, nbody = True, photo = True,
     np.savez(os.path.join(datapath, '%s%03d.npz' % (name, n)), 
              hist = hist, count = count)
 
-def Plot(photo = True, eyeball = True):
+def MergeFiles():
+    '''
+    
+    '''
+    
+    # Loop over both dataset types
+    for name in ['hist_e', 'hist_l']:
+    
+        # Load
+        print("Loading %s..." % name)
+        for n in tqdm(range(1000)):
+            if os.path.exists(os.path.join(datapath, '%s%03d.npz' % (name,n))):
+                data = np.load(os.path.join(datapath, '%s%03d.npz' % (name,n)))
+                os.remove(os.path.join(datapath, '%s%03d.npz' % (name,n)))
+            else:
+                break
+            if n == 0:
+                hist = data['hist']
+                count = data['count']
+            else:
+                for k in range(7):
+                    hist[k] = np.vstack((hist[k], data['hist'][k]))
+                count = np.hstack((count, data['count']))
+        
+        # Save as one big file
+        if n > 0:
+            print("Saving %s..." % name)
+            np.savez(os.path.join(datapath,'%s%03d.npz' % (name, 0)), 
+                     hist = hist, count = count)
+    
+def Plot(eyeball = True):
     '''
     Plots the results of a `Compute()` run and returns several figures.
     
     '''
     
     # The dataset name
-    name = 'hist_' + ('p' + ('e' if eyeball else 'l') if photo else 'd')  
+    name = 'hist_' + ('e' if eyeball else 'l')
+    
+    # Instantiate a dummy system
+    system = Trappist1(sample = True, nbody = False, quiet = True)
     
     # Load
     print("Loading...")
     for n in tqdm(range(1000)):
         if os.path.exists(os.path.join(datapath, '%s%03d.npz' % (name, n))):
             data = np.load(os.path.join(datapath, '%s%03d.npz' % (name, n)))
-            data['hist'][0]
         else:
             if n == 0:
                 raise Exception("Please run `Compute()` first.")
@@ -513,55 +496,29 @@ def Plot(photo = True, eyeball = True):
     print("Total number of samples: %d" % len(count[0]))
 
     # For reference, the average number of occultations *per day* is
-    occ_day = np.sum([hist[n].shape[0] for n in range(7)]) \
-              / count.shape[1] / 365
+    occ_day = np.sum([hist[n].shape[0] 
+                      for n in range(7)]) / count.shape[1] / 365
     print("Average number of occultations per day: %.2f" % occ_day)
     # I get 1.1 (!) These are occultations at all impact parameters 
     # and durations, so most are grazing / not really detectable.
         
-    # All the figures we'll plot
+    # Corner plots
     fig_corner = [None for i in range(7)]
-    fig_snr = [None for i in range(7)]
-    fig_hist = None
-
-    # Corner plot
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):    
-        samples = np.array(hist[k])
         
+        # The samples for the corner plot
+        samples = np.vstack((hist[k][:,0], hist[k][:,2], hist[k][:,5])).T
+            
         # But first check if we have enough samples
-        if not len(samples):
-            fig_snr[k] = pl.figure()
-            continue
-        
-        # Did we run the full photodynamical model?
-        if samples.shape[1] == 6:
-            snr = samples[:,5]
-            fig_snr[k], ax = pl.subplots(1)
-            color = 'cornflowerblue'
-            ax.hist(snr, 
-                    weights = np.ones_like(snr) / len(count[0]),
-                    color = color, edgecolor = 'none', 
-                    alpha = 0.5, histtype = 'stepfilled', 
-                    bins = 50)
-            ax.hist(snr, 
-                    weights = np.ones_like(snr) / len(count[0]),
-                    color = color, histtype = 'step', 
-                    lw = 2, bins = 50)
-            ax.set_xlabel('SNR', fontsize = 14, fontweight = 'bold')
-            ax.set_ylabel(r'Occultations [yr$^{-1}$]', fontsize = 14, 
-                          fontweight = 'bold')
-            samples = samples[:,:3]
-                 
-        # But first check if we have enough samples
-        if samples.shape[0] <= samples.shape[1]:
+        if len(samples) == 0 or (samples.shape[0] <= samples.shape[1]):
             fig_corner[k] = pl.figure()
             continue
-        
+
         fig_corner[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, 
-                                range = [(-180,180), (0,1), (0, 3)], 
-                                labels = ["Longitude [deg]", 
-                                          "Impact parameter", 
-                                          "Duration [min]"], bins = 30)
+                                      range = [(-180,180), (0, 3), (0, 3)], 
+                                      labels = ["Longitude [deg]", 
+                                                "Duration [min]", 
+                                                "SNR"], bins = 30)
         for i, ax in enumerate(fig_corner[k].axes):
             ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
             ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
@@ -577,21 +534,44 @@ def Plot(photo = True, eyeball = True):
             fig_corner[k].axes[i].set_xticks([-180, -90, 0, 90, 180])
         fig_corner[k].axes[6].set_xticklabels([r"$+$90", r"$\pm$180", 
                                                r"$-$90", "0", r"$+$90"])
-        fig_corner[k].axes[3].set_yticks([0.2, 0.4, 0.6, 0.8])
-        fig_corner[k].axes[7].set_xticks([0.2, 0.4, 0.6, 0.8])
+        fig_corner[k].axes[3].set_yticklabels([1, 10, 100, 1000])
+        fig_corner[k].axes[7].set_xticklabels([1, 10, 100, 1000])
         fig_corner[k].axes[8].set_xticks([0, 1, 2, 3])
-        fig_corner[k].axes[8].set_xticklabels([1, 10, 100, 1000])
         fig_corner[k].axes[6].set_yticks([0, 1, 2, 3])
-        fig_corner[k].axes[6].set_yticklabels([1, 10, 100, 1000])
     
-    # Frequency histogram
+    # Frequency plot (1)
     matplotlib.rcParams['mathtext.fontset'] = 'cm'
+    fig_snr = pl.figure(figsize = (7, 8))
+    fig_snr.subplots_adjust(hspace = 0.075)
+    ax = pl.subplot2grid((1, 1), (0, 0))
+    for k, planet in enumerate(system.bodies[1:]): 
+        if not len(hist[k]):
+            continue
+        snr = hist[k][:,5]
+        color = planet.color
+        ax.hist(snr, 
+                weights = np.ones_like(snr) / len(count[0]),
+                color = color, edgecolor = 'none', 
+                alpha = 0.5, histtype = 'stepfilled', 
+                bins = 50, range = (0, 4))
+        ax.hist(snr, 
+                weights = np.ones_like(snr) / len(count[0]),
+                color = color, histtype = 'step', 
+                lw = 2, bins = 50, range = (0, 4))
+        ax.set_xlabel('SNR', fontsize = 14, fontweight = 'bold')
+        ax.set_ylabel(r'Occultations [yr$^{-1}$]', fontsize = 14, 
+                      fontweight = 'bold')
+        ax.set_yscale('log')
+        ax.set_ylim(1e-3, 1e2)
+        ax.set_xlim(0, 4)
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: '%s' % x))
+    
+    # Frequency plot (2)
     fig_hist = pl.figure(figsize = (7, 8))
     fig_hist.subplots_adjust(hspace = 0.075)
     ax = pl.subplot2grid((5, 1), (1, 0), rowspan = 4)
     axt = pl.subplot2grid((5, 1), (0, 0), rowspan = 1, 
                           sharex = ax, zorder = -99)
-    system = Trappist1(sample = True, nbody = False, quiet = True)
     for k, planet in enumerate(system.bodies[1:]): 
             
         # Fit a gaussian
@@ -648,22 +628,20 @@ def Plot(photo = True, eyeball = True):
     
     return fig_corner, fig_snr, fig_hist
 
-def MakeFigures(photo = True, eyeball = True):
+def MakeFigures(eyeball = True):
     '''
     Plots all histogram figures for the paper.
     
     '''
     
-    # Plot all figures   
-    fig_corner, fig_snr, fig_hist = Plot(photo = photo, eyeball = eyeball)
+    # Plot all figures 
+    if eyeball:
+        kind = 'eyeball'
+    else:
+        kind = 'limbdark'  
+    fig_corner, fig_snr, fig_hist = Plot(eyeball = eyeball)
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
-        fig_corner[k].savefig('%s.corner.pdf' % planet, bbox_inches = 'tight')
-        if fig_snr is not None:
-            if eyeball:
-                fig_snr[k].savefig('%s.snr.eyeball.pdf' % planet, 
-                                   bbox_inches = 'tight')
-            else:
-                fig_snr[k].savefig('%s.snr.limbdark.pdf' % planet, 
-                                   bbox_inches = 'tight')
-    fig_hist.savefig('hist.pdf', bbox_inches = 'tight')
+        fig_corner[k].savefig('%s.corner.%s.pdf' % (planet, kind), bbox_inches = 'tight')
+    fig_snr.savefig('snr.%s.pdf' % kind, bbox_inches = 'tight')
+    fig_hist.savefig('hist.%s.pdf' % kind, bbox_inches = 'tight')
     pl.close()

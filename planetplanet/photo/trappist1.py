@@ -143,9 +143,9 @@ def Trappist1(sample = True, distance = 12, seed = None, **kwargs):
                       (0.003, 0.001)]
     
     # These we're just going to fix for now. We have no prior 
-    # constraints on them.
-    albedos = [(0.3, 0), (0.3, 0), (0.3, 0), (0.3, 0), 
-               (0.3, 0), (0.3, 0), (0.3, 0)]
+    # constraints on them. Let's assume the most optimistic albedos.
+    albedos = [(0., 0), (0., 0), (0., 0), (0., 0), 
+               (0., 0), (0., 0), (0., 0)]
     tnights = [(40., 0), (40., 0), (40., 0), (40., 0), 
                (40., 0), (40., 0), (40., 0)]
     

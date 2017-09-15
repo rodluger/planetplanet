@@ -58,7 +58,7 @@ def simulate():
     '''
     
     # Instantiate the system. Let's assume the planets are all
-    # blackbodies with albedo = 0.3 (default for `Trappist1()`)
+    # blackbodies with albedo = 0. (default for `Trappist1()`)
     # Let's also assume no limb darkening.
     system = Trappist1(sample = True, nbody = True, seed = 1234,
                                          radiancemap = LimbDarkenedMap(),

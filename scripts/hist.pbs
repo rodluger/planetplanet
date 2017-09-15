@@ -7,4 +7,4 @@ export OPENBLAS_NUM_THREADS=1
 cd ${HISTPATH}
 
 # Run on multiple nodes with MPI
-mpirun -np $NPROC python -c "import hist; hist._Parallelize($NSAMP, $PHOTO, $EYEBALL, $BATCHSZ)"
+mpirun -np $NPROC python -c "import hist; hist._Parallelize($NSAMP, $EYEBALL, $BATCHSZ)"

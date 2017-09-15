@@ -54,7 +54,7 @@ def compute():
 
     # Additional params for K-444b
     r = 0.04178                 # semi-major axis [AU]
-    A = 0.25                    # Planet albedo
+    A = 0.                      # Planet albedo
     e = 1.0                     # Planet emissivity
     i = 88.0                    # Orbital inclination [degrees]
     P = 3.6                     # Orbital period [days]
