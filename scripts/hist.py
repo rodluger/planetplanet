@@ -392,17 +392,17 @@ def Compute(nsamp = 300, minsnr = 0.5, nbody = True,
     else:
         wrap = lambda x: x
     for n in wrap(range(nsamp)):
-
-        # Instantiate the Trappist-1 system
-        system = Trappist1(sample = True, nbody = nbody, 
-                           quiet = True, **kwargs)
-        system.settings.timestep = 1. / 24.
         
         # Choose the correct radiance map
         if eyeball:
             radiancemap = planetplanet.RadiativeEquilibriumMap()
         else:
             radiancemap = planetplanet.LimbDarkenedMap()
+
+        # Instantiate the Trappist-1 system
+        system = Trappist1(sample = True, nbody = nbody, 
+                           quiet = True, radiancemap = radiancemap, **kwargs)
+        system.settings.timestep = 1. / 24.
         
         # Run!
         try:
