@@ -1,1 +1,2 @@
 .. automodule:: scripts.scatter
+   :members:
