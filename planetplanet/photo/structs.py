@@ -527,7 +527,7 @@ class SETTINGS(ctypes.Structure):
            speed up the code. Default :py:obj:`True`
     :param str integrator: The N-body integrator \
            (:py:obj:`whfast` | :py:obj:`ias15`) to use. \
-           Default :py:obj:`whfast`
+           Default :py:obj:`ias15`
 
     '''
 
@@ -549,7 +549,7 @@ class SETTINGS(ctypes.Structure):
 
     def __init__(self, **kwargs):
         self.nbody = kwargs.pop('nbody', True)
-        self.integrator = kwargs.pop('integrator', 'whfast')
+        self.integrator = kwargs.pop('integrator', 'ias15')
         self.keptol = kwargs.pop('keptol', 1.e-15)
         self.maxkepiter = kwargs.pop('maxkepiter', 100)
         self.kepsolver = kwargs.pop('kepsolver', 'newton')

@@ -435,6 +435,7 @@ def Compute(nsamp = 300, minsnr = 0.5, nbody = True,
 
 def MergeFiles():
     '''
+    Merge all the `npz` savesets into a single one for faster plotting.
     
     '''
     
@@ -447,6 +448,13 @@ def MergeFiles():
             if os.path.exists(os.path.join(datapath, '%s%03d.npz' % (name,n))):
                 data = np.load(os.path.join(datapath, '%s%03d.npz' % (name,n)))
                 os.remove(os.path.join(datapath, '%s%03d.npz' % (name,n)))
+                
+                # Skip corrupt files
+                try:
+                    data['hist'][0]
+                except:
+                    continue
+            
             else:
                 break
             if n == 0:
@@ -463,7 +471,7 @@ def MergeFiles():
             np.savez(os.path.join(datapath,'%s%03d.npz' % (name, 0)), 
                      hist = hist, count = count)
     
-def Plot(eyeball = True):
+def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
     '''
     Plots the results of a `Compute()` run and returns several figures.
     
@@ -493,7 +501,8 @@ def Plot(eyeball = True):
             count = np.hstack((count, data['count']))
     
     # For reference, total number of systems instantiated (samples)
-    print("Total number of samples: %d" % len(count[0]))
+    nyears = len(count[0])
+    print("Total number of samples: %d" % nyears)
 
     # For reference, the average number of occultations *per day* is
     occ_day = np.sum([hist[n].shape[0] 
@@ -514,8 +523,8 @@ def Plot(eyeball = True):
             fig_corner[k] = pl.figure()
             continue
 
-        fig_corner[k] = corner.corner(samples, data_kwargs = {'alpha': 0.005}, 
-                                      range = [(-180,180), (0, 3), (0, 3)], 
+        fig_corner[k] = corner.corner(samples, plot_datapoints = False,
+                                      range = [(-180,180), (0, 3), (0, 1)], 
                                       labels = ["Longitude [deg]", 
                                                 "Duration [min]", 
                                                 "SNR"], bins = 30)
@@ -536,12 +545,12 @@ def Plot(eyeball = True):
                                                r"$-$90", "0", r"$+$90"])
         fig_corner[k].axes[3].set_yticklabels([1, 10, 100, 1000])
         fig_corner[k].axes[7].set_xticklabels([1, 10, 100, 1000])
-        fig_corner[k].axes[8].set_xticks([0, 1, 2, 3])
-        fig_corner[k].axes[6].set_yticks([0, 1, 2, 3])
-    
+        fig_corner[k].axes[8].set_xticks([0, 0.25, 0.5, 0.75, 1.])
+        fig_corner[k].axes[6].set_yticks([0, 0.25, 0.5, 0.75, 1.])
+
     # Frequency plot (1)
     matplotlib.rcParams['mathtext.fontset'] = 'cm'
-    fig_snr = pl.figure(figsize = (7, 8))
+    fig_snr = pl.figure(figsize = (8, 6))
     fig_snr.subplots_adjust(hspace = 0.075)
     ax = pl.subplot2grid((1, 1), (0, 0))
     for k, planet in enumerate(system.bodies[1:]): 
@@ -549,23 +558,32 @@ def Plot(eyeball = True):
             continue
         snr = hist[k][:,5]
         color = planet.color
+        
+        # Average total SNR / year
+        tot_snr = np.sqrt(np.sum(snr ** 2) / nyears)
+        label = r"$\mathbf{%s}: %.3f$" % (planet.name, tot_snr)
+        
         ax.hist(snr, 
                 weights = np.ones_like(snr) / len(count[0]),
                 color = color, edgecolor = 'none', 
                 alpha = 0.5, histtype = 'stepfilled', 
-                bins = 50, range = (0, 4))
+                bins = 50, range = (0, 3), label = label)
         ax.hist(snr, 
                 weights = np.ones_like(snr) / len(count[0]),
                 color = color, histtype = 'step', 
-                lw = 2, bins = 50, range = (0, 4))
+                lw = 2, bins = 50, range = (0, 3))
         ax.set_xlabel('SNR', fontsize = 14, fontweight = 'bold')
         ax.set_ylabel(r'Occultations [yr$^{-1}$]', fontsize = 14, 
                       fontweight = 'bold')
         ax.set_yscale('log')
-        ax.set_ylim(1e-3, 1e2)
-        ax.set_xlim(0, 4)
+        ax.set_ylim(1e-2, 1e2)
+        ax.set_xlim(0, 3)
         ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: '%s' % x))
     
+    leg = ax.legend(loc = 'upper right', fontsize = 15,
+                    title = 'Average SNR / year')
+    leg.get_title().set_fontweight('bold')
+
     # Frequency plot (2)
     fig_hist = pl.figure(figsize = (7, 8))
     fig_hist.subplots_adjust(hspace = 0.075)
@@ -584,40 +602,54 @@ def Plot(eyeball = True):
             label = r"$\mathbf{%s}: %s \pm %3.1f\ \mathrm{yr}^{-1}$" \
                     % (planet.name, mu, sig)
         
-        # Plot
-        ax.hist(count[k], color = planet.color, edgecolor = 'none', 
-                 alpha = 0.25, histtype = 'stepfilled', normed = True, 
-                 range = (0,50), zorder = 0, label = label, bins = 50)
-        ax.hist(count[k], color = planet.color, histtype = 'step', 
-                normed = True, range = (0,50), zorder = 1, lw = 2, bins = 50)
-        
-        # HACK: Force a broken axis for planet `f`
-        if planet.name == 'f':
-            axt.hist(count[k], color = planet.color, edgecolor = 'none', 
+        # Plot!
+        if float(mu) > 0.2: 
+            ax.hist(count[k], color = planet.color, edgecolor = 'none', 
                      alpha = 0.25, histtype = 'stepfilled', normed = True, 
-                     range = (0,50), zorder = 0, label = label, bins = 50)
-            axt.hist(count[k], color = planet.color, histtype = 'step', 
-                     normed = True, range = (0,50), zorder = 1, 
-                     lw = 2, bins = 50)
+                     range = (0,55), zorder = zorder[k], label = label, 
+                     bins = 56)
+            ax.hist(count[k], color = planet.color, histtype = 'step', 
+                    normed = True, range = (0,55), zorder = zorder[k] + 0.5, 
+                    lw = 2, bins = 56)
+        else:
+            for axis in [ax, axt]:
+                axis.hist(count[k], color = planet.color, edgecolor = 'none', 
+                          alpha = 0.25, histtype = 'stepfilled', normed = True, 
+                          range = (0,55), zorder = zorder[k], label = label, 
+                          bins = 56)
+                axis.hist(count[k], color = planet.color, histtype = 'step', 
+                          normed = True, range = (0,55), 
+                          zorder = zorder[k] + 0.5, lw = 2, bins = 56)
         
     leg = ax.legend(loc = 'upper right', fontsize = 15, 
                     bbox_to_anchor = (0.89, 0.865), 
-                    bbox_transform = fig_hist.transFigure)
-    ax.set_xlabel('Occultations per year', fontsize = 16, fontweight = 'bold')
+                    bbox_transform = fig_hist.transFigure,
+                    title = 'Occultations with SNR > 0.5')
+    leg.get_title().set_fontweight('bold')                                  
+    ax.set_xlabel('Occultations per year with SNR > 0.5', fontsize = 16, fontweight = 'bold')
     ax.set_ylabel('Probability', fontsize = 16, fontweight = 'bold')
-    ax.yaxis.set_label_coords(-0.1, 0.6)
+    ax.yaxis.set_label_coords(-0.15, 0.6)
     
     for tick in ax.get_xticklabels() + ax.get_yticklabels() \
               + axt.get_yticklabels():
         tick.set_fontsize(12)
     
-    # HACK: Force a broken axis for planet `f`
-    ax.set_ylim(0, 0.32)
-    axt.set_ylim(0.4725, 0.55)
+    # HACK: Force a broken axis for the outer planets
+    if eyeball:
+        ax.set_ylim(0, 0.32)
+        axt.set_ylim(0.73, 1.05)
+    else:
+        ax.set_ylim(0, 0.21)
+        axt.set_ylim(0.75, 1.05)
+    
     axt.spines['bottom'].set_visible(False)
     ax.spines['top'].set_visible(False)
     axt.tick_params(bottom='off',labelbottom='off')
-    axt.set_yticks([0.5, 0.55])
+    axt.set_yticks([0.8, 1.0])
+    if eyeball:
+        axt.set_yticklabels(["0.80", "1.00"])
+    else:
+        axt.set_yticklabels(["0.800", "0.900", "1.000"])
     d = .015
     kwargs = dict(transform=axt.transAxes, color='k', clip_on=False, lw = 1)
     axt.plot((-d, +d), (-d, +d), **kwargs)

@@ -197,7 +197,7 @@ class System(object):
            speed up the code. Default :py:obj:`True`
     :param str integrator: The N-body integrator \
            (:py:obj:`whfast` | :py:obj:`ias15`) to use. \
-           Default :py:obj:`whfast`
+           Default :py:obj:`ias15`
 
     '''
 
