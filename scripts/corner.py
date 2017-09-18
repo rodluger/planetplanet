@@ -428,10 +428,10 @@ def hist2d(x, y, bins=20, range=None, weights=None, levels=None, smooth=None,
 
     # Set the default range based on the data range if not provided.
     if range is None:
-        if "extent" in kwargs:
+        if "extent" in data_kwargs:
             logging.warn("Deprecated keyword argument 'extent'. "
                          "Use 'range' instead.")
-            range = kwargs["extent"]
+            range = data_kwargs["extent"]
         else:
             range = [[x.min(), x.max()], [y.min(), y.max()]]
 
