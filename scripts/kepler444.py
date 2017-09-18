@@ -4,7 +4,8 @@
 kepler444.py |github|
 ---------------------
 
-Estimates the signal-to-noise on 15 stacked secondary eclipses for the innermost planet (b)
+Estimates the signal-to-noise on 15 stacked
+secondary eclipses for the innermost planet (b)
 in the Kepler-444 system with JWST.
 
   .. plot::
@@ -15,7 +16,7 @@ in the Kepler-444 system with JWST.
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/kepler444.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -30,18 +31,18 @@ import astropy.units as u
 
 def _test():
     '''
-    
+
     '''
-    
+
     fig1, _, fig2, _ = compute()
     pl.close(fig2)
     pl.show()
 
 def compute():
     '''
-    
+
     '''
-    
+
     # Kepler-444 and simulation parameters
     Nocc = 15                   # number of occultations observed
     nout = 4.0                  # obseved out of transit durations [tint]
@@ -69,7 +70,7 @@ def compute():
     Tplan = Tstar * ((1.-A)/e)**0.25 * (0.5*Rs_km/r_km)**0.5
 
     # transit duration
-    tdur_mins = (P_mins / np.pi) * np.arcsin(np.sqrt((Rp_km + Rs_km) ** 2 
+    tdur_mins = (P_mins / np.pi) * np.arcsin(np.sqrt((Rp_km + Rs_km) ** 2
                                    - r_km / (Rs_km * np.cos(i))) / r_km)
 
     # integration time [seconds]
@@ -79,15 +80,15 @@ def compute():
     print("Transit Duration : %.2f mins" %(tdur_mins))
 
     # Estimate for JWST
-    fig1, ax1 = jwst.estimate_eclipse_snr(tint = tdur, nout = nout, 
+    fig1, ax1 = jwst.estimate_eclipse_snr(tint = tdur, nout = nout,
                                           lammin = lammin, lammax = lammax,
-                                          Tstar = Tstar, Tplan = Tplan, 
+                                          Tstar = Tstar, Tplan = Tplan,
                                           Rs = Rs, Rp = Rp, d = d)
 
     # Estimate for an OST-like telescope, but using the JWST filters
-    fig2, ax2 = jwst.estimate_eclipse_snr(tint = tdur, nout = nout, 
+    fig2, ax2 = jwst.estimate_eclipse_snr(tint = tdur, nout = nout,
                                           lammin = lammin, lammax = lammax,
-                                          Tstar = Tstar, Tplan = Tplan, 
+                                          Tstar = Tstar, Tplan = Tplan,
                                           Rs = Rs, Rp = Rp, d = d,
                                           atel = 144., thermal = False)
 
