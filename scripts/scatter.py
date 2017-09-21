@@ -39,7 +39,7 @@ def _test():
 
     Run(save = False)
 
-def scatter_plot(system, tstart, tend, dt = 0.001):
+def scatter_plot(system, tstart, tend, dt = 0.001, sz = 0.2):
     '''
     Compute all occultations between `tstart` and `tend` and plot an 
     occultation scatter plot like the one in the paper.
@@ -48,7 +48,9 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
     :param float tend: The integration end time (BJD − 2,450,000)
     :param float dt: The time resolution in days. Occultations shorter \
            than this will not be registered.
-
+    :param float sz: The size scaling for the occultation circles. \
+           Default `0.2`
+    
     '''
     
     # Reset
@@ -109,7 +111,7 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
     figp, axp = pl.subplots(1, figsize = (8,8))
     figp.subplots_adjust(left = 0.1, right = 0.9, bottom = 0.1, top = 0.9)
     axp.axis('off')
-    for body in system.bodies[1:]:
+    for bi, body in enumerate(system.bodies[1:]):
         
         # Simulate an observation w/ JWST at 15 microns
         # Same syntax as in `observe()`
@@ -178,10 +180,10 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
                     snr = np.sqrt(np.sum((Nplan) ** 2 / (Nstar + Nback)))
                     
                     # Alpha proportional to the SNR
-                    alpha = min(1, snr)
+                    alpha = max(0.1, min(0.9, snr))
 
-                    # Size = duration in minutes / 3
-                    ms = duration * dt * 1440 / 3
+                    # Size = duration in minutes * sz
+                    ms = min(100, (duration * dt * 1440 * sz))
 
                     # If the occultor is the star, plot it only once
                     if (occ == 0):
@@ -189,13 +191,15 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
                             axp.plot(body.x[i], body.z[i], 'o', 
                                      color = system.colors[occ], 
                                      alpha = alpha, ms = ms, 
-                                     markeredgecolor = 'none')
+                                     markeredgecolor = 'none',
+                                     zorder = 100)
                             plot_secondary = False
                     else:
                         axp.plot(body.x[i], body.z[i], 'o', 
                                  color = system.colors[occ], 
                                  alpha = alpha, ms = ms, 
-                                 markeredgecolor = 'none')
+                                 markeredgecolor = 'none',
+                                 zorder = bi)
                         nppo += 1
 
             # Check for mutual transits
@@ -241,14 +245,14 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
     axl2.annotate('Duration', xy = (0., 1), ha = 'center', va = 'center', 
                   fontweight = 'bold')
     for j, duration in enumerate([10, 30, 60]):
-        ms = duration / 3.
+        ms = min(100, (duration * sz))
         axl2.plot(-0.65, -0.75 * j + 0.2, 'o', color = 'k', ms = ms, 
                   alpha = 0.65, markeredgecolor = 'none')
         axl2.annotate('%d minutes' % duration, 
                       xy = (-0.3, -0.75 * j + 0.2), xycoords = 'data',
                       ha = 'left', va = 'center', color = 'k')
 
-    # Legend 3: Transparency/impact parameter
+    # Legend 3: Transparency/SNR
     axl3 = pl.axes([0.025, 0.025, 0.2, 0.2])
     axl3.axis('off')
     axl3.set_xlim(-0.5, 1.5)
@@ -256,20 +260,30 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
     axl3.annotate('SNR', xy = (0.5, 0.65), ha = 'center', 
                   va = 'center', fontweight = 'bold')
     for j, snr in enumerate([0, 0.2, 0.4]):
-        alpha = min(1, snr)
+        alpha = max(0.1, min(0.9, snr))
         axl3.plot(-0.15, -0.75 * j, 'o', color = 'k', ms = 8, 
                   alpha = alpha, markeredgecolor = 'none')
-        axl3.annotate('%.1f' % snr, xy = (-0.05, -0.75 * j), 
-                      xycoords = 'data', ha = 'left', va = 'center', 
-                      color = 'k')
+        if j == 0:
+            l = '<0.1'
+        else:
+            l = ' %.1f' % snr
+        ann = axl3.annotate(l, xy = (-0.05, -0.75 * j), 
+                            xycoords = 'data', ha = 'left', va = 'center', 
+                            color = 'k')
+        ann.set_fontname('Andale Mono')
     for j, snr in enumerate([0.6, 0.8, 1.]):
-        alpha = min(1, snr)
+        alpha = max(0.1, min(0.9, snr))
         axl3.plot(0.675, -0.75 * j, 'o', color = 'k', ms = 8, 
                   alpha = alpha, markeredgecolor = 'none')
-        axl3.annotate('%.1f' % snr, xy = (0.775, -0.75 * j), 
-                      xycoords = 'data', ha = 'left', va = 'center', 
-                      color = 'k')
-
+        if j == 2:
+            l = '>1.0'
+        else:
+            l = ' %.1f' % snr
+        ann = axl3.annotate(l, xy = (0.775, -0.75 * j), 
+                            xycoords = 'data', ha = 'left', va = 'center', 
+                            color = 'k')
+        ann.set_fontname('Andale Mono')
+    
     # Observer direction
     axp.annotate("To observer", xy = (0.5, -0.1), 
                  xycoords = "axes fraction", xytext = (0, 30),
@@ -277,7 +291,7 @@ def scatter_plot(system, tstart, tend, dt = 0.001):
                  color = 'cornflowerblue', textcoords = "offset points", 
                  arrowprops = dict(arrowstyle = "-|>", 
                                    color = 'cornflowerblue'))
-
+    
     # Log
     if not system.settings.quiet:
         print("There were %d PPOs between t = %.2f and t = %.2f." % 
@@ -305,7 +319,8 @@ def Run(eyeball = True, save = True):
     
     # Instantiate the Trappist-1 system
     # Plot all occultations from October 2016 to October 2019
-    system = Trappist1(sample = True, nbody = True, radiancemap = radiancemap)
+    system = Trappist1(sample = True, nbody = True, radiancemap = radiancemap,
+                       seed = 44)
         
     fig = scatter_plot(system, OCTOBER_08_2016, OCTOBER_08_2016 + 365 * 3)
     

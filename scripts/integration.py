@@ -77,7 +77,7 @@ def plot():
     inds = np.where((x >= x1) & (x <= x2))
     ax.plot(x[inds], y[inds], 'b-', zorder = 999, lw = 2)
     ax.plot(x[inds], -y[inds], '-', zorder = 999, lw = 2, color = '#aaaaee')
-
+    
     # Plot the zenith angle ellipses
     for za in np.linspace(0, np.pi, nl + 2)[1:-1]:
 
@@ -145,12 +145,15 @@ def plot():
     ax.plot(x, yo - y, 'k-', lw = 1)
     ax.plot(x, yo + y, 'k-', lw = 1)
 
+    # Substellar point
+    ax.scatter(-r * np.cos(theta), 0, marker = r'$\star$', s = 300, color = 'k')
+
     # Integration bounds
     inds = np.where((x >= x1) & (x <= x2))
     ax.plot(x[inds], yo - y[inds], 'b-', zorder = 999, lw = 2)
     ax.plot(x[inds], yo + y[inds], '-', zorder = 999, lw = 2,
             color = '#aaaaee')
-
+        
     # Label regions
     ax.annotate(r'$A_1$', xy = (-0.54, 0), xycoords = 'data', ha = 'center', 
                 va = 'center', color = 'b', fontsize = 14)

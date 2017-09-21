@@ -505,8 +505,8 @@ def DrawOrbit(radiancemap = RadiativeEquilibriumMap(), inc = 70., Omega = 0.,
         
         # Indicate the orbital phase
         if label_phases:
-            dx = b.x[i] / r
-            dy = b.y[i] / r
+            dx = b.x[i] #/ r
+            dy = b.y[i] #/ r
             dr = np.sqrt(dx ** 2 + dy ** 2)
             dx *= 16 * size / dr
             dy *= 16 * size / dr

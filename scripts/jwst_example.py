@@ -79,7 +79,7 @@ def Triple_bc():
     # Let's re-center the time array for a prettier x axis
     system.A.time_hr -= time[0]
     system.A.time -= time[0]
-
+    
     # Observe it (one exposure)
     np.random.seed(1234567)
     fig, ax = system.observe(stack = 1, filter = 'f1500w', alpha_err = 0.5)
@@ -130,7 +130,7 @@ def Triple_bc():
 
     return fig, ax, axxz
 
-def Stacked_bc(N = 10):
+def Stacked_bc(N = 4):
     '''
     Simulate `N` stacked exposures of `b` occulting `c` in the 
     MIRI F1500W filter.
@@ -245,9 +245,9 @@ def Stacked_bc(N = 10):
 
     return fig, ax, axxz
 
-def Stacked_bc_all_filters():
+def Stacked_bc_all_filters(N = 4):
      '''
-     Simulate ten stacked exposures of `b` occulting `c` 
+     Simulate N stacked exposures of `b` occulting `c` 
      observed in all MIRI filters.
 
      .. plot::
@@ -328,9 +328,9 @@ def Stacked_bc_all_filters():
      wls = np.zeros(len(filters))
      for i in range(len(filters)):
 
-             # Observe it (ten exposures)
+             # Observe it (N exposures)
              np.random.seed(123)
-             figs[i], axi = system.observe(stack = 10, filter = filters[i])
+             figs[i], axi = system.observe(stack = N, filter = filters[i])
              axi.set_xlabel("Time [days]", fontweight = 'bold', fontsize = 10)
              SNRs[i] = system.filter.lightcurve.event_SNRs[0]
              wls[i] = system.filter.eff_wl
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     fig, _, _ = Triple_bc()
     fig.savefig("triple_bc.pdf", bbox_inches = 'tight')
     
-    fig, _, _ = Stacked_bc(N=10)
+    fig, _, _ = Stacked_bc(N=4)
     fig.savefig("stacked_bc.pdf", bbox_inches = 'tight')
     
     figs = Stacked_bc_all_filters()

@@ -509,14 +509,19 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
                       for n in range(7)]) / count.shape[1] / 365
     print("Average number of occultations per day: %.2f" % occ_day)
     # I get 1.1 (!) These are occultations at all impact parameters 
-    # and durations, so most are grazing / not really detectable.
+    # and durations, so most are grazing / not really detectable.    
         
     # Corner plots
     fig_corner = [None for i in range(7)]
     for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):    
         
+        # Probability that there's no SNR > 0.5 occultation of this
+        # planet in any given year
+        print("Planet %s P(SNR !> 0.5): %.3f" % 
+             (planet, 1 - np.count_nonzero(count[k]) / count[k].shape[0]))
+        
         # The samples for the corner plot
-        samples = np.vstack((hist[k][:,0], hist[k][:,2], hist[k][:,5])).T
+        samples = np.vstack((hist[k][:,0], hist[k][:,1], hist[k][:,2], hist[k][:,5])).T
             
         # But first check if we have enough samples
         if len(samples) == 0 or (samples.shape[0] <= samples.shape[1]):
@@ -524,8 +529,9 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
             continue
 
         fig_corner[k] = corner.corner(samples, plot_datapoints = False,
-                                      range = [(-180,180), (0, 3), (0, 1)], 
+                                      range = [(-180,180), (0, 1), (0, 3), (0, 1)], 
                                       labels = ["Longitude [deg]", 
+                                                "Impact parameter",
                                                 "Duration [min]", 
                                                 "SNR"], bins = 30)
         for i, ax in enumerate(fig_corner[k].axes):
@@ -533,7 +539,7 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
             ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
             for tick in ax.get_xticklabels() + ax.get_yticklabels():
                 tick.set_fontsize(12)
-        for i in [0,3,6]:
+        for i in [0,4,8,12]:
             # IMPORTANT: The `histogram()` method returns the 
             # **orbital phase angle**, which is
             # measured from *transit* (phase = 0 deg). The mean longitude 
@@ -541,16 +547,21 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
             # must apply. Order is secondary eclipse, quadrature left, 
             # transit, quadrature right, secondary eclipse
             fig_corner[k].axes[i].set_xticks([-180, -90, 0, 90, 180])
-        fig_corner[k].axes[6].set_xticklabels([r"$+$90", r"$\pm$180", 
+        
+        fig_corner[k].axes[12].set_xticklabels([r"$+$90", r"$\pm$180", 
                                                r"$-$90", "0", r"$+$90"])
-        fig_corner[k].axes[3].set_yticklabels([1, 10, 100, 1000])
-        fig_corner[k].axes[7].set_xticklabels([1, 10, 100, 1000])
-        fig_corner[k].axes[8].set_xticks([0, 0.25, 0.5, 0.75, 1.])
-        fig_corner[k].axes[6].set_yticks([0, 0.25, 0.5, 0.75, 1.])
-
+        fig_corner[k].axes[8].set_yticks([np.log10(3), 1, np.log10(30), 2, 
+                                          np.log10(300)])
+        fig_corner[k].axes[14].set_xticks([np.log10(3), 1, np.log10(30), 2, 
+                                          np.log10(300)])
+        fig_corner[k].axes[8].set_yticklabels([3, 10, 30, 100, 300])
+        fig_corner[k].axes[14].set_xticklabels([3, 10, 30, 100, 300])
+        fig_corner[k].axes[15].set_xticks([0, 0.25, 0.5, 0.75, 1.])
+        fig_corner[k].axes[12].set_yticks([0, 0.25, 0.5, 0.75, 1.])
+    
     # Frequency plot (1)
     matplotlib.rcParams['mathtext.fontset'] = 'cm'
-    fig_snr = pl.figure(figsize = (8, 6))
+    fig_snr = pl.figure(figsize = (7, 7))
     fig_snr.subplots_adjust(hspace = 0.075)
     ax = pl.subplot2grid((1, 1), (0, 0))
     for k, planet in enumerate(system.bodies[1:]): 
@@ -561,31 +572,46 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
         
         # Average total SNR / year
         tot_snr = np.sqrt(np.sum(snr ** 2) / nyears)
-        label = r"$\mathbf{%s}: %.3f$" % (planet.name, tot_snr)
         
-        ax.hist(snr, 
+        # Average total SNR / year from high SNR (> 0.5) occultations
+        tot_snr05 = np.sqrt(np.sum(snr[snr >= 0.5] ** 2) / nyears)
+        
+        label = r"$\mathbf{%s}: %.2f\ (%.2f)$" % (planet.name, tot_snr, tot_snr05)
+
+        ax.hist(snr, cumulative = -1,
                 weights = np.ones_like(snr) / len(count[0]),
                 color = color, edgecolor = 'none', 
                 alpha = 0.5, histtype = 'stepfilled', 
                 bins = 50, range = (0, 3), label = label)
-        ax.hist(snr, 
+        ax.hist(snr, cumulative = -1,
                 weights = np.ones_like(snr) / len(count[0]),
                 color = color, histtype = 'step', 
                 lw = 2, bins = 50, range = (0, 3))
-        ax.set_xlabel('SNR', fontsize = 14, fontweight = 'bold')
-        ax.set_ylabel(r'Occultations [yr$^{-1}$]', fontsize = 14, 
+        ax.set_xlabel('SNR', fontsize = 16, fontweight = 'bold')
+        ax.set_ylabel(r'Cumulative occultations per year', fontsize = 14, 
                       fontweight = 'bold')
         ax.set_yscale('log')
-        ax.set_ylim(1e-2, 1e2)
-        ax.set_xlim(0, 3)
+        ax.set_ylim(1e-2, 200)
+        ax.set_xlim(-0.1, 3.5)
         ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: '%s' % x))
     
-    leg = ax.legend(loc = 'upper right', fontsize = 15,
-                    title = 'Average SNR / year')
+    ax.axvline(0.5, color = 'k', lw = 1, alpha = 1, ls = '--')
+    
+    leg = ax.legend(loc = 'upper right', fontsize = 16,
+                    title = 'Expected SNR / year')
     leg.get_title().set_fontweight('bold')
-
+    leg.get_title().set_fontsize(13)
+    
+    if eyeball:
+        ax.set_title('Eyeball', fontweight = 'bold', fontsize = 16)
+    else:
+        ax.set_title('Uniform', fontweight = 'bold', fontsize = 16)
+    
+    for tick in ax.get_xticklabels() + ax.get_yticklabels():
+        tick.set_fontsize(12)
+    
     # Frequency plot (2)
-    fig_hist = pl.figure(figsize = (7, 8))
+    fig_hist = pl.figure(figsize = (7, 7))
     fig_hist.subplots_adjust(hspace = 0.075)
     ax = pl.subplot2grid((5, 1), (1, 0), rowspan = 4)
     axt = pl.subplot2grid((5, 1), (0, 0), rowspan = 1, 
@@ -621,22 +647,29 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
                           normed = True, range = (0,55), 
                           zorder = zorder[k] + 0.5, lw = 2, bins = 56)
         
-    leg = ax.legend(loc = 'upper right', fontsize = 15, 
+    leg = ax.legend(loc = 'upper right', fontsize = 18, 
                     bbox_to_anchor = (0.89, 0.865), 
                     bbox_transform = fig_hist.transFigure,
                     title = 'Occultations with SNR > 0.5')
     leg.get_title().set_fontweight('bold')                                  
-    ax.set_xlabel('Occultations per year with SNR > 0.5', fontsize = 16, fontweight = 'bold')
+    leg.get_title().set_fontsize(13)
+    ax.set_xlabel('Occultations per year with SNR > 0.5', fontsize = 16, 
+                  fontweight = 'bold')
     ax.set_ylabel('Probability', fontsize = 16, fontweight = 'bold')
     ax.yaxis.set_label_coords(-0.15, 0.6)
     
+    if eyeball:
+        axt.set_title('Eyeball', fontweight = 'bold', fontsize = 16)
+    else:
+        axt.set_title('Uniform', fontweight = 'bold', fontsize = 16)
+        
     for tick in ax.get_xticklabels() + ax.get_yticklabels() \
               + axt.get_yticklabels():
         tick.set_fontsize(12)
     
     # HACK: Force a broken axis for the outer planets
     if eyeball:
-        ax.set_ylim(0, 0.32)
+        ax.set_ylim(0, 0.42)
         axt.set_ylim(0.73, 1.05)
     else:
         ax.set_ylim(0, 0.21)
@@ -645,11 +678,13 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
     axt.spines['bottom'].set_visible(False)
     ax.spines['top'].set_visible(False)
     axt.tick_params(bottom='off',labelbottom='off')
-    axt.set_yticks([0.8, 1.0])
+    
     if eyeball:
+        axt.set_yticks([0.8, 1.0])
         axt.set_yticklabels(["0.80", "1.00"])
     else:
-        axt.set_yticklabels(["0.800", "0.900", "1.000"])
+        axt.set_yticks([0.85, 1.0])
+        axt.set_yticklabels(["0.850", "1.000"])
     d = .015
     kwargs = dict(transform=axt.transAxes, color='k', clip_on=False, lw = 1)
     axt.plot((-d, +d), (-d, +d), **kwargs)
@@ -660,20 +695,17 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
     
     return fig_corner, fig_snr, fig_hist
 
-def MakeFigures(eyeball = True):
+def MakeFigures():
     '''
     Plots all histogram figures for the paper.
     
     '''
     
-    # Plot all figures 
-    if eyeball:
-        kind = 'eyeball'
-    else:
-        kind = 'limbdark'  
-    fig_corner, fig_snr, fig_hist = Plot(eyeball = eyeball)
-    for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
-        fig_corner[k].savefig('%s.corner.%s.pdf' % (planet, kind), bbox_inches = 'tight')
-    fig_snr.savefig('snr.%s.pdf' % kind, bbox_inches = 'tight')
-    fig_hist.savefig('hist.%s.pdf' % kind, bbox_inches = 'tight')
-    pl.close()
+    for kind in ['eyeball', 'limbdark']: 
+        fig_corner, fig_snr, fig_hist = Plot(eyeball = (kind == 'eyeball'))
+        for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
+            fig_corner[k].savefig('%s_corner_%s.pdf' % (planet, kind), 
+                                  bbox_inches = 'tight')
+        fig_snr.savefig('snr_%s.pdf' % kind, bbox_inches = 'tight')
+        fig_hist.savefig('hist_%s.pdf' % kind, bbox_inches = 'tight')
+        pl.close()

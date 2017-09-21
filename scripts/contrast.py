@@ -216,16 +216,16 @@ def plot():
         for tick in axis.get_xticklabels():
             tick.set_fontsize(12)
         for tick in axis.get_yticklabels():
-            tick.set_fontsize(8)
+            tick.set_fontsize(12)
         axis.ticklabel_format(useOffset = False)
         if i < 3:
             axis.set_xticklabels([])
     ax[0].set_ylabel(r'Flux', fontweight = 'bold', fontsize = 16)
     ax[1].set_ylabel(r'$\Delta$ [ppm]', fontweight = 'bold', 
-                     fontsize = 16, labelpad = 18)
+                     fontsize = 16, labelpad = 28)
     ax[2].set_ylabel(r'Scaled Flux', fontweight = 'bold', fontsize = 16)
     ax[3].set_ylabel(r'$\Delta$ [ppm]', fontweight = 'bold', 
-                     fontsize = 16, labelpad = 18)
+                     fontsize = 16, labelpad = 28)
     ax[0].margins(None, 0.1)
     ax[1].set_ylim(-45,91)
     ax[2].margins(None, 0.1)
