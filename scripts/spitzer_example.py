@@ -8,13 +8,13 @@ Sample observations of TRAPPIST-1 PPOs with Spitzer.
 
   .. plot::
      :align: center
-     
+
      from scripts import spitzer_example
      spitzer_example._test()
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/spitzer_example.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 
@@ -30,15 +30,15 @@ import numpy as np
 
 def _test():
     '''
-    
+
     '''
-    
+
     plot()
     pl.show()
 
 def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
      '''
-     `N` stacked exposures of `b` occulting `c` observed in 
+     `N` stacked exposures of `b` occulting `c` observed in
      both Warm Spitzer filters
 
      '''
@@ -46,7 +46,7 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
      # Instantiate the star
      mstar = 0.0802
      rstar = 0.121
-     teff = (0.000524 
+     teff = (0.000524
              * LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
      star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
 
@@ -54,14 +54,14 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
      RpRs = np.sqrt(0.7266 / 100)
      r = RpRs * rstar * RSUN / REARTH
      b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-                Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., 
+                Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40.,
                 albedo = albedo, airless = airless, phasecurve = False)
 
      # Instantiate `c`
      RpRs = np.sqrt(0.687 / 100)
      r = RpRs * rstar * RSUN / REARTH
      c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-                Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., 
+                Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40.,
                 albedo = albedo, airless = airless, phasecurve = False)
 
      # Instantiate the system
@@ -112,7 +112,7 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
 
              # Observe it (ten exposures)
              np.random.seed(123)
-             fig, ax = system.observe(stack = N, filter = filters[i], 
+             fig, ax = system.observe(stack = N, filter = filters[i],
                                       instrument = 'spitzer')
 
              SNRs[i] = system.filter.lightcurve.event_SNRs[0]
@@ -132,7 +132,7 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
      ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 14)
 
      wl_filt, dwl_filt, tputs, names = jwst.readin_miri_filters()
-     #jwst.plot_miri_filters(ax, wl_filt, tputs, 
+     #jwst.plot_miri_filters(ax, wl_filt, tputs,
      #                       names, ylim=[0.0,1.0], leg=True)
      #ax2 = fig.get_axes()[1]
      #ax2.set_ylabel("Throughput", fontweight = 'bold', fontsize = 25)
@@ -143,21 +143,21 @@ def Stacked_bc_all_filters(N = 100, albedo = 0.0, airless = True):
 
 def plot():
     '''
-    
+
     '''
-    
-    fig1, ax1 = Stacked_bc_all_filters(N = 100000, airless = False, 
+
+    fig1, ax1 = Stacked_bc_all_filters(N = 10000, airless = False,
                                        albedo = 0.0)
-    fig1.suptitle("100,000 stacked occultations of a blackbody at eq. temp.", 
+    fig1.suptitle("10,000 stacked occultations of a blackbody at eq. temp.",
                   fontweight = 'bold', fontsize = 10)
     fig2, ax2 = Stacked_bc_all_filters(N = 10000, airless = True, albedo = 0.0)
-    fig2.suptitle("10,000 stacked occultations of airless body at eq. temp.", 
+    fig2.suptitle("10,000 stacked occultations of airless body at eq. temp.",
                   fontweight = 'bold', fontsize = 10)
-    fig3, ax3 = Stacked_bc_all_filters(N = 100, airless = False, albedo = -15)
-    fig3.suptitle("100 stacked occultations of 683 K blackbody", 
+    fig3, ax3 = Stacked_bc_all_filters(N = 10, airless = False, albedo = -15)
+    fig3.suptitle("10 stacked occultations of 683 K blackbody",
                   fontweight = 'bold', fontsize = 10)
 
 if __name__ == '__main__':
-    
+
     plot()
     pl.show()
