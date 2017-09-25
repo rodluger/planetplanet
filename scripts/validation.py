@@ -173,7 +173,7 @@ def ValidateOccultations():
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67 - 0.05, r = r, 
                t0 = 0, Omega = 0, w = 0, ecc = 0, color = 'coral', 
-               tnight = 40., albedo = 0.3, airless = True, phasecurve = False, 
+               tnight = 40., albedo = 0.3, phasecurve = False, 
                nz = 31)
 
     # Instantiate `d`
@@ -181,7 +181,7 @@ def ValidateOccultations():
     r = RpRs * rstar * RSUN / REARTH        
     d = Planet('d', m = 0.41, per = 4.049610, inc = 89.75 + 0.16, r = r, 
                t0 = 0, Omega = 0, w = 0, ecc = 0, color = 'firebrick', 
-               tnight = 40., albedo = 0.3, airless = True, phasecurve = False)
+               tnight = 40., albedo = 0.3, phasecurve = False)
 
     # Instantiate the system
     system = System(star, c, d, distance = 12, oversample = 1, nbody = False)

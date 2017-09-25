@@ -60,8 +60,7 @@ if __name__ == '__main__':
         # Compute the phase curve
         star = Star('A')
         b = Planet('b', per = 10., inc = inc, Omega = Omega, t0 = 0, ecc = ecc, 
-                   w = w, Phi = Phi, Lambda = Lambda, airless = True, 
-                   phasecurve = True)
+                   w = w, Phi = Phi, Lambda = Lambda, phasecurve = True)
         system = System(star, b, mintheta = 0.001)
         time = np.linspace(-5, 5, 1000)
         system.compute(time)
