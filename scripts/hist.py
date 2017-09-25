@@ -18,61 +18,77 @@ planet-planet occultations in one Earth year.
           sessions: \
           :py:obj:`screen -dm python -c "import hist; hist.Compute(nsamp = 100)"`
 
+The figures below show the distributions for the eyeball planet case (left)
+and the limb-darkened planet case (right). Click on them to enlarge.
+
 TRAPPIST-1b
 ~~~~~~~~~~~
           
-.. image:: /b.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /b_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /b_corner_limbdark.jpg
+    :width: 49 %
 
 TRAPPIST-1c
 ~~~~~~~~~~~
           
-.. image:: /c.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /c_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /c_corner_limbdark.jpg
+    :width: 49 %
 
 TRAPPIST-1d
 ~~~~~~~~~~~
           
-.. image:: /d.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /d_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /d_corner_limbdark.jpg
+    :width: 49 %
 
 TRAPPIST-1e
 ~~~~~~~~~~~
           
-.. image:: /e.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /e_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /e_corner_limbdark.jpg
+    :width: 49 %
 
 TRAPPIST-1f
 ~~~~~~~~~~~
           
-.. image:: /f.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /f_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /f_corner_limbdark.jpg
+    :width: 49 %
 
 TRAPPIST-1g
 ~~~~~~~~~~~
           
-.. image:: /g.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /g_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /g_corner_limbdark.jpg
+    :width: 49 %
 
 TRAPPIST-1h
 ~~~~~~~~~~~
           
-.. image:: /h.corner.jpg
-   :width: 400px
-   :align: center
+.. image:: /h_corner_eyeball.jpg
+    :width: 49 %
+.. image:: /h_corner_limbdark.jpg
+    :width: 49 %
    
 Marginal distributions
 ~~~~~~~~~~~~~~~~~~~~~~
           
-.. image:: /hist.jpg
-   :width: 400px
-   :align: center
+.. image:: /hist_eyeball.jpg
+    :width: 49 %
+.. image:: /hist_limbdark.jpg
+    :width: 49 %
+
+.. image:: /snr_eyeball.jpg
+    :width: 49 %
+.. image:: /snr_limbdark.jpg
+    :width: 49 %
 
 .. role:: raw-html(raw)
    :format: html

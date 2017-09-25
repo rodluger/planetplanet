@@ -4,6 +4,58 @@
 hist_mutual.py |github|
 -----------------------
 
+Histograms of the mutual transit events in TRAPPIST-1. Shows histograms
+of the fractional depth and duration of these events for all pairs of
+planets.
+
+TRAPPIST-1b
+~~~~~~~~~~~
+          
+.. image:: /b_mutual.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1c
+~~~~~~~~~~~
+          
+.. image:: /c_mutual.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1d
+~~~~~~~~~~~
+          
+.. image:: /d_mutual.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1e
+~~~~~~~~~~~
+          
+.. image:: /e_mutual.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1f
+~~~~~~~~~~~
+          
+.. image:: /f_mutual.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1g
+~~~~~~~~~~~
+          
+.. image:: /g_mutual.jpg
+   :width: 400px
+   :align: center
+
+TRAPPIST-1h
+~~~~~~~~~~~
+          
+.. image:: /h_mutual.jpg
+   :width: 400px
+   :align: center
 
 .. role:: raw-html(raw)
    :format: html
@@ -250,6 +302,43 @@ def Compute(nsamp = 100, nbody = True, progress_bar = True, **kwargs):
     np.savez(os.path.join(datapath, 'hist_mutual%03d.npz' % n), 
              pairs = pairs, durs = durs, depths = depths)
 
+def MergeFiles():
+    '''
+    Merge all the `npz` savesets into a single one for faster plotting.
+    
+    '''
+    
+    # Load
+    pairs = np.empty([0, 2], dtype = int)
+    durs = np.array([], dtype = float)
+    depths = np.array([], dtype = float)
+    print("Loading...")
+    for n in tqdm(range(1000)):
+        if os.path.exists(os.path.join(datapath, 'hist_mutual%03d.npz' % n)):
+            data = np.load(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
+            os.remove(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
+            
+            # Skip corrupt files
+            try:
+                data['pairs'][0]
+                data['durs'][0]
+                data['depths'][0]
+            except:
+                continue
+        
+        else:
+            break
+        
+        pairs = np.vstack([pairs, data['pairs']])
+        durs = np.append(durs, data['durs'])
+        depths = np.append(depths, data['depths'])
+    
+    # Save as one big file
+    if n > 0:
+        print("Saving...")
+        np.savez(os.path.join(datapath,'hist_mutual000.npz'), 
+                 pairs = pairs, durs = durs, depths = depths)
+
 def Plot():
     '''
     
@@ -272,6 +361,10 @@ def Plot():
         durs = np.append(durs, data['durs'])
         depths = np.append(depths, data['depths'])
     
+    # Dummy system to get colors
+    system = Trappist1()
+    colors = [system.bodies[n].color for n in range(1, 8)]
+    
     # Loop over all planets
     for k in range(1, 8):
         
@@ -286,10 +379,50 @@ def Plot():
         
         # Corner plot
         samples = np.vstack((dt, d)).T
-        corner.corner(samples, plot_datapoints = False,
-                      range = [(0, 60), (0, 1)], 
-                      labels = ["Duration [min]", 
-                                "Depth [%]"], 
-                      bins = 30)
+        fig = corner.corner(samples, plot_datapoints = False,
+                            range = [(0, 60), (0, 1)], 
+                            labels = ["Duration [min]", 
+                                      "Depth [%]"], 
+                            bins = 30,
+                            hist_kwargs = {'color': 'w'})
         
-        pl.show()
+        # Indices of events involving each of the planets
+        pinds = [[] for j in range(1, 8)]
+        for j in range(1, 8):
+            if j != k:
+                pinds[j - 1] = np.where((pairs[inds,0] == j) | (pairs[inds,1] == j))[0]
+
+        # Duration stacked histogram
+        n, _, _ = fig.axes[0].hist([dt[p] for p in pinds], bins = 30,
+                                   range = (0, 60), 
+                                   stacked = True,
+                                   normed = 1,
+                                   color = colors,
+                                   alpha = 0.5)
+        maxn = np.max(np.array(n)[-1])
+        fig.axes[0].hist(dt, bins = 30, range = (0, 60), normed = 1,
+                         color = 'k', alpha = 1, histtype = 'step')
+        fig.axes[0].set_ylim(0, 1.1 * maxn)
+        
+        # Depth stacked histogram
+        n, _, _ = fig.axes[3].hist([d[p] for p in pinds], bins = 30,
+                                   range = (0, 1), 
+                                   stacked = True,
+                                   normed = 1,
+                                   color = colors,
+                                   alpha = 0.5)
+        maxn = np.max(np.array(n)[-1])
+        fig.axes[3].hist(d, bins = 30, range = (0, 1), normed = 1,
+                         color = 'k', alpha = 1, histtype = 'step')
+        fig.axes[3].set_ylim(0, 1.1 * maxn)
+        
+        # Tweak appearance
+        for i, ax in enumerate(fig.axes):
+            ax.set_xlabel(ax.get_xlabel(), fontsize = 14, fontweight = 'bold')
+            ax.set_ylabel(ax.get_ylabel(), fontsize = 14, fontweight = 'bold')
+            for tick in ax.get_xticklabels() + ax.get_yticklabels():
+                tick.set_fontsize(12)
+        
+        # Save!
+        fig.savefig('%s_mutual.pdf' % system.bodies[k].name, 
+                    bbox_inches = 'tight')

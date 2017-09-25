@@ -33,6 +33,7 @@ From the paper
    integration method <scripts/integration>
    JWST example <scripts/jwst_example>
    Kepler-444 example <scripts/kepler444>
+   mutual transit histograms <scripts/hist_mutual>
    occultation histograms <scripts/hist>
    OST example <scripts/ost_example>
    PPO scatter plot <scripts/scatter>
