@@ -46,7 +46,7 @@ def _test():
     pass
 
 def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
-           mpn = None, nsamp = 50000, batch_size = 100, nproc = None):
+           mpn = None, nsamp = 50000, batch_size = 30, nproc = None):
     '''
     Submits a PBS cluster job to run :py:func:`Compute` in parallel.
 
