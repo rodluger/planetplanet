@@ -74,7 +74,7 @@ def Submit(queue = None, email = None, walltime = 8, nodes = 5, ppn = 12,
     else:
         str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)    
     str_v = 'NPROC=%d,HISTPATH=%s,NSAMP=%d,BATCHSZ=%d' % \
-            (nproc, histpath, nsamp, int(eyeball), batch_size)
+            (nproc, histpath, nsamp, batch_size)
     str_name = 'planetplanet'
     str_out = 'hist_mutual.log'
     qsub_args = ['qsub', 'hist_mutual.pbs', 
@@ -115,7 +115,7 @@ class _FunctionWrapper(object):
         
         return self.f(*self.args, **self.kwargs)
 
-def _Parallelize(nsamp, eyeball, batch_size):
+def _Parallelize(nsamp, batch_size):
     '''
     Runs the actual parallelized computations. Used internally.
     
