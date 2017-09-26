@@ -315,11 +315,11 @@ def MergeFiles():
     print("Loading...")
     for n in tqdm(range(1000)):
         if os.path.exists(os.path.join(datapath, 'hist_mutual%03d.npz' % n)):
-            data = np.load(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
-            os.remove(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
             
             # Skip corrupt files
             try:
+                data = np.load(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
+                os.remove(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
                 data['pairs'][0]
                 data['durs'][0]
                 data['depths'][0]
@@ -351,7 +351,16 @@ def Plot():
     print("Loading...")
     for n in tqdm(range(1000)):
         if os.path.exists(os.path.join(datapath, 'hist_mutual%03d.npz' % n)):
-            data = np.load(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
+            
+            # Skip corrupt files
+            try:
+                data = np.load(os.path.join(datapath, 'hist_mutual%03d.npz' % n))
+                data['pairs'][0]
+                data['durs'][0]
+                data['depths'][0]
+            except:
+                continue
+        
         else:
             if n == 0:
                 raise Exception("Please run `Compute()` first.")
@@ -364,6 +373,10 @@ def Plot():
     # Dummy system to get colors
     system = Trappist1()
     colors = [system.bodies[n].color for n in range(1, 8)]
+    
+    # For the paper, we ran 30,000 simulations, so the average
+    # number of mutual transits per year is...
+    print("Mutual transits per year: %.3f" % (len(pairs) / 30000.))
     
     # Loop over all planets
     for k in range(1, 8):
