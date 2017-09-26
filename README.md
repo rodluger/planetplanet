@@ -3,9 +3,10 @@
 </img>
 <br/><br/>
 <p><a href="https://travis-ci.com/rodluger/planetplanet"><img src="https://travis-ci.com/rodluger/planetplanet.svg?token=jABaFLLgJNHTWSqkT7CM&branch=master"/></a>
+<a href="http://dx.doi.org/10.5281/zenodo.997391"><img src="https://img.shields.io/badge/doi-10.5281/zenodo.997391-1C6080.svg?style=flat"/></a>
 <a href="https://raw.githubusercontent.com/rodluger/planetplanet/master/LICENSE?token=AI5FKxGMJTv55h2EE_AuXW2gofnIaRDeks5Zm0unwA%3D%3D"><img src="https://img.shields.io/badge/license-GPL-3399ff.svg?style=flat"/></a>
-<a href="https://rodluger.github.io/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-ff69b4.svg?style=flat"/></a>
-<a href="https://rodluger.github.io/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"/></a>
+<a href="https://rodluger.github.io/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-CD3A37.svg?style=flat"/></a>
+<a href="https://rodluger.github.io/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-fd7709.svg?style=flat"/></a>
 </p>
 </div>
 
