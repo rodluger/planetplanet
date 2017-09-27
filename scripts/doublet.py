@@ -56,7 +56,7 @@ def plot():
     time = system.time[i0:]
     time -= time[0]
     time /= MINUTE
-    #time -= (i0 // 2)
+    time -= 163
     flux = c.flux[i0:,-1]
     flux /= flux[0]
     c_x = c.x[i0:]
@@ -71,8 +71,8 @@ def plot():
     b_vy = b.vy[i0:]
     
     # The figure for the paper
-    fig, ax = pl.subplots(1, figsize = (7, 5))
-    fig.subplots_adjust(top = 0.75, bottom = 0.25)
+    fig, ax = pl.subplots(1, figsize = (6, 4))
+    fig.subplots_adjust(top = 0.75, bottom = 0.25, left = 0.1, right = 0.975)
     
     # Plot the light curve
     ax.plot(time, flux, 'k-')
@@ -104,7 +104,7 @@ def plot():
         occ_dict = [dict(x = (b_x[i] - c_x[i]) / c._r, 
                          y = (b_y[i] - c_y[i]) / c._r, 
                          r = b._r / c._r, zorder = 99, alpha = 1)]
-        DrawEyeball(px, 0.9, 0.025, theta = theta, nz = 31, gamma = gamma, 
+        DrawEyeball(px, 0.9, 0.03, theta = theta, nz = 31, gamma = gamma, 
                     draw_ellipses = False, radiancemap = c.radiancemap,
                     occultors = occ_dict, cmap = 'inferno', 
                     fig = fig, rasterize = True)
@@ -114,7 +114,7 @@ def plot():
                        clip_on = False, 
                        arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
         ax.annotate(r"$%d$" % time[i], xy = (px, 0.96), xycoords = "figure fraction",
-                    ha = 'center', va = 'center', fontsize = 8)
+                    ha = 'center', va = 'center', fontsize = 10)
         vx = (c_vx[i] - b_vx[i]) / vnorm
         if np.abs(vx) > 5:
             ax.annotate("", xy = (time[i], flux[i]), textcoords = 'offset points',
@@ -127,7 +127,7 @@ def plot():
         occ_dict = [dict(x = (b_x[j] - c_x[j]) / c._r, 
                          y = (b_y[j] - c_y[j]) / c._r, 
                          r = b._r / c._r, zorder = 99, alpha = 1)]
-        DrawEyeball(px, 0.1, 0.025, theta = theta, nz = 31, gamma = gamma, 
+        DrawEyeball(px, 0.1, 0.03, theta = theta, nz = 31, gamma = gamma, 
                     draw_ellipses = False, radiancemap = c.radiancemap,
                     occultors = occ_dict, cmap = 'inferno', 
                     fig = fig, rasterize = True)
@@ -136,8 +136,8 @@ def plot():
                        textcoords = "figure fraction", 
                        clip_on = False, 
                        arrowprops = dict(arrowstyle = '-', alpha = 0.5, lw = 1))
-        ax.annotate(r"$%d$" % time[j], xy = (px, 0.04), xycoords = "figure fraction",
-                    ha = 'center', va = 'center', fontsize = 8)
+        ax.annotate(r"$%d$" % time[j], xy = (px, 0.03), xycoords = "figure fraction",
+                    ha = 'center', va = 'center', fontsize = 10)
         vx = (c_vx[j] - b_vx[j]) / vnorm
         if np.abs(vx) > 5:
             ax.annotate("", xy = (time[j], flux[j]), textcoords = 'offset points',
@@ -145,10 +145,11 @@ def plot():
         else:
             ax.plot(time[j], flux[j], 'ko', ms = 3)
             
-        ax.plot((time[i],time[i]), (ymax, flux[i]), color = 'k', alpha = 0.25, lw = 1)
-        ax.plot((time[j],time[j]), (ymin, flux[j]), color = 'k', alpha = 0.25, lw = 1)
+        ax.plot((time[i], time[i]), (ymax, flux[i]), color = 'k', alpha = 0.25, lw = 1)
+        ax.plot((time[j], time[j]), (ymin, flux[j]), color = 'k', alpha = 0.25, lw = 1)
 
-    fig.savefig('retro.pdf', bbox_inches = 'tight')
+    fig.savefig('retro.pdf', dpi = 800)
+    pl.show()
     
 if __name__ == '__main__':
   plot()

@@ -439,6 +439,15 @@ def Plot():
             for tick in ax.get_xticklabels() + ax.get_yticklabels():
                 tick.set_fontsize(12)
         
+        # HACK: Legend for planet `b`
+        if k == 1:
+            for occultor in [2,3,4,5,7]:
+                fig.axes[0].axhline(-1, color = system.bodies[occultor].color, 
+                                    lw = 4, alpha = 0.5, 
+                                    label = system.bodies[occultor].name)
+            fig.axes[0].legend(loc = 'upper right', 
+                               fontsize = 8, borderpad = 1)
+        
         # Save!
         fig.savefig('%s_mutual.pdf' % system.bodies[k].name, 
                     bbox_inches = 'tight')
