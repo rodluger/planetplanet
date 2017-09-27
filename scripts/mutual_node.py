@@ -135,7 +135,7 @@ def plot(niter = 10000):
     iszero = np.where(duration == 0)
     duration = np.delete(duration, iszero)
     Omega = np.delete(Omega, iszero)
-    corner.hist2d(duration, Omega, bins = 100, ax = ax[0])
+    corner.hist2d(duration, Omega, bins = 100, ax = ax[0], plot_datapoints = False)
 
     # Zoom inset
     duration_zoom = duration_zoom.reshape(-1)
@@ -143,7 +143,7 @@ def plot(niter = 10000):
     iszero = np.where(duration_zoom == 0)
     duration_zoom = np.delete(duration_zoom, iszero)
     Omega_zoom = np.delete(Omega_zoom, iszero)
-    corner.hist2d(duration_zoom, Omega_zoom, bins = 100, ax = ax[1])
+    corner.hist2d(duration_zoom, Omega_zoom, bins = 100, ax = ax[1], plot_datapoints = False)
 
     # Appearance
     ax[0].set_ylabel(r'$\mathbf{\Delta\Omega}$ [degrees]', 
@@ -158,6 +158,6 @@ def plot(niter = 10000):
     return fig, ax
 
 if __name__ == '__main__':
-    fig, ax = plot()
+    fig, ax = plot(1000)
     fig.savefig("mutual_node.pdf")
     pl.show()

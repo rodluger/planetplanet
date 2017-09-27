@@ -384,6 +384,9 @@ def Plot():
         # Indices of events involving this planet
         inds = np.where((pairs[:,0] == k) | (pairs[:,1] == k))[0]
         
+        # Again, for the 30,000 simulations we ran...
+        print("%s: %.3f" % (system.bodies[k].name, len(pairs[inds]) / 30000.))
+        
         # Duration
         dt = durs[inds] / MINUTE
         

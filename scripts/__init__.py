@@ -4,6 +4,7 @@
 from . import contrast
 from . import corner
 from . import custom_map
+from . import doublet
 from . import draw_orbit
 from . import exomoon
 from . import eyeball

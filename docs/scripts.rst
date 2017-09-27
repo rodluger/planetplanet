@@ -36,6 +36,7 @@ From the paper
    mutual transit histograms <scripts/hist_mutual>
    occultation histograms <scripts/hist>
    OST example <scripts/ost_example>
+   PPO doublet <scripts/doublet>
    PPO scatter plot <scripts/scatter>
    sample TRAPPIST-1 light curve <scripts/lightcurve>
    Spitzer example <scripts/spitzer_example>
