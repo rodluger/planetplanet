@@ -20,7 +20,7 @@ Documentation
    api
    Github <https://github.com/rodluger/planetplanet>
    Submit an issue <https://github.com/rodluger/planetplanet/issues>
-   Read the paper <http://staff.washington.edu/rodluger/planetplanet/PPOs.pdf>
+   Read the paper <https://rodluger.github.io/planetplanet/PPOs.pdf>
    
 Indices and tables
 ==================

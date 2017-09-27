@@ -18,15 +18,17 @@ Interactive eyeball planet visualizer. See :py:mod:`planetplanet.photo.eyeball`.
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+                       unicode_literals
 from planetplanet.photo import eyeball
 
 def _test():
-  '''
-  
-  '''
-  
-  eyeball.Interact()
+    '''
+
+    '''
+
+    eyeball.Interact()
   
 if __name__ == '__main__':
-  eyeball.Interact()
+
+    eyeball.Interact()

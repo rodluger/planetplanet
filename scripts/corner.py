@@ -417,8 +417,8 @@ def quantile(x, q, weights=None):
 def hist2d(x, y, bins=20, range=None, weights=None, levels=None, smooth=None,
            ax=None, color=None, plot_datapoints=True, plot_density=True,
            plot_contours=True, no_fill_contours=False, fill_contours=False,
-           contour_kwargs=None, contourf_kwargs=None, data_kwargs=None,
-           cmap='inferno_r',**kwargs):
+           contour_kwargs=None, contourf_kwargs=None,
+           cmap='inferno_r',**data_kwargs):
     """
     Plot a 2-D histogram of samples.
 
@@ -428,10 +428,10 @@ def hist2d(x, y, bins=20, range=None, weights=None, levels=None, smooth=None,
 
     # Set the default range based on the data range if not provided.
     if range is None:
-        if "extent" in kwargs:
+        if "extent" in data_kwargs:
             logging.warn("Deprecated keyword argument 'extent'. "
                          "Use 'range' instead.")
-            range = kwargs["extent"]
+            range = data_kwargs["extent"]
         else:
             range = [[x.min(), x.max()], [y.min(), y.max()]]
 
@@ -475,7 +475,17 @@ def hist2d(x, y, bins=20, range=None, weights=None, levels=None, smooth=None,
     ])
 
     # Simple imshow
-    ax.imshow(H2.T, extent = (X2[0],X2[-1],Y2[0],Y2[-1]), origin = 'lower', aspect = 'auto', interpolation = 'lanczos', cmap = pl.get_cmap(cmap))
+    ax.imshow(H2.T, extent = (X2[0],X2[-1],Y2[0],Y2[-1]), origin = 'lower', 
+              aspect = 'auto', interpolation = 'lanczos',
+              cmap = pl.get_cmap(cmap))
+    
+    # Datapoints
+    if plot_datapoints:
+        data_kwargs["color"] = data_kwargs.get("color", color)
+        data_kwargs["ms"] = data_kwargs.get("ms", 2.0)
+        data_kwargs["mec"] = data_kwargs.get("mec", "none")
+        data_kwargs["alpha"] = data_kwargs.get("alpha", 0.1)
+        ax.plot(x, y, "o", zorder=1, rasterized=True, **data_kwargs)
         
     ax.set_xlim(range[0])
     ax.set_ylim(range[1])

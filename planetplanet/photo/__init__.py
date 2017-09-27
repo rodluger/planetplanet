@@ -7,4 +7,4 @@ from .ppo import *
 from .structs import *
 from .maps import *
 from .trappist1 import *
-from .eyeball import DrawEyeball, DrawOrbit
+from .eyeball import DrawEyeball, DrawOrbit, GetAngles

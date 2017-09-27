@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Prevent numpy from multithreading
+export OPENBLAS_NUM_THREADS=1
+
+# CD into our working directory
+cd ${HISTPATH}
+
+# Run on multiple nodes with MPI
+mpirun -np $NPROC python -c "import hist_mutual; hist_mutual._Parallelize($NSAMP, $BATCHSZ)"

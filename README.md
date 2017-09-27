@@ -1,11 +1,12 @@
 <div align="center"> 
-<img src="http://staff.washington.edu/rodluger/planetplanet/_images/title.gif" width="400px">
+<img src="https://rodluger.github.io/planetplanet/_images/title.gif" width="400px">
 </img>
 <br/><br/>
 <p><a href="https://travis-ci.com/rodluger/planetplanet"><img src="https://travis-ci.com/rodluger/planetplanet.svg?token=jABaFLLgJNHTWSqkT7CM&branch=master"/></a>
-<a href="https://raw.githubusercontent.com/rodluger/planetplanet/master/LICENSE?token=AI5FKxGMJTv55h2EE_AuXW2gofnIaRDeks5Zm0unwA%3D%3D"><img src="https://img.shields.io/badge/license-GPL-3399ff.svg?style=flat"/></a>
-<a href="http://staff.washington.edu/rodluger/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-ff69b4.svg?style=flat"/></a>
-<a href="http://staff.washington.edu/rodluger/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"/></a>
+<a href="http://dx.doi.org/10.5281/zenodo.997391"><img src="https://img.shields.io/badge/doi-zenodo-568AB8.svg?style=flat"/></a>
+<a href="https://raw.githubusercontent.com/rodluger/planetplanet/master/LICENSE?token=AI5FKxGMJTv55h2EE_AuXW2gofnIaRDeks5Zm0unwA%3D%3D"><img src="https://img.shields.io/badge/license-GPL-a2a2a2.svg?style=flat"/></a>
+<a href="https://rodluger.github.io/planetplanet/PPOs.pdf"><img src="https://img.shields.io/badge/read-the_paper-fd7709.svg?style=flat"/></a>
+<a href="https://rodluger.github.io/planetplanet/index.html"><img src="https://img.shields.io/badge/read-the_docs-AF5891.svg?style=flat"/></a>
 </p>
 </div>
 
@@ -32,4 +33,4 @@ You may need to install the [GNU Scientific Library](https://www.gnu.org/softwar
 brew install gsl
 ```
 
-Please check out the [documentation](http://staff.washington.edu/rodluger/planetplanet/index.html) or read the [paper](http://staff.washington.edu/rodluger/planetplanet/PPOs.pdf) for more information.
+Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.

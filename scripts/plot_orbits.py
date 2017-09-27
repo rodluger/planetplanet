@@ -19,35 +19,36 @@ Plot the TRAPPIST-1 planet orbits from different viewing angles.
 
 '''
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+                       unicode_literals
 import planetplanet as pp
 from planetplanet.constants import *
 import matplotlib.pyplot as pl
 import numpy as np
 
 def _test():
-  '''
-  
-  '''
-  
-  plot()
-  pl.show()
+    '''
+
+    '''
+
+    plot()
+    pl.show()
 
 def plot():
-  '''
-  
-  '''
-  
-  # Instantiate the TRAPPIST-1 system
-  time = np.linspace(OCTOBER_08_2016, OCTOBER_08_2016 + 20, 10000)
-  system = pp.Trappist1(sample = True)
-  
-  # Compute and plot the orbits
-  system.compute(time)
-  fig, ax = system.plot_orbits(cmap = 'jet_r')
-  
-  return fig, ax
+    '''
+
+    '''
+
+    # Instantiate the TRAPPIST-1 system
+    time = np.linspace(OCTOBER_08_2016, OCTOBER_08_2016 + 20, 10000)
+    system = pp.Trappist1(sample = True)
+
+    # Compute and plot the orbits
+    system.compute(time)
+    fig, ax = system.plot_orbits(cmap = 'jet_r')
+
+    return fig, ax
 
 if __name__ == '__main__':
-  fig, ax = plot()
-  pl.show()
+    fig, ax = plot()
+    pl.show()

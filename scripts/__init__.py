@@ -4,6 +4,7 @@
 from . import contrast
 from . import corner
 from . import custom_map
+from . import doublet
 from . import draw_orbit
 from . import exomoon
 from . import eyeball
@@ -11,6 +12,7 @@ from . import eyeball_orbit
 from . import flower
 from . import geometry
 from . import hist
+from . import hist_mutual
 from . import integration
 from . import intersection
 from . import jwst_example

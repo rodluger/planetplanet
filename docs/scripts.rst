@@ -33,8 +33,10 @@ From the paper
    integration method <scripts/integration>
    JWST example <scripts/jwst_example>
    Kepler-444 example <scripts/kepler444>
+   mutual transit histograms <scripts/hist_mutual>
    occultation histograms <scripts/hist>
    OST example <scripts/ost_example>
+   PPO doublet <scripts/doublet>
    PPO scatter plot <scripts/scatter>
    sample TRAPPIST-1 light curve <scripts/lightcurve>
    Spitzer example <scripts/spitzer_example>

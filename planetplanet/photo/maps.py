@@ -4,12 +4,13 @@
 maps.py |github|
 ----------------
 
-A library of surface radiance map functions. These are functions of two parameters (wavelength
-in m and zenith angle in radians) and return a radiance. All functions here are function generators that return
-radiance map functions decorated with a :py:mod:`numba` :py:func:`cfunc` statement so that they
-can be pre-compiled and passed to C as pointers. This ensures we get near-C speed when calling 
-them. Users are encouraged to define their own radiance maps by following the syntax in the functions
-below.
+A library of surface radiance map functions. These are functions of two 
+parameters (wavelength in m and zenith angle in radians) and return a radiance. 
+All functions here are function generators that return radiance map functions 
+decorated with a :py:mod:`numba` :py:func:`cfunc` statement so that they
+can be pre-compiled and passed to C as pointers. This ensures we get near-C 
+speed when calling them. Users are encouraged to define their own radiance maps 
+by following the syntax in the functions below.
 
   .. code-block:: python
 
@@ -27,14 +28,15 @@ below.
   
       # Note that you can do all sorts of calculations within this function to
       # define variables that can be accessed by the radiance map below. Let's
-      # compute the standard deviation (in radians) of the Gaussian from the FWHM:
+      # compute the standard deviation (in radians) of the Gaussian from the 
+      # FWHM:
   
       std = (np.pi / 180) * fwhm / 2.35482
     
-      # Note that since :py:obj:`func` is a compiled C function, you'll get nasty
-      # errors if you try to access functions/classes/dictionaries or other fancy
-      # Python objects from inside it. Stick to floats and ints and (maybe) numpy
-      # arrays.
+      # Note that since :py:obj:`func` is a compiled C function, you'll get 
+      # nasty errors if you try to access functions/classes/dictionaries or 
+      # other fancy Python objects from inside it. Stick to floats and ints 
+      # and (maybe) numpy arrays.
   
       @cfunc("float64(float64, float64)")
       def func(lam, z):
@@ -49,13 +51,13 @@ below.
         # zenith angle.
         return amp * np.exp(-(z / (2 * std)) ** 2)
     
-      # This line is important: we need to tell :py:obj:`planetplanet` what kind
-      # of radiance map this is. There are two choices: a radially symmetric map,
-      # whose axis of symmetry is always the center of the projected disk, and an
-      # elliptically symmetric (eyeball) map, whose axis of symmetry rotates as the planet
-      # orbits the star, always pointing towards the substellar point (or with
-      # an offset, if :py:obj:`Lambda` and :py:obj:`Phi` are set). Let's make this
-      # map elliptically symmetric:
+      # This line is important: we need to tell :py:obj:`planetplanet` what 
+      # kind of radiance map this is. There are two choices: a radially 
+      # symmetric map, whose axis of symmetry is always the center of the 
+      # projected disk, and an elliptically symmetric (eyeball) map, whose axis 
+      # of symmetry rotates as the planet orbits the star, always pointing 
+      # towards the substellar point (or with an offset, if :py:obj:`Lambda` 
+      # and :py:obj:`Phi` are set). Let's make this map elliptically symmetric:
   
       func.maptype = MAP_ELLIPTICAL_CUSTOM
   
@@ -67,7 +69,7 @@ To see what this looks like, run
   .. code-block:: python
 
     fig = pl.figure(figsize = (3,3))
-    DrawEyeball(fig = fig, radiancemap = CustomMap(), theta = np.pi / 3, nz = 51)
+    DrawEyeball(fig = fig, radiancemap = CustomMap(), theta = np.pi/3, nz = 51)
     pl.show()
 
   .. plot::
@@ -106,102 +108,106 @@ from ..constants import *
 import numpy as np
 from numba import cfunc
 
-__all__ = ['LimbDarkenedMap', 'RadiativeEquilibriumMap', 'BandedCloudsMap', 'UniformMap']
+__all__ = ['LimbDarkenedMap', 'RadiativeEquilibriumMap', 
+           'BandedCloudsMap', 'UniformMap']
 
 def LimbDarkenedMap():
-  '''
-  The default limb-darkened map. This is really a dummy function, since this is
-  already hard-coded in the C engine.
-  
-  '''
-  
-  @cfunc("float64(float64, float64)")
-  def func(lam, z):
     '''
+    The default limb-darkened map. This is really a dummy function, since 
+    this is already hard-coded in the C engine.
     
     '''
     
-    return np.nan
-  
-  # Specify that this is the default radially-symmetric function
-  func.maptype = MAP_RADIAL_DEFAULT
-  
-  return func
+    @cfunc("float64(float64, float64)")
+    def func(lam, z):
+        '''
+        
+        '''
+        
+        return np.nan
+    
+    # Specify that this is the default radially-symmetric function
+    func.maptype = MAP_RADIAL_DEFAULT
+    
+    return func
 
 def RadiativeEquilibriumMap():
-  '''
-  The default eyeball map. This is really a dummy function, since this is
-  already hard-coded in the C engine.
-  
-  '''
-  
-  @cfunc("float64(float64, float64)")
-  def func(lam, z):
     '''
+    The default eyeball map. This is really a dummy function, since this is
+    already hard-coded in the C engine.
     
     '''
     
-    return np.nan
-  
-  # Specify that this is the default elliptically-symmetric function
-  func.maptype = MAP_ELLIPTICAL_DEFAULT
-  
-  return func
+    @cfunc("float64(float64, float64)")
+    def func(lam, z):
+        '''
+        
+        '''
+        
+        return np.nan
+    
+    # Specify that this is the default elliptically-symmetric function
+    func.maptype = MAP_ELLIPTICAL_DEFAULT
+    
+    return func
 
 def UniformMap(albedo = 0.3, irrad = SEARTH):
-  '''
-  A uniform surface radiance map.
-  
-  :param float albedo: The body's albedo. Default `0.3`
-  :param float irrad: The body's irradiation. Default is the Solar constant, :py:obj:`SEARTH`
-  
-  '''
-  
-  @cfunc("float64(float64, float64)")
-  def func(lam, z):
     '''
+    A uniform surface radiance map.
+    
+    :param float albedo: The body's albedo. Default `0.3`
+    :param float irrad: The body's irradiation. Default is the Solar \
+           constant, :py:obj:`SEARTH`
     
     '''
     
-    # Compute the temperature
-    temp = ((irrad * (1 - albedo)) / (4 * SBOLTZ)) ** 0.25
-  
-    # Compute the radiance
-    a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
-    b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
-    return a / (np.exp(b) - 1.)
-  
-  # Specify that this is a custom radially-symmetric function
-  func.maptype = MAP_RADIAL_CUSTOM
-  
-  return func
+    @cfunc("float64(float64, float64)")
+    def func(lam, z):
+        '''
+        
+        '''
+        
+        # Compute the temperature
+        temp = ((irrad * (1 - albedo)) / (4 * SBOLTZ)) ** 0.25
+    
+        # Compute the radiance
+        a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+        b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
+        return a / (np.exp(b) - 1.)
+    
+    # Specify that this is a custom radially-symmetric function
+    func.maptype = MAP_RADIAL_CUSTOM
+    
+    return func
 
 def BandedCloudsMap(albedo = 0.3, irrad = SEARTH, bands = 5):
-  '''
-  A quirky periodic surface map that simulates banded clouds on a gas giant.
-  Not terribly realistic, but showcases what the code can do.
-  
-  :param float albedo: The body's albedo. Default `0.3`
-  :param float irrad: The body's irradiation. Default is the Solar constant, :py:obj:`SEARTH`
-  :param int bands: The number of bands. Default `5`
-  
-  '''
-
-  @cfunc("float64(float64, float64)")
-  def func(lam, z):
     '''
-  
-    '''
+    A quirky periodic surface map that simulates banded clouds on a gas giant.
+    Not terribly realistic, but showcases what the code can do.
     
-    # Compute the temperature
-    temp = ((irrad * np.cos(bands * z) ** 2 * (1 - albedo)) / SBOLTZ) ** 0.25
-  
-    # Compute the radiance
-    a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
-    b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
-    return a / (np.exp(b) - 1.)
-  
-  # Specify that this is a custom elliptically-symmetric function
-  func.maptype = MAP_ELLIPTICAL_CUSTOM
-  
-  return func
+    :param float albedo: The body's albedo. Default `0.3`
+    :param float irrad: The body's irradiation. Default is the Solar \
+           constant, :py:obj:`SEARTH`
+    :param int bands: The number of bands. Default `5`
+    
+    '''
+
+    @cfunc("float64(float64, float64)")
+    def func(lam, z):
+        '''
+    
+        '''
+        
+        # Compute the temperature
+        temp = ((irrad * np.cos(bands * z) ** 2 
+                * (1 - albedo)) / SBOLTZ) ** 0.25
+    
+        # Compute the radiance
+        a = 2 * HPLANCK * CLIGHT * CLIGHT / (lam * lam * lam * lam * lam)
+        b = HPLANCK * CLIGHT / (lam * KBOLTZ * temp)
+        return a / (np.exp(b) - 1.)
+    
+    # Specify that this is a custom elliptically-symmetric function
+    func.maptype = MAP_ELLIPTICAL_CUSTOM
+    
+    return func

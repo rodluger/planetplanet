@@ -267,13 +267,14 @@ Computes the full light curve for all bodies in the system.
 @param time The array of times at which to evaluate the orbits
 @param nw The size of the wavelength grid
 @param wavelength The wavelength grid in microns
+@param continuum The continuum flux (i.e., the total flux without occultations) of the system on a time/wavelength grid
 @param np The number of particles (bodies) in the system
 @param body An array of BODY pointers corresponding to all the bodies in the system
 @param settings An instance of the SETTINGS class containing all settings
 @return The error code
 
 */
-int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **body, SETTINGS settings){
+int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuum[nt * nw], int np, BODY **body, SETTINGS settings){
 
   double d, dx, dy, dz, d2;
   double lum, irrad;
@@ -299,7 +300,14 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       body[p]->time[t] = time[t];
     }    
   }
-    
+  
+  // Initialize the continuum flux
+  for (t = 0; t < nt; t++) {
+    for (w = 0; w < nw; w++) {
+      continuum[nw * t + w] = 0;
+    }
+  }
+  
   // Solve for the orbits
   if (settings.nbody)
     iErr = NBody(np, body, settings, 0, 0, 0, dummyInt, 0, dummyDouble, dummyInt, dummyDouble);
@@ -394,13 +402,23 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
         
       } else if (p > 0) {
         
-        // Initialize to zero at all wavelengths
+        // NOTE: If phase curves are turned off, I set the body's
+        // flux to be the flux at full phase. This is obviously
+        // incorrect for an eyeball planet but has a negligible effect on 
+        // the total light curve. Recall that occultations are differential 
+        // measurements and the continuum is set by the star. If this is
+        // ever an issue, just turn phase curves on!
         for (w = 0; w < nw; w++) {
-          body[p]->flux[nw * t + w] = 0;
+          body[p]->flux[nw * t + w] = body[p]->total_flux[w];
         }
         
       }
-            
+        
+      // Add to the continuum flux
+      for (w = 0; w < nw; w++) {
+        continuum[nw * t + w] += body[p]->flux[nw * t + w];
+      }
+             
       // Default is no occultation
       no = 0;
       body[p]->occultor[t] = 0;
@@ -482,7 +500,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], int np, BODY **
       }
       
     }    
-  
+    
   }
 
   // Log
