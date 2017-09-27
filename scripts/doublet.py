@@ -5,7 +5,7 @@ doublet.py |github|
 -------------------
 
 An example of a PPO doublet in TRAPPIST-1. To see an animation, check out
-:ref:`next_occultation`.
+:doc:`next_occultation.py </scripts/next_occultation>`.
 
   .. plot::
      :align: center
