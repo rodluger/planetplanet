@@ -22,6 +22,7 @@ install:
   - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
   - conda install --yes numpy scipy matplotlib nose numba
+  - ln -sf $(which gcc) x86_64-conda_cos6-linux-gnu-gcc
   - python setup.py develop
 
 # Configure a headless display to test plot generation
