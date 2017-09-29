@@ -24,6 +24,7 @@ if not __PLANETPLANET_SETUP__:
     from .version import VersionCheck
     from .photo import *
     from .photo.trappist1 import *
+    from .photo.wasp47 import *
     from .detect import *
     
     # Check for updates?

@@ -25,6 +25,7 @@ from __future__ import division, print_function, absolute_import, \
                        unicode_literals
 from planetplanet.constants import *
 from planetplanet import Star, Planet, System, jwst
+from planetplanet import Wasp47
 import matplotlib.pyplot as pl
 import numpy as np
 import astropy.units as u
@@ -38,7 +39,7 @@ def _test():
     pl.close(fig2)
     pl.show()
 
-def compute():
+def _old_compute():
     '''
 
     '''
@@ -70,7 +71,7 @@ def compute():
     i = 89.22                   # Orbital inclination [degrees]
     P = 9.0304                  # Orbital period [days]
 
-    # Additional params for WASP-47d
+    # Additional params for WASP-47e
     Rp = 1.87                   # planet radius [Earth Radii]
     r = 0.0173                  # semi-major axis [AU]
     A = 0.0                     # Planet albedo
@@ -121,7 +122,30 @@ def compute():
 
     return fig1, ax1, fig2, ax2
 
+def compute(seed = None):
+    '''
+    
+    '''
+    
+    # Draw a system
+    system = Wasp47(sample = True, seed = seed)
+
+    # Re-instantiate and compute
+    system = Wasp47(sample = True, seed = seed, oversample = 1)
+    time = np.arange(0., 250., 5 * MINUTE)
+    system.compute(time, lambda1 = 5, lambda2 = 10, R = 100)
+    
+    # HACK: Delete stellar occultations
+    system.A.occultor *= 0
+    system.A.occultor_hr *= 0
+    system.A.flux[:,:] = system.A.flux[0,:]
+    system.A.flux_hr[:,:] = system.A.flux_hr[0,:]
+    
+    # Plot
+    #system.plot_lightcurve(interactive = True)
+    
+    fig, ax = system.observe(stack = 1, filter = 'f770w', alpha_err = 0.5) 
+    pl.show()
+    
 if __name__ == '__main__':
-    fig1, _, fig2, _ = compute()
-    fig1.savefig("wasp47_jwst.pdf", bbox_inches = 'tight')
-    fig2.savefig("wasp47_ost.pdf", bbox_inches = 'tight')
+    compute(1)

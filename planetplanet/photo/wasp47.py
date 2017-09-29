@@ -17,7 +17,7 @@ from __future__ import division, print_function, absolute_import, \
                        unicode_literals
 from ..constants import *
 from .ppo import Star, Planet, System
-from .photo import LimbDarkenedMap, RadiativeEquilibriumMap
+from .eyeball import LimbDarkenedMap, RadiativeEquilibriumMap
 import numpy as np
 import matplotlib.pyplot as pl
 import os
@@ -72,7 +72,7 @@ def Wasp47(sample = True, distance = 200, seed = None, **kwargs):
     star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k', **kwargs)
     
     # Parameters from Weiss et al. (2017)
-    planets = [None for i in range(7)]
+    planets = [None for i in range(3)]
     names = ['e', 'b', 'd']
     
     periods = [(0.78961, 0.00001),
@@ -107,10 +107,10 @@ def Wasp47(sample = True, distance = 200, seed = None, **kwargs):
     # These we're just going to fix for now. We have no prior 
     # constraints on them. Let's assume the most optimistic albedos.
     albedos = [(0., 0), (0., 0), (0., 0)]
-    tnights = [(40., 0), (40., 0), (40., 0)]
-    Omegas = [(0., 1.), 
-              (0., 1.), 
-              (0., 1.)]
+    tnights = [(100., 0), (100., 0), (100., 0)]
+    Omegas = [(0., 0.5), 
+              (0., 0.5), 
+              (0., 0.5)]
     
     # Colors for plotting
     colors = ['firebrick', 'gold', 'cornflowerblue']
@@ -131,7 +131,7 @@ def Wasp47(sample = True, distance = 200, seed = None, **kwargs):
             m = N(*masses[i])
     
         # Inclination in range [0, 90]
-        inc = inclinations[i]
+        inc = N(*inclinations[i])
         if inc > 90:
             inc = 180 - inc
         
