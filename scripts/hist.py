@@ -319,7 +319,10 @@ def histogram(system, tstart, tend, dt = 0.0001):
         # Identify the different planet-planet events
         inds = np.where(body.occultor > 0)[0]
         difs = np.where(np.diff(inds) > 1)[0]
-
+        
+        # Total body photons
+        total_body_photons = np.nanmedian(filter.lightcurve.Nsys)
+        
         # Loop over individual ones
         for i in inds[difs]:
             
