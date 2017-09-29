@@ -141,7 +141,10 @@ def scatter_plot(system, tstart, tend, dt = 0.001, sz = 0.2):
                      alpha = 0.2, fontweight = 'bold',
                      fontsize = 8, zorder = -99, ha = 'center', 
                      va = 'center')
-
+        
+        # Total body photons
+        total_body_photons = np.nanmedian(filter.lightcurve.Nsys)
+        
         # Loop over individual ones
         plot_secondary = True
         for i in inds[difs]:
@@ -165,7 +168,13 @@ def scatter_plot(system, tstart, tend, dt = 0.001, sz = 0.2):
                     Nstar = filter.lightcurve.Ncont[idx]
                     
                     # Compute the number of photons *missing*
-                    Nplan = np.nanmedian(Nplan) - Nplan
+                    # NOTE: There was a BUG in the previous version,
+                    # where we did 
+                    # >>> Nplan = np.nanmedian(Nplan) - Nplan
+                    # which gets the wrong baseline for the planet's
+                    # continuum. This led to low SNR in the previous
+                    # versions of the plots!
+                    Nplan = total_body_photons - Nplan
                     
                     # Compute signal of and noise on the event
                     # in parts per million
@@ -180,7 +189,7 @@ def scatter_plot(system, tstart, tend, dt = 0.001, sz = 0.2):
                     snr = np.sqrt(np.sum((Nplan) ** 2 / (Nstar + Nback)))
                     
                     # Alpha proportional to the SNR
-                    alpha = max(0.1, min(0.9, snr))
+                    alpha = max(0.05, min(0.95, snr / 3))
 
                     # Size = duration in minutes * sz
                     ms = min(100, (duration * dt * 1440 * sz))
@@ -259,27 +268,27 @@ def scatter_plot(system, tstart, tend, dt = 0.001, sz = 0.2):
     axl3.set_ylim(-2, 1.5)
     axl3.annotate('SNR', xy = (0.5, 0.65), ha = 'center', 
                   va = 'center', fontweight = 'bold')
-    for j, snr in enumerate([0, 0.2, 0.4]):
-        alpha = max(0.1, min(0.9, snr))
-        axl3.plot(-0.15, -0.75 * j, 'o', color = 'k', ms = 8, 
-                  alpha = alpha, markeredgecolor = 'none')
+    for j, snr in enumerate([0, 0.5, 1.0, 1.5]):
+        alpha = max(0.05, min(0.95, snr / 3))
+        axl3.plot(-0.15, -0.65 * j, 'o', color = 'k', ms = 8, 
+                  alpha = alpha, markeredgecolor = 'none', clip_on = False)
         if j == 0:
             l = '<0.1'
         else:
             l = ' %.1f' % snr
-        ann = axl3.annotate(l, xy = (-0.05, -0.75 * j), 
+        ann = axl3.annotate(l, xy = (-0.05, -0.65 * j), 
                             xycoords = 'data', ha = 'left', va = 'center', 
-                            color = 'k')
+                            color = 'k', clip_on = False)
         ann.set_fontname('Andale Mono')
-    for j, snr in enumerate([0.6, 0.8, 1.]):
-        alpha = max(0.1, min(0.9, snr))
-        axl3.plot(0.675, -0.75 * j, 'o', color = 'k', ms = 8, 
+    for j, snr in enumerate([2.0, 2.5, 3.0]):
+        alpha = max(0.05, min(0.95, snr / 3))
+        axl3.plot(0.675, -0.65 * j, 'o', color = 'k', ms = 8, 
                   alpha = alpha, markeredgecolor = 'none')
         if j == 2:
-            l = '>1.0'
+            l = '>3.0'
         else:
             l = ' %.1f' % snr
-        ann = axl3.annotate(l, xy = (0.775, -0.75 * j), 
+        ann = axl3.annotate(l, xy = (0.775, -0.65 * j), 
                             xycoords = 'data', ha = 'left', va = 'center', 
                             color = 'k')
         ann.set_fontname('Andale Mono')
@@ -331,4 +340,4 @@ def Run(eyeball = True, save = True):
 
 if __name__ == '__main__':
     
-    Run()
+    Run(eyeball = True)

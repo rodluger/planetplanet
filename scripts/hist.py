@@ -360,7 +360,13 @@ def histogram(system, tstart, tend, dt = 0.0001):
                         Nstar = filter.lightcurve.Ncont[idx]
                         
                         # Compute the number of photons *missing*
-                        Nplan = np.nanmedian(Nplan) - Nplan
+                        # NOTE: There was a BUG in the previous version,
+                        # where we did 
+                        # >>> Nplan = np.nanmedian(Nplan) - Nplan
+                        # which gets the wrong baseline for the planet's
+                        # continuum. This led to low SNR in the previous
+                        # versions of the plots!
+                        Nplan = total_body_photons - Nplan
                         
                         # Compute signal of and noise on the event
                         # in parts per million
