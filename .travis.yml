@@ -5,7 +5,8 @@ language: python
 matrix:
   include:
     # All the versions of Python.
-    - python: 2.7
+    # NOTE: travis is having conda issues with py2 right now...
+    # - python: 2.7
     - python: 3.4
 
 git:
