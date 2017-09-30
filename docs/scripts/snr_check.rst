@@ -1,0 +1,1 @@
+.. automodule:: scripts.snr_check

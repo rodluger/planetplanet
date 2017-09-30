@@ -57,5 +57,6 @@ Miscellaneous
    light curve oversampling example <scripts/oversample>
    mutual inclination from PPOs <scripts/mutual_node>
    integration timestep <scripts/timestep>
+   SNR benchmarks <scripts/snr_check>
    timing tests <scripts/timing>
    zenith angle <scripts/zenith>
