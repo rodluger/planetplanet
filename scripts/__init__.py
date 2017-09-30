@@ -28,6 +28,7 @@ from . import ost_example
 from . import oversample
 from . import plot_orbits
 from . import scatter
+from . import snr_check
 from . import spitzer_example
 from . import timestep
 from . import timing

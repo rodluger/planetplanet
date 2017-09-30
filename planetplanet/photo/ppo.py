@@ -539,7 +539,7 @@ class System(object):
         assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     def observe(self, save = None, filter = 'f1500w', stack = 1,
-                instrument = 'jwst', alpha_err = 0.7):
+                instrument = 'jwst', alpha_err = 0.7, figsize = (12,4)):
         '''
         Run telescope observability calculations for a system that has had its
         lightcurve computed. Calculates a synthetic noised lightcurve in the
@@ -615,10 +615,11 @@ class System(object):
                                        self.wavelength, stack = stack,
                                        time_hr = self.time_hr,
                                        flux_hr = self.flux_hr,
-                                       atel = atel, thermal = thermal)
+                                       atel = atel, thermal = thermal,
+                                       quiet = self.settings.quiet)
 
         # Setup plot
-        fig, ax = pl.subplots(figsize = (12,4))
+        fig, ax = pl.subplots(figsize = figsize)
         ax.set_title(r"%s" % self.filter.name)
         ax.set_ylabel("Relative Flux", fontweight = 'bold', fontsize = 10)
         ax.set_xlabel("Time [BJD − 2,450,000]", fontweight = 'bold',
@@ -630,7 +631,8 @@ class System(object):
         # Determine average precision attained in lightcurve
         ppm = np.mean(self.filter.lightcurve.sig
                       / self.filter.lightcurve.obs) * 1e6
-        print("Average lightcurve precision: %.3f ppm" %ppm)
+        if not self.settings.quiet:
+            print("Average lightcurve precision: %.3f ppm" %ppm)
 
         """
         Determine SNR on each event:
@@ -958,12 +960,6 @@ class System(object):
                     / body.total_flux[body.flux.shape[-1] // 2]
             fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
 
-            # Add a baseline?
-            if not (body.phasecurve or body.body_type == 'star'):
-                fluxg += 1
-                fluxr += 1
-                fluxb += 1
-
             # Plot
             axlc.plot(body.time_hr[t], fluxb, 'b-',
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
@@ -979,8 +975,6 @@ class System(object):
         else:
 
             fluxw = body.flux_hr[t, w] / body.total_flux[w]
-            if not (body.phasecurve or body.body_type == 'star'):
-                fluxw += 1
             axlc.plot(body.time_hr[t], fluxw, 'k-',
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
                               1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
