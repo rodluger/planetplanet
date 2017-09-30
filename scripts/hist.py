@@ -720,17 +720,22 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
     
     return fig_corner, fig_snr, fig_hist
 
-def MakeFigures():
+def MakeFigures(jpg = False):
     '''
     Plots all histogram figures for the paper.
     
     '''
     
+    if jpg:
+        ext = 'jpg'
+    else:
+        ext = 'pdf'
+    
     for kind in ['eyeball', 'limbdark']: 
         fig_corner, fig_snr, fig_hist = Plot(eyeball = (kind == 'eyeball'))
         for k, planet in enumerate(['b', 'c', 'd', 'e', 'f', 'g', 'h']):
-            fig_corner[k].savefig('%s_corner_%s.pdf' % (planet, kind), 
+            fig_corner[k].savefig('%s_corner_%s.%s' % (planet, kind, ext), 
                                   bbox_inches = 'tight')
-        fig_snr.savefig('snr_%s.pdf' % kind, bbox_inches = 'tight')
-        fig_hist.savefig('hist_%s.pdf' % kind, bbox_inches = 'tight')
+        fig_snr.savefig('snr_%s.%s' % (kind, ext), bbox_inches = 'tight')
+        fig_hist.savefig('hist_%s.%s' % (kind, ext), bbox_inches = 'tight')
         pl.close()
