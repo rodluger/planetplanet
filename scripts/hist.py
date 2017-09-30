@@ -391,14 +391,14 @@ def histogram(system, tstart, tend, dt = 0.0001):
         
     return hist
     
-def Compute(nsamp = 300, minsnr = 0.5, nbody = True,
+def Compute(nsamp = 300, minsnr = 1.0, nbody = True,
             progress_bar = True, eyeball = True, **kwargs):
     '''
     Compute occultation histograms by drawing `nsamp` draws from the 
     system prior. Saves the results to `data/histXXX.npz`.
     
     :param int nsamp: The number of prior samples to draw. Default `300`
-    :param float minsnr: The minimum SNR to include in the tally. Default `10.`
+    :param float minsnr: The minimum SNR to include in the tally. Default `1.`
     :param bool nbody: Use the N-Body solver? Default :py:obj:`True`
     :param bool progress_bar: Display a progress bar? Default :py:obj:`True`
     :param bool eyeball: Assume eyeball planets? Default :py:obj:`True`. If
@@ -542,7 +542,7 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
         
         # Probability that there's no SNR > 0.5 occultation of this
         # planet in any given year
-        print("Planet %s P(SNR !> 0.5): %.3f" % 
+        print("Planet %s P(SNR !> 1.0): %.3f" % 
              (planet, 1 - np.count_nonzero(count[k]) / count[k].shape[0]))
         
         # The samples for the corner plot
@@ -554,7 +554,7 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
             continue
 
         fig_corner[k] = corner.corner(samples, plot_datapoints = False,
-                                      range = [(-180,180), (0, 1), (0, 3), (0, 1)], 
+                                      range = [(-180,180), (0, 1), (0, 3), (0, 2)], 
                                       labels = ["Longitude [deg]", 
                                                 "Impact parameter",
                                                 "Duration [min]", 
@@ -581,8 +581,8 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
                                           np.log10(300)])
         fig_corner[k].axes[8].set_yticklabels([3, 10, 30, 100, 300])
         fig_corner[k].axes[14].set_xticklabels([3, 10, 30, 100, 300])
-        fig_corner[k].axes[15].set_xticks([0, 0.25, 0.5, 0.75, 1.])
-        fig_corner[k].axes[12].set_yticks([0, 0.25, 0.5, 0.75, 1.])
+        fig_corner[k].axes[15].set_xticks([0, 0.5, 1.0, 1.5, 2.0])
+        fig_corner[k].axes[12].set_yticks([0, 0.5, 1.0, 1.5, 2.0])
     
     # Frequency plot (1)
     matplotlib.rcParams['mathtext.fontset'] = 'cm'
@@ -598,32 +598,32 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
         # Average total SNR / year
         tot_snr = np.sqrt(np.sum(snr ** 2) / nyears)
         
-        # Average total SNR / year from high SNR (> 0.5) occultations
-        tot_snr05 = np.sqrt(np.sum(snr[snr >= 0.5] ** 2) / nyears)
+        # Average total SNR / year from high SNR (> 1) occultations
+        tot_snr1 = np.sqrt(np.sum(snr[snr >= 1] ** 2) / nyears)
         
-        label = r"$\mathbf{%s}: %.2f\ (%.2f)$" % (planet.name, tot_snr, tot_snr05)
+        label = r"$\mathbf{%s}: %.2f\ (%.2f)$" % (planet.name, tot_snr, tot_snr1)
 
         ax.hist(snr, cumulative = -1,
                 weights = np.ones_like(snr) / len(count[0]),
                 color = color, edgecolor = 'none', 
                 alpha = 0.5, histtype = 'stepfilled', 
-                bins = 50, range = (0, 3), label = label)
+                bins = 51, range = (0, 5), label = label)
         ax.hist(snr, cumulative = -1,
                 weights = np.ones_like(snr) / len(count[0]),
                 color = color, histtype = 'step', 
-                lw = 2, bins = 50, range = (0, 3))
+                lw = 2, bins = 51, range = (0, 5))
         ax.set_xlabel('SNR', fontsize = 16, fontweight = 'bold')
         ax.set_ylabel(r'Cumulative occultations per year', fontsize = 14, 
                       fontweight = 'bold')
         ax.set_yscale('log')
         ax.set_ylim(1e-2, 200)
-        ax.set_xlim(-0.1, 3.5)
+        ax.set_xlim(-0.1, 5.1)
         ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: '%s' % x))
     
-    ax.axvline(0.5, color = 'k', lw = 1, alpha = 1, ls = '--')
+    ax.axvline(1.0, color = 'k', lw = 1, alpha = 1, ls = '--')
     
-    leg = ax.legend(loc = 'upper right', fontsize = 16,
-                    title = 'Expected SNR / year')
+    leg = ax.legend(loc = 'upper right', fontsize = 14,
+                    title = 'SNR / yr')
     leg.get_title().set_fontweight('bold')
     leg.get_title().set_fontsize(13)
     
@@ -652,7 +652,7 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
         else:
             label = r"$\mathbf{%s}: %s \pm %3.1f\ \mathrm{yr}^{-1}$" \
                     % (planet.name, mu, sig)
-        
+
         # Plot!
         if float(mu) > 0.2: 
             ax.hist(count[k], color = planet.color, edgecolor = 'none', 
@@ -675,10 +675,10 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
     leg = ax.legend(loc = 'upper right', fontsize = 18, 
                     bbox_to_anchor = (0.89, 0.865), 
                     bbox_transform = fig_hist.transFigure,
-                    title = 'Occultations with SNR > 0.5')
+                    title = 'Occultations with SNR > 1')
     leg.get_title().set_fontweight('bold')                                  
     leg.get_title().set_fontsize(13)
-    ax.set_xlabel('Occultations per year with SNR > 0.5', fontsize = 16, 
+    ax.set_xlabel('Occultations per year with SNR > 1', fontsize = 16, 
                   fontweight = 'bold')
     ax.set_ylabel('Probability', fontsize = 16, fontweight = 'bold')
     ax.yaxis.set_label_coords(-0.15, 0.6)
