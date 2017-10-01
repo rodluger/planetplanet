@@ -11,16 +11,16 @@ code. The benchmarked values are
   .. code-block:: python
     
         planetplanet    analytic     ratio
-    b:     4.250          5.182      0.820
-    c:     2.752          3.406      0.808
-    d:     0.931          1.129      0.825
-    e:     0.863          1.039      0.830
-    f:     0.652          0.798      0.816
-    g:     0.502          0.622      0.806
-    h:     0.117          0.141      0.830
+    b:     4.250          4.488      0.947
+    c:     2.752          2.950      0.933
+    d:     0.931          0.978      0.953
+    e:     0.863          0.900      0.958
+    f:     0.652          0.691      0.942
+    g:     0.502          0.539      0.931
+    h:     0.117          0.122      0.958
 
 Note that the `planetplanet` estimates are lower than the `analytic` estimates
-by about 20% because the latter neglects thermal/background noise.
+by a few percent because the latter neglects thermal/background noise.
 
   .. role:: raw-html(raw)
      :format: html
@@ -151,7 +151,7 @@ def analytic_snr():
     lam = 15.0
 
     # Filter width, microns
-    dlam = 4.0
+    dlam = 3.0
 
     # Compute the signal
     nu = C / (1e-4 * lam)
