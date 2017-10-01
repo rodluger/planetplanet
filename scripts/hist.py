@@ -477,6 +477,7 @@ def MergeFiles():
                 # Skip corrupt files
                 try:
                     data['hist'][0]
+                    data['count']
                 except:
                     continue
             
@@ -654,23 +655,14 @@ def Plot(eyeball = True, zorder = [6,5,4,3,2,1,0]):
                     % (planet.name, mu, sig)
 
         # Plot!
-        if float(mu) > 0.2: 
-            ax.hist(count[k], color = planet.color, edgecolor = 'none', 
-                     alpha = 0.25, histtype = 'stepfilled', normed = True, 
-                     range = (0,55), zorder = zorder[k], label = label, 
-                     bins = 56)
-            ax.hist(count[k], color = planet.color, histtype = 'step', 
-                    normed = True, range = (0,55), zorder = zorder[k] + 0.5, 
-                    lw = 2, bins = 56)
-        else:
-            for axis in [ax, axt]:
-                axis.hist(count[k], color = planet.color, edgecolor = 'none', 
-                          alpha = 0.25, histtype = 'stepfilled', normed = True, 
-                          range = (0,55), zorder = zorder[k], label = label, 
-                          bins = 56)
-                axis.hist(count[k], color = planet.color, histtype = 'step', 
-                          normed = True, range = (0,55), 
-                          zorder = zorder[k] + 0.5, lw = 2, bins = 56)
+        for axis in [ax, axt]:
+            axis.hist(count[k], color = planet.color, edgecolor = 'none', 
+                      alpha = 0.25, histtype = 'stepfilled', normed = True, 
+                      range = (0,55), zorder = zorder[k], label = label, 
+                      bins = 56)
+            axis.hist(count[k], color = planet.color, histtype = 'step', 
+                      normed = True, range = (0,55), 
+                      zorder = zorder[k] + 0.5, lw = 2, bins = 56)
         
     leg = ax.legend(loc = 'upper right', fontsize = 18, 
                     bbox_to_anchor = (0.89, 0.865), 
