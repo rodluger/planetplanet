@@ -19,6 +19,9 @@ code. The benchmarked values are
     g:     0.502          0.622      0.806
     h:     0.117          0.141      0.830
 
+Note that the `planetplanet` estimates are lower than the `analytic` estimates
+by about 20% because the latter neglects thermal/background noise.
+
   .. role:: raw-html(raw)
      :format: html
   
