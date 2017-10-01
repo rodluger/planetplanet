@@ -99,7 +99,8 @@ class BODY(ctypes.Structure):
         self.w = kwargs.pop('w', 0.)
         self.Omega = kwargs.pop('Omega', 0.)
         self.inc = kwargs.pop('inc', 90.)
-
+        self.cmap = kwargs.pop('cmap', 'inferno')
+        
         # Python stuff
         self._inds = []
         self._computed = False
@@ -267,8 +268,8 @@ class Planet(BODY):
            coordinate on the surface of the star. Each coefficient may either \
            be a scalar, in which case limb darkening is assumed to be grey \
            (the same at all wavelengths), or a callable whose single argument \
-           is the wavelength in microns. Default is `[1.0]`, a grey linear \
-           limb darkening law.
+           is the wavelength in microns. Default is `[]`, corresponding to no \
+           limb darkening.
     :param float Lambda: Longitudinal hotspot offset in degrees, with \
            positive values corresponding to a northward shift. Airless \
            bodies only. Default `0.`
@@ -295,7 +296,7 @@ class Planet(BODY):
         self.albedo = kwargs.pop('albedo', 0.3)
         self.teff = 0
         self.tnight = kwargs.pop('tnight', 0.)
-        self.limbdark = []
+        self.limbdark = kwargs.pop('limbdark', [])
         self.Lambda = kwargs.pop('Lambda', 0)
         self.Phi = kwargs.pop('Phi', 0)
         self.phasecurve = kwargs.pop('phasecurve', False)
@@ -351,8 +352,8 @@ class Moon(BODY):
            coordinate on the surface of the star. Each coefficient may either \
            be a scalar, in which case limb darkening is assumed to be grey \
            (the same at all wavelengths), or a callable whose single argument \
-           is the wavelength in microns. Default is `[1.0]`, a grey linear \
-           limb darkening law.
+           is the wavelength in microns. Default is `[]`, corresponding to no \
+           limb darkening.
     :param float Lambda: Longitudinal hotspot offset in degrees, with \
            positive values corresponding to a northward shift. Airless \
            bodies only. Default `0.`
@@ -378,7 +379,7 @@ class Moon(BODY):
     self.albedo = kwargs.pop('albedo', 0.3)
     self.teff = 0
     self.tnight = kwargs.pop('tnight', 0.)
-    self.limbdark = []
+    self.limbdark = kwargs.pop('limbdark', [])
     self.Lambda = kwargs.pop('Lambda', 0)
     self.Phi = kwargs.pop('Phi', 0)
     self.phasecurve = kwargs.pop('phasecurve', False)

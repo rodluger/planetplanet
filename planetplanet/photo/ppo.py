@@ -539,7 +539,8 @@ class System(object):
         assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     def observe(self, save = None, filter = 'f1500w', stack = 1,
-                instrument = 'jwst', alpha_err = 0.7, figsize = (12,4)):
+                instrument = 'jwst', alpha_err = 0.7, figsize = (12,4),
+                time_unit = 'BJD − 2,450,000'):
         '''
         Run telescope observability calculations for a system that has had its
         lightcurve computed. Calculates a synthetic noised lightcurve in the
@@ -622,7 +623,7 @@ class System(object):
         fig, ax = pl.subplots(figsize = figsize)
         ax.set_title(r"%s" % self.filter.name)
         ax.set_ylabel("Relative Flux", fontweight = 'bold', fontsize = 10)
-        ax.set_xlabel("Time [BJD − 2,450,000]", fontweight = 'bold',
+        ax.set_xlabel("Time [%s]" % time_unit, fontweight = 'bold',
                       fontsize = 10)
 
         # Plot lightcurve
@@ -866,7 +867,8 @@ class System(object):
         return times, occultors, durations
 
     def plot_occultation(self, body, time, wavelength = 15., interval = 50,
-                         gifname = None, spectral = False, **kwargs):
+                         gifname = None, spectral = False, 
+                         time_unit = 'BJD − 2,450,000', **kwargs):
         '''
         Plots and animates an occultation event.
 
@@ -979,7 +981,7 @@ class System(object):
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
                               1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
 
-        axlc.set_xlabel('Time [BJD − 2,450,000]', fontweight = 'bold',
+        axlc.set_xlabel('Time [%s]' % time_unit, fontweight = 'bold',
                         fontsize = 10)
         axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
         axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -1181,7 +1183,8 @@ class System(object):
         # Draw the eyeball planet and the occultor(s)
         fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap,
                                        theta = theta, gamma = gamma,
-                                       occultors = occ_dict, cmap = 'inferno',
+                                       occultors = occ_dict, 
+                                       cmap = occulted.cmap,
                                        fig = fig, wavelength = wavelength,
                                        teff = occulted.teff,
                                        limbdark = occulted.limbdark, **kwargs)
