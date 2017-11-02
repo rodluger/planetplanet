@@ -303,22 +303,22 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
 	for (p = 1; p < np; p++) {
 	  
 	  // Get the true anomaly at the first timestep
-    M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);                  
-    if (settings.kepsolver == MDFAST)
-      E = EccentricAnomalyFast(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
-    else
-      E = EccentricAnomaly(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
-    if (E == -1) return ERR_KEPLER;
-    f = TrueAnomaly(E, body[p]->ecc);  
+      M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);                  
+      if (settings.kepsolver == MDFAST)
+        E = EccentricAnomalyFast(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
+      else
+        E = EccentricAnomaly(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
+      if (E == -1) return ERR_KEPLER;
+      f = TrueAnomaly(E, body[p]->ecc);  
 	  
 	  // Create the particle in REBOUND
-    struct reb_particle planet = reb_tools_orbit_to_particle(r->G, r->particles[body[p]->host], body[p]->m,
-                                 body[p]->a, body[p]->ecc, body[p]->inc, 
-                                 body[p]->Omega, body[p]->w, f);
-    reb_add(r, planet);
+      struct reb_particle planet = reb_tools_orbit_to_particle(r->G, r->particles[body[p]->host], body[p]->m,
+                                   body[p]->a, body[p]->ecc, body[p]->inc, 
+                                   body[p]->Omega, body[p]->w, f);
+      reb_add(r, planet);
     
-    // Is this a moon?
-    if (body[p]->host != 0) moons++;
+      // Is this a moon?
+      if (body[p]->host != 0) moons++;
      
 	}
 	

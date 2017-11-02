@@ -310,7 +310,7 @@ class Filter(object):
                                                 atel = atel)
 
         # Hi-res light curve
-        if flux_hr is not None:
+        if time_hr is not None:
             tint_hr = dthr * 3600. * 24
             Nsys_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:],
                                                          atel = atel)

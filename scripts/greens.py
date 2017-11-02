@@ -92,6 +92,31 @@ def FUnif(x0, y0, r, phi1, phi2):
     
     return F0
 
+def M(p, q, x0, y0, r, phi1, phi2):
+    '''
+    
+    '''
+    
+    # TODO!
+    pass
+    
+
+def IntM(p, q, x0, y0, r, phi1, phi2):
+    '''
+    
+    '''
+    
+    return x0 * IntM(p - 1, q, x0, y0, r, phi1, phi2) +
+           r * IntMC(p - 1, q, x0, y0, r, phi1, phi2)
+
+def IntMC(p, q, x0, y0, r, phi1, phi2):
+    '''
+    
+    '''
+    
+    # TODO
+    pass
+
 def Greens(F, xo, yo, ro, roots):
     '''
     
