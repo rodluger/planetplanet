@@ -25,8 +25,28 @@ import numba
 import ctypes
 import numpy as np
 
-__all__ = ['BODY', 'SETTINGS', 'Star', 'Planet', 'Moon']
+__all__ = ['BODY', 'SETTINGS', 'CM', 'Star', 'Planet', 'Moon']
 
+class CM(object):
+    '''
+    A class corresponding to a dummy center of mass particle.
+    Used internally. 
+    
+    '''
+    
+    def __init__(self, *bodies):
+        '''
+        
+        '''
+        
+        self.name = 'cm'
+        self._m = np.sum([body._m for body in bodies])
+        self.bodies = bodies
+
+    @property
+    def body_type(self):
+        return 'cm'
+ 
 class BODY(ctypes.Structure):
     '''
     The class containing all the input planet/star parameters. This is a 
@@ -247,7 +267,9 @@ class Planet(BODY):
     '''
     A planet :py:class:`BODY` class.
 
-    :param str name: A unique identifier for this planet
+    :param str name: A unique identifier for this body
+    :param str host: The name of the body's host. Default \
+           :py:obj:`0` (host is the central star).
     :param float m: Mass in Earth masses. Default `1.`
     :param float r: Radius in Earth radii. Default `1.`
     :param float per: Orbital period in days. Default `3.`
@@ -256,9 +278,9 @@ class Planet(BODY):
     :param float w: Longitude of pericenter in degrees. `0.`
     :param float Omega: Longitude of ascending node in degrees. `0.`
     :param float t0: Time of transit in days. Default `0.`
-    :param bool phasecurve: Compute the phasecurve for this planet? \
+    :param bool phasecurve: Compute the phasecurve for this body? \
            Default :py:obj:`False`
-    :param float albedo: Planetary albedo (airless limit). Default `0.3`
+    :param float albedo: Body's albedo (airless limit). Default `0.3`
     :param float tnight: Nightside temperature in Kelvin (airless limit). \
            Default `40`
     :param array_like limbdark: The limb darkening coefficients (thick \
@@ -301,7 +323,7 @@ class Planet(BODY):
         self.Phi = kwargs.pop('Phi', 0)
         self.phasecurve = kwargs.pop('phasecurve', False)
         self.color = kwargs.pop('color', 'r')
-        self.host = 0
+        self.host = kwargs.pop('host', 0)
         self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap())
         super(Planet, self).__init__(*args, **kwargs)
     
@@ -311,7 +333,7 @@ class Planet(BODY):
     
     def draw_orbit(self, **kwargs):
         '''
-        Draws the orbit of the planet on the sky. Accepts the keyword 
+        Draws the orbit of the body on the sky. Accepts the keyword 
         arguments taken by :py:func:`planetplanet.photo.eyeball.DrawOrbit`.
         
         '''
@@ -320,83 +342,37 @@ class Planet(BODY):
         return DrawOrbit(inc = self.inc, Omega = self.Omega, ecc = self.ecc, 
                          w = self.w, Phi = self.Phi, Lambda = self.Lambda, 
                          radiancemap = self.radiancemap, **kwargs) 
+
+class Moon(Planet):
+    '''
+    A moon :py:class:`BODY` class. This is just an alias of the
+    :py:class:`Planet` class.
     
-class Moon(BODY):
-  '''
-  A moon :py:class:`BODY` class.
-  
-  .. warning:: The ability to model moons is still in beta and hasn't been \
-               thoroughly tested. Please \
-               `let us know <https://github.com/rodluger/planetplanet/issues>`_ \
-               if you find any bugs!
-  
-  :param str name: A unique identifier for this moon
-  :param str host: The name of the moon's host planet. Default :py:obj:`None`
-  :param float m: Mass in Earth masses. Default `1.`
-  :param float r: Radius in Earth radii. Default `1.`
-  :param float per: Orbital period in days. Default `3.`
-  :param float inc: Orbital inclination in degrees. Default `90.`
-  :param float ecc: Orbital eccentricity. Default `0.`
-  :param float w: Longitude of pericenter in degrees. `0.`
-  :param float Omega: Longitude of ascending node in degrees. `0.`
-  :param float t0: Time of transit in days. Default `0.`
-  :param bool phasecurve: Compute the phasecurve for this planet? Default \
-         :py:obj:`False`
-  :param float albedo: Planetary albedo (airless limit). Default `0.3`
-  :param float tnight: Nightside temperature in Kelvin (airless limit). \
-         Default `40`
-  :param array_like limbdark: The limb darkening coefficients (thick \
-           atmosphere limit). These are the coefficients \
-           in the Taylor expansion of `(1 - mu)`, starting with the first \
-           order (linear) coefficient, where `mu = cos(theta)` is the radial \
-           coordinate on the surface of the star. Each coefficient may either \
-           be a scalar, in which case limb darkening is assumed to be grey \
-           (the same at all wavelengths), or a callable whose single argument \
-           is the wavelength in microns. Default is `[]`, corresponding to no \
-           limb darkening.
-    :param float Lambda: Longitudinal hotspot offset in degrees, with \
-           positive values corresponding to a northward shift. Airless \
-           bodies only. Default `0.`
-    :param float Phi: Latitudinal hotspot offset in degrees, with positive \
-           values corresponding to an eastward shift. Airless bodies only. \
-           Default `0.`
-    :param radiancemap: A surface radiance map function. This function must \
-           be decorated with a :py:mod:`numba` :py:func:`cfunc` statement. \
-           See :py:class:`planetplanet.photo.maps` for more info. Default \
-           :py:func:`planetplanet.photo.maps.RadiativeEquilibriumMap`
-  :param int nz: Number of zenith angle slices. Default `11`
-  :param str color: Object color (for plotting). Default `r`
-
-  '''
-
-  def __init__(self, *args, **kwargs):
     '''
 
-    '''
+    def __init__(self, *args, **kwargs):
+        # Ensure user specified a host
+        assert kwargs.get('host', 0) != 0, "Please provide a valid host " + \
+                                           "for this moon."
+        super(Moon, self).__init__(*args, **kwargs)
     
-    self.nz = kwargs.pop('nz', 11)
-    self._per = kwargs.pop('per', 3.)
-    self.albedo = kwargs.pop('albedo', 0.3)
-    self.teff = 0
-    self.tnight = kwargs.pop('tnight', 0.)
-    self.limbdark = kwargs.pop('limbdark', [])
-    self.Lambda = kwargs.pop('Lambda', 0)
-    self.Phi = kwargs.pop('Phi', 0)
-    self.phasecurve = kwargs.pop('phasecurve', False)
-    self.color = kwargs.pop('colorw', 'b')
-    self.host = kwargs.pop('host', None)
-    self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap())
-    super(Moon, self).__init__(*args, **kwargs)
-  
-  @property
-  def body_type(self):
-    return 'moon'
-  
+    @property
+    def body_type(self):
+        return 'moon'
+    
+    def draw_orbit(self, **kwargs):
+        raise NotImplementedError('This feature is not '
+                                  'yet implemented for moons.')
+      
 class Star(BODY):
     '''
     A star :py:class:`BODY` class.
 
     :param str name: A unique identifier for this star
+    :param str host: The name of the body's host. Default \
+           :py:obj:`None` (host is the center of mass of all bodies that come \
+           earlier in the arguments list passed to \
+           :py:class:`planetplanet.ppo.System`).
     :param float m: Mass in solar masses. Default `1.`
     :param float r: Radius in solar radii. Default `1.`
     :param float per: Orbital period in days. Default `0.`
@@ -440,7 +416,7 @@ class Star(BODY):
         self.Lambda = 0
         self.Phi = 0
         self.color = kwargs.pop('color', 'k')
-        self.host = 0
+        self.host = kwargs.pop('host', None)
         self.radiancemap = kwargs.get('radiancemap', LimbDarkenedMap())
         super(Star, self).__init__(*args, **kwargs)
     
@@ -546,7 +522,8 @@ class SETTINGS(ctypes.Structure):
                 ("_mintheta", ctypes.c_double),
                 ("maxvertices", ctypes.c_int),
                 ("maxfunctions", ctypes.c_int),
-                ("distance", ctypes.c_double)]
+                ("distance", ctypes.c_double),
+                ("nstars", ctypes.c_int)]
 
     def __init__(self, **kwargs):
         self.nbody = kwargs.pop('nbody', True)
@@ -565,13 +542,14 @@ class SETTINGS(ctypes.Structure):
         self.maxfunctions = kwargs.pop('maxfunctions', 999)
         self.oversample = max(1, kwargs.pop('oversample', 1))
         self.distance = kwargs.pop('distance', 10.)
+        self.nstars = 1
 
     @property
     def params(self):
         return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
                 'timestep', 'adaptive', 'circleopt', 'batmanopt', 
                 'quarticsolver', 'quiet', 'mintheta', 'maxvertices', 
-                'maxfunctions', 'oversample', 'distance']
+                'maxfunctions', 'oversample', 'distance', 'nstars']
 
     @property
     def mintheta(self):

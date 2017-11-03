@@ -277,14 +277,15 @@ Computes the full light curve for all bodies in the system.
 int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuum[nt * nw], int np, BODY **body, SETTINGS settings){
 
   double d, dx, dy, dz, d2;
-  double lum, irrad;
+  double lum[settings.nstars];
+  double irrad;
   int no;
   double xo[np-1], yo[np-1], ro[np-1];
   double tmp[nw];
   double tmpflux[nw];
   double theta, gamma;
   double tmpx, tmpy;
-  int t, p, o, w;
+  int t, p, q, o, w;
   int iErr = ERR_NONE;
   int dummyInt[0];
   double dummyDouble[0];
@@ -318,29 +319,35 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
     abort();
   }
   
-  // Compute the stellar radiance from Planck's law
-  norm = PI * body[0]->r * REARTH * body[0]->r * REARTH * MICRON / (settings.distance * settings.distance * PARSEC * PARSEC);
-  for (w = 0; w < nw; w++) {
-    sflx = Blackbody(wavelength[w], body[0]->teff) * norm;
-    body[0]->total_flux[w] = sflx;
-    for (t = 0; t < nt; t++) {
-      body[0]->flux[nw * t + w] = sflx;
+  // Compute the stellar radiance(s) from Planck's law
+  for (p = 0; p < settings.nstars; p++) {
+    norm = PI * body[p]->r * REARTH * body[p]->r * REARTH * MICRON / (settings.distance * settings.distance * PARSEC * PARSEC);
+    for (w = 0; w < nw; w++) {
+      sflx = Blackbody(wavelength[w], body[p]->teff) * norm;
+      body[p]->total_flux[w] = sflx;
+      for (t = 0; t < nt; t++) {
+        body[p]->flux[nw * t + w] = sflx;
+      }
     }
-  }
-    
-  // Pre-compute the stellar luminosity per solid angle
-  lum = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff);
   
+    // Pre-compute the stellar luminosity per solid angle
+    lum[p] = (body[p]->r * body[p]->r) * SBOLTZ * (body[p]->teff * body[p]->teff * body[p]->teff * body[p]->teff);
+  
+  }
+
   // Compute the total flux from each of the planets at full phase
   // and store it in the `total_flux` attribute
-  for (p = 1; p < np; p++) {
+  for (p = settings.nstars; p < np; p++) {
     
     // The planet effective temperature from radiation balance
-    dx = (body[0]->x[0] - body[p]->x[0]);
-    dy = (body[0]->y[0] - body[p]->y[0]);
-    dz = (body[0]->z[0] - body[p]->z[0]);
-    d2 = dx * dx + dy * dy + dz * dz;
-    irrad = lum / d2;
+    irrad = 0;
+    for (q = 0; q < settings.nstars; q++) {
+      dx = (body[q]->x[0] - body[p]->x[0]);
+      dy = (body[q]->y[0] - body[p]->y[0]);
+      dz = (body[q]->z[0] - body[p]->z[0]);
+      d2 = dx * dx + dy * dy + dz * dz;
+      irrad += lum[q] / d2;
+    }
     body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
     
     // Call the eyeball routine at *full phase*
@@ -366,7 +373,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
     for (p = 0; p < np; p++) {
       
       // Compute the phase curve for this body?
-      if ((p > 0) && (body[p]->phasecurve) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
+      if ((p > settings.nstars - 1) && (body[p]->phasecurve) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
         // TODO: Interpolate here to save time!
         
@@ -375,13 +382,16 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
         GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->vx[t], body[p]->vy[t], body[p]->vz[t], body[p]->Lambda, body[p]->Phi, &theta, &gamma);
         
         // The planet effective temperature from radiation balance
-        dx = (body[0]->x[t] - body[p]->x[t]);
-        dy = (body[0]->y[t] - body[p]->y[t]);
-        dz = (body[0]->z[t] - body[p]->z[t]);
-        d2 = dx * dx + dy * dy + dz * dz;
-        irrad = (body[0]->r * body[0]->r) * SBOLTZ * (body[0]->teff * body[0]->teff * body[0]->teff * body[0]->teff) / d2;
+        irrad = 0;
+        for (q = 0; q < settings.nstars; q++) {
+          dx = (body[q]->x[t] - body[p]->x[t]);
+          dy = (body[q]->y[t] - body[p]->y[t]);
+          dz = (body[q]->z[t] - body[p]->z[t]);
+          d2 = dx * dx + dy * dy + dz * dz;
+          irrad += lum[q] / d2;
+        }
         body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
-                
+    
         // Call the eyeball routine
         UnoccultedFlux(body[p]->r, theta, body[p]->tnight, body[p]->teff,
                        settings.distance, settings.mintheta, settings.maxvertices, settings.maxfunctions, 
@@ -400,7 +410,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
           body[p]->flux[nw * t + w] = body[p]->total_flux[w];
         }
         
-      } else if (p > 0) {
+      } else if (p > settings.nstars - 1) {
         
         // NOTE: If phase curves are turned off, I set the body's
         // flux to be the flux at full phase. This is obviously
@@ -425,7 +435,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
       for (w = 0; w < nw; w++)
         tmpflux[w] = 0;
       
-      // Loop over all possible occultors, including the star
+      // Loop over all possible occultors, including the star(s)
       // and check whether an occultation is occurring
       for (o = 0; o < np; o++) {
   
@@ -457,7 +467,7 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
       // Now compute the light curve for this planet
       if (no > 0) {
         
-        if ((p > 0) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
+        if ((p > settings.nstars - 1) && ((body[p]->maptype == MAP_ELLIPTICAL_DEFAULT) || (body[p]->maptype == MAP_ELLIPTICAL_CUSTOM))) {
         
           // Get the eyeball angles `theta` and `gamma`
           GetAngles(body[p]->x[t], body[p]->y[t], body[p]->z[t], body[p]->vx[t], body[p]->vy[t], body[p]->vz[t], body[p]->Lambda, body[p]->Phi, &theta, &gamma);
@@ -478,12 +488,16 @@ int Flux(int nt, double time[nt], int nw, double wavelength[nw], double continuu
         }
         
         // The planet effective temperature from radiation balance
-        if (p > 0) {
-          dx = (body[0]->x[t] - body[p]->x[t]);
-          dy = (body[0]->y[t] - body[p]->y[t]);
-          dz = (body[0]->z[t] - body[p]->z[t]);
-          d2 = dx * dx + dy * dy + dz * dz;
-          irrad = lum / d2;
+        if (p > settings.nstars - 1) {
+          // The planet effective temperature from radiation balance
+          irrad = 0;
+          for (q = 0; q < settings.nstars; q++) {
+            dx = (body[q]->x[t] - body[p]->x[t]);
+            dy = (body[q]->y[t] - body[p]->y[t]);
+            dz = (body[q]->z[t] - body[p]->z[t]);
+            d2 = dx * dx + dy * dy + dz * dz;
+            irrad += lum[q] / d2;
+          }
           body[p]->teff = pow(irrad * (1 - body[p]->albedo) / (4 * SBOLTZ), 0.25);
         }
         

@@ -137,8 +137,8 @@ double EccentricAnomaly(double M, double e, double tol, int maxiter) {
   if (iter >= maxiter) 
     return -1.;                                                                       // Solver didn't converge
   else
-	  return E;
-	
+    return E;
+  
 }
 
 /**
@@ -218,8 +218,8 @@ int Kepler(int np, BODY **body, SETTINGS settings){
   
     // Display the progress
     if (!settings.quiet) {
-	    if (t % 1000 == 0) 
-	      progress_tick(progress, 1000);
+      if (t % 1000 == 0) 
+        progress_tick(progress, 1000);
     }
     
   }
@@ -228,8 +228,8 @@ int Kepler(int np, BODY **body, SETTINGS settings){
     printf("\n");
   
   progress_free(progress);
-	return iErr;
-	
+  return iErr;
+  
 }
 
 /**
@@ -281,28 +281,33 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
     printf("Computing orbits with REBOUND...\n");
   }
   
-	// Set the timestep
-	r->dt = settings.timestep;
+  // Set the timestep
+  r->dt = settings.timestep;
 
-	// G in REARTH^3 / MEARTH / day^2
-	r->G = GEARTH;
-	
-	// Settings for WHFAST: 11th order symplectic corrector
-	r->ri_whfast.safe_mode 	= 0;
-	r->ri_whfast.corrector 	= 11;		
-	r->integrator = settings.integrator;
-	r->heartbeat = heartbeat;
-	r->exact_finish_time = 1;
+  // G in REARTH^3 / MEARTH / day^2
+  r->G = GEARTH;
 
-  // Initialize the star
+  // Settings for WHFAST: 11th order symplectic corrector
+  r->ri_whfast.safe_mode = 0;
+  r->ri_whfast.corrector = 11;
+  r->integrator = settings.integrator;
+  r->heartbeat = heartbeat;
+  r->exact_finish_time = 1;
+  
+  // TODO: Stars relative to central star
+  // Planets relative to stellar center of mass: 
+  //    
+  // Moons relative to planets
+  
+  // Initialize the central star
   struct reb_particle primary = {0};
   primary.m = body[0]->m;
   reb_add(r, primary);
 
-	// Initialize the planets
-	for (p = 1; p < np; p++) {
-	  
-	  // Get the true anomaly at the first timestep
+    // Initialize the planets
+    for (p = 1; p < np; p++) {
+    
+      // Get the true anomaly at the first timestep
       M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);                  
       if (settings.kepsolver == MDFAST)
         E = EccentricAnomalyFast(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
@@ -310,37 +315,48 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
         E = EccentricAnomaly(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
       if (E == -1) return ERR_KEPLER;
       f = TrueAnomaly(E, body[p]->ecc);  
-	  
-	  // Create the particle in REBOUND
-      struct reb_particle planet = reb_tools_orbit_to_particle(r->G, r->particles[body[p]->host], body[p]->m,
-                                   body[p]->a, body[p]->ecc, body[p]->inc, 
-                                   body[p]->Omega, body[p]->w, f);
-      reb_add(r, planet);
+
+      // Create the particle in REBOUND
+      if (body[p]->host == -1) {
+        // Host is the center of mass
+        struct reb_particle cm = reb_get_com(r);
+        struct reb_particle planet = reb_tools_orbit_to_particle(r->G, cm, body[p]->m,
+                                     body[p]->a, body[p]->ecc, body[p]->inc, 
+                                     body[p]->Omega, body[p]->w, f);
+        reb_add(r, planet);
+      } else {
+        // Host is a specific body
+        struct reb_particle planet = reb_tools_orbit_to_particle(r->G, r->particles[body[p]->host], body[p]->m,
+                                     body[p]->a, body[p]->ecc, body[p]->inc, 
+                                     body[p]->Omega, body[p]->w, f);
+        reb_add(r, planet);
+      }
+      
     
       // Is this a moon?
-      if (body[p]->host != 0) moons++;
-     
-	}
-	
-	// Move to center of mass frame
-	reb_move_to_com(r);
-	
-	// Store the initial positions
-	last_t = 0;
-	for (p = 0; p < np; p++) {
-	  body[p]->x[0] = r->particles[p].x;
-	  body[p]->y[0] = r->particles[p].y;
-	  body[p]->z[0] = r->particles[p].z;
-	  body[p]->vx[0] = r->particles[p].vx;
-	  body[p]->vy[0] = r->particles[p].vy;
-	  body[p]->vz[0] = r->particles[p].vz;
-	}
-	
-	// Integrate!
-	for (t = 1; t < body[0]->nt; t++) {
+      if (body[p]->host > 0) moons++;
+      
+    }
+
+    // Move to center of mass frame
+    reb_move_to_com(r);
+
+    // Store the initial positions
+    last_t = 0;
+    for (p = 0; p < np; p++) {
+      body[p]->x[0] = r->particles[p].x;
+      body[p]->y[0] = r->particles[p].y;
+      body[p]->z[0] = r->particles[p].z;
+      body[p]->vx[0] = r->particles[p].vx;
+      body[p]->vy[0] = r->particles[p].vy;
+      body[p]->vz[0] = r->particles[p].vz;
+    }
+
+  // Integrate!
+  for (t = 1; t < body[0]->nt; t++) {
     
     // Do we need to synchronize this time step?
-    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.timestep) || (t == body[0]->nt - 1) || moons) {
+    if ((body[0]->time[t] - body[0]->time[last_t] >= settings.timestep) || (t == body[0]->nt - 1) || moons || (settings.nstars > 1)) {
     
       // Yes: take one step
       reb_integrate(r, body[0]->time[t] - body[0]->time[0]);
@@ -483,33 +499,45 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
       
       }
 
-	    // Reset
-	    last_t = t;
-	    
-	  }
-	    
-	  // Display the progress
-	  if (!settings.quiet) {
-	    if (t % 1000 == 0) 
-	      progress_tick(progress, 1000);
+      // Reset
+      last_t = t;
+      
+    }
+      
+    // Display the progress
+    if (!settings.quiet) {
+      if (t % 1000 == 0) 
+        progress_tick(progress, 1000);
     }
 
   }
   
-  // TODO: BUG: The orbital elements for moons are screwed up.
+  // TODO: BUG: The orbital elements for moons and multiple star systems are screwed up.
 
   // Update the orbital elements of all the bodies
   for (p = 0; p < np; p++) {
     
-    struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[body[p]->host]);
-    body[p]->a = orbit.a;
-    body[p]->ecc = orbit.e;
-    body[p]->inc = orbit.inc;
-    body[p]->w = orbit.omega;
-    body[p]->Omega = orbit.Omega;
-    body[p]->tperi0 = body[p]->time[body[p]->nt - 1] - body[p]->per * orbit.M / (2 * PI);
-    body[p]->per = orbit.P;
-    
+    if (body[p]->host == -1) {
+      struct reb_particle cm = reb_get_com(r);
+      struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], cm);
+      body[p]->a = orbit.a;
+      body[p]->ecc = orbit.e;
+      body[p]->inc = orbit.inc;
+      body[p]->w = orbit.omega;
+      body[p]->Omega = orbit.Omega;
+      body[p]->tperi0 = body[p]->time[body[p]->nt - 1] - body[p]->per * orbit.M / (2 * PI);
+      body[p]->per = orbit.P;
+    } else {
+      struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[body[p]->host]);
+      body[p]->a = orbit.a;
+      body[p]->ecc = orbit.e;
+      body[p]->inc = orbit.inc;
+      body[p]->w = orbit.omega;
+      body[p]->Omega = orbit.Omega;
+      body[p]->tperi0 = body[p]->time[body[p]->nt - 1] - body[p]->per * orbit.M / (2 * PI);
+      body[p]->per = orbit.P;
+    }
+
   } 
 
   // Log

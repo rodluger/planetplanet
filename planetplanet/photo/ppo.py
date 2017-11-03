@@ -234,27 +234,38 @@ class System(object):
             body.ecc = body._ecc
         self._names = np.array([p.name for p in self.bodies])
         self.colors = [b.color for b in self.bodies]
-
-        # Compute the semi-major axis for each planet/moon (in Earth radii)
+        
+        # Evaluate the body host names
+        for i, body in enumerate(self.bodies):
+            if body.host is None:
+                # Host is CM of all interior bodies
+                body.host = CM(*self.bodies[:i])
+                body._host = -1
+            elif type(body.host) is int:
+                # Host is an index
+                body._host = body.host
+                body.host = self.bodies[body.host]
+            elif isinstance(body.host, string_types):
+                # Host is another body in the system
+                body.host = getattr(self, body.host)
+                body._host = np.argmax(self._names == body.host.name)
+            elif body.host in self.bodies:
+                # Host is another body in the system
+                body._host = np.argmax(self._names == body.host.name)
+            else:
+                try:
+                  assert body.host.body_type == 'cm', "Error!"
+                except:
+                  # Something went wrong
+                  raise ValueError("Invalid `host` setting for body `%s`."
+                                     % body.name)
+            
+        # Compute the semi-major axis for each body (in Earth radii)
         for body in self.bodies:
             body._computed = False
-            body._host = 0
-            if body.body_type == 'planet':
-                body.a = ((body.per * DAYSEC) ** 2 * G
-                          * (self.primary._m + body._m) * MEARTH
-                          / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-            elif body.body_type == 'moon':
-                if isinstance(body.host, string_types):
-                    body.host = getattr(self, body.host)
-                elif body.host in self.bodies:
-                    pass
-                else:
-                    raise ValueError("Invalid `host` setting for moon `%s`."
-                                     % body.name)
-                body._host = np.argmax(self._names == body.host.name)
-                body.a = ((body.per * DAYSEC) ** 2 * G
-                          * (body.host._m + body._m) * MEARTH
-                          / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
+            body.a = ((body.per * DAYSEC) ** 2 * G
+                      * (body.host._m + body._m) * MEARTH
+                      / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
 
         # Reset continuum
         self._continuum = np.empty((0,), dtype = 'float64')
@@ -271,12 +282,29 @@ class System(object):
 
         '''
 
-        # Check that the first body is a star and that there
-        # are no other stars (for now)
+        # Check that the first body is a star
         assert self.bodies[0].body_type == 'star', \
                'The first body must be a :py:class:`Star`.'
-        assert 'star' not in [b.body_type for b in self.bodies[1:]], \
-               'Multiple-star systems not yet implemented.'
+        
+        # Check that if there are N stars, the first N bodies are stars
+        nstars = np.sum([int(b.body_type == 'star') for b in self.bodies])
+        assert np.all([b.body_type == 'star' for b in self.bodies[:nstars]]), \
+               'Stars must be passed as the first arguments to `System`,' \
+               'before any planets or moons.'
+        self.settings.nstars = nstars
+        self.nstars = nstars
+        
+        # Check that if there are multiple stars, Keplerian solver is off
+        if nstars > 1:
+            assert self.settings.nbody, "N-body integrator must be selected" \
+                   "for systems with multiple stars."
+        
+        # If there's more than one star, disable the RadiativeEquilibriumMap
+        if 'star' in [b.body_type for b in self.bodies[1:]]:
+            for b in self.bodies[1:]:
+                assert b.radiancemap.maptype not in [MAP_ELLIPTICAL_DEFAULT,
+                    MAP_ELLIPTICAL_CUSTOM], "Elliptically-symmetric radiance "\
+                    "maps not implemented for multiple-star systems."
 
         # Initialize the C interface
         self._Orbits = libppo.Orbits

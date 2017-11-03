@@ -73,7 +73,7 @@ typedef struct {
   int phasecurve;                                                                     /**< Compute the phase curve for this body? */
   double Lambda;                                                                      /**< Longitudinal hotspot offset in radians */
   double Phi;                                                                         /**< Latitudinal hotspot offset in radians */
-  int host;                                                                           /**< The index of this body's host (host star if planet; host planet if moon) */
+  int host;                                                                           /**< The index of this body's host */
   int nu;                                                                             /**< Number of limb darkening coefficients (per wavelength) */
   int nz;                                                                             /**< Number of zenith angle slices */
   int nt;                                                                             /**< Size of time array */
@@ -114,6 +114,7 @@ typedef struct {
   int maxvertices;                                                                    /**< Maximum number of vertices (for memory allocation) */
   int maxfunctions;                                                                   /**< Maximum number of functions (for memory allocation) */
   double distance;                                                                    /**< Distance to the system in parsecs */
+  int nstars;                                                                         /**< Number of stars in the system */
 } SETTINGS;
 
 /**
