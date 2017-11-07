@@ -38,6 +38,7 @@ from scipy.integrate import quad
 from tqdm import tqdm
 from six import string_types
 import numba
+import rebound
 
 __all__ = ['System']
 
@@ -74,7 +75,7 @@ class _Animation(object):
 
     '''
 
-    def __init__(self, t, fig, axim, tracker, occ, ptb, body, bodies,
+    def __init__(self, t, fig, axim, tracker, occ, pt_xz, pt_zy, body, bodies,
                  occultors, interval = 50, gifname = None, xy = None,
                  quiet = False):
         '''
@@ -86,7 +87,8 @@ class _Animation(object):
         self.axim = axim
         self.tracker = tracker
         self.occ = occ
-        self.ptb = ptb
+        self.pt_xz = pt_xz
+        self.pt_zy = pt_zy
         self.body = body
         self.bodies = bodies
         self.occultors = occultors
@@ -155,8 +157,10 @@ class _Animation(object):
 
                 # BODY orbits
                 for k, b in enumerate(self.bodies):
-                    self.ptb[k].set_xdata(b.x_hr[self.t[j]])
-                    self.ptb[k].set_ydata(b.z_hr[self.t[j]])
+                    self.pt_xz[k].set_xdata(b.x_hr[self.t[j]])
+                    self.pt_xz[k].set_ydata(b.z_hr[self.t[j]])
+                    self.pt_zy[k].set_xdata(b.z_hr[self.t[j]])
+                    self.pt_zy[k].set_ydata(b.y_hr[self.t[j]])
 
 class System(object):
     '''
@@ -896,7 +900,8 @@ class System(object):
 
     def plot_occultation(self, body, time, wavelength = 15., interval = 50,
                          gifname = None, spectral = False, 
-                         time_unit = 'BJD − 2,450,000', **kwargs):
+                         time_unit = 'BJD − 2,450,000',
+                         **kwargs):
         '''
         Plots and animates an occultation event.
 
@@ -1032,54 +1037,131 @@ class System(object):
                 occultors.append(b)
         zorders = [-self.bodies[o].z_hr[ti] for o in occultors]
         occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
-
-        # Plot the orbits of all bodies except moons
-        # NOTE: These are plotted from a top-down view for each planet
-        # individually. This places non-coplanar planets in the same
-        # orbital plane so that their orbits can be better visualized.
-        # In the future, we should show a top-down and edge-on view
-        # in fixed reference frames.
-        axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
-        f = np.linspace(0, 2 * np.pi, 1000)
+        
+        # Plot the orbits
+        # We will run REBOUND backwards in time for a duration
+        # equal to the longest orbital period in the system.
+        # But let's cap it at 5,000 steps just to be safe.
+        if not self.settings.quiet:
+            print("Computing orbits for plotting...")
+        per = np.max([b.per for b in self.bodies])
+        tlong = np.arange(0, min(1.5 * per, 5000 * self.settings.timestep),
+                          self.settings.timestep)
+        sim = rebound.Simulation()
+        sim.G = GEARTH
+        for b in self.bodies:
+            sim.add(m = b._m, x = b.x_hr[tf], y = b.y_hr[tf],
+                    z = b.z_hr[tf], vx = -b.vx_hr[tf], 
+                    vy = -b.vy_hr[tf], vz = -b.vz_hr[tf])
+        x = np.zeros((len(self.bodies), len(tlong)))
+        y = np.zeros((len(self.bodies), len(tlong)))
+        z = np.zeros((len(self.bodies), len(tlong)))
+        for i, time in enumerate(tlong):
+            sim.integrate(time, exact_finish_time = 1)
+            for q in range(len(self.bodies)):
+                x[q,i] = sim.particles[q].x
+                y[q,i] = sim.particles[q].y
+                z[q,i] = sim.particles[q].z
+        axxz = pl.subplot2grid((5, 4), (0, 0), colspan = 2, rowspan = 2)
+        axzy = pl.subplot2grid((5, 4), (0, 2), colspan = 2, rowspan = 2)
         for j, b in enumerate(self.bodies):
-            if b.body_type == 'moon':
-                continue
             if j == p:
                 style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
             elif j in occultors:
                 style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
             else:
                 style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
-            r = b.a * (1 - b.ecc ** 2) / (1 + b.ecc * np.cos(f))
-            x = r * np.cos(b._w + f) - r * np.sin(b._w + f) \
-                  * np.cos(b._inc) * np.sin(b._Omega)
-            z = r * np.sin(b._w + f) * np.sin(b._inc)
-            axxz.plot(x, z, **style)
-
+            
+            # Top view
+            axxz.plot(x[j], z[j], clip_on = False, **style)
+            
+            # Side view
+            axzy.plot(z[j], y[j], clip_on = False, **style)
+          
         # Plot the locations of the bodies
-        ptb = [None for b in self.bodies]
+        pt_xz = [None for b in self.bodies]
+        pt_zy = [None for b in self.bodies]
         for bi, b in enumerate(self.bodies):
             if b == body:
-                ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'r',
-                                     alpha = 1, markeredgecolor = 'k',
-                                     zorder = 99)
+                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'r',
+                                       alpha = 1, markeredgecolor = 'k',
+                                       zorder = 99, clip_on = False)
+                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = 'r',
+                                       alpha = 1, markeredgecolor = 'k',
+                                       zorder = 99, clip_on = False)
             elif bi in occultors:
-                ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                     color = 'lightgrey', alpha = 1,
-                                     markeredgecolor = 'k', zorder = 99)
+                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
+                                       color = 'lightgrey', alpha = 1,
+                                       markeredgecolor = 'k', zorder = 99,
+                                       clip_on = False)
+                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o',
+                                       color = 'lightgrey', alpha = 1,
+                                       markeredgecolor = 'k', zorder = 99,
+                                       clip_on = False)
             else:
-                ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                     color = '#dddddd', alpha = 1,
-                                     markeredgecolor = '#999999', zorder = 99)
-
-        # Appearance
+                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
+                                       color = '#dddddd', alpha = 1,
+                                       markeredgecolor = '#999999', 
+                                       zorder = 99, clip_on = False)
+                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o',
+                                       color = '#dddddd', alpha = 1,
+                                       markeredgecolor = '#999999', 
+                                       zorder = 99, clip_on = False)        
+        
+        # Symmetrical limits
         axxz.set_ylim(-max(np.abs(axxz.get_ylim())),
                       max(np.abs(axxz.get_ylim())))
         axxz.set_xlim(-max(np.abs(axxz.get_xlim())),
                       max(np.abs(axxz.get_xlim())))
+        axzy.set_ylim(-max(np.abs(axzy.get_ylim())),
+                      max(np.abs(axzy.get_ylim())))
+        axzy.set_xlim(-max(np.abs(axzy.get_xlim())),
+                      max(np.abs(axzy.get_xlim())))
         axxz.set_aspect('equal')
+        axzy.set_aspect('equal')
         axxz.axis('off')
-
+        axzy.axis('off')
+        
+        # Legend
+        axlg = pl.axes([0.2, 0.4, 0.8, 0.4])
+        axlg.axis('off')
+        axlg.annotate(r"$z$", xy=(0, 0.5), xytext=(0, 20),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$x$", xy=(-0.005, 0.5075), xytext=(18, 0),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$y$", xy=(0.5, 0.5), xytext=(0, 20),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$z$", xy=(0.495, 0.5075), xytext=(18, 0),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$y$", xy=(0, 0.05), xytext=(0, 20),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$x$", xy=(-0.005, 0.0575), xytext=(18, 0),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        
         # Plot the image
         axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig,
                                         wavelength = wavelength, **kwargs)
@@ -1100,22 +1182,22 @@ class System(object):
         # The title
         if len(occultors) == 1:
             axxz.annotate("%s occulted by %s" % (body.name,
-                          self.bodies[occultors[0]].name), xy = (0.5, 1.25),
-                          xycoords = "axes fraction", ha = 'center',
+                          self.bodies[occultors[0]].name), xy = (0.55, 0.95),
+                          xycoords = "figure fraction", ha = 'center',
                           va = 'center',
-                          fontweight = 'bold', fontsize = 12)
+                          fontweight = 'bold', fontsize = 12, clip_on = False)
         else:
             axxz.annotate("%s occulted by %s" % (body.name,
                           ", ".join([occultor.name for occultor in
                           [self.bodies[o] for o in occultors]])),
-                          xy = (0.5, 1.25),
-                          xycoords = "axes fraction", ha = 'center',
+                          xy = (0.55, 0.95),
+                          xycoords = "figure fraction", ha = 'center',
                           va = 'center',
-                          fontweight = 'bold', fontsize = 12)
+                          fontweight = 'bold', fontsize = 12, clip_on = False)
         axxz.annotate("Duration: %.2f minutes" % duration,
-                      xy = (0.5, 1.1), ha = 'center', va = 'center',
-                      xycoords = 'axes fraction', fontsize = 10,
-                      style = 'italic')
+                      xy = (0.55, 0.92), ha = 'center', va = 'center',
+                      xycoords = 'figure fraction', fontsize = 10,
+                      style = 'italic', clip_on = False)
 
         # Animate!
         if gifname is not None:
@@ -1123,7 +1205,7 @@ class System(object):
         else:
             tmp = None
         self._animations.append(_Animation(range(ti, tf), fig, axim, tracker,
-                                occ, ptb, body, self.bodies,
+                                occ, pt_xz, pt_zy, body, self.bodies,
                                 [self.bodies[o] for o in occultors],
                                 interval = interval, gifname = tmp,
                                 quiet = self.settings.quiet, xy = xy))

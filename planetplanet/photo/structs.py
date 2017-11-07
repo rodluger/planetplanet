@@ -543,13 +543,15 @@ class SETTINGS(ctypes.Structure):
         self.oversample = max(1, kwargs.pop('oversample', 1))
         self.distance = kwargs.pop('distance', 10.)
         self.nstars = 1
+        self.plot_tres = kwargs.pop('plot_tres', 60.)
 
     @property
     def params(self):
         return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
                 'timestep', 'adaptive', 'circleopt', 'batmanopt', 
                 'quarticsolver', 'quiet', 'mintheta', 'maxvertices', 
-                'maxfunctions', 'oversample', 'distance', 'nstars']
+                'maxfunctions', 'oversample', 'distance', 'nstars',
+                'plot_tres']
 
     @property
     def mintheta(self):

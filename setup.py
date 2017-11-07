@@ -77,7 +77,8 @@ setup(name = 'planetplanet',
                           'tqdm',
                           'astropy',
                           'numba>=0.34',
-                          'pandas'
+                          'pandas',
+                          'rebound'
                          ],
       include_package_data = True,
       zip_safe = False,

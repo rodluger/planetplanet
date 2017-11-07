@@ -61,15 +61,18 @@ def plot():
 
     # Planet b
     b = Planet('b', m = 1, per = 2, inc = 90.4, r = 2., t0 = 0, 
-               nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
+               nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False,
+               color = 'r')
 
     # Planet c
     c = Planet('c', m = 1, per = 8, inc = 90., r = 2., t0 = 0.0005, 
-               nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
+               nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False,
+               color = 'g')
 
     # Planet d
     d = Planet('d', m = 1, per = 32, inc = 89.94, r = 2., t0 = 0.002, 
-               nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False)
+               nz = 1, Omega = 0, w = 0., ecc = 0., phasecurve = False,
+               color = 'b')
 
     # System
     system = System(star, b, c, d)
