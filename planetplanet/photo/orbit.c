@@ -512,7 +512,12 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
 
   }
   
-  // TODO: BUG: The orbital elements for moons and multiple star systems are screwed up.
+  // TODO: BUG: The orbital elements for moons 
+  // and multiple star systems are screwed up. This
+  // does not affect the photodynamical model! It is
+  // only a problem if the user is interested in 
+  // the updated orbital parameters (period, semi-major
+  // axis, etc) of the moon after running the N-body code.
 
   // Update the orbital elements of all the bodies
   for (p = 0; p < np; p++) {
