@@ -1,4 +1,4 @@
-<div align="center"> 
+<div align="center">
 <img src="https://rodluger.github.io/planetplanet/_images/title.gif" width="400px">
 </img>
 <br/><br/>
