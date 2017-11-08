@@ -43,8 +43,7 @@ def plot():
     system.c.inc = 60
     
     # Draw the orbit
-    system.c.draw_orbit(draw_outline = True, size = 2, nz = 11, 
-                        plot_phasecurve = False)
+    system.c.draw_orbit(size = 2, nz = 11, plot_phasecurve = False)
     
     # Show!
     pl.show()

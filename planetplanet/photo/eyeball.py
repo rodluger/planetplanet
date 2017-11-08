@@ -175,8 +175,9 @@ def DrawEyeball(x0 = 0.5, y0 = 0.5, r = 0.5,
                 radiancemap = RadiativeEquilibriumMap(), 
                 theta = np.pi / 3, nz = 31, gamma = 0, occultors = [], 
                 cmap = 'inferno', fig = None, draw_terminator = False, 
-                draw_outline = True, draw_ellipses = False, rasterize = False,
-                cpad = 0.2, limbdark = [1.], teff = 2500., wavelength = 15.):
+                draw_ellipses = False, rasterize = False,
+                cpad = 0.2, limbdark = [1.], teff = 2500., wavelength = 15.,
+                color = None):
     '''
     Creates a floating axis and draws an "eyeball" planet at given 
     phase and rotation angles.
@@ -216,11 +217,10 @@ def DrawEyeball(x0 = 0.5, y0 = 0.5, r = 0.5,
     :type fig: :py:class:`matplotlib.Figure`
     :param bool draw_terminator: Draw the terminator ellipse outline? \
            Default :py:obj:`False`
-    :param bool draw_outline: Draw the planet outline(s)? \
-           Default :py:obj:`True`
     :param bool draw_ellipses: Draw the zenith angle ellipse outlines? \
            Default :py:obj:`False`
     :param bool rasterize: Rasterize the image? Default :py:obj:`False`
+    :param str color: Occulted body outline color. Default :py:obj:`None`
     
     :return: **fig**, **ax**, **occ**, **xy**. These are the figure and \
              floating axis instances, a lits of :py:obj:`Circle` \
@@ -271,20 +271,20 @@ def DrawEyeball(x0 = 0.5, y0 = 0.5, r = 0.5,
         yo = occultor['y']
         ro = occultor['r']
         zo = occultor.get('zorder', 1)
-        co = occultor.get('color', 'lightgray')
+        ec = occultor.get('color', 'k')
         ao = occultor.get('alpha', 1)
         xo, yo = xy(xo, yo)
-        occ[i] = pl.Circle((xo, yo), ro, color = co,
-                           ec = 'k' if draw_outline else 'none', 
+        occ[i] = pl.Circle((xo, yo), ro, color = 'lightgrey',
+                           ec = ec, lw = 2,
                            alpha = ao, zorder = zo, clip_on = False)
         ax.add_artist(occ[i])
         
     # Plot the occulted body
     x = np.linspace(-1, 1, 1000)
     y = np.sqrt(1 - x ** 2)
-    if draw_outline:
-        ax.plot(x, y, color = 'k', zorder = 0, lw = 1, clip_on = False)
-        ax.plot(x, -y, color = 'k', zorder = 0, lw = 1, clip_on = False)
+    if color is not None:
+        ax.plot(x, y, color = color, zorder = 0, lw = 2, clip_on = False)
+        ax.plot(x, -y, color = color, zorder = 0, lw = 2, clip_on = False)
         
     # Get the radiance map. If it's one of the default maps,
     # we need to call their special Python implementations defined

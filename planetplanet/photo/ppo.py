@@ -61,24 +61,27 @@ def _colorline(ax, x, y, color = (0, 0, 0), **kwargs):
     
     # A bit hacky... But there doesn't seem to be
     # an easy way to get the hex code for a named color...
-    if type(color) is str:
-        if len(color) == 1:
-            if color == 'k':
-                color = 'black'
-            elif color == 'r':
-                color = 'red'
-            elif color == 'b':
-                color = 'blue'
-            elif color == 'g':
-                color = 'green'
-            elif color == 'y':
-                color = 'yellow'
-            elif color == 'w':
-                color = 'white'
-            else:
-                # ?!
-                color = 'black'
-        hex = matplotlib.colors.cnames[color.lower()][1:]
+    if isinstance(color, string_types):
+        if color.startswith("#"):
+            hex = color[1:]
+        else:
+            if len(color) == 1:
+                if color == 'k':
+                    color = 'black'
+                elif color == 'r':
+                    color = 'red'
+                elif color == 'b':
+                    color = 'blue'
+                elif color == 'g':
+                    color = 'green'
+                elif color == 'y':
+                    color = 'yellow'
+                elif color == 'w':
+                    color = 'white'
+                else:
+                    # ?!
+                    color = 'black'
+            hex = matplotlib.colors.cnames[color.lower()][1:]
         r, g, b = tuple(int(hex[i:i+2], 16) / 255. for i in (0, 2 ,4))
     else:
         r, g, b = color
@@ -1105,26 +1108,14 @@ class System(object):
         pt_xz = [None for b in self.bodies]
         pt_zy = [None for b in self.bodies]
         for bi, b in enumerate(self.bodies):
-            if (b == body) or (bi in occultors):
-                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = b.color,
-                                       alpha = 1, markeredgecolor = 'k',
-                                       zorder = 99, clip_on = False,
-                                       ms = 5)
-                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = b.color,
-                                       alpha = 1, markeredgecolor = 'k',
-                                       zorder = 99, clip_on = False,
-                                       ms = 5)
-            else:
-                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                       color = b.color, alpha = 1,
-                                       markeredgecolor = None, zorder = 99,
-                                       clip_on = False,
-                                       ms = 2)
-                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o',
-                                       color = b.color, alpha = 1,
-                                       markeredgecolor = None, zorder = 99,
-                                       clip_on = False,
-                                       ms = 2)       
+            pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'lightgrey',
+                                   alpha = 1, markeredgecolor = b.color,
+                                   zorder = 99, clip_on = False,
+                                   ms = 5, markeredgewidth = 2)
+            pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = 'lightgrey',
+                                   alpha = 1, markeredgecolor = b.color,
+                                   zorder = 99, clip_on = False,
+                                   ms = 5, markeredgewidth = 2)   
         
         # Symmetrical limits
         axxz.set_ylim(-max(np.abs(axxz.get_ylim())),
@@ -1316,7 +1307,9 @@ class System(object):
                                        cmap = occulted.cmap,
                                        fig = fig, wavelength = wavelength,
                                        teff = occulted.teff,
-                                       limbdark = occulted.limbdark, **kwargs)
+                                       limbdark = occulted.limbdark, 
+                                       color = occulted.color,
+                                       **kwargs)
 
         return ax, occ, xy
 

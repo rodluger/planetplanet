@@ -1,10 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-binary.py |github|
-------------------
+circumbinary_exomoon.py |github|
+--------------------------------
 
-A binary star system.
+A (crazy) example of the code's ability to handle nested multi-body systems.
+Here we have a moon orbiting a planet orbiting one star in a binary system.
+All bodies transit the primary at `t = 0`. This system isn't stable (and
+the moon isn't even bound to the planet), but it highlights what the code can
+do.
+
+  .. plot::
+     :align: center
+     
+     from scripts import circumbinary_exomoon
+     circumbinary_exomoon._test()
 
   .. role:: raw-html(raw)
      :format: html
@@ -27,32 +37,32 @@ def _test():
 
     '''
 
-    pass
+    plot()
 
 def plot():
     '''
 
     '''
 
-    # Instantiate the primary
+    # Instantiate the primary (an M dwarf)
     A = Star('A', m = 0.1, r = 0.1, nz = 31, color = 'r', 
              limbdark = [0.4, 0.26])
     
-    # Instantiate the secondary
-    B = Star('B', m = 0.05, r = 0.1, nz = 31, t0 = -0.05,
-             Omega = 0, w = 0, ecc = 0, inc = 87.2,
+    # Instantiate the secondary (a brown dwarf)
+    B = Star('B', m = 0.05, r = 0.05, nz = 31, t0 = -0.05,
+             Omega = 0, w = 0, ecc = 0, inc = 88.,
              per = 2, color = 'g', 
              limbdark = [0.4, 0.26])
 
-    # Instantiate a planet
-    b = Planet('b', host = 'A', m = 300, r = 2, nz = 31, t0 = 0.,
+    # Instantiate a planet (a hot Jupiter orbiting the primary)
+    b = Planet('b', host = 'A', m = 300, r = 2, nz = 1, t0 = 0.,
               Omega = 0, w = 0, ecc = 0, inc = 90,
               per = 0.2, color = 'b', radiancemap = UniformMap())
     
-    # Instantiate a moon
-    bI = Moon('bI', host = 'b', m = 0.1, r = 1, nz = 31, t0 = 0,
+    # Instantiate its moon (a puffy Mars-sized thing)
+    bI = Moon('bI', host = 'b', m = 0.1, r = 1, nz = 1, t0 = 0,
               Omega = 0, w = 0, ecc = 0, inc = 45,
-              per = 0.05, color = 'b', radiancemap = UniformMap())
+              per = 0.05, color = 'dodgerblue', radiancemap = UniformMap())
     
     # Compute the light curve
     system = System(A, B, b, bI, nbody = True, integrator = 'ias15', 
