@@ -28,6 +28,7 @@ np.seterr(invalid = 'ignore')
 import os, shutil
 import sysconfig
 from numpy.ctypeslib import ndpointer, as_ctypes
+import matplotlib
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
@@ -38,6 +39,7 @@ from scipy.integrate import quad
 from tqdm import tqdm
 from six import string_types
 import numba
+import rebound
 
 __all__ = ['System']
 
@@ -50,14 +52,40 @@ libppo = ctypes.cdll.LoadLibrary(os.path.join(dn(dn(dn(
                                  os.path.abspath(__file__)))),
                                  "libppo" + suffix))
 
-def _colorline(ax, x, y, rgb = (0, 0, 0), **kwargs):
+def _colorline(ax, x, y, color = (0, 0, 0), **kwargs):
     '''
     Plots the curve `y(x)` with linearly increasing alpha.
     Adapted from `http://nbviewer.jupyter.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb`_.
 
     '''
+    
+    # A bit hacky... But there doesn't seem to be
+    # an easy way to get the hex code for a named color...
+    if isinstance(color, string_types):
+        if color.startswith("#"):
+            hex = color[1:]
+        else:
+            if len(color) == 1:
+                if color == 'k':
+                    color = 'black'
+                elif color == 'r':
+                    color = 'red'
+                elif color == 'b':
+                    color = 'blue'
+                elif color == 'g':
+                    color = 'green'
+                elif color == 'y':
+                    color = 'yellow'
+                elif color == 'w':
+                    color = 'white'
+                else:
+                    # ?!
+                    color = 'black'
+            hex = matplotlib.colors.cnames[color.lower()][1:]
+        r, g, b = tuple(int(hex[i:i+2], 16) / 255. for i in (0, 2 ,4))
+    else:
+        r, g, b = color
 
-    r, g, b = rgb
     colors = [(r, g, b, i) for i in np.linspace(0, 1, 3)]
     cmap = LinearSegmentedColormap.from_list('alphacmap', colors, N = 1000)
     points = np.array([x, y]).T.reshape(-1, 1, 2)
@@ -74,7 +102,7 @@ class _Animation(object):
 
     '''
 
-    def __init__(self, t, fig, axim, tracker, occ, ptb, body, bodies,
+    def __init__(self, t, fig, axim, tracker, occ, pt_xz, pt_zy, body, bodies,
                  occultors, interval = 50, gifname = None, xy = None,
                  quiet = False):
         '''
@@ -86,7 +114,8 @@ class _Animation(object):
         self.axim = axim
         self.tracker = tracker
         self.occ = occ
-        self.ptb = ptb
+        self.pt_xz = pt_xz
+        self.pt_zy = pt_zy
         self.body = body
         self.bodies = bodies
         self.occultors = occultors
@@ -155,8 +184,10 @@ class _Animation(object):
 
                 # BODY orbits
                 for k, b in enumerate(self.bodies):
-                    self.ptb[k].set_xdata(b.x_hr[self.t[j]])
-                    self.ptb[k].set_ydata(b.z_hr[self.t[j]])
+                    self.pt_xz[k].set_xdata(b.x_hr[self.t[j]])
+                    self.pt_xz[k].set_ydata(b.z_hr[self.t[j]])
+                    self.pt_zy[k].set_xdata(b.z_hr[self.t[j]])
+                    self.pt_zy[k].set_ydata(b.y_hr[self.t[j]])
 
 class System(object):
     '''
@@ -234,27 +265,38 @@ class System(object):
             body.ecc = body._ecc
         self._names = np.array([p.name for p in self.bodies])
         self.colors = [b.color for b in self.bodies]
-
-        # Compute the semi-major axis for each planet/moon (in Earth radii)
+        
+        # Evaluate the body host names
+        for i, body in enumerate(self.bodies):
+            if body.host is None:
+                # Host is CM of all interior bodies
+                body.host = CM(*self.bodies[:i])
+                body._host = -1
+            elif type(body.host) is int:
+                # Host is an index
+                body._host = body.host
+                body.host = self.bodies[body.host]
+            elif isinstance(body.host, string_types):
+                # Host is another body in the system
+                body.host = getattr(self, body.host)
+                body._host = np.argmax(self._names == body.host.name)
+            elif body.host in self.bodies:
+                # Host is another body in the system
+                body._host = np.argmax(self._names == body.host.name)
+            else:
+                try:
+                  assert body.host.body_type == 'cm', "Error!"
+                except:
+                  # Something went wrong
+                  raise ValueError("Invalid `host` setting for body `%s`."
+                                     % body.name)
+            
+        # Compute the semi-major axis for each body (in Earth radii)
         for body in self.bodies:
             body._computed = False
-            body._host = 0
-            if body.body_type == 'planet':
-                body.a = ((body.per * DAYSEC) ** 2 * G
-                          * (self.primary._m + body._m) * MEARTH
-                          / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
-            elif body.body_type == 'moon':
-                if isinstance(body.host, string_types):
-                    body.host = getattr(self, body.host)
-                elif body.host in self.bodies:
-                    pass
-                else:
-                    raise ValueError("Invalid `host` setting for moon `%s`."
-                                     % body.name)
-                body._host = np.argmax(self._names == body.host.name)
-                body.a = ((body.per * DAYSEC) ** 2 * G
-                          * (body.host._m + body._m) * MEARTH
-                          / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
+            body.a = ((body.per * DAYSEC) ** 2 * G
+                      * (body.host._m + body._m) * MEARTH
+                      / (4 * np.pi ** 2)) ** (1. / 3.) / REARTH
 
         # Reset continuum
         self._continuum = np.empty((0,), dtype = 'float64')
@@ -271,12 +313,29 @@ class System(object):
 
         '''
 
-        # Check that the first body is a star and that there
-        # are no other stars (for now)
+        # Check that the first body is a star
         assert self.bodies[0].body_type == 'star', \
                'The first body must be a :py:class:`Star`.'
-        assert 'star' not in [b.body_type for b in self.bodies[1:]], \
-               'Multiple-star systems not yet implemented.'
+        
+        # Check that if there are N stars, the first N bodies are stars
+        nstars = np.sum([int(b.body_type == 'star') for b in self.bodies])
+        assert np.all([b.body_type == 'star' for b in self.bodies[:nstars]]), \
+               'Stars must be passed as the first arguments to `System`,' \
+               'before any planets or moons.'
+        self.settings.nstars = nstars
+        self.nstars = nstars
+        
+        # Check that if there are multiple stars, Keplerian solver is off
+        if nstars > 1:
+            assert self.settings.nbody, "N-body integrator must be selected" \
+                   "for systems with multiple stars."
+        
+        # If there's more than one star, disable the RadiativeEquilibriumMap
+        if 'star' in [b.body_type for b in self.bodies[1:]]:
+            for b in self.bodies[1:]:
+                assert b.radiancemap.maptype not in [MAP_ELLIPTICAL_DEFAULT,
+                    MAP_ELLIPTICAL_CUSTOM], "Elliptically-symmetric radiance "\
+                    "maps not implemented for multiple-star systems."
 
         # Initialize the C interface
         self._Orbits = libppo.Orbits
@@ -539,7 +598,8 @@ class System(object):
         assert err <= 0, "Error in C routine `Orbits` (%d)." % err
 
     def observe(self, save = None, filter = 'f1500w', stack = 1,
-                instrument = 'jwst', alpha_err = 0.7, figsize = (12,4)):
+                instrument = 'jwst', alpha_err = 0.7, figsize = (12,4),
+                time_unit = 'BJD − 2,450,000'):
         '''
         Run telescope observability calculations for a system that has had its
         lightcurve computed. Calculates a synthetic noised lightcurve in the
@@ -622,7 +682,7 @@ class System(object):
         fig, ax = pl.subplots(figsize = figsize)
         ax.set_title(r"%s" % self.filter.name)
         ax.set_ylabel("Relative Flux", fontweight = 'bold', fontsize = 10)
-        ax.set_xlabel("Time [BJD − 2,450,000]", fontweight = 'bold',
+        ax.set_xlabel("Time [%s]" % time_unit, fontweight = 'bold',
                       fontsize = 10)
 
         # Plot lightcurve
@@ -866,7 +926,9 @@ class System(object):
         return times, occultors, durations
 
     def plot_occultation(self, body, time, wavelength = 15., interval = 50,
-                         gifname = None, spectral = False, **kwargs):
+                         gifname = None, spectral = False, 
+                         time_unit = 'BJD − 2,450,000',
+                         **kwargs):
         '''
         Plots and animates an occultation event.
 
@@ -979,7 +1041,7 @@ class System(object):
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
                               1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
 
-        axlc.set_xlabel('Time [BJD − 2,450,000]', fontweight = 'bold',
+        axlc.set_xlabel('Time [%s]' % time_unit, fontweight = 'bold',
                         fontsize = 10)
         axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
         axlc.get_yaxis().set_major_locator(MaxNLocator(4))
@@ -1002,54 +1064,113 @@ class System(object):
                 occultors.append(b)
         zorders = [-self.bodies[o].z_hr[ti] for o in occultors]
         occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
-
-        # Plot the orbits of all bodies except moons
-        # NOTE: These are plotted from a top-down view for each planet
-        # individually. This places non-coplanar planets in the same
-        # orbital plane so that their orbits can be better visualized.
-        # In the future, we should show a top-down and edge-on view
-        # in fixed reference frames.
-        axxz = pl.subplot2grid((5, 3), (0, 0), colspan = 3, rowspan = 2)
-        f = np.linspace(0, 2 * np.pi, 1000)
+        
+        # Plot the orbits
+        # We will run REBOUND backwards in time for a duration
+        # equal to the longest orbital period in the system.
+        # But let's cap it at 5,000 steps just to be safe.
+        if not self.settings.quiet:
+            print("Computing orbits for plotting...")
+        per = np.max([b.per for b in self.bodies])
+        tlong = np.arange(0, min(1.5 * per, 5000 * self.settings.timestep),
+                          self.settings.timestep)
+        sim = rebound.Simulation()
+        sim.G = GEARTH
+        for b in self.bodies:
+            sim.add(m = b._m, x = b.x_hr[tf], y = b.y_hr[tf],
+                    z = b.z_hr[tf], vx = -b.vx_hr[tf], 
+                    vy = -b.vy_hr[tf], vz = -b.vz_hr[tf])
+        x = np.zeros((len(self.bodies), len(tlong)))
+        y = np.zeros((len(self.bodies), len(tlong)))
+        z = np.zeros((len(self.bodies), len(tlong)))
+        for i, time in enumerate(tlong):
+            sim.integrate(time, exact_finish_time = 1)
+            for q in range(len(self.bodies)):
+                x[q,i] = sim.particles[q].x
+                y[q,i] = sim.particles[q].y
+                z[q,i] = sim.particles[q].z
+        axxz = pl.subplot2grid((5, 4), (0, 0), colspan = 2, rowspan = 2)
+        axzy = pl.subplot2grid((5, 4), (0, 2), colspan = 2, rowspan = 2)
         for j, b in enumerate(self.bodies):
-            if b.body_type == 'moon':
-                continue
-            if j == p:
-                style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
-            elif j in occultors:
-                style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
-            else:
-                style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
-            r = b.a * (1 - b.ecc ** 2) / (1 + b.ecc * np.cos(f))
-            x = r * np.cos(b._w + f) - r * np.sin(b._w + f) \
-                  * np.cos(b._inc) * np.sin(b._Omega)
-            z = r * np.sin(b._w + f) * np.sin(b._inc)
-            axxz.plot(x, z, **style)
+            
+            # Trim the array
+            one_orbit = range(np.argmax(tlong > b.per))
 
+            # Top view
+            _colorline(axxz, x[j][one_orbit], z[j][one_orbit], lw = 1, 
+                       clip_on = False, color = b.color)
+            
+            # Side view
+            _colorline(axzy, z[j][one_orbit], y[j][one_orbit], lw = 1, 
+                       clip_on = False, color = b.color)
+          
         # Plot the locations of the bodies
-        ptb = [None for b in self.bodies]
+        pt_xz = [None for b in self.bodies]
+        pt_zy = [None for b in self.bodies]
         for bi, b in enumerate(self.bodies):
-            if b == body:
-                ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'r',
-                                     alpha = 1, markeredgecolor = 'k',
-                                     zorder = 99)
-            elif bi in occultors:
-                ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                     color = 'lightgrey', alpha = 1,
-                                     markeredgecolor = 'k', zorder = 99)
-            else:
-                ptb[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                     color = '#dddddd', alpha = 1,
-                                     markeredgecolor = '#999999', zorder = 99)
-
-        # Appearance
+            pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'lightgrey',
+                                   alpha = 1, markeredgecolor = b.color,
+                                   zorder = 99, clip_on = False,
+                                   ms = 5, markeredgewidth = 2)
+            pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = 'lightgrey',
+                                   alpha = 1, markeredgecolor = b.color,
+                                   zorder = 99, clip_on = False,
+                                   ms = 5, markeredgewidth = 2)   
+        
+        # Symmetrical limits
         axxz.set_ylim(-max(np.abs(axxz.get_ylim())),
                       max(np.abs(axxz.get_ylim())))
         axxz.set_xlim(-max(np.abs(axxz.get_xlim())),
                       max(np.abs(axxz.get_xlim())))
+        axzy.set_ylim(-max(np.abs(axzy.get_ylim())),
+                      max(np.abs(axzy.get_ylim())))
+        axzy.set_xlim(-max(np.abs(axzy.get_xlim())),
+                      max(np.abs(axzy.get_xlim())))
         axxz.set_aspect('equal')
+        axzy.set_aspect('equal')
         axxz.axis('off')
-
+        axzy.axis('off')
+        
+        # Legend
+        axlg = pl.axes([0.2, 0.4, 0.8, 0.4])
+        axlg.axis('off')
+        axlg.annotate(r"$z$", xy=(0, 0.5), xytext=(0, 20),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$x$", xy=(-0.005, 0.5075), xytext=(18, 0),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$y$", xy=(0.5, 0.5), xytext=(0, 20),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$z$", xy=(0.495, 0.5075), xytext=(18, 0),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$y$", xy=(0, 0.05), xytext=(0, 20),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        axlg.annotate(r"$x$", xy=(-0.005, 0.0575), xytext=(18, 0),
+                      fontsize = 8,
+                      xycoords = 'axes fraction',
+                      textcoords = 'offset points',
+                      ha = 'center', va = 'center',
+                      arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
+        
         # Plot the image
         axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig,
                                         wavelength = wavelength, **kwargs)
@@ -1070,22 +1191,22 @@ class System(object):
         # The title
         if len(occultors) == 1:
             axxz.annotate("%s occulted by %s" % (body.name,
-                          self.bodies[occultors[0]].name), xy = (0.5, 1.25),
-                          xycoords = "axes fraction", ha = 'center',
+                          self.bodies[occultors[0]].name), xy = (0.55, 0.95),
+                          xycoords = "figure fraction", ha = 'center',
                           va = 'center',
-                          fontweight = 'bold', fontsize = 12)
+                          fontweight = 'bold', fontsize = 12, clip_on = False)
         else:
             axxz.annotate("%s occulted by %s" % (body.name,
                           ", ".join([occultor.name for occultor in
                           [self.bodies[o] for o in occultors]])),
-                          xy = (0.5, 1.25),
-                          xycoords = "axes fraction", ha = 'center',
+                          xy = (0.55, 0.95),
+                          xycoords = "figure fraction", ha = 'center',
                           va = 'center',
-                          fontweight = 'bold', fontsize = 12)
+                          fontweight = 'bold', fontsize = 12, clip_on = False)
         axxz.annotate("Duration: %.2f minutes" % duration,
-                      xy = (0.5, 1.1), ha = 'center', va = 'center',
-                      xycoords = 'axes fraction', fontsize = 10,
-                      style = 'italic')
+                      xy = (0.55, 0.92), ha = 'center', va = 'center',
+                      xycoords = 'figure fraction', fontsize = 10,
+                      style = 'italic', clip_on = False)
 
         # Animate!
         if gifname is not None:
@@ -1093,7 +1214,7 @@ class System(object):
         else:
             tmp = None
         self._animations.append(_Animation(range(ti, tf), fig, axim, tracker,
-                                occ, ptb, body, self.bodies,
+                                occ, pt_xz, pt_zy, body, self.bodies,
                                 [self.bodies[o] for o in occultors],
                                 interval = interval, gifname = tmp,
                                 quiet = self.settings.quiet, xy = xy))
@@ -1176,15 +1297,19 @@ class System(object):
             occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp,
                                  y = (occultor.y_hr[t] - y0) / rp,
                                  r = occultor._r / rp, zorder = i + 1,
-                                 alpha = 1))
+                                 alpha = 1,
+                                 color = occultor.color))
 
         # Draw the eyeball planet and the occultor(s)
         fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap,
                                        theta = theta, gamma = gamma,
-                                       occultors = occ_dict, cmap = 'inferno',
+                                       occultors = occ_dict, 
+                                       cmap = occulted.cmap,
                                        fig = fig, wavelength = wavelength,
                                        teff = occulted.teff,
-                                       limbdark = occulted.limbdark, **kwargs)
+                                       limbdark = occulted.limbdark, 
+                                       color = occulted.color,
+                                       **kwargs)
 
         return ax, occ, xy
 
@@ -1378,15 +1503,15 @@ class System(object):
             z = planet.z[-N:]
 
             # x-z
-            _colorline(ax[0,0], x, z, lw = 1, rgb = rgb[i])
+            _colorline(ax[0,0], x, z, lw = 1, color = rgb[i])
             ax[0,0].plot(x[-1], z[-1], '.', color = rgb[i])
 
             # x-y
-            _colorline(ax[1,0], x, y, lw = 1, rgb = rgb[i])
+            _colorline(ax[1,0], x, y, lw = 1, color = rgb[i])
             ax[1,0].plot(x[-1], y[-1], '.', color = rgb[i])
 
             # z-y
-            _colorline(ax[1,1], z, y, lw = 1, rgb = rgb[i])
+            _colorline(ax[1,1], z, y, lw = 1, color = rgb[i])
             ax[1,1].plot(z[-1], y[-1], '.', color = rgb[i])
 
             # Append to running array

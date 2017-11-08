@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from . import circumbinary_exomoon
 from . import contrast
 from . import corner
 from . import custom_map

@@ -66,7 +66,7 @@ def plot():
                     timestep = MINUTE)
     time = np.arange(-1.1, 1.1, 0.1 * MINUTE)
     system.compute(time, lambda2 = 100)
-
+    
     # Plot
     system.plot_lightcurve(wavelength = 100, interactive = True)
 

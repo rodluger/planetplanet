@@ -310,7 +310,7 @@ class Filter(object):
                                                 atel = atel)
 
         # Hi-res light curve
-        if flux_hr is not None:
+        if time_hr is not None:
             tint_hr = dthr * 3600. * 24
             Nsys_hr = stack * tint_hr * self.photon_rate(lam, flux_hr[:,:],
                                                          atel = atel)
@@ -416,10 +416,17 @@ class Lightcurve(object):
 
         ax.errorbar(self.time, self.obs, yerr=self.sig, fmt="o", c="k", ms=2,
                     alpha=alpha_err, zorder=10, lw = 1)
-        ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins ($\times$ %d)"
-                % (self.tint[0]/60., self.stack),
-                ha="left", va="top", transform = ax.transAxes,
-                fontsize=12)
+        if self.stack > 1:
+            ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins ($\times$ %d)"
+                    % (self.tint[0]/60., self.stack),
+                    ha="left", va="top", transform = ax.transAxes,
+                    fontsize=12)
+        else:
+            ax.text(0.02, 0.95, r"$\Delta t = %.1f$ mins"
+                    % (self.tint[0]/60.),
+                    ha="left", va="top", transform = ax.transAxes,
+                    fontsize=12)
+
         ax.legend(loc = 'upper right')
         ax.ticklabel_format(useOffset = False)
         ax.margins(0, 0.15)

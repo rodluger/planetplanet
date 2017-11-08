@@ -50,6 +50,7 @@ Miscellaneous
    :maxdepth: 2
    
    circle/ellipse intersection points <scripts/intersection>
+   circumbinary exomoon <scripts/circumbinary_exomoon>
    code validation <scripts/validation>
    colorful corner plot <scripts/corner>
    exomoons <scripts/exomoon>
