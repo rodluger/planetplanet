@@ -28,6 +28,7 @@ np.seterr(invalid = 'ignore')
 import os, shutil
 import sysconfig
 from numpy.ctypeslib import ndpointer, as_ctypes
+import matplotlib
 import matplotlib.pyplot as pl
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
@@ -51,14 +52,37 @@ libppo = ctypes.cdll.LoadLibrary(os.path.join(dn(dn(dn(
                                  os.path.abspath(__file__)))),
                                  "libppo" + suffix))
 
-def _colorline(ax, x, y, rgb = (0, 0, 0), **kwargs):
+def _colorline(ax, x, y, color = (0, 0, 0), **kwargs):
     '''
     Plots the curve `y(x)` with linearly increasing alpha.
     Adapted from `http://nbviewer.jupyter.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb`_.
 
     '''
+    
+    # A bit hacky... But there doesn't seem to be
+    # an easy way to get the hex code for a named color...
+    if type(color) is str:
+        if len(color) == 1:
+            if color == 'k':
+                color = 'black'
+            elif color == 'r':
+                color = 'red'
+            elif color == 'b':
+                color = 'blue'
+            elif color == 'g':
+                color = 'green'
+            elif color == 'y':
+                color = 'yellow'
+            elif color == 'w':
+                color = 'white'
+            else:
+                # ?!
+                color = 'black'
+        hex = matplotlib.colors.cnames[color.lower()][1:]
+        r, g, b = tuple(int(hex[i:i+2], 16) / 255. for i in (0, 2 ,4))
+    else:
+        r, g, b = color
 
-    r, g, b = rgb
     colors = [(r, g, b, i) for i in np.linspace(0, 1, 3)]
     cmap = LinearSegmentedColormap.from_list('alphacmap', colors, N = 1000)
     points = np.array([x, y]).T.reshape(-1, 1, 2)
@@ -1065,48 +1089,42 @@ class System(object):
         axxz = pl.subplot2grid((5, 4), (0, 0), colspan = 2, rowspan = 2)
         axzy = pl.subplot2grid((5, 4), (0, 2), colspan = 2, rowspan = 2)
         for j, b in enumerate(self.bodies):
-            if j == p:
-                style = dict(color = 'r', alpha = 1, ls = '-', lw = 1)
-            elif j in occultors:
-                style = dict(color = 'k', alpha = 1, ls = '-', lw = 1)
-            else:
-                style = dict(color = 'k', alpha = 0.1, ls = '--', lw = 1)
             
+            # Trim the array
+            one_orbit = range(np.argmax(tlong > b.per))
+
             # Top view
-            axxz.plot(x[j], z[j], clip_on = False, **style)
+            _colorline(axxz, x[j][one_orbit], z[j][one_orbit], lw = 1, 
+                       clip_on = False, color = b.color)
             
             # Side view
-            axzy.plot(z[j], y[j], clip_on = False, **style)
+            _colorline(axzy, z[j][one_orbit], y[j][one_orbit], lw = 1, 
+                       clip_on = False, color = b.color)
           
         # Plot the locations of the bodies
         pt_xz = [None for b in self.bodies]
         pt_zy = [None for b in self.bodies]
         for bi, b in enumerate(self.bodies):
-            if b == body:
-                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'r',
+            if (b == body) or (bi in occultors):
+                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = b.color,
                                        alpha = 1, markeredgecolor = 'k',
-                                       zorder = 99, clip_on = False)
-                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = 'r',
+                                       zorder = 99, clip_on = False,
+                                       ms = 5)
+                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = b.color,
                                        alpha = 1, markeredgecolor = 'k',
-                                       zorder = 99, clip_on = False)
-            elif bi in occultors:
-                pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                       color = 'lightgrey', alpha = 1,
-                                       markeredgecolor = 'k', zorder = 99,
-                                       clip_on = False)
-                pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o',
-                                       color = 'lightgrey', alpha = 1,
-                                       markeredgecolor = 'k', zorder = 99,
-                                       clip_on = False)
+                                       zorder = 99, clip_on = False,
+                                       ms = 5)
             else:
                 pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o',
-                                       color = '#dddddd', alpha = 1,
-                                       markeredgecolor = '#999999', 
-                                       zorder = 99, clip_on = False)
+                                       color = b.color, alpha = 1,
+                                       markeredgecolor = None, zorder = 99,
+                                       clip_on = False,
+                                       ms = 2)
                 pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o',
-                                       color = '#dddddd', alpha = 1,
-                                       markeredgecolor = '#999999', 
-                                       zorder = 99, clip_on = False)        
+                                       color = b.color, alpha = 1,
+                                       markeredgecolor = None, zorder = 99,
+                                       clip_on = False,
+                                       ms = 2)       
         
         # Symmetrical limits
         axxz.set_ylim(-max(np.abs(axxz.get_ylim())),
@@ -1288,7 +1306,8 @@ class System(object):
             occ_dict.append(dict(x = (occultor.x_hr[t] - x0) / rp,
                                  y = (occultor.y_hr[t] - y0) / rp,
                                  r = occultor._r / rp, zorder = i + 1,
-                                 alpha = 1))
+                                 alpha = 1,
+                                 color = occultor.color))
 
         # Draw the eyeball planet and the occultor(s)
         fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap,
@@ -1491,15 +1510,15 @@ class System(object):
             z = planet.z[-N:]
 
             # x-z
-            _colorline(ax[0,0], x, z, lw = 1, rgb = rgb[i])
+            _colorline(ax[0,0], x, z, lw = 1, color = rgb[i])
             ax[0,0].plot(x[-1], z[-1], '.', color = rgb[i])
 
             # x-y
-            _colorline(ax[1,0], x, y, lw = 1, rgb = rgb[i])
+            _colorline(ax[1,0], x, y, lw = 1, color = rgb[i])
             ax[1,0].plot(x[-1], y[-1], '.', color = rgb[i])
 
             # z-y
-            _colorline(ax[1,1], z, y, lw = 1, rgb = rgb[i])
+            _colorline(ax[1,1], z, y, lw = 1, color = rgb[i])
             ax[1,1].plot(z[-1], y[-1], '.', color = rgb[i])
 
             # Append to running array

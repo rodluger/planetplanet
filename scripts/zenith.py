@@ -32,7 +32,12 @@ def _test():
     '''
     
     '''
-
+    
+    # HACK: Python 2 does not seem to like the Slider widget...
+    import sys
+    if sys.version_info[0] < 3:
+        return
+        
     plot()
     pl.show()
 
