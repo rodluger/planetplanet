@@ -82,7 +82,7 @@ def _colorline(ax, x, y, color = (0, 0, 0), **kwargs):
                     # ?!
                     color = 'black'
             hex = matplotlib.colors.cnames[color.lower()][1:]
-        r, g, b = tuple(int(hex[i:i+2], 16) / 255. for i in (0, 2 ,4))
+        r, g, b = tuple(int(hex[i:i+2], 16) / 255. for i in (0, 2, 4))
     else:
         r, g, b = color
 
@@ -316,6 +316,9 @@ class System(object):
         # Check that the first body is a star
         assert self.bodies[0].body_type == 'star', \
                'The first body must be a :py:class:`Star`.'
+
+        # Force cartesian coords for the star.
+        self.bodies[0].cartesian = True
 
         # Check that if there are N stars, the first N bodies are stars
         nstars = np.sum([int(b.body_type == 'star') for b in self.bodies])
@@ -934,13 +937,15 @@ class System(object):
     def plot_occultation(self, body, time, wavelength = 15., interval = 50,
                          gifname = None, spectral = False,
                          time_unit = 'BJD − 2,450,000',
+                         trail_dur = 1.,
                          **kwargs):
         '''
         Plots and animates an occultation event.
 
         :param body: The occulted body
         :type body: :py:class:`BODY`
-        :param float time: The time of the occultation event (BJD − 2,450,000)
+        :param float time: The approximate time of the occultation event \
+               (BJD − 2,450,000)
         :param float wavelength: The wavelength in microns at which to plot \
                the light curve. Must be within the wavelength grid. \
                Default `15`
@@ -952,6 +957,9 @@ class System(object):
                If :py:obj:`True`, plots the first, middle, and last \
                wavelength in the wavelength grid. If :py:obj:`False`, plots \
                the specified `wavelength`. Default :py:obj:`True`
+        :param float trail_dur: Duration of the orbital trails in days when \
+               plotting the orbits. The plotting code actually calls \
+               :py:mod:`rebound` to compute these. Default `1`
         :param kwargs: Any additional keyword arguments to be passed to \
                :py:func:`plot_image`
 
@@ -1040,23 +1048,25 @@ class System(object):
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
                               1e6 * body.wavelength[-1]))
                               + r"\ \mu\mathrm{m}$")
+            axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold',
+                            fontsize = 10)
+            axlc.legend(loc = 'lower right', fontsize = 8)
         else:
-
             fluxw = body.flux_hr[t, w] / body.total_flux[w]
-            axlc.plot(body.time_hr[t], fluxw, 'k-',
-                      label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
-                              1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$")
+            axlc.plot(body.time_hr[t], fluxw, 'k-')
+            label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
+                    1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$"
+            axlc.set_ylabel(r'Normalized Flux (%s)' % label,
+                            fontweight = 'bold', fontsize = 10)
 
         axlc.set_xlabel('Time [%s]' % time_unit, fontweight = 'bold',
                         fontsize = 10)
-        axlc.set_ylabel(r'Normalized Flux', fontweight = 'bold', fontsize = 10)
         axlc.get_yaxis().set_major_locator(MaxNLocator(4))
         axlc.get_xaxis().set_major_locator(MaxNLocator(4))
         tracker = axlc.axvline(body.time_hr[ti], color = 'k',
                                alpha = 0.5, lw = 1, ls = '--')
         for tick in axlc.get_xticklabels() + axlc.get_yticklabels():
             tick.set_fontsize(8)
-        axlc.legend(loc = 'lower right', fontsize = 8)
         axlc.ticklabel_format(useOffset = False)
         if body.time_hr[ti] > 1e4:
             for label in axlc.get_xmajorticklabels():
@@ -1088,15 +1098,15 @@ class System(object):
                                    zorder = 99, clip_on = False,
                                    ms = 5, markeredgewidth = 2)
 
-        # Plot the orbits
-        # We will run REBOUND backwards in time for a duration
-        # equal to the longest orbital period in the system.
-        # But let's cap it at 5,000 steps just to be safe.
+        # Plot the orbits. We will run rebound
+        # backwards in time to get the orbital
+        # trails. This avoids having to deal with
+        # the case when the occultation is at the
+        # beginning of the timeseries!
         if not self.settings.quiet:
             print("Computing orbits for plotting...")
         per = np.max([b.per for b in self.bodies])
-        tlong = np.arange(0, min(1.5 * per, 5000 * self.settings.timestep),
-                          self.settings.timestep)
+        tlong = np.arange(0, trail_dur, self.settings.timestep)
         sim = rebound.Simulation()
         sim.G = GEARTH
         for b in self.bodies:
@@ -1115,26 +1125,18 @@ class System(object):
         maxx = maxy = maxz = 0.
         for j, b in enumerate(self.bodies):
 
-            # Trim the array to a single orbit
-            if b.per == 0:
-                one_orbit = range(len(tlong))
-            elif b.per < tlong[-1]:
-                one_orbit = range(np.argmax(tlong > b.per))
-            else:
-                one_orbit = range(len(tlong))
-
             # Top view
-            _colorline(axxz, x[j][one_orbit][::-1], z[j][one_orbit][::-1], lw = 1,
+            _colorline(axxz, x[j][::-1], z[j][::-1], lw = 1,
                        clip_on = False, color = b.color)
 
             # Side view
-            _colorline(axzy, z[j][one_orbit][::-1], y[j][one_orbit][::-1], lw = 1,
+            _colorline(axzy, z[j][::-1], y[j][::-1], lw = 1,
                        clip_on = False, color = b.color)
 
             # Axis limits
-            maxx = max(maxx, np.max(x[j][one_orbit][::-1]), -np.min(x[j][one_orbit][::-1]))
-            maxy = max(maxy, np.max(y[j][one_orbit][::-1]), -np.min(y[j][one_orbit][::-1]))
-            maxz = max(maxz, np.max(z[j][one_orbit][::-1]), -np.min(z[j][one_orbit][::-1]))
+            maxx = max(maxx, np.max(x[j][::-1]), -np.min(x[j][::-1]))
+            maxy = max(maxy, np.max(y[j][::-1]), -np.min(y[j][::-1]))
+            maxz = max(maxz, np.max(z[j][::-1]), -np.min(z[j][::-1]))
 
         # Symmetrical limits
         axxz.set_ylim(-maxz, maxz)
@@ -1453,7 +1455,7 @@ class System(object):
         else:
             return fig, ax
 
-    def plot_orbits(self, bodies = 'all', nper = 1):
+    def plot_orbits(self, bodies = 'all', trail_dur = 1.):
         '''
         Plot the orbits of a given set of bodies over `nper` periods.
 
@@ -1472,7 +1474,7 @@ class System(object):
                corresponding to their names or a list of \
                :py:obj:`Planet <planetplanet.photo.structs.Planet>` instances.\
                Default is to plot all planets in the system
-        :param int nper: The number of periods over which to draw the orbits. \
+        :param float trail_dur: The duration of the orbital trails in days. \
                Default `1`
         :returns: A figure and an axis instance
 
@@ -1504,14 +1506,10 @@ class System(object):
                                    for b in self.bodies])]
 
             # Trim the arrays
-            N = min(1, nper / ((body.time[-1] - body.time[0])
-                              / body.per)) * len(body.time)
-            if N > len(body.x):
-                N = len(body.x)
-            N = int(N)
-            x = body.x[-N:]
-            y = body.y[-N:]
-            z = body.z[-N:]
+            N = np.argmax(body.time > body.time[-1] - trail_dur)
+            x = body.x[N:]
+            y = body.y[N:]
+            z = body.z[N:]
 
             # x-z
             _colorline(ax[0,0], x, z, lw = 1, color = body.color)

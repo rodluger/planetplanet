@@ -295,15 +295,11 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
   r->heartbeat = heartbeat;
   r->exact_finish_time = 1;
 
-  // Initialize the central star
-  struct reb_particle primary = {0};
-  primary.m = body[0]->m;
-  reb_add(r, primary);
-
-    // Initialize the planets
-    for (p = 1; p < np; p++) {
+  // Initialize the particles
+  for (p = 0; p < np; p++) {
 
       if (!(body[p]->cartesian)) {
+
         // We're doing orbital elements.
         // Get the true anomaly at the first timestep
         M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);
@@ -314,52 +310,49 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
         if (E == -1) return ERR_KEPLER;
         f = TrueAnomaly(E, body[p]->ecc);
 
-        if (body[p]->host == -1) {
-          // Host is the center of mass
-          struct reb_particle cm = reb_get_com(r);
-          struct reb_particle planet = reb_tools_orbit_to_particle(r->G, cm, body[p]->m,
+        // Instantiate it w/ respect to either the center of mass or its host body
+        struct reb_particle refbody;
+        if (body[p]->host == -1) refbody = reb_get_com(r);
+        else refbody = r->particles[body[p]->host];
+        struct reb_particle particle = reb_tools_orbit_to_particle(r->G, refbody, body[p]->m,
                                        body[p]->a, body[p]->ecc, body[p]->inc,
                                        body[p]->Omega, body[p]->w, f);
-          reb_add(r, planet);
-        } else {
-          // Host is a specific body
-          struct reb_particle planet = reb_tools_orbit_to_particle(r->G, r->particles[body[p]->host], body[p]->m,
-                                       body[p]->a, body[p]->ecc, body[p]->inc,
-                                       body[p]->Omega, body[p]->w, f);
-          reb_add(r, planet);
-        }
+        reb_add(r, particle);
+
       } else {
+
         // We're doing Cartesian coordinates.
-        struct reb_particle planet = {0};
-        planet.x = body[p]->x[0];
-        planet.y = body[p]->y[0];
-        planet.z = body[p]->z[0];
-        planet.vx = body[p]->vx[0];
-        planet.vy = body[p]->vy[0];
-        planet.vz = body[p]->vz[0];
-        planet.m = body[p]->m;
-        reb_add(r, planet);
+        struct reb_particle particle = {0};
+        particle.x = body[p]->x[0];
+        particle.y = body[p]->y[0];
+        particle.z = body[p]->z[0];
+        particle.vx = body[p]->vx[0];
+        particle.vy = body[p]->vy[0];
+        particle.vz = body[p]->vz[0];
+        particle.m = body[p]->m;
+        reb_add(r, particle);
         cartesian = 1;
+
       }
 
       // Is this a moon?
       if (body[p]->host > 0) moons++;
 
-    }
+  }
 
-    // Move to center of mass frame
-    reb_move_to_com(r);
+  // Move to center of mass frame
+  reb_move_to_com(r);
 
-    // Store the initial positions
-    last_t = 0;
-    for (p = 0; p < np; p++) {
+  // Store the initial positions
+  last_t = 0;
+  for (p = 0; p < np; p++) {
       body[p]->x[0] = r->particles[p].x;
       body[p]->y[0] = r->particles[p].y;
       body[p]->z[0] = r->particles[p].z;
       body[p]->vx[0] = r->particles[p].vx;
       body[p]->vy[0] = r->particles[p].vy;
       body[p]->vz[0] = r->particles[p].vz;
-    }
+  }
 
   // Integrate!
   for (t = 1; t < body[0]->nt; t++) {
@@ -382,11 +375,18 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
 
         // Go back and compute the ones we skipped
         // with a Keplerian solver using the current
-        // osculating elements
-        // TODO: I am unable to assign a planet as the primary here!
-        // Leads to terrible orbital errors. Need to investigate why.
-        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], primary);
+        // osculating elements.
+        struct reb_particle refbody;
+        if (body[p]->host == -1) refbody = reb_get_com(r);
+        else refbody = r->particles[body[p]->host];
+        struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], refbody);
 
+        // TODO: Currently the Keplerian updates below are disabled
+        // when there are exomoons, binary star systems, or any sort
+        // of nested problem. In principle this could work, but I need
+        // to add the position and velocity of the host to the position
+        // and velocity vectors of the secondary body after computing
+        // its evolution along the osculating orbit.
         for (i = last_t + 1; i < t; i++) {
 
           // Is this the star? If so, assume it hasn't moved
@@ -527,9 +527,10 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
   // only a problem if the user is interested in
   // the updated orbital parameters (period, semi-major
   // axis, etc) of the moon after running the N-body code.
-  // I am turning off the orbital parameter upddating for
-  // now.
-  /*
+
+  // Move to center of mass frame
+  reb_move_to_com(r);
+
   for (p = 0; p < np; p++) {
     if (body[p]->host == -1) {
       struct reb_particle cm = reb_get_com(r);
@@ -552,7 +553,6 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
       body[p]->per = orbit.P;
     }
   }
- */
 
   // Log
   if (!settings.quiet) {

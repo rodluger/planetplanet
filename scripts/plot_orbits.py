@@ -8,13 +8,13 @@ Plot the TRAPPIST-1 planet orbits from different viewing angles.
 
   .. plot::
      :align: center
-     
+
      from scripts import plot_orbits
      plot_orbits._test()
-     
+
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/plot_orbits.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -45,7 +45,7 @@ def plot():
 
     # Compute and plot the orbits
     system.compute(time)
-    fig, ax = system.plot_orbits(cmap = 'jet_r')
+    fig, ax = system.plot_orbits()
 
     return fig, ax
 
