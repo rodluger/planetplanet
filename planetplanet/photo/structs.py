@@ -4,10 +4,10 @@
 structs.py |github|
 -------------------
 
-Contains the :py:obj:`BODY` and :py:obj:`SETTINGS` classes that are passed to C 
-as structs, which are for internal use only. All bodies should be instantiated 
-via the :py:class:`Planet`, :py:class:`Moon`, and :py:class:`Star` subclasses. 
-Settings should be passed directly to the :py:class:`planetplanet.photo.System` 
+Contains the :py:obj:`BODY` and :py:obj:`SETTINGS` classes that are passed to C
+as structs, which are for internal use only. All bodies should be instantiated
+via the :py:class:`Planet`, :py:class:`Moon`, and :py:class:`Star` subclasses.
+Settings should be passed directly to the :py:class:`planetplanet.photo.System`
 class.
 
   .. role:: raw-html(raw)
@@ -30,15 +30,15 @@ __all__ = ['BODY', 'SETTINGS', 'CM', 'Star', 'Planet', 'Moon']
 class CM(object):
     '''
     A class corresponding to a dummy center of mass particle.
-    Used internally. 
-    
+    Used internally.
+
     '''
-    
+
     def __init__(self, *bodies):
         '''
-        
+
         '''
-        
+
         self.name = 'cm'
         self._m = np.sum([body._m for body in bodies])
         self.bodies = bodies
@@ -46,18 +46,18 @@ class CM(object):
     @property
     def body_type(self):
         return 'cm'
- 
+
 class BODY(ctypes.Structure):
     '''
-    The class containing all the input planet/star parameters. This is a 
-    :py:mod:`ctypes` interface to the C :py:obj:`BODY` struct. Users should 
-    instantiate these via the :py:class:`Star`, :py:class:`Planet`, and 
+    The class containing all the input planet/star parameters. This is a
+    :py:mod:`ctypes` interface to the C :py:obj:`BODY` struct. Users should
+    instantiate these via the :py:class:`Star`, :py:class:`Planet`, and
     :py:class:`Moon` classes.
-        
+
     :param str name: The name of the body.
     :param kwargs: Any body-specific :py:obj:`kwargs`. See :py:func:`Star`, \
     :py:func:`Planet`, and :py:func:`Moon`.
-    
+
     '''
 
     #: All the fields
@@ -77,6 +77,7 @@ class BODY(ctypes.Structure):
                 ("_Lambda", ctypes.c_double),
                 ("_Phi", ctypes.c_double),
                 ("_host", ctypes.c_int),
+                ("_cartesian", ctypes.c_int),
                 ("nu", ctypes.c_int),
                 ("nz", ctypes.c_int),
                 ("nt", ctypes.c_int),
@@ -94,7 +95,7 @@ class BODY(ctypes.Structure):
                 ("_flux", ctypes.POINTER(ctypes.c_double)),
                 ("_total_flux", ctypes.POINTER(ctypes.c_double)),
                 ("_maptype", ctypes.c_int),
-                ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double, 
+                ("_radiancemap", ctypes.CFUNCTYPE(ctypes.c_double,
                                  ctypes.c_double, ctypes.c_double)),
                 ]
 
@@ -102,14 +103,14 @@ class BODY(ctypes.Structure):
         '''
 
         '''
-        
+
         # C stuff
         self.nt = 0
         self.nw = 0
         self.nu = 0
         self.tperi0 = 0.
         self.a = 0.
-        
+
         # Universal params
         self.name = name
         self.m = kwargs.pop('m', 1.)
@@ -120,25 +121,32 @@ class BODY(ctypes.Structure):
         self.Omega = kwargs.pop('Omega', 0.)
         self.inc = kwargs.pop('inc', 90.)
         self.cmap = kwargs.pop('cmap', 'inferno')
-        
+        self.cartesian = kwargs.pop('cartesian', False)
+        self.x0 = kwargs.pop('x0', 0)
+        self.y0 = kwargs.pop('y0', 0)
+        self.z0 = kwargs.pop('z0', 0)
+        self.vx0 = kwargs.pop('vx0', 0)
+        self.vy0 = kwargs.pop('vy0', 0)
+        self.vz0 = kwargs.pop('vz0', 0)
+
         # Python stuff
         self._inds = []
         self._computed = False
-        
+
     @property
     def radiancemap(self):
         return self._py_radiancemap
-    
+
     @radiancemap.setter
     def radiancemap(self, val):
         self._py_radiancemap = val
         self._radiancemap = val.ctypes
         self._maptype = val.maptype
-        
+
     @property
     def m(self):
         return self._m
-    
+
     @m.setter
     def m(self, val):
         self._m = val
@@ -150,14 +158,22 @@ class BODY(ctypes.Structure):
     @r.setter
     def r(self, val):
         self._r = val
-    
+
     @property
     def phasecurve(self):
         return bool(self._phasecurve)
-    
+
     @phasecurve.setter
     def phasecurve(self, val):
         self._phasecurve = int(val)
+
+    @property
+    def cartesian(self):
+        return bool(self._cartesian)
+
+    @cartesian.setter
+    def cartesian(self, val):
+        self._cartesian = int(val)
 
     @property
     def inc(self):
@@ -236,19 +252,19 @@ class BODY(ctypes.Structure):
     @ecc.setter
     def ecc(self, val):
         '''
-        We need to update the time of pericenter passage whenever the 
-        eccentricty, longitude of pericenter, period, or time of transit 
+        We need to update the time of pericenter passage whenever the
+        eccentricty, longitude of pericenter, period, or time of transit
         changes. See the appendix in Shields et al. (2016).
 
         '''
 
         self._ecc = val
         fi = (3 * np.pi / 2.) - self._w
-        self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) / 
+        self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) /
                      (2. * np.pi) * (self.ecc * np.sin(fi) /
-                     (1. + self.ecc * np.cos(fi)) - 2. 
+                     (1. + self.ecc * np.cos(fi)) - 2.
                      / np.sqrt(1. - self.ecc * self.ecc)
-                     * np.arctan2(np.sqrt(1. - self.ecc * self.ecc) 
+                     * np.arctan2(np.sqrt(1. - self.ecc * self.ecc)
                      * np.tan(fi/2.), 1. + self.ecc)))
 
     def M(self, t):
@@ -258,11 +274,11 @@ class BODY(ctypes.Structure):
         '''
 
         return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
-    
+
     @property
     def body_type(self):
         return None
-  
+
 class Planet(BODY):
     '''
     A planet :py:class:`BODY` class.
@@ -312,7 +328,7 @@ class Planet(BODY):
         '''
 
         '''
-        
+
         self.nz = kwargs.pop('nz', 11)
         self._per = kwargs.pop('per', 3.)
         self.albedo = kwargs.pop('albedo', 0.3)
@@ -326,28 +342,28 @@ class Planet(BODY):
         self.host = kwargs.pop('host', 0)
         self.radiancemap = kwargs.get('radiancemap', RadiativeEquilibriumMap())
         super(Planet, self).__init__(*args, **kwargs)
-    
+
     @property
     def body_type(self):
         return 'planet'
-    
+
     def draw_orbit(self, **kwargs):
         '''
-        Draws the orbit of the body on the sky. Accepts the keyword 
+        Draws the orbit of the body on the sky. Accepts the keyword
         arguments taken by :py:func:`planetplanet.photo.eyeball.DrawOrbit`.
-        
+
         '''
-        
+
         from .eyeball import DrawOrbit
-        return DrawOrbit(inc = self.inc, Omega = self.Omega, ecc = self.ecc, 
-                         w = self.w, Phi = self.Phi, Lambda = self.Lambda, 
-                         radiancemap = self.radiancemap, **kwargs) 
+        return DrawOrbit(inc = self.inc, Omega = self.Omega, ecc = self.ecc,
+                         w = self.w, Phi = self.Phi, Lambda = self.Lambda,
+                         radiancemap = self.radiancemap, **kwargs)
 
 class Moon(Planet):
     '''
     A moon :py:class:`BODY` class. This is just an alias of the
     :py:class:`Planet` class.
-    
+
     '''
 
     def __init__(self, *args, **kwargs):
@@ -355,15 +371,15 @@ class Moon(Planet):
         assert kwargs.get('host', 0) != 0, "Please provide a valid host " + \
                                            "for this moon."
         super(Moon, self).__init__(*args, **kwargs)
-    
+
     @property
     def body_type(self):
         return 'moon'
-    
+
     def draw_orbit(self, **kwargs):
         raise NotImplementedError('This feature is not '
                                   'yet implemented for moons.')
-      
+
 class Star(BODY):
     '''
     A star :py:class:`BODY` class.
@@ -405,7 +421,7 @@ class Star(BODY):
         '''
 
         '''
-        
+
         self.nz = kwargs.pop('nz', 31)
         self._per = kwargs.pop('per', 0.)
         self.albedo = 0.
@@ -419,7 +435,7 @@ class Star(BODY):
         self.host = kwargs.pop('host', None)
         self.radiancemap = kwargs.get('radiancemap', LimbDarkenedMap())
         super(Star, self).__init__(*args, **kwargs)
-    
+
     @property
     def body_type(self):
         return 'star'
@@ -448,9 +464,9 @@ class Star(BODY):
     def phasecurve(self, val):
         '''
         Can't set this property for the star.
-        
+
         '''
-        
+
         pass
 
     @property
@@ -471,8 +487,8 @@ class Star(BODY):
 
 class SETTINGS(ctypes.Structure):
     '''
-    The class that contains the model settings. This class is used internally; 
-    settings should be specified as :py:obj:`kwargs` to :py:class:`System` or 
+    The class that contains the model settings. This class is used internally;
+    settings should be specified as :py:obj:`kwargs` to :py:class:`System` or
     by assignment once a :py:class:`System` object has been instantiated.
 
     :param bool nbody: Uses the :py:obj:`REBOUND` N-body code to compute \
@@ -548,8 +564,8 @@ class SETTINGS(ctypes.Structure):
     @property
     def params(self):
         return ['nbody', 'integrator', 'keptol', 'maxkepiter', 'kepsolver',
-                'timestep', 'adaptive', 'circleopt', 'batmanopt', 
-                'quarticsolver', 'quiet', 'mintheta', 'maxvertices', 
+                'timestep', 'adaptive', 'circleopt', 'batmanopt',
+                'quarticsolver', 'quiet', 'mintheta', 'maxvertices',
                 'maxfunctions', 'oversample', 'distance', 'nstars',
                 'plot_tres']
 
@@ -608,17 +624,17 @@ class SETTINGS(ctypes.Structure):
             self._integrator = REB_INTEGRATOR_IAS15
         else:
             raise ValueError("Unsupported integrator.")
-    
+
     @property
     def quarticsolver(self):
         if self._quarticsolver == QGSL:
             return 'gsl'
-            
+
     @quarticsolver.setter
     def quarticsolver(self, val):
         if val.lower() == 'gsl':
             self._quarticsolver = QGSL
-        else:		
+        else:
             raise ValueError("Unsupported solver.")
 
     @property

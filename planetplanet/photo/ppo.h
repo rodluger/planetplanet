@@ -5,27 +5,27 @@
 #include <stdio.h>
 #include <math.h>
 
-// Models         
+// Models
 #define MDFAST                  0                                                              /**< Use the Murray & Dermott fast Kepler solver */
 #define NEWTON                  1                                                              /**< Use the standard Newton Kepler solver */
 #define QGSL                    3                                                              /**< Use the GSL complex polynomial solver */
-         
-// Surface maps         
+
+// Surface maps
 #define MAP_NONE               -1                                                              /**< No map defined */
 #define MAP_RADIAL_DEFAULT      0                                                              /**< Default radially-symmetric LimbDarkenedMap */
 #define MAP_RADIAL_CUSTOM       1                                                              /**< Custom compiled Python radially-symmetric map */
 #define MAP_ELLIPTICAL_DEFAULT  2                                                              /**< Default elliptically-symmetric RadiativeEquilibriumMap */
 #define MAP_ELLIPTICAL_CUSTOM   3                                                              /**< Custom compiled Python elliptically-symmetric map */
-         
-// Errors         
+
+// Errors
 #define ERR_NONE                0                                                              /**< No error occurred */
 #define ERR_NOT_IMPLEMENTED     1                                                              /**< Function/option not yet implemented */
 #define ERR_KEPLER              2                                                              /**< Error in the Kepler solver; probably didn't converge */
 #define ERR_INPUT               3                                                              /**< Bad input value */
 #define ERR_TOO_FEW_OCCS        4                                                              /**< No or too few occultations detected over the specified time interval */
 #define ERR_OOB                 -1                                                             /**< Warning: out of bounds */
-         
-// Constants         
+
+// Constants
 #define PI                      acos(-1.)                                                      /**< Plain old pi */
 #define BIGG                    6.67428e-11                                                    /**< Gravitational constant (mks) */
 #define DAYSEC                  86400.                                                         /**< Number of seconds in one day */
@@ -40,7 +40,7 @@
 #define MEARTH                  5.9722e24                                                      /**< Mass of Earth in kg */
 #define GEARTH                  (BIGG * DAYSEC * DAYSEC * MEARTH / (REARTH * REARTH * REARTH)) /**< Graviational constant in Earth units */
 
-// Settings         
+// Settings
 #define MAXIM                   1.e-2                                                          /**< Maximum magnitude of the imaginary component for root to be treated as real */
 #define SMALL                   1.e-10                                                         /**< Tolerance in the geometry routines */
 #define TINY                    1.e-15                                                         /**< Tolerance in the geometry routines */
@@ -48,7 +48,7 @@
 #define CRESCENTNZ              31                                                             /**< Number of zenith slices in the tiny crescent limit */
 
 /**
-A radiance map function of the wavelength and the zenith angle. 
+A radiance map function of the wavelength and the zenith angle.
 
 */
 typedef double (*RADIANCEMAP)(double, double);
@@ -74,6 +74,7 @@ typedef struct {
   double Lambda;                                                                      /**< Longitudinal hotspot offset in radians */
   double Phi;                                                                         /**< Latitudinal hotspot offset in radians */
   int host;                                                                           /**< The index of this body's host */
+  int cartesian;                                                                      /**< Initialize body based on its Cartesian coords? */
   int nu;                                                                             /**< Number of limb darkening coefficients (per wavelength) */
   int nz;                                                                             /**< Number of zenith angle slices */
   int nt;                                                                             /**< Size of time array */
@@ -86,7 +87,7 @@ typedef struct {
   double *z;                                                                          /**< The Cartesian z position on the sky (into sky positive) */
   double *vx;                                                                         /**< The Cartesian x velocity on the sky (right positive) */
   double *vy;                                                                         /**< The Cartesian y velocity on the sky (up positive) */
-  double *vz;                                                                         /**< The Cartesian z velocity on the sky (into sky positive) */  
+  double *vz;                                                                         /**< The Cartesian z velocity on the sky (into sky positive) */
   int *occultor;                                                                      /**< The array of occultor bit flags */
   double *flux;                                                                       /**< The grid of observed flux from this body in time/wavelength */
   double *total_flux;                                                                 /**< The total unocculted flux of this body at full phase */

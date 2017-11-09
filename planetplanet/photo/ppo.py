@@ -58,7 +58,7 @@ def _colorline(ax, x, y, color = (0, 0, 0), **kwargs):
     Adapted from `http://nbviewer.jupyter.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb`_.
 
     '''
-    
+
     # A bit hacky... But there doesn't seem to be
     # an easy way to get the hex code for a named color...
     if isinstance(color, string_types):
@@ -265,7 +265,7 @@ class System(object):
             body.ecc = body._ecc
         self._names = np.array([p.name for p in self.bodies])
         self.colors = [b.color for b in self.bodies]
-        
+
         # Evaluate the body host names
         for i, body in enumerate(self.bodies):
             if body.host is None:
@@ -290,7 +290,7 @@ class System(object):
                   # Something went wrong
                   raise ValueError("Invalid `host` setting for body `%s`."
                                      % body.name)
-            
+
         # Compute the semi-major axis for each body (in Earth radii)
         for body in self.bodies:
             body._computed = False
@@ -316,7 +316,7 @@ class System(object):
         # Check that the first body is a star
         assert self.bodies[0].body_type == 'star', \
                'The first body must be a :py:class:`Star`.'
-        
+
         # Check that if there are N stars, the first N bodies are stars
         nstars = np.sum([int(b.body_type == 'star') for b in self.bodies])
         assert np.all([b.body_type == 'star' for b in self.bodies[:nstars]]), \
@@ -324,12 +324,12 @@ class System(object):
                'before any planets or moons.'
         self.settings.nstars = nstars
         self.nstars = nstars
-        
+
         # Check that if there are multiple stars, Keplerian solver is off
         if nstars > 1:
             assert self.settings.nbody, "N-body integrator must be selected" \
                    "for systems with multiple stars."
-        
+
         # If there's more than one star, disable the RadiativeEquilibriumMap
         if 'star' in [b.body_type for b in self.bodies[1:]]:
             for b in self.bodies[1:]:
@@ -382,16 +382,22 @@ class System(object):
             body.wavelength = np.zeros(nw)
             body._wavelength = np.ctypeslib.as_ctypes(body.wavelength)
             body.x = np.zeros(nt)
+            body.x[0] = body.x0
             body._x = np.ctypeslib.as_ctypes(body.x)
             body.y = np.zeros(nt)
+            body.y[0] = body.y0
             body._y = np.ctypeslib.as_ctypes(body.y)
             body.z = np.zeros(nt)
+            body.z[0] = body.z0
             body._z = np.ctypeslib.as_ctypes(body.z)
             body.vx = np.zeros(nt)
+            body.vx[0] = body.vx0
             body._vx = np.ctypeslib.as_ctypes(body.vx)
             body.vy = np.zeros(nt)
+            body.vy[0] = body.vy0
             body._vy = np.ctypeslib.as_ctypes(body.vy)
             body.vz = np.zeros(nt)
+            body.vz[0] = body.vz0
             body._vz = np.ctypeslib.as_ctypes(body.vz)
             body.occultor = np.zeros(nt, dtype = 'int32')
             body._occultor = np.ctypeslib.as_ctypes(body.occultor)
@@ -926,7 +932,7 @@ class System(object):
         return times, occultors, durations
 
     def plot_occultation(self, body, time, wavelength = 15., interval = 50,
-                         gifname = None, spectral = False, 
+                         gifname = None, spectral = False,
                          time_unit = 'BJD − 2,450,000',
                          **kwargs):
         '''
@@ -1064,7 +1070,24 @@ class System(object):
                 occultors.append(b)
         zorders = [-self.bodies[o].z_hr[ti] for o in occultors]
         occultors = [o for (z,o) in sorted(zip(zorders, occultors))]
-        
+
+        # Our orbital plot axes
+        axxz = pl.subplot2grid((5, 4), (0, 0), colspan = 2, rowspan = 2)
+        axzy = pl.subplot2grid((5, 4), (0, 2), colspan = 2, rowspan = 2)
+
+        # Plot the locations of the bodies
+        pt_xz = [None for b in self.bodies]
+        pt_zy = [None for b in self.bodies]
+        for bi, b in enumerate(self.bodies):
+            pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'lightgrey',
+                                   alpha = 1, markeredgecolor = b.color,
+                                   zorder = 99, clip_on = False,
+                                   ms = 5, markeredgewidth = 2)
+            pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = 'lightgrey',
+                                   alpha = 1, markeredgecolor = b.color,
+                                   zorder = 99, clip_on = False,
+                                   ms = 5, markeredgewidth = 2)
+
         # Plot the orbits
         # We will run REBOUND backwards in time for a duration
         # equal to the longest orbital period in the system.
@@ -1078,7 +1101,7 @@ class System(object):
         sim.G = GEARTH
         for b in self.bodies:
             sim.add(m = b._m, x = b.x_hr[tf], y = b.y_hr[tf],
-                    z = b.z_hr[tf], vx = -b.vx_hr[tf], 
+                    z = b.z_hr[tf], vx = -b.vx_hr[tf],
                     vy = -b.vy_hr[tf], vz = -b.vz_hr[tf])
         x = np.zeros((len(self.bodies), len(tlong)))
         y = np.zeros((len(self.bodies), len(tlong)))
@@ -1089,48 +1112,40 @@ class System(object):
                 x[q,i] = sim.particles[q].x
                 y[q,i] = sim.particles[q].y
                 z[q,i] = sim.particles[q].z
-        axxz = pl.subplot2grid((5, 4), (0, 0), colspan = 2, rowspan = 2)
-        axzy = pl.subplot2grid((5, 4), (0, 2), colspan = 2, rowspan = 2)
+        maxx = maxy = maxz = 0.
         for j, b in enumerate(self.bodies):
-            
-            # Trim the array
-            one_orbit = range(np.argmax(tlong > b.per))
+
+            # Trim the array to a single orbit
+            if b.per == 0:
+                one_orbit = range(len(tlong))
+            elif b.per < tlong[-1]:
+                one_orbit = range(np.argmax(tlong > b.per))
+            else:
+                one_orbit = range(len(tlong))
 
             # Top view
-            _colorline(axxz, x[j][one_orbit], z[j][one_orbit], lw = 1, 
+            _colorline(axxz, x[j][one_orbit][::-1], z[j][one_orbit][::-1], lw = 1,
                        clip_on = False, color = b.color)
-            
+
             # Side view
-            _colorline(axzy, z[j][one_orbit], y[j][one_orbit], lw = 1, 
+            _colorline(axzy, z[j][one_orbit][::-1], y[j][one_orbit][::-1], lw = 1,
                        clip_on = False, color = b.color)
-          
-        # Plot the locations of the bodies
-        pt_xz = [None for b in self.bodies]
-        pt_zy = [None for b in self.bodies]
-        for bi, b in enumerate(self.bodies):
-            pt_xz[bi], = axxz.plot(b.x_hr[ti], b.z_hr[ti], 'o', color = 'lightgrey',
-                                   alpha = 1, markeredgecolor = b.color,
-                                   zorder = 99, clip_on = False,
-                                   ms = 5, markeredgewidth = 2)
-            pt_zy[bi], = axzy.plot(b.z_hr[ti], b.y_hr[ti], 'o', color = 'lightgrey',
-                                   alpha = 1, markeredgecolor = b.color,
-                                   zorder = 99, clip_on = False,
-                                   ms = 5, markeredgewidth = 2)   
-        
+
+            # Axis limits
+            maxx = max(maxx, np.max(x[j][one_orbit][::-1]), -np.min(x[j][one_orbit][::-1]))
+            maxy = max(maxy, np.max(y[j][one_orbit][::-1]), -np.min(y[j][one_orbit][::-1]))
+            maxz = max(maxz, np.max(z[j][one_orbit][::-1]), -np.min(z[j][one_orbit][::-1]))
+
         # Symmetrical limits
-        axxz.set_ylim(-max(np.abs(axxz.get_ylim())),
-                      max(np.abs(axxz.get_ylim())))
-        axxz.set_xlim(-max(np.abs(axxz.get_xlim())),
-                      max(np.abs(axxz.get_xlim())))
-        axzy.set_ylim(-max(np.abs(axzy.get_ylim())),
-                      max(np.abs(axzy.get_ylim())))
-        axzy.set_xlim(-max(np.abs(axzy.get_xlim())),
-                      max(np.abs(axzy.get_xlim())))
+        axxz.set_ylim(-maxz, maxz)
+        axxz.set_xlim(-maxx, maxx)
+        axzy.set_ylim(-maxy, maxy)
+        axzy.set_xlim(-maxz, maxz)
         axxz.set_aspect('equal')
         axzy.set_aspect('equal')
         axxz.axis('off')
         axzy.axis('off')
-        
+
         # Legend
         axlg = pl.axes([0.2, 0.4, 0.8, 0.4])
         axlg.axis('off')
@@ -1170,7 +1185,7 @@ class System(object):
                       textcoords = 'offset points',
                       ha = 'center', va = 'center',
                       arrowprops=dict(arrowstyle="<|-", lw = 0.5, color = 'k'))
-        
+
         # Plot the image
         axim, occ, xy = self.plot_image(ti, body, occultors, fig = fig,
                                         wavelength = wavelength, **kwargs)
@@ -1303,11 +1318,11 @@ class System(object):
         # Draw the eyeball planet and the occultor(s)
         fig, ax, occ, xy = DrawEyeball(figx, figy, figr, occulted.radiancemap,
                                        theta = theta, gamma = gamma,
-                                       occultors = occ_dict, 
+                                       occultors = occ_dict,
                                        cmap = occulted.cmap,
                                        fig = fig, wavelength = wavelength,
                                        teff = occulted.teff,
-                                       limbdark = occulted.limbdark, 
+                                       limbdark = occulted.limbdark,
                                        color = occulted.color,
                                        **kwargs)
 
@@ -1438,9 +1453,9 @@ class System(object):
         else:
             return fig, ax
 
-    def plot_orbits(self, planets = 'all', nper = 1, cmap = 'inferno'):
+    def plot_orbits(self, bodies = 'all', nper = 1):
         '''
-        Plot the orbits of a given set of planets over `nper` periods.
+        Plot the orbits of a given set of bodies over `nper` periods.
 
         .. plot::
              :align: center
@@ -1459,8 +1474,6 @@ class System(object):
                Default is to plot all planets in the system
         :param int nper: The number of periods over which to draw the orbits. \
                Default `1`
-        :param str cmap: The color map to use when coloring the orbital \
-               tracks. Default `inferno`
         :returns: A figure and an axis instance
 
         '''
@@ -1473,46 +1486,44 @@ class System(object):
                             "first.")
 
         # Get planets
-        if (planets == 'all') or (planets is None):
-            planets = [body for body in self.bodies
-                       if body.body_type == 'planet']
-        elif not hasattr(planets, '__len__'):
-            planets = [planets]
-
-        # Color scheme
-        rgb = [pl.get_cmap(cmap)(i)[:3] for i in np.linspace(0,1,len(planets))]
+        if (bodies == 'all') or (bodies is None):
+            bodies = self.bodies
+        elif not hasattr(bodies, '__len__'):
+            bodies = [bodies]
 
         # Set up
         fig, ax = pl.subplots(2,2, figsize = (8,8))
         fig.subplots_adjust(wspace = 0.2, hspace = 0.2)
         arrs = np.array([])
 
-        for i, planet in enumerate(planets):
+        for i, body in enumerate(bodies):
 
             # Ensure we have a planet instance
-            if isinstance(planet, string_types):
-                planet = self.bodies[np.argmax([b.name == planet
-                                                for b in self.bodies])]
+            if isinstance(body, string_types):
+                body = self.bodies[np.argmax([b.name == body
+                                   for b in self.bodies])]
 
             # Trim the arrays
-            N = min(1, nper / ((planet.time[-1] - planet.time[0])
-                              / planet.per)) * len(planet.time)
+            N = min(1, nper / ((body.time[-1] - body.time[0])
+                              / body.per)) * len(body.time)
+            if N > len(body.x):
+                N = len(body.x)
             N = int(N)
-            x = planet.x[-N:]
-            y = planet.y[-N:]
-            z = planet.z[-N:]
+            x = body.x[-N:]
+            y = body.y[-N:]
+            z = body.z[-N:]
 
             # x-z
-            _colorline(ax[0,0], x, z, lw = 1, color = rgb[i])
-            ax[0,0].plot(x[-1], z[-1], '.', color = rgb[i])
+            _colorline(ax[0,0], x, z, lw = 1, color = body.color)
+            ax[0,0].plot(x[-1], z[-1], '.', color = body.color)
 
             # x-y
-            _colorline(ax[1,0], x, y, lw = 1, color = rgb[i])
-            ax[1,0].plot(x[-1], y[-1], '.', color = rgb[i])
+            _colorline(ax[1,0], x, y, lw = 1, color = body.color)
+            ax[1,0].plot(x[-1], y[-1], '.', color = body.color)
 
             # z-y
-            _colorline(ax[1,1], z, y, lw = 1, color = rgb[i])
-            ax[1,1].plot(z[-1], y[-1], '.', color = rgb[i])
+            _colorline(ax[1,1], z, y, lw = 1, color = body.color)
+            ax[1,1].plot(z[-1], y[-1], '.', color = body.color)
 
             # Append to running array
             arrs = np.hstack((arrs, x, y, z))
@@ -1533,7 +1544,6 @@ class System(object):
 
         lim = 1.2 * np.max((np.abs(np.min(arrs)), np.abs(np.max(arrs))))
         for axis in [ax[0,0], ax[1,0], ax[1,1]]:
-            axis.plot(0, 0, 'k', marker = r'$\star$', zorder = -1)
             for tick in axis.get_xticklabels() + axis.get_yticklabels():
                 tick.set_fontsize(8)
             axis.set_xlim(-lim, lim)
