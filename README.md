@@ -17,7 +17,7 @@ occults (transits) the disk of another planet in the same planetary system, bloc
 
 `planetplanet` is coded in C and wrapped in a user-friendly Python interface. Once installed, generating light curves is as easy as
 
-```
+```python
 import planetplanet as pp
 import numpy as np
 import matplotlib.pyplot as pl
