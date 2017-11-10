@@ -326,7 +326,7 @@ and Agol (2017) for the planets' mutual inclinations. First, let's look at the o
    time = np.arange(0, 10, 0.001)
    system = pp.Trappist1(sample = True)
    system.compute(time)
-   system.plot_orbits(cmap = 'jet_r')
+   system.plot_orbits()
    pl.show()
 
 The plot in the lower left-hand corner is the view from Earth. We can also plot the full system light curve as before:
