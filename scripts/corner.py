@@ -10,14 +10,14 @@ occultations.
 
 .. plot::
    :align: center
-   
+
    from scripts import corner
    corner._test()
 
 .. role:: raw-html(raw)
    :format: html
 .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/corner.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
-   
+
 '''
 
 from __future__ import print_function, absolute_import, unicode_literals
@@ -60,13 +60,13 @@ except ImportError:
 
 def _test():
   '''
-  
+
   '''
-  
+
   samples = np.random.randn(1000000, 3)
-  corner(samples, bins = 100)
+  corner(samples, bins = 100, plot_datapoints=False,cmap='viridis')
   pl.show()
-  
+
 def corner(xs, bins=20, range=None, weights=None, color="k",
            smooth=None, smooth1d=None,
            labels=None, label_kwargs=None,
@@ -475,10 +475,10 @@ def hist2d(x, y, bins=20, range=None, weights=None, levels=None, smooth=None,
     ])
 
     # Simple imshow
-    ax.imshow(H2.T, extent = (X2[0],X2[-1],Y2[0],Y2[-1]), origin = 'lower', 
+    ax.imshow(H2.T, extent = (X2[0],X2[-1],Y2[0],Y2[-1]), origin = 'lower',
               aspect = 'auto', interpolation = 'lanczos',
               cmap = pl.get_cmap(cmap))
-    
+
     # Datapoints
     if plot_datapoints:
         data_kwargs["color"] = data_kwargs.get("color", color)
@@ -486,6 +486,6 @@ def hist2d(x, y, bins=20, range=None, weights=None, levels=None, smooth=None,
         data_kwargs["mec"] = data_kwargs.get("mec", "none")
         data_kwargs["alpha"] = data_kwargs.get("alpha", 0.1)
         ax.plot(x, y, "o", zorder=1, rasterized=True, **data_kwargs)
-        
+
     ax.set_xlim(range[0])
     ax.set_ylim(range[1])
