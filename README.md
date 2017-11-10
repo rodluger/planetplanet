@@ -10,27 +10,33 @@
 </p>
 </div>
 
-Generates planet-planet occultation (PPO) light curves in Python. During a PPO, a planet
+A general photodynamical code for modeling exoplanet transits, secondary eclipses, phase curves, and exomoons, as well as eclipsing binaries, circumbinary planets, and more. The code was originally developed to model planet-planet occultation (PPO) light curves for the TRAPPIST-1 system. During a PPO, a planet
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
-We developed this package with the [TRAPPIST-1](http://www.trappist.one) planetary system in mind, but `planetplanet`
-is generally applicable to any exoplanet system. The `planetplanet` package also computes transit light curves, secondary eclipse light curves, and planetary phase curves, as well as occultations of planets by moons and mutual transits of planets
-across the face of their host star.
 
-To install from source:
+Here's a wacky example of what the code can do:
+
+<img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" style="width: 200px;"/>
+
+The `planetplanet` code is now `pip`-installable:
+
+```
+pip install planetplanet
+```
+
+Alternatively, to install from source:
 
 ```
 git clone git@github.com:rodluger/planetplanet.git
 cd planetplanet
-git submodule init
-git submodule update
+git submodule init && git submodule update
 python setup.py develop
 ```
 
-You may need to install the [GNU Scientific Library](https://www.gnu.org/software/gsl/). On a Mac, it's as simple as
+Note that you may need to install the [GNU Scientific Library](https://www.gnu.org/software/gsl/). On a Mac, it's as simple as
 
 ```
 brew install gsl
 ```
 
-Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
+Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information. If you find something is amiss, please submit an [issue](https://github.com/rodluger/planetplanet/issues)!
