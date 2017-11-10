@@ -11,7 +11,7 @@
 </div>
 
 # Intro
-A general photodynamical code for modeling exoplanet transits, secondary eclipses, phase curves, and exomoons, as well as eclipsing binaries, circumbinary planets, and more. The code was originally developed to model planet-planet occultation (PPO) light curves for the TRAPPIST-1 system. During a PPO, a planet
+`planetplanet` is a general photodynamical code for modeling exoplanet transits, secondary eclipses, phase curves, and exomoons, as well as eclipsing binaries, circumbinary planets, and more. The code was originally developed to model planet-planet occultation (PPO) light curves for the TRAPPIST-1 system. During a PPO, a planet
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
 
@@ -60,7 +60,13 @@ brew install gsl
 ```
 
 # Just for fun
-Here's a wacky example of a transit of a [circumbinary exomoon](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py)!
+Here's a an example of a planet-planet occultation [**[code]**](https://github.com/rodluger/planetplanet/blob/master/scripts/occultation.py):
+
+<div align="center">
+<img src="https://rodluger.github.io/planetplanet/_images/ppo.gif" alt="Planet-planet occultation" width="500px">
+</div>
+
+And here's a wacky example of a transit of a circumbinary exomoon [**[code]**](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py):
 
 <div align="center">
 <img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" width="500px">
