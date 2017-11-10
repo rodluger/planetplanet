@@ -10,16 +10,12 @@
 </p>
 </div>
 
+# Intro
 A general photodynamical code for modeling exoplanet transits, secondary eclipses, phase curves, and exomoons, as well as eclipsing binaries, circumbinary planets, and more. The code was originally developed to model planet-planet occultation (PPO) light curves for the TRAPPIST-1 system. During a PPO, a planet
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
 
-Here's a wacky example of what the code can do: a transits of a circumbinary exomoon!
-
-<div align="center">
-<img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" width="500px">
-</div>
-
+# Installation
 The `planetplanet` code is now `pip`-installable:
 
 ```
@@ -42,3 +38,11 @@ brew install gsl
 ```
 
 Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information. If you find something is amiss, please submit an [issue](https://github.com/rodluger/planetplanet/issues)!
+
+
+# Wacky example
+A transit of a [circumbinary exomoon](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py)!
+
+<div align="center">
+<img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" width="500px">
+</div>
