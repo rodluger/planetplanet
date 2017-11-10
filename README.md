@@ -10,7 +10,7 @@
 </p>
 </div>
 
-# Intro
+# Overview
 `planetplanet` is a general photodynamical code for modeling exoplanet transits, secondary eclipses, phase curves, and exomoons, as well as eclipsing binaries, circumbinary planets, and more. The code was originally developed to model planet-planet occultation (PPO) light curves for the TRAPPIST-1 system. During a PPO, a planet
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
