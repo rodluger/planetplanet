@@ -15,6 +15,28 @@ A general photodynamical code for modeling exoplanet transits, secondary eclipse
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
 
+`planetplanet` is coded in C and wrapped in a user-friendly Python interface. Once installed, generating light curves is as easy as
+
+```
+import planetplanet as pp
+import numpy as np
+import matplotlib.pyplot as pl
+
+star = pp.Star('A', m = 0.1, r = 0.1, limbdark = [0.4, 0.26])
+planet = pp.Planet('b', m = 1, r = 1, t0 = 0., per = 3.)
+system = pp.System(star, planet)
+time = np.arange(-1., 1., 0.0001)
+system.compute(time)
+system.plot_occultation('A', time = 0)
+pl.show()
+```
+
+<div align="center">
+<img src="https://rodluger.github.io/misc/transit.gif" alt="Exoplanet transit light curve" width="500px">
+</div>
+
+Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
+
 # Installation
 The `planetplanet` code is now `pip`-installable:
 
@@ -37,11 +59,8 @@ Note that you may need to install the [GNU Scientific Library](https://www.gnu.o
 brew install gsl
 ```
 
-Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information. If you find something is amiss, please submit an [issue](https://github.com/rodluger/planetplanet/issues)!
-
-
-# Wacky example
-A transit of a [circumbinary exomoon](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py)!
+# Just for fun
+Here's a wacky example of a transit of a [circumbinary exomoon](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py)!
 
 <div align="center">
 <img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" width="500px">
