@@ -63,7 +63,7 @@ brew install gsl
 Here's a an example of a planet-planet occultation [**[code]**](https://github.com/rodluger/planetplanet/blob/master/scripts/occultation.py):
 
 <div align="center">
-<img src="https://rodluger.github.io/planetplanet/_images/ppo.gif" alt="Planet-planet occultation" width="500px">
+<img src="https://rodluger.github.io/misc/ppo.gif" alt="Planet-planet occultation" width="500px">
 </div>
 
 And here's a wacky example of a transit of a circumbinary exomoon [**[code]**](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py):
