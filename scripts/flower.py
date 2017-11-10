@@ -11,13 +11,13 @@ mutual transits.
 
   .. plot::
      :align: center
-     
+
      from scripts import flower
      flower._test()
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/flower.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 
@@ -59,24 +59,24 @@ def plot():
     star = Star('A', m = 0.1, r = 0.1, nz = 21, color = 'k', limbdark = [u1])
 
     # Planet b
-    b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., t0 = 0, 
-               nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False, 
+    b = Planet('b', m = 1, per = 3, inc = 89.6, r = 5., t0 = 0,
+               nz = 11, Omega = 0, w = 0., ecc = 0., phasecurve = False,
                color = 'r')
 
     # Planet c
-    c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., t0 = 0, 
-               nz = 11, Omega = 90, w = 0., ecc = 0., phasecurve = False, 
+    c = Planet('c', m = 1, per = 3 + 1e-5, inc = 89.6, r = 5., t0 = 0,
+               nz = 11, Omega = 90, w = 0., ecc = 0., phasecurve = False,
                color = 'b')
 
     # Planet c
-    d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., t0 = 0, 
-               nz = 11, Omega = 180, w = 0., ecc = 0., phasecurve = False, 
-               color = 'b')
-       
+    d = Planet('d', m = 1, per = 3 + 2e-5, inc = 89.6, r = 5., t0 = 0,
+               nz = 11, Omega = 180, w = 0., ecc = 0., phasecurve = False,
+               color = 'g')
+
     # Planet c
-    e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., t0 = 0, 
-               nz = 11, Omega = 270, w = 0., ecc = 0., phasecurve = False, 
-               color = 'b')
+    e = Planet('e', m = 1, per = 3 + 3e-5, inc = 89.6, r = 5., t0 = 0,
+               nz = 11, Omega = 270, w = 0., ecc = 0., phasecurve = False,
+               color = 'y')
 
     # System
     system = System(star, b, c, d, e)
