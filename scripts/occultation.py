@@ -10,13 +10,13 @@ Planet c has a latitudinal hotspot offset, just for fun.
 
   .. plot::
      :align: center
-     
+
      from scripts import occultation
      occultation._test()
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/occultation.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -31,26 +31,26 @@ import numpy as np
 
 def _test():
     '''
-    
+
     '''
-    
+
     plot()
 
 def plot():
     '''
-    
+
     '''
-    
+
     # Instantiate the Trappist-1 system
-    system = Trappist1(sample = True, phasecurve = True, 
+    system = Trappist1(sample = True, phasecurve = True,
                        nbody = True, seed = 999)
-    
+
     # Fudge: Let's make this a nice, near-full occultation
     system.c.Omega = -0.15
-    
+
     # Give `c` a large latitudinal offset in its hotspot just for fun
     system.c.Phi = 30
-    
+
     # Compute an occultation by `b`
     # This would be on December 3, 2021
     time = np.linspace(9552.9364, 9552.9664, 100)

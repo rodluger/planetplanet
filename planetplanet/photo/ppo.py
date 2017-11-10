@@ -937,7 +937,7 @@ class System(object):
     def plot_occultation(self, body, time, wavelength = 15., interval = 50,
                          gifname = None, spectral = False,
                          time_unit = 'BJD − 2,450,000',
-                         trail_dur = 1.,
+                         trail_dur = 1., full_lightcurve = False,
                          **kwargs):
         '''
         Plots and animates an occultation event.
@@ -960,6 +960,11 @@ class System(object):
         :param float trail_dur: Duration of the orbital trails in days when \
                plotting the orbits. The plotting code actually calls \
                :py:mod:`rebound` to compute these. Default `1`
+        :param bool full_lightcurve: Plot the full system light curve? If \
+               :py:obj:`True`, the light curve will include the contribution \
+               of any other bodies being occulted at the given time. Default \
+               :py:obj:`False`, in which case only the flux from :py:obj:`body`\
+               is plotted.
         :param kwargs: Any additional keyword arguments to be passed to \
                :py:func:`plot_image`
 
@@ -1020,6 +1025,14 @@ class System(object):
         ti = t[0]
         tf = t[-1]
 
+        # Are we including the flux from other bodies?
+        if full_lightcurve:
+            flux = self.flux_hr
+            total_flux = np.sum([b.total_flux for b in self.bodies], axis = 0)
+        else:
+            flux = body.flux_hr
+            total_flux = body.total_flux
+
         # Get the duration in minutes. We find the occultor(s)
         # at the exact time requested by the user, and compute how
         # many cadences this occultation lasts. Note that this kind
@@ -1031,10 +1044,10 @@ class System(object):
 
         # Plot three different wavelengths (first, mid, and last)
         if spectral:
-            fluxb = body.flux_hr[t, 0] / body.total_flux[0]
-            fluxg = body.flux_hr[t, body.flux_hr.shape[-1] // 2] \
-                    / body.total_flux[body.flux.shape[-1] // 2]
-            fluxr = body.flux_hr[t, -1] / body.total_flux[-1]
+            fluxb = flux[t, 0] / total_flux[0]
+            fluxg = flux[t, flux.shape[-1] // 2] \
+                    / total_flux[flux.shape[-1] // 2]
+            fluxr = flux[t, -1] / total_flux[-1]
 
             # Plot
             axlc.plot(body.time_hr[t], fluxb, 'b-',
@@ -1042,7 +1055,7 @@ class System(object):
                               1e6 * body.wavelength[0])) + r"\ \mu\mathrm{m}$")
             axlc.plot(body.time_hr[t], fluxg, 'g-',
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
-                              1e6 * body.wavelength[body.flux.shape[-1] // 2]))
+                              1e6 * body.wavelength[flux.shape[-1] // 2]))
                               + r"\ \mu\mathrm{m}$")
             axlc.plot(body.time_hr[t], fluxr, 'r-',
                       label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
@@ -1052,7 +1065,7 @@ class System(object):
                             fontsize = 10)
             axlc.legend(loc = 'lower right', fontsize = 8)
         else:
-            fluxw = body.flux_hr[t, w] / body.total_flux[w]
+            fluxw = flux[t, w] / total_flux[w]
             axlc.plot(body.time_hr[t], fluxw, 'k-')
             label = r"$" + '{:.4s}'.format('{:0.2f}'.format(
                     1e6 * body.wavelength[w])) + r"\ \mu\mathrm{m}$"
