@@ -5,10 +5,9 @@ circumbinary_exomoon.py |github|
 --------------------------------
 
 A (crazy) example of the code's ability to handle nested multi-body systems.
-Here we have a moon orbiting a planet orbiting one star in a binary system.
-All bodies transit the primary at `t = 0`. This system isn't stable (and
-the moon isn't even bound to the planet), but it highlights what the code can
-do.
+Here we have a moon orbiting a planet orbiting two stars in a binary system.
+All bodies transit the primary close to `t = 0`. This system is probably not
+stable, but it highlights what the code can do!
 
   .. plot::
      :align: center
