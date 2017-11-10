@@ -14,9 +14,11 @@ A general photodynamical code for modeling exoplanet transits, secondary eclipse
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
 
-Here's a wacky example of what the code can do:
+Here's a wacky example of what the code can do: a transits of a circumbinary exomoon!
 
-<img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" style="width: 200px;"/>
+<div align="center">
+<img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" width="500px">
+</div>
 
 The `planetplanet` code is now `pip`-installable:
 
