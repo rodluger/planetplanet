@@ -35,7 +35,7 @@ pl.show()
 <img src="https://rodluger.github.io/misc/transit.gif" alt="Exoplanet transit light curve" width="500px">
 </div>
 
-Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
+Please check out the [documentation](https://rodluger.github.io/planetplanet/index.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
 
 # Installation
 The `planetplanet` code is now `pip`-installable:
