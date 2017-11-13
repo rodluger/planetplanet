@@ -33,4 +33,4 @@ You may need to install the [GNU Scientific Library](https://www.gnu.org/softwar
 brew install gsl
 ```
 
-Please check out the [documentation](https://rodluger.github.io/planetplanet/ndex.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
+Please check out the [documentation](https://rodluger.github.io/planetplanet/index.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
