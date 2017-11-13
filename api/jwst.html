@@ -1,0 +1,424 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>jwst.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="detect" href="detect.html"/>
+        <link rel="prev" title="detect" href="detect.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="photo.html">photo</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="detect.html">detect</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">jwst.py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="detect.html">detect</a>&raquo;</li>
+      
+    
+      <li>jwst.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/detect/jwst.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-planetplanet.detect.jwst"></span><div class="section" id="jwst-py-github">
+<h1>jwst.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/detect/jwst.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#jwst-py-github" title="Permalink to this headline">¶</a></h1>
+<p>A Python interface for simulating time-series filter photometry with the James
+Webb Space Telescope (JWST).</p>
+<blockquote>
+<div></div></blockquote>
+<dl class="class">
+<dt id="planetplanet.detect.jwst.Filter">
+<em class="property">class </em><code class="descclassname">planetplanet.detect.jwst.</code><code class="descname">Filter</code><span class="sig-paren">(</span><em>name=None</em>, <em>wl=None</em>, <em>throughput=None</em>, <em>dwl=None</em>, <em>eff_wl=None</em>, <em>eff_dwl=None</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.Filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A photometruc filter class. This is an interface for filter
+photometry calculations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) – Name of the filter</li>
+<li><strong>wl</strong> (<em>array_like</em>) – Wavelength grid for filter [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>throughput</strong> (<em>array_like</em>) – Filter throughput</li>
+<li><strong>dwl</strong> (<em>array_like</em>) – Wavelength width grid for filter            [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>eff_wl</strong> (<em>float</em>) – Effective filter wavelenth [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>eff_dwl</strong> (<em>float</em>) – Effective filter width [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="planetplanet.detect.jwst.Filter.compute_lightcurve">
+<code class="descname">compute_lightcurve</code><span class="sig-paren">(</span><em>time</em>, <em>flux</em>, <em>continuum</em>, <em>lam</em>, <em>stack=1</em>, <em>atel=25.0</em>, <em>thermal=True</em>, <em>time_hr=None</em>, <em>flux_hr=None</em>, <em>quiet=False</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.Filter.compute_lightcurve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes an observed lightcurve in the <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>time</strong> (<em>array_like</em>) – Time grid [days]</li>
+<li><strong>flux</strong> (<em>array_like</em>) – Observed flux grid (<cite>time</cite> by <cite>lam</cite>)                [<span class="math">\(\mathrm{W/m}^2 / \mu \mathrm{m}\)</span>]</li>
+<li><strong>continuum</strong> (<em>array_like</em>) – Observed <em>continuum</em> flux grid (no                occultations, shape <cite>time</cite> by <cite>lam</cite>)                [<span class="math">\(\mathrm{W/m}^2 / \mu \mathrm{m}\)</span>]</li>
+<li><strong>lam</strong> (<em>array_like</em>) – Wavelength [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>stack</strong> (<em>int</em>) – Number of exposures to stack. Default <cite>1</cite></li>
+<li><strong>atel</strong> (<em>float</em>) – Telescope collecting area [<span class="math">\(\mathrm{m}^2\)</span>].                Default <cite>25</cite></li>
+<li><strong>thermal</strong> (<em>bool</em>) – Compute thermal noise. Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>time_hr</strong> (<em>array_like</em>) – High-res time grid [Days].                Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>flux_hr</strong> (<em>array_like</em>) – High-res flux grid. Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.detect.jwst.Filter.convolve">
+<code class="descname">convolve</code><span class="sig-paren">(</span><em>lam</em>, <em>flux</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.Filter.convolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolve flux with normalized filter throughput.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>lam</strong> (<em>array_like</em>) – High-res wavelength grid [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>flux</strong> (<em>array_like</em>) – High-res flux grid                [<span class="math">\(\mathrm{W/m}^2 / \mu \mathrm{m}\)</span>]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Returns array_like F:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first last">Flux convolved with normalized throughput</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.detect.jwst.Filter.photon_rate">
+<code class="descname">photon_rate</code><span class="sig-paren">(</span><em>lam</em>, <em>flux</em>, <em>atel=25.0</em>, <em>dlam=None</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.Filter.photon_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the photon count rate registered by the detector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>lam</strong> (<em>array_like</em>) – High-res wavelengths [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>flux</strong> (<em>array_like</em>) – Spectral flux density                [<span class="math">\(\mathrm{W/m}^2 / \mu \mathrm{m}\)</span>]</li>
+<li><strong>atel</strong> (<em>float</em>) – Telescope collecting area [<span class="math">\(\mathrm{m}^2\)</span>].                Default is <cite>25</cite></li>
+<li><strong>dlam</strong> (<em>array_like</em>) – Delta-wavelength grid. Default is                <code class="xref py py-obj docutils literal"><span class="pre">None</span></code> and is calculated</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Returns array_like cphot:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first last">Photon count rate [<span class="math">\(\mathrm{s}^{-1}\)</span>]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.detect.jwst.Filter.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>ax=None</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.Filter.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the filter throughput curve.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ax</strong> (<code class="xref py py-obj docutils literal"><span class="pre">axis</span></code>) – An axis instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.detect.jwst.estimate_eclipse_snr">
+<code class="descclassname">planetplanet.detect.jwst.</code><code class="descname">estimate_eclipse_snr</code><span class="sig-paren">(</span><em>tint=2184.0</em>, <em>nout=4.0</em>, <em>lammin=1.0</em>, <em>lammax=30.0</em>, <em>Nlam=10000</em>, <em>Tstar=2560.0</em>, <em>Tplan=400.0</em>, <em>Rs=0.12</em>, <em>Rp=1.086</em>, <em>d=12.2</em>, <em>atel=25.0</em>, <em>verbose=True</em>, <em>plot=True</em>, <em>thermal=True</em>, <em>filters='MIRI'</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.estimate_eclipse_snr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate the signal-to-noise on the detection of secondary eclipses in
+JWST/MIRI photometric filters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tint</strong> (<em>float</em>) – Exposure time [s]. Default <cite>36.4*60.</cite></li>
+<li><strong>nout</strong> (<em>float</em>) – Out-of-transit time observed [transit durations].            Default <cite>4</cite></li>
+<li><strong>lammin</strong> (<em>float</em>) – Wavelength minimum [<span class="math">\(\mu \mathrm{m}\)</span>].            Default <cite>1.0</cite></li>
+<li><strong>lammax</strong> (<em>float</em>) – Wavelength maximum [<span class="math">\(\mu \mathrm{m}\)</span>].            Default <cite>30.0</cite></li>
+<li><strong>Nlam</strong> (<em>int</em>) – Number of wavelengths. Default <cite>10000</cite></li>
+<li><strong>Tstar</strong> (<em>float</em>) – Stellar effective temperature [K]. Default <cite>2560</cite></li>
+<li><strong>Tplan</strong> (<em>float</em>) – Planet equilibrium temperature [K]. Default <cite>400</cite></li>
+<li><strong>Rs</strong> (<em>float</em>) – Stellar radius [solar radii]. Default <cite>0.12</cite></li>
+<li><strong>Rp</strong> (<em>float</em>) – Planet radius [Earth radii]. Default <cite>1.086</cite></li>
+<li><strong>d</strong> (<em>float</em>) – System distance [pc]. Default <cite>12.2</cite></li>
+<li><strong>atel</strong> (<em>float</em>) – Telescope collecting area [<span class="math">\(\mathrm{m}^2\)</span>].            Default <cite>25</cite></li>
+<li><strong>verbose</strong> – Print things. Default <cite>True</cite></li>
+<li><strong>plot</strong> – Make a plot. Detault <cite>True</cite></li>
+<li><strong>thermal</strong> – Include thermal noise. Default <cite>True</cite></li>
+<li><strong>filters</strong> (str or list of <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a> objects) – User provided filter names or list of filters. Default             <cite>MIRI</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.detect.jwst.create_tophat_filter">
+<code class="descclassname">planetplanet.detect.jwst.</code><code class="descname">create_tophat_filter</code><span class="sig-paren">(</span><em>lammin</em>, <em>lammax</em>, <em>dlam=0.1</em>, <em>Tput=0.3</em>, <em>name='custom'</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.create_tophat_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a tophat <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>lammin</strong> (<em>float</em>) – Wavelength minimum [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>lammax</strong> (<em>float</em>) – Wavelength maximum [<span class="math">\(\mu \mathrm{m}\)</span>]</li>
+<li><strong>dlam</strong> (<em>float</em>) – Wavelength resolution [<span class="math">\(\mu \mathrm{m}\)</span>].            Default <cite>0.1</cite></li>
+<li><strong>Tput</strong> (<em>float</em>) – Filter throughput. Default <cite>0.3</cite></li>
+<li><strong>name</strong> (<em>str</em>) – Name of filter. Default “custom”</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns filt:</th><td class="field-body"><p class="first last">New custom tophat <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a> object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.detect.jwst.get_spitzer_filter_wheel">
+<code class="descclassname">planetplanet.detect.jwst.</code><code class="descname">get_spitzer_filter_wheel</code><span class="sig-paren">(</span><em>warm=True</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.get_spitzer_filter_wheel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-in and instantiate list of Spitzer IRAC filters as
+<a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a> objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>warm</strong> (<em>bool</em>) – If <code class="xref py py-obj docutils literal"><span class="pre">True</span></code> uses only Warm Spitzer filters</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a> objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.detect.jwst.get_miri_filter_wheel">
+<code class="descclassname">planetplanet.detect.jwst.</code><code class="descname">get_miri_filter_wheel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.detect.jwst.get_miri_filter_wheel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <cite>list</cite> of MIRI <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a> objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Returns list wheel:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><cite>list</cite> of MIRI <a class="reference internal" href="#planetplanet.detect.jwst.Filter" title="planetplanet.detect.jwst.Filter"><code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code></a> objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="detect.html" class="btn btn-neutral" title="detect" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

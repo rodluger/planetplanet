@@ -1,0 +1,267 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trappist1.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="eyeball.c" href="c_eyeball.html"/>
+        <link rel="prev" title="theta.py" href="theta.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#python-interface">Python interface</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="eyeball.html">eyeball.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="maps.html">maps.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ppo.html">ppo.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="structs.html">structs.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="theta.html">theta.py</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">trappist1.py</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="photo.html#c-engine">C engine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>trappist1.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/trappist1.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-planetplanet.photo.trappist1"></span><div class="section" id="trappist1-py-github">
+<h1>trappist1.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/trappist1.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#trappist1-py-github" title="Permalink to this headline">¶</a></h1>
+<p>This module hosts TRAPPIST-1-specific routines.</p>
+<blockquote>
+<div></div></blockquote>
+<dl class="function">
+<dt id="planetplanet.photo.trappist1.Trappist1">
+<code class="descclassname">planetplanet.photo.trappist1.</code><code class="descname">Trappist1</code><span class="sig-paren">(</span><em>sample=True</em>, <em>distance=12</em>, <em>seed=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.trappist1.Trappist1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an instance of <code class="xref py py-obj docutils literal"><span class="pre">planetplanet.photo.System</span></code> for the full 
+TRAPPIST-1 system. Star and planet parameters are drawn from their 
+respective prior distributions, which are based on the observed values 
+from Gillon et al. (2017), Luger et al. (2017), and 
+Burgasser &amp; Mamajek (2017). Longitudes of ascending node are
+drawn from the <span class="math">\(\theta\)</span> distribution derived in the paper.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sample</strong> (<em>bool</em>) – Draw a random sample from the full prior?            If <code class="xref py py-obj docutils literal"><span class="pre">False</span></code>,returns the mean values for all parameters.            Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>distance</strong> (<em>float</em>) – Distance to the system in parsecs.            Default <code class="xref py py-obj docutils literal"><span class="pre">12</span></code></li>
+<li><strong>seed</strong> (<em>int</em>) – Random number generator seed. Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>kwargs</strong> – Any other <code class="xref py py-obj docutils literal"><span class="pre">kwargs</span></code> to be passed to            <code class="xref py py-func docutils literal"><span class="pre">planetplanet.Star()</span></code>,            <code class="xref py py-func docutils literal"><span class="pre">planetplanet.Planet()</span></code>, and <code class="xref py py-func docutils literal"><span class="pre">planetplanet.System()</span></code>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="figure align-center">
+<img alt="../_images/trappist1-1.png" src="../_images/trappist1-1.png" />
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="c_eyeball.html" class="btn btn-neutral float-right" title="eyeball.c" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="theta.html" class="btn btn-neutral" title="theta.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

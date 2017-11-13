@@ -1,0 +1,1 @@
+.. automodule:: scripts.mutual_node

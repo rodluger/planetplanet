@@ -1,0 +1,286 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>scatter.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="Scripts" href="../scripts.html"/>
+        <link rel="next" title="lightcurve.py" href="lightcurve.html"/>
+        <link rel="prev" title="doublet.py" href="doublet.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../scripts.html#simple-examples">Simple Examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#from-the-paper">From the paper</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="contrast.html">day/night contrast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geometry.html">eyeball geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eyeball_orbit.html">eyeball orbit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="integration.html">integration method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="jwst_example.html">JWST example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kepler444.html">Kepler-444 example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hist_mutual.html">mutual transit histograms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hist.html">occultation histograms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ost_example.html">OST example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doublet.html">PPO doublet</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">PPO scatter plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lightcurve.html">sample TRAPPIST-1 light curve</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spitzer_example.html">Spitzer example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="orbitsII.html">TRAPPIST-1 orbits II</a></li>
+<li class="toctree-l3"><a class="reference internal" href="triple_transit.html">triple mutual transit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../scripts.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../scripts.html">Scripts</a>&raquo;</li>
+      
+    
+      <li>scatter.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/scatter.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-scripts.scatter"></span><div class="section" id="scatter-py-github">
+<h1>scatter.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/scatter.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#scatter-py-github" title="Permalink to this headline">¶</a></h1>
+<p>Computes all occultations that occur in the TRAPPIST-1 system over a 
+3 year time period for a random draw from the prior. Plots each
+occultation as a circle in a top-view of the system; the circle size, 
+transparency, and color indicate the duration, SNR, and 
+occulting body, respectively.</p>
+<blockquote>
+<div><div class="figure align-center">
+<img alt="../_images/scatter-1.png" src="../_images/scatter-1.png" />
+</div>
+</div></blockquote>
+<dl class="function">
+<dt id="scripts.scatter.Run">
+<code class="descclassname">scripts.scatter.</code><code class="descname">Run</code><span class="sig-paren">(</span><em>eyeball=True</em>, <em>save=True</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.scatter.Run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes and plots the scatter plot for the TRAPPIST-1
+system seen with JWST MIRI at 15 microns over the
+course of 3 years.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>eyeball</strong> (<em>bool</em>) – Assume the radiative equilibrium surface map?            Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code>. If <code class="xref py py-obj docutils literal"><span class="pre">False</span></code>, uses the limb-darkened
+surface map.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="scripts.scatter.scatter_plot">
+<code class="descclassname">scripts.scatter.</code><code class="descname">scatter_plot</code><span class="sig-paren">(</span><em>system</em>, <em>tstart</em>, <em>tend</em>, <em>dt=0.001</em>, <em>sz=0.2</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.scatter.scatter_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute all occultations between <cite>tstart</cite> and <cite>tend</cite> and plot an 
+occultation scatter plot like the one in the paper.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tstart</strong> (<em>float</em>) – The integration start time (BJD − 2,450,000)</li>
+<li><strong>tend</strong> (<em>float</em>) – The integration end time (BJD − 2,450,000)</li>
+<li><strong>dt</strong> (<em>float</em>) – The time resolution in days. Occultations shorter            than this will not be registered.</li>
+<li><strong>sz</strong> (<em>float</em>) – The size scaling for the occultation circles.            Default <cite>0.2</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lightcurve.html" class="btn btn-neutral float-right" title="lightcurve.py" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="doublet.html" class="btn btn-neutral" title="doublet.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

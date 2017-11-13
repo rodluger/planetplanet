@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>hist.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="Scripts" href="../scripts.html"/>
+        <link rel="next" title="ost_example.py" href="ost_example.html"/>
+        <link rel="prev" title="hist_mutual.py" href="hist_mutual.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../scripts.html#simple-examples">Simple Examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#from-the-paper">From the paper</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="contrast.html">day/night contrast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geometry.html">eyeball geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eyeball_orbit.html">eyeball orbit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="integration.html">integration method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="jwst_example.html">JWST example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kepler444.html">Kepler-444 example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hist_mutual.html">mutual transit histograms</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">occultation histograms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1b">TRAPPIST-1b</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1c">TRAPPIST-1c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1d">TRAPPIST-1d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1e">TRAPPIST-1e</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1f">TRAPPIST-1f</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1g">TRAPPIST-1g</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trappist-1h">TRAPPIST-1h</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#marginal-distributions">Marginal distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ost_example.html">OST example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doublet.html">PPO doublet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scatter.html">PPO scatter plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lightcurve.html">sample TRAPPIST-1 light curve</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spitzer_example.html">Spitzer example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="orbitsII.html">TRAPPIST-1 orbits II</a></li>
+<li class="toctree-l3"><a class="reference internal" href="triple_transit.html">triple mutual transit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../scripts.html#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../scripts.html">Scripts</a>&raquo;</li>
+      
+    
+      <li>hist.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/hist.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-scripts.hist"></span><div class="section" id="hist-py-github">
+<h1>hist.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/hist.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#hist-py-github" title="Permalink to this headline">¶</a></h1>
+<p>Histograms of the occultation events as a function of mean longitude, duration, 
+and impact parameter for each of the seven TRAPPIST-1 planets, as well as a 
+marginalized histogram of the total number of potentially detectable 
+planet-planet occultations in one Earth year.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When I sample too many times from the prior in a single run, the           code often hangs. There may be a memory leak somewhere, but I           haven’t been able to find it yet. If you want to run large           ensembles, I recommend using the parallelization scheme I           implemented below. Alternatively, a brain-dead           way of doing it is to instantiate a bunch of <strong>screen</strong>           sessions:           <code class="xref py py-obj docutils literal"><span class="pre">screen</span> <span class="pre">-dm</span> <span class="pre">python</span> <span class="pre">-c</span> <span class="pre">&quot;import</span> <span class="pre">hist;</span> <span class="pre">hist.Compute(nsamp</span> <span class="pre">=</span> <span class="pre">100)&quot;</span></code></p>
+</div>
+<p>The figures below show the distributions for the eyeball planet case (left)
+and the limb-darkened planet case (right). Click on them to enlarge.</p>
+<div class="section" id="trappist-1b">
+<h2>TRAPPIST-1b<a class="headerlink" href="#trappist-1b" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/b_corner_eyeball.jpg"><img alt="../_images/b_corner_eyeball.jpg" src="../_images/b_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/b_corner_limbdark.jpg"><img alt="../_images/b_corner_limbdark.jpg" src="../_images/b_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="trappist-1c">
+<h2>TRAPPIST-1c<a class="headerlink" href="#trappist-1c" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/c_corner_eyeball.jpg"><img alt="../_images/c_corner_eyeball.jpg" src="../_images/c_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/c_corner_limbdark.jpg"><img alt="../_images/c_corner_limbdark.jpg" src="../_images/c_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="trappist-1d">
+<h2>TRAPPIST-1d<a class="headerlink" href="#trappist-1d" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/d_corner_eyeball.jpg"><img alt="../_images/d_corner_eyeball.jpg" src="../_images/d_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/d_corner_limbdark.jpg"><img alt="../_images/d_corner_limbdark.jpg" src="../_images/d_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="trappist-1e">
+<h2>TRAPPIST-1e<a class="headerlink" href="#trappist-1e" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/e_corner_eyeball.jpg"><img alt="../_images/e_corner_eyeball.jpg" src="../_images/e_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/e_corner_limbdark.jpg"><img alt="../_images/e_corner_limbdark.jpg" src="../_images/e_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="trappist-1f">
+<h2>TRAPPIST-1f<a class="headerlink" href="#trappist-1f" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/f_corner_eyeball.jpg"><img alt="../_images/f_corner_eyeball.jpg" src="../_images/f_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/f_corner_limbdark.jpg"><img alt="../_images/f_corner_limbdark.jpg" src="../_images/f_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="trappist-1g">
+<h2>TRAPPIST-1g<a class="headerlink" href="#trappist-1g" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/g_corner_eyeball.jpg"><img alt="../_images/g_corner_eyeball.jpg" src="../_images/g_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/g_corner_limbdark.jpg"><img alt="../_images/g_corner_limbdark.jpg" src="../_images/g_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="trappist-1h">
+<h2>TRAPPIST-1h<a class="headerlink" href="#trappist-1h" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/h_corner_eyeball.jpg"><img alt="../_images/h_corner_eyeball.jpg" src="../_images/h_corner_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/h_corner_limbdark.jpg"><img alt="../_images/h_corner_limbdark.jpg" src="../_images/h_corner_limbdark.jpg" style="width: 49%;" /></a>
+</div>
+<div class="section" id="marginal-distributions">
+<h2>Marginal distributions<a class="headerlink" href="#marginal-distributions" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../_images/hist_eyeball.jpg"><img alt="../_images/hist_eyeball.jpg" src="../_images/hist_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/hist_limbdark.jpg"><img alt="../_images/hist_limbdark.jpg" src="../_images/hist_limbdark.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/snr_eyeball.jpg"><img alt="../_images/snr_eyeball.jpg" src="../_images/snr_eyeball.jpg" style="width: 49%;" /></a>
+<a class="reference internal image-reference" href="../_images/snr_limbdark.jpg"><img alt="../_images/snr_limbdark.jpg" src="../_images/snr_limbdark.jpg" style="width: 49%;" /></a>
+<dl class="function">
+<dt id="scripts.hist.Compute">
+<code class="descclassname">scripts.hist.</code><code class="descname">Compute</code><span class="sig-paren">(</span><em>nsamp=300</em>, <em>minsnr=1.0</em>, <em>nbody=True</em>, <em>progress_bar=True</em>, <em>eyeball=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.hist.Compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute occultation histograms by drawing <cite>nsamp</cite> draws from the 
+system prior. Saves the results to <cite>data/histXXX.npz</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nsamp</strong> (<em>int</em>) – The number of prior samples to draw. Default <cite>300</cite></li>
+<li><strong>minsnr</strong> (<em>float</em>) – The minimum SNR to include in the tally. Default <cite>1.</cite></li>
+<li><strong>nbody</strong> (<em>bool</em>) – Use the N-Body solver? Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>progress_bar</strong> (<em>bool</em>) – Display a progress bar? Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>eyeball</strong> (<em>bool</em>) – Assume eyeball planets? Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code>. If
+<code class="xref py py-obj docutils literal"><span class="pre">False</span></code>, uses the limb darkened surface map.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="scripts.hist.MakeFigures">
+<code class="descclassname">scripts.hist.</code><code class="descname">MakeFigures</code><span class="sig-paren">(</span><em>jpg=False</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.hist.MakeFigures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots all histogram figures for the paper.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scripts.hist.MergeFiles">
+<code class="descclassname">scripts.hist.</code><code class="descname">MergeFiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scripts.hist.MergeFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge all the <cite>npz</cite> savesets into a single one for faster plotting.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scripts.hist.Plot">
+<code class="descclassname">scripts.hist.</code><code class="descname">Plot</code><span class="sig-paren">(</span><em>eyeball=True, zorder=[6, 5, 4, 3, 2, 1, 0]</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.hist.Plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the results of a <cite>Compute()</cite> run and returns several figures.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="scripts.hist.Submit">
+<code class="descclassname">scripts.hist.</code><code class="descname">Submit</code><span class="sig-paren">(</span><em>queue=None</em>, <em>email=None</em>, <em>walltime=8</em>, <em>nodes=5</em>, <em>ppn=12</em>, <em>mpn=None</em>, <em>nsamp=50000</em>, <em>eyeball=True</em>, <em>batch_size=100</em>, <em>nproc=None</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.hist.Submit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submits a PBS cluster job to run <a class="reference internal" href="#scripts.hist.Compute" title="scripts.hist.Compute"><code class="xref py py-func docutils literal"><span class="pre">Compute()</span></code></a> in parallel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>queue</strong> (<em>str</em>) – The name of the queue to submit to.            Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>email</strong> (<em>str</em>) – The email to send job status notifications to.            Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>walltime</strong> (<em>int</em>) – The number of hours to request. Default <cite>8</cite></li>
+<li><strong>nodes</strong> (<em>int</em>) – The number of nodes to request. Default <cite>5</cite></li>
+<li><strong>ppn</strong> (<em>int</em>) – The number of processors per node to request. Default <cite>12</cite></li>
+<li><strong>nsamp</strong> (<em>int</em>) – The number of prior samples to draw. Default <cite>50,000</cite></li>
+<li><strong>eyeball</strong> (<em>bool</em>) – Use the radiative equilibrium surface map?            Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>batch_size</strong> (<em>int</em>) – Size of each batch used in the parallelization.            Default <cite>100</cite></li>
+<li><strong>mpn</strong> (<em>int</em>) – Memory per node in gb to request. Default no setting.</li>
+<li><strong>nproc</strong> (<em>int</em>) – Number of processes to spawn. Default is the number of            core.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="scripts.hist.histogram">
+<code class="descclassname">scripts.hist.</code><code class="descname">histogram</code><span class="sig-paren">(</span><em>system</em>, <em>tstart</em>, <em>tend</em>, <em>dt=0.0001</em><span class="sig-paren">)</span><a class="headerlink" href="#scripts.hist.histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes statistical properties of planet-planet occultations that 
+occur over a given interval. Computes the frequency of occultations as 
+a function of orbital phase, duration, and signal-to-noise ratio, as well 
+as the fully marginalized occultation frequency for each planet in the 
+system. Occultations by the star are not included, nor are occultations
+occuring behind the star, which are not visible to the observer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>system</strong> (<code class="xref py py-obj docutils literal"><span class="pre">planetplanet.structs.System</span></code>) – A system instance.</li>
+<li><strong>tstart</strong> (<em>float</em>) – The integration start time (BJD − 2,450,000)</li>
+<li><strong>tend</strong> (<em>float</em>) – The integration end time (BJD − 2,450,000)</li>
+<li><strong>dt</strong> (<em>float</em>) – The time resolution in days. Occultations shorter            than this will not be registered.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of               <code class="xref py py-obj docutils literal"><span class="pre">(phase,</span> <span class="pre">impact,</span> <span class="pre">duration,</span> <span class="pre">signal,</span> <span class="pre">noise,</span> <span class="pre">snr)</span></code> tuples               for each planet in the system. The phase angle is measured               in degrees and the duration is measured in days. The signal and               noise are measured in ppm.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This routine computes the <strong>orbital phase angle</strong>, which                  is measured from <strong>transit</strong>. This is different from the                  mean longitude by <span class="math">\(\pi/2\)</span></p>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ost_example.html" class="btn btn-neutral float-right" title="ost_example.py" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="hist_mutual.html" class="btn btn-neutral" title="hist_mutual.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

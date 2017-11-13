@@ -1,0 +1,341 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>eyeball.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="maps.py" href="maps.html"/>
+        <link rel="prev" title="photo" href="photo.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#python-interface">Python interface</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">eyeball.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="maps.html">maps.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ppo.html">ppo.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="structs.html">structs.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="theta.html">theta.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trappist1.html">trappist1.py</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="photo.html#c-engine">C engine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>eyeball.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/eyeball.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-planetplanet.photo.eyeball"></span><div class="section" id="eyeball-py-github">
+<h1>eyeball.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/eyeball.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#eyeball-py-github" title="Permalink to this headline">¶</a></h1>
+<p>Code for plotting and visualizing “eyeball” planets.</p>
+<blockquote>
+<div></div></blockquote>
+<dl class="function">
+<dt id="planetplanet.photo.eyeball.DrawEyeball">
+<code class="descclassname">planetplanet.photo.eyeball.</code><code class="descname">DrawEyeball</code><span class="sig-paren">(</span><em>x0=0.5, y0=0.5, r=0.5, radiancemap=&lt;Numba C callback 'RadiativeEquilibriumMap.&lt;locals&gt;.func'&gt;, theta=1.0471975511965976, nz=31, gamma=0, occultors=[], cmap='inferno', fig=None, draw_terminator=False, draw_ellipses=False, rasterize=False, cpad=0.2, limbdark=[1.0], teff=2500.0, wavelength=15.0, color=None</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.eyeball.DrawEyeball" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a floating axis and draws an “eyeball” planet at given 
+phase and rotation angles.</p>
+<div class="figure align-center">
+<img alt="../_images/eyeball-1.png" src="../_images/eyeball-1.png" />
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x0</strong> (<em>float</em>) – The <cite>x</cite> position of the center of the planet in            figure coordinates</li>
+<li><strong>y0</strong> (<em>float</em>) – The <cite>y</cite> position of the center of the planet in            figure coordinates</li>
+<li><strong>r</strong> (<em>float</em>) – The radius of the planet in figure coordinates</li>
+<li><strong>theta</strong> (<em>float</em>) – The phase angle of the eyeball in radians.            Default <span class="math">\(\pi/3\)</span></li>
+<li><strong>gamma</strong> (<em>float</em>) – The rotation angle of the eyeball in radians.            Default <cite>0</cite></li>
+<li><strong>nz</strong> (<em>int</em>) – The number of zenith angle wedges. Default <cite>11</cite></li>
+<li><strong>occultors</strong> (<em>array_like</em>) – A list of <code class="xref py py-obj docutils literal"><span class="pre">dict</span></code> instances with            information on each of the occultors to draw.     Each dictionary must have keywords <cite>x</cite>, <cite>y</cite>, and <cite>r</cite>, corresponding to            the xy position and radius of the     occultor, respectively. These are defined relative to the center of the            planet and scaled so that the     radius of the planet is unity. Optional keywords are <cite>zorder</cite>, <cite>color</cite>,            and <cite>alpha</cite>. Default <code class="xref py py-obj docutils literal"><span class="pre">[]</span></code></li>
+<li><strong>cmap</strong> (<em>str</em>) – The name of the <code class="xref py py-class docutils literal"><span class="pre">matplotlib</span></code> colormap.            Default <cite>inferno</cite></li>
+<li><strong>fig</strong> (<code class="xref py py-class docutils literal"><span class="pre">matplotlib.Figure</span></code>) – The figure object in which to create the axis.            Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>draw_terminator</strong> (<em>bool</em>) – Draw the terminator ellipse outline?            Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>draw_ellipses</strong> (<em>bool</em>) – Draw the zenith angle ellipse outlines?            Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>rasterize</strong> (<em>bool</em>) – Rasterize the image? Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>color</strong> (<em>str</em>) – Occulted body outline color. Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>fig</strong>, <strong>ax</strong>, <strong>occ</strong>, <strong>xy</strong>. These are the figure and              floating axis instances, a lits of <code class="xref py py-obj docutils literal"><span class="pre">Circle</span></code>              instances corresponding to each of the occultors, and a function              <strong>xy</strong> that performs the rotation              transformation into the axis-symmetric eyeball frame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.photo.eyeball.DrawOrbit">
+<code class="descclassname">planetplanet.photo.eyeball.</code><code class="descname">DrawOrbit</code><span class="sig-paren">(</span><em>radiancemap=&lt;Numba C callback 'RadiativeEquilibriumMap.&lt;locals&gt;.func'&gt;</em>, <em>inc=70.0</em>, <em>Omega=0.0</em>, <em>ecc=0.0</em>, <em>w=0.0</em>, <em>Phi=0.0</em>, <em>Lambda=0.0</em>, <em>nphases=20</em>, <em>size=1</em>, <em>draw_orbit=True</em>, <em>draw_orbital_vectors=True</em>, <em>plot_phasecurve=False</em>, <em>label_phases=False</em>, <em>figsize=(8</em>, <em>8)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.eyeball.DrawOrbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw an “eyeball” planet’s orbit on the sky, illustrating the changing 
+phases over the course of the orbit.</p>
+<div class="figure align-center">
+<img alt="../_images/eyeball-2.png" src="../_images/eyeball-2.png" />
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inc</strong> (<em>float</em>) – The orbital inclination in degrees. Default <cite>70.</cite></li>
+<li><strong>Omega</strong> (<em>float</em>) – The longitude of ascending node in degrees.            Default <cite>0.</cite></li>
+<li><strong>ecc</strong> (<em>float</em>) – The orbital eccentricity. Default <cite>0.</cite></li>
+<li><strong>w</strong> (<em>float</em>) – The longitude of pericenter in degrees. Default <cite>0.</cite></li>
+<li><strong>Phi</strong> (<em>float</em>) – The latitudinal hot spot offset in degrees. Default <cite>0.</cite></li>
+<li><strong>Lambda</strong> (<em>float</em>) – The longitudinal hot spot offset in degrees.            Default <cite>0.</cite></li>
+<li><strong>nphases</strong> (<em>int</em>) – The number of planets to draw at different phases.            Default <cite>20</cite></li>
+<li><strong>size</strong> (<em>float</em>) – The size of the planets in arbitrary units. Default <cite>1.</cite></li>
+<li><strong>draw_orbit</strong> (<em>bool</em>) – Draw the orbit outline? Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>draw_orbital_vectors</strong> (<em>bool</em>) – Draw the orbital radial vectors?            Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>plot_phasecurve</strong> (<em>bool</em>) – Compute and plot the phase curve for one            orbit? Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>label_phases</strong> (<em>bool</em>) – Label each of the phases? Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>figsize</strong> (<em>tuple</em>) – The size of the figure in inches.            Default <code class="xref py py-obj docutils literal"><span class="pre">(8,</span> <span class="pre">8)</span></code></li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Any other <code class="xref py py-obj docutils literal"><span class="pre">kwargs</span></code> to be passed to            <a class="reference internal" href="#planetplanet.photo.eyeball.DrawEyeball" title="planetplanet.photo.eyeball.DrawEyeball"><code class="xref py py-func docutils literal"><span class="pre">DrawEyeball()</span></code></a></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><cite>fig</cite>, <cite>axes</cite>, and optionally <cite>figphase</cite>, <cite>axphase</cite>; these are               all the figure and axes objects generated by the function</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.photo.eyeball.GetAngles">
+<code class="descclassname">planetplanet.photo.eyeball.</code><code class="descname">GetAngles</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>z</em>, <em>vx</em>, <em>vy</em>, <em>vz</em>, <em>Lambda=0.0</em>, <em>Phi=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.eyeball.GetAngles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the eyeball angles <span class="math">\(\theta\)</span> and <span class="math">\(\gamma\)</span> given the 
+Cartesian orbital elements and the hotspot offset angles <span class="math">\(\Lambda\)</span> 
+and <span class="math">\(\Phi\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>float</em>) – The <strong>x</strong> component of the planet’s position vector</li>
+<li><strong>y</strong> (<em>float</em>) – The <strong>y</strong> component of the planet’s position vector</li>
+<li><strong>z</strong> (<em>float</em>) – The <strong>z</strong> component of the planet’s position vector</li>
+<li><strong>vx</strong> (<em>float</em>) – The <strong>x</strong> component of the planet’s velocity vector</li>
+<li><strong>vy</strong> (<em>float</em>) – The <strong>y</strong> component of the planet’s velocity vector</li>
+<li><strong>vz</strong> (<em>float</em>) – The <strong>z</strong> component of the planet’s velocity vector</li>
+<li><strong>Lambda</strong> (<em>float</em>) – The longitudinal hotspot offset in radians.            Default <cite>0</cite></li>
+<li><strong>Phi</strong> (<em>float</em>) – The latitudinal hotspot offset in radians. Default <cite>0</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><span class="math">\(\theta\)</span> and <span class="math">\(\gamma\)</span>, the eyeball phase angles,               in radians</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="maps.html" class="btn btn-neutral float-right" title="maps.py" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="photo.html" class="btn btn-neutral" title="photo" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

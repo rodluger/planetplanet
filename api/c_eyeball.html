@@ -1,0 +1,704 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>eyeball.c &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="orbit.c" href="c_orbit.html"/>
+        <link rel="prev" title="trappist1.py" href="trappist1.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="photo.html#python-interface">Python interface</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#c-engine">C engine</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">eyeball.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_orbit.html">orbit.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_ppo.html">ppo.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_ppo_h.html">ppo.h</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>eyeball.c <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/eyeball.c"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="eyeball-c-github">
+<h1>eyeball.c <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/eyeball.c"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#eyeball-c-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div></div></blockquote>
+<p>Occultation light curve routines. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Functions</p>
+<dl class="function">
+<dt id="_CPPv29Blackbodydd">
+<span id="Blackbody__double.double"></span><span class="target" id="eyeball_8c_1a0ea5c59e86f8de13e496df7b2add7f2a"></span>double <code class="descname">Blackbody</code><span class="sig-paren">(</span>double <em>lambda</em>, double <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv29Blackbodydd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the blackbody intensity (W / m^2 / m / sr).</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The intensity given by Planck’s Law </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength in m </li>
+<li><code class="docutils literal"><span class="pre">T</span></code>: The effective temperature in K </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv210BatmanFluxddddddiiiAnu *nw_dAnw_dAnw_d">
+<span id="BatmanFlux__double.double.double.double.double.double.i.i.i.doubleA.doubleA.doubleA"></span><span class="target" id="eyeball_8c_1a0d29c5023d8a252e5931c19f6b22f12c"></span>void <code class="descname">BatmanFlux</code><span class="sig-paren">(</span>double <em>r</em>, double <em>x0</em>, double <em>y0</em>, double <em>ro</em>, double <em>teff</em>, double <em>distance</em>, int <em>nu</em>, int <em>nz</em>, int <em>nw</em>, double <em>u</em>[nu *nw], double <em>lambda</em>[nw], double <em>flux</em>[nw]<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv210BatmanFluxddddddiiiAnu *nw_dAnw_dAnw_d" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An implementation of the BATMAN algorithm (Kreidberg 2016) to compute occultations of radially-symmetric bodies. This applies to transits across stars and planet-planet occultations in the limb-darkened limit or of planets at full or new phase.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The occulted body’s radius in Earth radii </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the occultor relative to the occulted body in Earth radii </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the occultor relative to the occulted body in Earth radii </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of the occultor in Earth radii </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The effective temperature of the occulted body </li>
+<li><code class="docutils literal"><span class="pre">distance</span></code>: The distance to the system in parsecs </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb darkening coefficients </li>
+<li><code class="docutils literal"><span class="pre">nz</span></code>: The number of zenith angle slices </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb darkening coefficient grid: <em>nu</em> coefficients at each wavelength </li>
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength grid in m </li>
+<li><code class="docutils literal"><span class="pre">flux</span></code>: The wavelength-dependent light curve computed by this function </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv27dblcompPKvPKv">
+<span id="dblcomp__voidCP.voidCP"></span><span class="target" id="eyeball_8c_1a915256877c7282bbe9b072e2ed128cd7"></span>int <code class="descname">dblcomp</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>a</em>, <em class="property">const</em> void *<em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv27dblcompPKvPKv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compares two doubles. Used with qsort.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>0 if a == b, 1 if a &lt; b, -1 otherwise </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">a</span></code>: A double </li>
+<li><code class="docutils literal"><span class="pre">b</span></code>: A double </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv27funcompPKvPKv">
+<span id="funcomp__voidCP.voidCP"></span><span class="target" id="eyeball_8c_1a7a5373462b017be9895103aa71c16817"></span>int <code class="descname">funcomp</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>a</em>, <em class="property">const</em> void *<em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv27funcompPKvPKv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compares the y values of two FUNCTIONs. Used with qsort.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>0 if a.y == b.y, 1 if a.y &lt; b.y, -1 otherwise </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">a</span></code>: A <a class="reference internal" href="c_ppo_h.html#struct_f_u_n_c_t_i_o_n"><span class="std std-ref">FUNCTION</span></a> instance </li>
+<li><code class="docutils literal"><span class="pre">b</span></code>: A <a class="reference internal" href="c_ppo_h.html#struct_f_u_n_c_t_i_o_n"><span class="std std-ref">FUNCTION</span></a> instance </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv223RadiativeEquilibriumMapdddd">
+<span id="RadiativeEquilibriumMap__double.double.double.double"></span><span class="target" id="eyeball_8c_1a5505826d802c205969435edefbec406e"></span>double <code class="descname">RadiativeEquilibriumMap</code><span class="sig-paren">(</span>double <em>lambda</em>, double <em>za</em>, double <em>teff</em>, double <em>tnight</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv223RadiativeEquilibriumMapdddd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the flux at a given zenith angle on an eyeball planet.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The emitted spectral flux density from that point on the surface </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength in m </li>
+<li><code class="docutils literal"><span class="pre">za</span></code>: The zenith angle in radians, measured from the hotspot </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The body’s equilibrium temperature </li>
+<li><code class="docutils literal"><span class="pre">tnight</span></code>: The night side temperature in K </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv215LimbDarkenedMapiddiiAnu *nw_dd">
+<span id="LimbDarkenedMap__i.double.double.i.i.doubleA.double"></span><span class="target" id="eyeball_8c_1ad158b6eb4674220b167710ca2cbd53e8"></span>double <code class="descname">LimbDarkenedMap</code><span class="sig-paren">(</span>int <em>j</em>, double <em>za</em>, double <em>teff</em>, int <em>nu</em>, int <em>nw</em>, double <em>u</em>[nu *nw], double <em>B0</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv215LimbDarkenedMapiddiiAnu *nw_dd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the flux at a given zenith angle on a limb-darkened planet.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The emitted spectral flux density from that point on the surface </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">j</span></code>: The index of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">za</span></code>: The zenith angle in radians, measured from the hotspot </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The body’s effective temperature </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb-darkening coefficients per wavelength bin </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The number of wavelength bins </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb-darkening coefficient grid </li>
+<li><code class="docutils literal"><span class="pre">B0</span></code>: The normalization constant for the radiance at this wavelength </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv211GetRootsGSLdddddddA4_d">
+<span id="GetRootsGSL__double.double.double.double.double.double.double.doubleA"></span><span class="target" id="eyeball_8c_1a22dbca4a8143756008e3c46ae676c43f"></span>void <code class="descname">GetRootsGSL</code><span class="sig-paren">(</span>double <em>a</em>, double <em>b</em>, double <em>xE</em>, double <em>yE</em>, double <em>xC</em>, double <em>yC</em>, double <em>r</em>, double <em>roots</em>[4]<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv211GetRootsGSLdddddddA4_d" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the real roots of the circle-ellipse intersection quartic equation. These roots are the x coordinates of the intersection point(s) relative to the center of the circle.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">a</span></code>: The semi-major axis of the ellipse, which is aligned with the y axis </li>
+<li><code class="docutils literal"><span class="pre">b</span></code>: The semi-minor axis of the ellipse, which is aligned with the x axis </li>
+<li><code class="docutils literal"><span class="pre">xE</span></code>: The x coordinate of the center of the ellipse </li>
+<li><code class="docutils literal"><span class="pre">yE</span></code>: The y coordinate of the center of the ellipse </li>
+<li><code class="docutils literal"><span class="pre">xC</span></code>: The x coordinate of the center of the circle </li>
+<li><code class="docutils literal"><span class="pre">yC</span></code>: The y coordinate of the center of the ellipse </li>
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the circle </li>
+<li><code class="docutils literal"><span class="pre">roots</span></code>: The x coordinates of the point(s) of intersection </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv211ZenithAngledddd">
+<span id="ZenithAngle__double.double.double.double"></span><span class="target" id="eyeball_8c_1ae6fe010efc653bb62bda80c4cdd1287b"></span>double <code class="descname">ZenithAngle</code><span class="sig-paren">(</span>double <em>x</em>, double <em>y</em>, double <em>r</em>, double <em>theta</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv211ZenithAngledddd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the zenith angle of a point (x, y) on the projected disk of a planet.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The zenith angle in radians </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x</span></code>: The x coordinate of the point </li>
+<li><code class="docutils literal"><span class="pre">y</span></code>: The y coordinate of the point </li>
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the planet </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The phase angle of the eyeball </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv216SurfaceIntensityddi11RADIANCEMAPiAnz_diAnw_diAnu *nw_dAnw_dAnz+1_Anw_d">
+<span id="SurfaceIntensity__double.double.i.RADIANCEMAP.i.doubleA.i.doubleA.i.doubleA.doubleA.doubleAA"></span><span class="target" id="eyeball_8c_1a2a6abcfbbacfdedd632cf6aae213a3f6"></span>void <code class="descname">SurfaceIntensity</code><span class="sig-paren">(</span>double <em>tnight</em>, double <em>teff</em>, int <em>maptype</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv211RADIANCEMAP" title="RADIANCEMAP">RADIANCEMAP</a> <em>radiancemap</em>, int <em>nz</em>, double <em>zenithgrid</em>[nz], int <em>nw</em>, double <em>lambda</em>[nw], int <em>nu</em>, double <em>u</em>[nu *nw], double <em>B0</em>[nw], double <em>B</em>[nz+1][nw]<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv216SurfaceIntensityddi11RADIANCEMAPiAnz_diAnw_diAnu *nw_dAnw_dAnz+1_Anw_d" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the blackbody intensity at the center of each zenith_angle slice evaluated at a given array of wavelengths.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">tnight</span></code>: The night side temperature in K (eyeball limit) </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The effective temperature of the planet (blackbody limit) </li>
+<li><code class="docutils literal"><span class="pre">maptype</span></code>: The code for the radiance map </li>
+<li><code class="docutils literal"><span class="pre">radiancemap</span></code>: A pointer to the RADIANCEMAP function </li>
+<li><code class="docutils literal"><span class="pre">nz</span></code>: The number of zenith angle slices </li>
+<li><code class="docutils literal"><span class="pre">zenithgrid</span></code>: The zenith angle grid </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The number of wavelength points </li>
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength array </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb darkening coefficients </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb darkening coefficient grid: <em>nu</em> coefficients at each wavelength </li>
+<li><code class="docutils literal"><span class="pre">B0</span></code>: The wavelength-dependent normalization for the limb-darkened case </li>
+<li><code class="docutils literal"><span class="pre">B</span></code>: The blackbody intensity grid </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv25curved8FUNCTION">
+<span id="curve__double.FUNCTION"></span><span class="target" id="eyeball_8c_1a0a1beead0017a97fe8151a22e7147d4d"></span>double <code class="descname">curve</code><span class="sig-paren">(</span>double <em>x</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28FUNCTION" title="FUNCTION">FUNCTION</a> <em>function</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv25curved8FUNCTION" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Evaluates a <a class="reference internal" href="c_ppo_h.html#struct_f_u_n_c_t_i_o_n"><span class="std std-ref">FUNCTION</span></a> instance.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The value of the function at <em>x</em> </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x</span></code>: The point at which to evaluate the function </li>
+<li><code class="docutils literal"><span class="pre">function</span></code>: A <a class="reference internal" href="c_ppo_h.html#struct_f_u_n_c_t_i_o_n"><span class="std std-ref">FUNCTION</span></a> instance </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv28integraldd8FUNCTIONPi">
+<span id="integral__double.double.FUNCTION.iP"></span><span class="target" id="eyeball_8c_1aae5d87d7c2b560e403773e17afd61503"></span>double <code class="descname">integral</code><span class="sig-paren">(</span>double <em>x0</em>, double <em>x1</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28FUNCTION" title="FUNCTION">FUNCTION</a> <em>function</em>, int *<em>oob</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv28integraldd8FUNCTIONPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Evaluates the definite integral of a <a class="reference internal" href="c_ppo_h.html#struct_f_u_n_c_t_i_o_n"><span class="std std-ref">FUNCTION</span></a> instance.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The definite integral of the function from <em>x0</em> to <em>x1</em> </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The lower integration limit </li>
+<li><code class="docutils literal"><span class="pre">x1</span></code>: The upper integration limit </li>
+<li><code class="docutils literal"><span class="pre">function</span></code>: A <a class="reference internal" href="c_ppo_h.html#struct_f_u_n_c_t_i_o_n"><span class="std std-ref">FUNCTION</span></a> instance </li>
+<li><code class="docutils literal"><span class="pre">oob</span></code>: Flag set to 1 if the integration limits are out of bounds </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26fupperdP7ELLIPSE">
+<span id="fupper__double.ELLIPSEP"></span><span class="target" id="eyeball_8c_1acc24e349031af30b3f9ef43fd23cf85f"></span>double <code class="descname">fupper</code><span class="sig-paren">(</span>double <em>x</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *<em>ellipse</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26fupperdP7ELLIPSE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The upper curve of an ellipse.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The value of the upper curve of the ellipse at <em>x</em>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x</span></code>: The point at which to evaluate the curve </li>
+<li><code class="docutils literal"><span class="pre">ellipse</span></code>: An <a class="reference internal" href="c_ppo_h.html#struct_e_l_l_i_p_s_e"><span class="std std-ref">ELLIPSE</span></a> instance </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26flowerdP7ELLIPSE">
+<span id="flower__double.ELLIPSEP"></span><span class="target" id="eyeball_8c_1a5648e35ea17fac1fffbed75c41110fe5"></span>double <code class="descname">flower</code><span class="sig-paren">(</span>double <em>x</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *<em>ellipse</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26flowerdP7ELLIPSE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The lower curve of an ellipse.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The value of the lower curve of the ellipse at <em>x</em>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x</span></code>: The point at which to evaluate the curve </li>
+<li><code class="docutils literal"><span class="pre">ellipse</span></code>: An <a class="reference internal" href="c_ppo_h.html#struct_e_l_l_i_p_s_e"><span class="std std-ref">ELLIPSE</span></a> instance </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26iupperddP7ELLIPSEPi">
+<span id="iupper__double.double.ELLIPSEP.iP"></span><span class="target" id="eyeball_8c_1a2a9febe3eac48d65f2f8e184affdb9fd"></span>double <code class="descname">iupper</code><span class="sig-paren">(</span>double <em>xL</em>, double <em>xR</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *<em>ellipse</em>, int *<em>oob</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26iupperddP7ELLIPSEPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The area under the upper curve of an ellipse.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The value of the definite integral of the upper curve of the ellipse </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">xL</span></code>: The left (lower) integration limit </li>
+<li><code class="docutils literal"><span class="pre">xR</span></code>: The right (upper) integration limit </li>
+<li><code class="docutils literal"><span class="pre">ellipse</span></code>: An <a class="reference internal" href="c_ppo_h.html#struct_e_l_l_i_p_s_e"><span class="std std-ref">ELLIPSE</span></a> instance </li>
+<li><code class="docutils literal"><span class="pre">oob</span></code>: Flag set to 1 if the integration limits are out of bounds </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26ilowerddP7ELLIPSEPi">
+<span id="ilower__double.double.ELLIPSEP.iP"></span><span class="target" id="eyeball_8c_1a1fe9e56200feff845fa0d6127184b367"></span>double <code class="descname">ilower</code><span class="sig-paren">(</span>double <em>xL</em>, double <em>xR</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *<em>ellipse</em>, int *<em>oob</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26ilowerddP7ELLIPSEPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The area under the lower curve of an ellipse.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The value of the definite integral of the lower curve of the ellipse </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">xL</span></code>: The left (lower) integration limit </li>
+<li><code class="docutils literal"><span class="pre">xR</span></code>: The right (upper) integration limit </li>
+<li><code class="docutils literal"><span class="pre">ellipse</span></code>: An <a class="reference internal" href="c_ppo_h.html#struct_e_l_l_i_p_s_e"><span class="std std-ref">ELLIPSE</span></a> instance </li>
+<li><code class="docutils literal"><span class="pre">oob</span></code>: Flag set to 1 if the integration limits are out of bounds </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv221AddZenithAngleEllipseddiAno_dAno_dAno_ddiiiPdPiP8FUNCTIONPi">
+<span id="AddZenithAngleEllipse__double.double.i.doubleA.doubleA.doubleA.double.i.i.i.doubleP.iP.FUNCTIONP.iP"></span><span class="target" id="eyeball_8c_1a7b32bbe2494f93bb3ebf6173038a2fbf"></span>void <code class="descname">AddZenithAngleEllipse</code><span class="sig-paren">(</span>double <em>zenith_angle</em>, double <em>r</em>, int <em>no</em>, double <em>x0</em>[no], double <em>y0</em>[no], double <em>ro</em>[no], double <em>theta</em>, int <em>quarticsolver</em>, int <em>maxvertices</em>, int <em>maxfunctions</em>, double *<em>vertices</em>, int *<em>v</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28FUNCTION" title="FUNCTION">FUNCTION</a> *<em>functions</em>, int *<em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv221AddZenithAngleEllipseddiAno_dAno_dAno_ddiiiPdPiP8FUNCTIONPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the full geometry for a single zenith angle ellipse. Computes the functional form of the ellipse, its integral, and all points of intersection with the limb of the occulted planet and the limb of the occultor. Adds the vertices and functions to the running lists.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">zenith_angle</span></code>: The zenith angle in radians </li>
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">no</span></code>: The number of occulting bodies </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">quarticsolver</span></code>: Which quartic solver to use? </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The phase angle of the eyeball </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">vertices</span></code>: The list of vertices </li>
+<li><code class="docutils literal"><span class="pre">v</span></code>: The number of vertices so far </li>
+<li><code class="docutils literal"><span class="pre">functions</span></code>: The list of functions </li>
+<li><code class="docutils literal"><span class="pre">f</span></code>: The number of functions so far </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv220AddZenithAngleCircleddiAno_dAno_dAno_diiPdPiP8FUNCTIONPi">
+<span id="AddZenithAngleCircle__double.double.i.doubleA.doubleA.doubleA.i.i.doubleP.iP.FUNCTIONP.iP"></span><span class="target" id="eyeball_8c_1aa5f5016043c063d17925b8f9fc077f88"></span>void <code class="descname">AddZenithAngleCircle</code><span class="sig-paren">(</span>double <em>zenith_angle</em>, double <em>r</em>, int <em>no</em>, double <em>x0</em>[no], double <em>y0</em>[no], double <em>ro</em>[no], int <em>maxvertices</em>, int <em>maxfunctions</em>, double *<em>vertices</em>, int *<em>v</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28FUNCTION" title="FUNCTION">FUNCTION</a> *<em>functions</em>, int *<em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv220AddZenithAngleCircleddiAno_dAno_dAno_diiPdPiP8FUNCTIONPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the full geometry for a single zenith angle circle. This is the limiting case of <em>AddZenithAngleEllipse</em> for limb-darkened planets or those at full/new phase. Computes the functional form of the circle, its integral, and all points of intersection with the limb of the occultor. Adds the vertices and functions to the running lists.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">zenith_angle</span></code>: The zenith angle in radians </li>
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">no</span></code>: The number of occulting bodies </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">vertices</span></code>: The list of vertices </li>
+<li><code class="docutils literal"><span class="pre">v</span></code>: The number of vertices so far </li>
+<li><code class="docutils literal"><span class="pre">functions</span></code>: The list of functions </li>
+<li><code class="docutils literal"><span class="pre">f</span></code>: The number of functions so far </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv212AddOccultorsdiAno_dAno_dAno_diiPdPiP8FUNCTIONPi">
+<span id="AddOccultors__double.i.doubleA.doubleA.doubleA.i.i.doubleP.iP.FUNCTIONP.iP"></span><span class="target" id="eyeball_8c_1a5cd4d9cfc046d281d81936fb71f9fa8a"></span>void <code class="descname">AddOccultors</code><span class="sig-paren">(</span>double <em>r</em>, int <em>no</em>, double <em>x0</em>[no], double <em>y0</em>[no], double <em>ro</em>[no], int <em>maxvertices</em>, int <em>maxfunctions</em>, double *<em>vertices</em>, int *<em>v</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28FUNCTION" title="FUNCTION">FUNCTION</a> *<em>functions</em>, int *<em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv212AddOccultorsdiAno_dAno_dAno_diiPdPiP8FUNCTIONPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the geometry for all occulting bodies. Adds relevant vertices and functions to the running lists.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">no</span></code>: The number of occulting bodies </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">vertices</span></code>: The list of vertices </li>
+<li><code class="docutils literal"><span class="pre">v</span></code>: The number of vertices so far </li>
+<li><code class="docutils literal"><span class="pre">functions</span></code>: The list of functions </li>
+<li><code class="docutils literal"><span class="pre">f</span></code>: The number of functions so far </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv211AddOcculteddiAno_dAno_dAno_diiPdPiP8FUNCTIONPi">
+<span id="AddOcculted__double.i.doubleA.doubleA.doubleA.i.i.doubleP.iP.FUNCTIONP.iP"></span><span class="target" id="eyeball_8c_1a7039a01f8e636062446fc6f7e69f6e51"></span>void <code class="descname">AddOcculted</code><span class="sig-paren">(</span>double <em>r</em>, int <em>no</em>, double <em>x0</em>[no], double <em>y0</em>[no], double <em>ro</em>[no], int <em>maxvertices</em>, int <em>maxfunctions</em>, double *<em>vertices</em>, int *<em>v</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28FUNCTION" title="FUNCTION">FUNCTION</a> *<em>functions</em>, int *<em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv211AddOcculteddiAno_dAno_dAno_diiPdPiP8FUNCTIONPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the geometry for the occulted body. Adds the vertices of intersection with each of the occultors and the functional form of the planet disk to the running lists.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">no</span></code>: The number of occulting bodies </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">vertices</span></code>: The list of vertices </li>
+<li><code class="docutils literal"><span class="pre">v</span></code>: The number of vertices so far </li>
+<li><code class="docutils literal"><span class="pre">functions</span></code>: The list of functions </li>
+<li><code class="docutils literal"><span class="pre">f</span></code>: The number of functions so far </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv212OccultedFluxdiAno_dAno_dAno_ddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi">
+<span id="OccultedFlux__double.i.doubleA.doubleA.doubleA.double.double.double.double.double.i.i.i.i.i.i.i.i.i.doubleA.doubleA.doubleA.i.RADIANCEMAP.i.iP"></span><span class="target" id="eyeball_8c_1af4b26107e6ae720f6b5affb07f9fb9da"></span>void <code class="descname">OccultedFlux</code><span class="sig-paren">(</span>double <em>r</em>, int <em>no</em>, double <em>x0</em>[no], double <em>y0</em>[no], double <em>ro</em>[no], double <em>theta</em>, double <em>tnight</em>, double <em>teff</em>, double <em>distance</em>, double <em>mintheta</em>, int <em>maxvertices</em>, int <em>maxfunctions</em>, int <em>adaptive</em>, int <em>circleopt</em>, int <em>batmanopt</em>, int <em>quarticsolver</em>, int <em>nu</em>, int <em>nz</em>, int <em>nw</em>, double <em>u</em>[nu *nw], double <em>lambda</em>[nw], double <em>flux</em>[nw], int <em>maptype</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv211RADIANCEMAP" title="RADIANCEMAP">RADIANCEMAP</a> <em>radiancemap</em>, int <em>quiet</em>, int *<em>iErr</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv212OccultedFluxdiAno_dAno_dAno_ddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the flux of an eyeball planet occulted by one or more bodies over a grid of wavelengths.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">no</span></code>: The number of occulting bodies </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The eyeball phase angle </li>
+<li><code class="docutils literal"><span class="pre">tnight</span></code>: The planet’s night side temperature in K (airless limit only) </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The planet’s effective temperature in K (blackbody limit only) </li>
+<li><code class="docutils literal"><span class="pre">distance</span></code>: The distance to the system in parsecs </li>
+<li><code class="docutils literal"><span class="pre">mintheta</span></code>: The minimum absolute value of the phase angle, below which it is assumed constant to prevent numerical errors </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">adaptive</span></code>: Adaptive zenith angle grid? Limb-darkened limit only </li>
+<li><code class="docutils literal"><span class="pre">circleopt</span></code>: Treat ellipses as circles for limb-darkened bodies? There’s no reason <em>not</em> to do this! Option left in mainly for testing purposes. </li>
+<li><code class="docutils literal"><span class="pre">batmanopt</span></code>: Use the BATMAN algorithm to speed up limb-darkened occultations? </li>
+<li><code class="docutils literal"><span class="pre">quarticsolver</span></code>: Which quartic solver to use? </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb darkening coefficients </li>
+<li><code class="docutils literal"><span class="pre">nz</span></code>: The number of zenith angle slices </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb darkening coefficient grid: <em>nu</em> coefficients at each wavelength </li>
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength grid in m </li>
+<li><code class="docutils literal"><span class="pre">flux</span></code>: The wavelength-dependent light curve computed by this function </li>
+<li><code class="docutils literal"><span class="pre">maptype</span></code>: The code for the radiance map </li>
+<li><code class="docutils literal"><span class="pre">radiancemap</span></code>: A pointer to the RADIANCEMAP function </li>
+<li><code class="docutils literal"><span class="pre">quiet</span></code>: Suppress output? </li>
+<li><code class="docutils literal"><span class="pre">iErr</span></code>: Flag set if an error occurs </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv214UnoccultedFluxddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi">
+<span id="UnoccultedFlux__double.double.double.double.double.double.i.i.i.i.i.i.i.i.i.doubleA.doubleA.doubleA.i.RADIANCEMAP.i.iP"></span><span class="target" id="eyeball_8c_1a2f1816e12ec0776d1fc0363ff90f5e13"></span>void <code class="descname">UnoccultedFlux</code><span class="sig-paren">(</span>double <em>r</em>, double <em>theta</em>, double <em>tnight</em>, double <em>teff</em>, double <em>distance</em>, double <em>mintheta</em>, int <em>maxvertices</em>, int <em>maxfunctions</em>, int <em>adaptive</em>, int <em>circleopt</em>, int <em>batmanopt</em>, int <em>quarticsolver</em>, int <em>nu</em>, int <em>nz</em>, int <em>nw</em>, double <em>u</em>[nu *nw], double <em>lambda</em>[nw], double <em>flux</em>[nw], int <em>maptype</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv211RADIANCEMAP" title="RADIANCEMAP">RADIANCEMAP</a> <em>radiancemap</em>, int <em>quiet</em>, int *<em>iErr</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv214UnoccultedFluxddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the total flux of an eyeball over a grid of wavelengths. This routine (hackishly) calls <em>OccultedFlux</em> with an imaginary occultor covering the entire disk of the body.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The eyeball phase angle </li>
+<li><code class="docutils literal"><span class="pre">tnight</span></code>: The planet’s night side temperature in K (airless limit only) </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The planet’s effective temperature in K (blackbody limit only) </li>
+<li><code class="docutils literal"><span class="pre">distance</span></code>: The distance to the system in parsecs </li>
+<li><code class="docutils literal"><span class="pre">mintheta</span></code>: The minimum absolute value of the phase angle, below which it is assumed constant to prevent numerical errors </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">adaptive</span></code>: Adaptive zenith angle grid? Limb-darkened limit only </li>
+<li><code class="docutils literal"><span class="pre">circleopt</span></code>: Treat ellipses as circles for limb-darkened bodies? There’s no reason <em>not</em> to do this! Option left in mainly for testing purposes. </li>
+<li><code class="docutils literal"><span class="pre">batmanopt</span></code>: Use the BATMAN algorithm to speed up limb-darkened occultations? </li>
+<li><code class="docutils literal"><span class="pre">quarticsolver</span></code>: Which quartic solver to use? </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb darkening coefficients </li>
+<li><code class="docutils literal"><span class="pre">nz</span></code>: The number of zenith angle slices </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb darkening coefficient grid: <em>nu</em> coefficients at each wavelength </li>
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength grid in m </li>
+<li><code class="docutils literal"><span class="pre">flux</span></code>: The wavelength-dependent light curve computed by this function </li>
+<li><code class="docutils literal"><span class="pre">maptype</span></code>: The code for the radiance map </li>
+<li><code class="docutils literal"><span class="pre">radiancemap</span></code>: A pointer to the RADIANCEMAP function </li>
+<li><code class="docutils literal"><span class="pre">quiet</span></code>: Suppress output? </li>
+<li><code class="docutils literal"><span class="pre">iErr</span></code>: Flag set if an error occurs </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="c_orbit.html" class="btn btn-neutral float-right" title="orbit.c" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="trappist1.html" class="btn btn-neutral" title="trappist1.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

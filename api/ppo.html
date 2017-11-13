@@ -1,0 +1,508 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ppo.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="structs.py" href="structs.html"/>
+        <link rel="prev" title="maps.py" href="maps.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#python-interface">Python interface</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="eyeball.html">eyeball.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="maps.html">maps.py</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ppo.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="structs.html">structs.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="theta.html">theta.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trappist1.html">trappist1.py</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="photo.html#c-engine">C engine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>ppo.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-planetplanet.photo.ppo"></span><div class="section" id="ppo-py-github">
+<h1>ppo.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#ppo-py-github" title="Permalink to this headline">¶</a></h1>
+<p>The main Python interface to the C photodynamics code. Allows users to compute
+and plot planet-planet occultation light curves, as well as transits, secondary
+eclipses, phase curves, mutual transits, planet-moon events, and more.</p>
+<blockquote>
+<div></div></blockquote>
+<dl class="class">
+<dt id="planetplanet.photo.ppo.System">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.ppo.</code><code class="descname">System</code><span class="sig-paren">(</span><em>*bodies</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System" title="Permalink to this definition">¶</a></dt>
+<dd><p>The planetary system class. This is the main interface to the
+photodynamical core. Instantiate with all bodies in the system and the
+desired settings, passed as <code class="xref py py-obj docutils literal"><span class="pre">kwargs</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bodies</strong> – Any number of <code class="xref py py-func docutils literal"><span class="pre">Planet()</span></code>, <code class="xref py py-func docutils literal"><span class="pre">Moon()</span></code>, or            <code class="xref py py-func docutils literal"><span class="pre">Star()</span></code> instances comprising all the bodies in the system.            The first body is assumed to be the primary.</li>
+<li><strong>nbody</strong> (<em>bool</em>) – Uses the <code class="xref py py-obj docutils literal"><span class="pre">REBOUND</span></code> N-body code to compute            orbits. Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>keptol</strong> (<em>float</em>) – Kepler solver tolerance. Default <cite>1.e-15</cite></li>
+<li><strong>maxkepiter</strong> (<em>int</em>) – Maximum number of Kepler solver iterations.            Default <cite>100</cite></li>
+<li><strong>kepsolver</strong> (<em>str</em>) – Kepler solver (<cite>newton</cite> | <cite>mdfast</cite>). Default <cite>newton</cite></li>
+<li><strong>timestep</strong> (<em>float</em>) – Timestep in days for the N-body solver.            Default <cite>0.01</cite></li>
+<li><strong>adaptive</strong> (<em>bool</em>) – Adaptive grid for limb-darkened bodies?            Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>quiet</strong> (<em>bool</em>) – Suppress output? Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>mintheta</strong> (<em>float</em>) – Absolute value of the minimum phase angle in            degrees. Below this angle, elliptical boundaries of constant            surface brightness on the planet surface are treated as vertical            lines. Default <cite>1.</cite></li>
+<li><strong>maxvertices</strong> (<em>int</em>) – Maximum number of vertices allowed in the area            computation. Default <cite>999</cite></li>
+<li><strong>maxfunctions</strong> (<em>int</em>) – Maximum number of functions allowed in the area            computation. Default <cite>999</cite></li>
+<li><strong>oversample</strong> (<em>int</em>) – Oversampling factor for each exposure. Default <cite>1</cite></li>
+<li><strong>distance</strong> (<em>float</em>) – Distance to the system in parsecs. Default <cite>10.</cite></li>
+<li><strong>circleopt</strong> (<em>bool</em>) – Solve the simpler quadratic problem for            circle-ellipse intersections when the axes of the ellipse are            equal to within <span class="math">\(10^{-10}\)</span>? Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>batmanopt</strong> (<em>bool</em>) – Use the <code class="xref py py-mod docutils literal"><span class="pre">batman</span></code> algorithm to compute            light curves of radially symmetric bodies? This can significantly            speed up the code. Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>integrator</strong> (<em>str</em>) – The N-body integrator            (<code class="xref py py-obj docutils literal"><span class="pre">whfast</span></code> | <code class="xref py py-obj docutils literal"><span class="pre">ias15</span></code>) to use.            Default <code class="xref py py-obj docutils literal"><span class="pre">ias15</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.compute">
+<code class="descname">compute</code><span class="sig-paren">(</span><em>time</em>, <em>lambda1=5</em>, <em>lambda2=15</em>, <em>R=100</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the full system light curve over a given <cite>time</cite> array between
+wavelengths <cite>lambda1</cite> and <cite>lambda2</cite> at resolution <cite>R</cite>. This method
+runs the photodynamical core, populates all bodies with their
+individual light curves, and flags all occultation events.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>time</strong> (<em>array_like</em>) – The times at which to evaluate the light                curve (BJD − 2,450,000)</li>
+<li><strong>lambda1</strong> (<em>float</em>) – The start point of the wavelength grid in                microns. Default <cite>5</cite></li>
+<li><strong>lambda2</strong> (<em>float</em>) – The end point of the wavelength grid in                microns. Default <cite>15</cite></li>
+<li><strong>R</strong> (<em>float</em>) – The spectrum resolution,                <span class="math">\(R = \frac{\lambda}{\Delta\lambda}\)</span>. Default <cite>100</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.compute_orbits">
+<code class="descname">compute_orbits</code><span class="sig-paren">(</span><em>time</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.compute_orbits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the dynamical code to compute the positions of all bodies over a
+given <cite>time</cite> array. This method does not compute light curves, but it
+does check for occultations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> (<em>array_like</em>) – The times at which to store the body                positions (BJD − 2,450,000)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="planetplanet.photo.ppo.System.continuum">
+<code class="descname">continuum</code><a class="headerlink" href="#planetplanet.photo.ppo.System.continuum" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total <em>continuum</em> flux of the system computed on a
+grid of time and wavelength. This is the same as <a class="reference internal" href="#planetplanet.photo.ppo.System.flux" title="planetplanet.photo.ppo.System.flux"><code class="xref py py-attr docutils literal"><span class="pre">flux</span></code></a>,
+but without any occultations/transits.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="planetplanet.photo.ppo.System.flux">
+<code class="descname">flux</code><a class="headerlink" href="#planetplanet.photo.ppo.System.flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total flux of the system computed on a grid of time and wavelength.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="planetplanet.photo.ppo.System.flux_hr">
+<code class="descname">flux_hr</code><a class="headerlink" href="#planetplanet.photo.ppo.System.flux_hr" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total flux of the system computed on a grid of high
+resolution time and wavelength.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.next_occultation">
+<code class="descname">next_occultation</code><span class="sig-paren">(</span><em>occulted</em>, <em>occultors=None</em>, <em>tstart=7670.0</em>, <em>tend=7770.0</em>, <em>dt=0.001</em>, <em>noccultations=1</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.next_occultation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the time of the next occultation of body <cite>occulted</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>occulted</strong> – The occulted body, passed as a string corresponding                to the body name, the body instance, or the index of the body.</li>
+<li><strong>occultors</strong> – The occultor(s), passed as a list of strings, body                instances, or indices. Default is to consider occultations by                all bodies in the system.</li>
+<li><strong>tstart</strong> (<em>float</em>) – Time at which to start searching for                occultations (BJD − 2,450,000). Default <cite>8000.</cite>                (12:00:00 UT October 8, 2016)</li>
+<li><strong>tend</strong> (<em>float</em>) – Time at which to end the search if fewer than                <cite>noccultations</cite> occultations have been found                (BJD − 2,450,000). Default <cite>8100.</cite></li>
+<li><strong>dt</strong> (<em>float</em>) – The search timestep in days. Occultations shorter                than this value will be missed. Default <cite>0.001</cite>                (about 2 minutes)</li>
+<li><strong>noccultations</strong> (<em>int</em>) – The number of occultations to search for.                Once this many occultations have been found, halts the N-body                integration and returns. Default <cite>1</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Arrays corresponding to the times of the occultations                (BJD − 2,450,000), the occulting bodies, and the durations                (in minutes)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.observe">
+<code class="descname">observe</code><span class="sig-paren">(</span><em>save=None</em>, <em>filter='f1500w'</em>, <em>stack=1</em>, <em>instrument='jwst'</em>, <em>alpha_err=0.7</em>, <em>figsize=(12</em>, <em>4)</em>, <em>time_unit='BJD −\u20092</em>, <em>450</em>, <em>000'</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.observe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run telescope observability calculations for a system that has had its
+lightcurve computed. Calculates a synthetic noised lightcurve in the
+user specified filter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>save</strong> (<em>bool</em>) – Save a text file and a plot. Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>filter</strong> (str or <code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code>) – Filter name or <code class="xref py py-func docutils literal"><span class="pre">Filter()</span></code> object.                Default <cite>‘f1500w’</cite></li>
+<li><strong>stack</strong> (<em>int</em>) – Number of exposures to stack. Default <cite>1</cite></li>
+<li><strong>instrument</strong> (<em>str</em>) – Telescope instrument to use. Default <cite>‘jwst’</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.plot_image">
+<code class="descname">plot_image</code><span class="sig-paren">(</span><em>t</em>, <em>occulted</em>, <em>occultor=None</em>, <em>wavelength=15.0</em>, <em>fig=None</em>, <em>figx=0.535</em>, <em>figy=0.5</em>, <em>figr=0.05</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.plot_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots an image of the <cite>occulted</cite> body and its occultor(s) at a
+given index of the <cite>time_hr</cite> array <cite>t</cite>.</p>
+<div class="figure align-center">
+<img alt="../_images/ppo-1.png" src="../_images/ppo-1.png" />
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>t</strong> (<em>int</em>) – The index of the occultation in the high resolution                time array <cite>time_hr</cite></li>
+<li><strong>occulted</strong> – The occulted body instance</li>
+<li><strong>occultor</strong> (<code class="xref py py-class docutils literal"><span class="pre">BODY</span></code> or <code class="xref py py-obj docutils literal"><span class="pre">list</span></code>) – The occultor(s). Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>wavelength</strong> (<em>float</em>) – The wavelength in microns at which to plot                the light curve. Must be within the wavelength grid.                Default <cite>15</cite></li>
+<li><strong>fig</strong> (<code class="xref py py-class docutils literal"><span class="pre">matplotlib.Figure</span></code>) – The figure on which to plot the image</li>
+<li><strong>figx</strong> (<em>float</em>) – The x coordinate of the image in figure units.                Default <cite>0.535</cite></li>
+<li><strong>figy</strong> (<em>float</em>) – The y coordinate of the image in figure units.                Default <cite>0.5</cite></li>
+<li><strong>figr</strong> (<em>float</em>) – The radius of the image in figure units.
+Default <cite>0.05</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.plot_lightcurve">
+<code class="descname">plot_lightcurve</code><span class="sig-paren">(</span><em>wavelength=15.0</em>, <em>interactive=True</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.plot_lightcurve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the light curve of the system after running <a class="reference internal" href="#planetplanet.photo.ppo.System.compute" title="planetplanet.photo.ppo.System.compute"><code class="xref py py-func docutils literal"><span class="pre">compute()</span></code></a>.</p>
+<div class="figure align-center">
+<img alt="../_images/ppo-2.png" src="../_images/ppo-2.png" />
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wavelength</strong> (<em>float</em>) – The wavelength in microns at which to plot                the light curve. Must be within the wavelength grid.                Default <cite>15</cite></li>
+<li><strong>interactive</strong> (<em>bool</em>) – Interactive (clickable) plot? Default                <code class="xref py py-obj docutils literal"><span class="pre">True</span></code>. If <code class="xref py py-obj docutils literal"><span class="pre">False</span></code>, returns a <code class="xref py py-obj docutils literal"><span class="pre">fig</span></code>                and an <code class="xref py py-obj docutils literal"><span class="pre">axis</span></code> instance.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="xref py py-obj docutils literal"><span class="pre">(fig,</span> <span class="pre">ax)</span></code> if                   <code class="xref py py-obj docutils literal"><span class="pre">interactive</span></code> = <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.plot_occultation">
+<code class="descname">plot_occultation</code><span class="sig-paren">(</span><em>body</em>, <em>time</em>, <em>wavelength=15.0</em>, <em>interval=50</em>, <em>gifname=None</em>, <em>spectral=False</em>, <em>time_unit='BJD −\u20092</em>, <em>450</em>, <em>000'</em>, <em>trail_dur=1.0</em>, <em>full_lightcurve=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.plot_occultation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots and animates an occultation event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>body</strong> (<code class="xref py py-class docutils literal"><span class="pre">BODY</span></code>) – The occulted body</li>
+<li><strong>time</strong> (<em>float</em>) – The approximate time of the occultation event                (BJD − 2,450,000)</li>
+<li><strong>wavelength</strong> (<em>float</em>) – The wavelength in microns at which to plot                the light curve. Must be within the wavelength grid.                Default <cite>15</cite></li>
+<li><strong>interval</strong> (<em>int</em>) – The interval between frames in the animation in                ms. Default <cite>50</cite></li>
+<li><strong>gifname</strong> (<em>str</em>) – If specified, saves the occultation animation as                a <code class="xref py py-obj docutils literal"><span class="pre">gif</span></code> in the current directory. Default <code class="xref py py-obj docutils literal"><span class="pre">None</span></code></li>
+<li><strong>spectral</strong> (<em>bool</em>) – Plot the light curve at different wavelengths?                If <code class="xref py py-obj docutils literal"><span class="pre">True</span></code>, plots the first, middle, and last                wavelength in the wavelength grid. If <code class="xref py py-obj docutils literal"><span class="pre">False</span></code>, plots                the specified <cite>wavelength</cite>. Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>trail_dur</strong> (<em>float</em>) – Duration of the orbital trails in days when                plotting the orbits. The plotting code actually calls                <code class="xref py py-mod docutils literal"><span class="pre">rebound</span></code> to compute these. Default <cite>1</cite></li>
+<li><strong>full_lightcurve</strong> (<em>bool</em>) – Plot the full system light curve? If                <code class="xref py py-obj docutils literal"><span class="pre">True</span></code>, the light curve will include the contribution                of any other bodies being occulted at the given time. Default                <code class="xref py py-obj docutils literal"><span class="pre">False</span></code>, in which case only the flux from <code class="xref py py-obj docutils literal"><span class="pre">body</span></code>               is plotted.</li>
+<li><strong>kwargs</strong> – Any additional keyword arguments to be passed to                <a class="reference internal" href="#planetplanet.photo.ppo.System.plot_image" title="planetplanet.photo.ppo.System.plot_image"><code class="xref py py-func docutils literal"><span class="pre">plot_image()</span></code></a></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="xref py py-obj docutils literal"><span class="pre">(fig,</span> <span class="pre">ax1,</span> <span class="pre">ax2,</span> <span class="pre">ax3)</span></code>, a figure instance and                   its three axes</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="figure align-center">
+<img alt="../_images/ppo-3.png" src="../_images/ppo-3.png" />
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="planetplanet.photo.ppo.System.plot_orbits">
+<code class="descname">plot_orbits</code><span class="sig-paren">(</span><em>bodies='all'</em>, <em>trail_dur=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.ppo.System.plot_orbits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the orbits of a given set of bodies over <cite>nper</cite> periods.</p>
+<div class="figure align-center">
+<img alt="../_images/ppo-4.png" src="../_images/ppo-4.png" />
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>planets</strong> – The planet(s) to plot. Can be a list of strings                corresponding to their names or a list of                <a class="reference internal" href="structs.html#planetplanet.photo.structs.Planet" title="planetplanet.photo.structs.Planet"><code class="xref py py-obj docutils literal"><span class="pre">Planet</span></code></a> instances.               Default is to plot all planets in the system</li>
+<li><strong>trail_dur</strong> (<em>float</em>) – The duration of the orbital trails in days.                Default <cite>1</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A figure and an axis instance</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="planetplanet.photo.ppo.System.time">
+<code class="descname">time</code><a class="headerlink" href="#planetplanet.photo.ppo.System.time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time array in days, BJD − 2,450,000</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="planetplanet.photo.ppo.System.time_hr">
+<code class="descname">time_hr</code><a class="headerlink" href="#planetplanet.photo.ppo.System.time_hr" title="Permalink to this definition">¶</a></dt>
+<dd><p>High-resolution time array in days, BJD − 2,450,000</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="planetplanet.photo.ppo.System.wavelength">
+<code class="descname">wavelength</code><a class="headerlink" href="#planetplanet.photo.ppo.System.wavelength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wavelength array in microns.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="structs.html" class="btn btn-neutral float-right" title="structs.py" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="maps.html" class="btn btn-neutral" title="maps.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

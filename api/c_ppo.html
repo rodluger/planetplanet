@@ -1,0 +1,370 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ppo.c &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="ppo.h" href="c_ppo_h.html"/>
+        <link rel="prev" title="orbit.c" href="c_orbit.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="photo.html#python-interface">Python interface</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#c-engine">C engine</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="c_eyeball.html">eyeball.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_orbit.html">orbit.c</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ppo.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_ppo_h.html">ppo.h</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>ppo.c <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.c"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ppo-c-github">
+<h1>ppo.c <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.c"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#ppo-c-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div></div></blockquote>
+<p>Main interface to the photodynamical routines. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Functions</p>
+<dl class="function">
+<dt id="_CPPv29RodriguesPdPdPddddd">
+<span id="Rodrigues__doubleP.doubleP.doubleP.double.double.double.double"></span><span class="target" id="ppo_8c_1a393d6636dcc4d13fc204a03612b41b94"></span>void <code class="descname">Rodrigues</code><span class="sig-paren">(</span>double *<em>vx</em>, double *<em>vy</em>, double *<em>vz</em>, double <em>kx</em>, double <em>ky</em>, double <em>kz</em>, double <em>theta</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv29RodriguesPdPdPddddd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Rodrigues rotation formula in 3D, given a vector <em>v</em>, a unit vector <em>k</em> normal to the plane of rotation, and the angle of rotation <em>theta</em> in radians. The rotation is applied in-place to the vector <em>v</em>.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">vx</span></code>: The x coordinate of the vector <em>v</em> </li>
+<li><code class="docutils literal"><span class="pre">vy</span></code>: The y coordinate of the vector <em>v</em> </li>
+<li><code class="docutils literal"><span class="pre">vz</span></code>: The z coordinate of the vector <em>v</em> </li>
+<li><code class="docutils literal"><span class="pre">kx</span></code>: The x coordinate of the unit vector <em>k</em> </li>
+<li><code class="docutils literal"><span class="pre">ky</span></code>: The y coordinate of the unit vector <em>k</em> </li>
+<li><code class="docutils literal"><span class="pre">kz</span></code>: The z coordinate of the unit vector <em>k</em> </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The angle of rotation in radians </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv29GetAnglesddddddddPdPd">
+<span id="GetAngles__double.double.double.double.double.double.double.double.doubleP.doubleP"></span><span class="target" id="ppo_8c_1af99449406858f5c3b4970d02733178e3"></span>void <code class="descname">GetAngles</code><span class="sig-paren">(</span>double <em>x</em>, double <em>y</em>, double <em>z</em>, double <em>vx</em>, double <em>vy</em>, double <em>vz</em>, double <em>Lambda</em>, double <em>Phi</em>, double *<em>theta</em>, double *<em>gamma</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv29GetAnglesddddddddPdPd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the phase angle <em>theta</em> and the rotation angle <em>gamma</em> at a given point in a planet’s orbit.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x</span></code>: The x coordinate of the planet’s position on the sky </li>
+<li><code class="docutils literal"><span class="pre">y</span></code>: The y coordinate of the planet’s position on the sky </li>
+<li><code class="docutils literal"><span class="pre">z</span></code>: The z coordinate of the planet’s position on the sky </li>
+<li><code class="docutils literal"><span class="pre">vx</span></code>: The x coordinate of the planet’s velocity on the sky </li>
+<li><code class="docutils literal"><span class="pre">vy</span></code>: The y coordinate of the planet’s velocity on the sky </li>
+<li><code class="docutils literal"><span class="pre">vz</span></code>: The z coordinate of the planet’s velocity on the sky </li>
+<li><code class="docutils literal"><span class="pre">Lambda</span></code>: The latitudinal hotspot offset in radians (north positive) </li>
+<li><code class="docutils literal"><span class="pre">Phi</span></code>: The longitudinal hotspot offset in radians (east positive) </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The eyeball phase angle </li>
+<li><code class="docutils literal"><span class="pre">gamma</span></code>: The eyeball rotation angle </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv24ipowii">
+<span id="ipow__i.i"></span><span class="target" id="ppo_8c_1a5daaf7f37651029de2abf8ad375b6850"></span>int <code class="descname">ipow</code><span class="sig-paren">(</span>int <em>base</em>, int <em>exp</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv24ipowii" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Raises an integer to an integer power.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The result of base^exponent </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">base</span></code>: The base </li>
+<li><code class="docutils literal"><span class="pre">exp</span></code>: The exponent </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv215NextOccultationiAnt_diPP4BODY8SETTINGSiiAnoccultors_iiAnoccultations_dAnoccultations_iAnoccultations_d">
+<span id="NextOccultation__i.doubleA.i.BODYPP.SETTINGS.i.i.iA.i.doubleA.iA.doubleA"></span><span class="target" id="ppo_8c_1a04da6ed2b3f519e0be6a7f6f40181aaa"></span>int <code class="descname">NextOccultation</code><span class="sig-paren">(</span>int <em>nt</em>, double <em>time</em>[nt], int <em>np</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em>, int <em>occulted</em>, int <em>noccultors</em>, int <em>occultors</em>[noccultors], int <em>noccultations</em>, double <em>occultation_times</em>[noccultations], int <em>occultation_inds</em>[noccultations], double <em>occultation_durs</em>[noccultations]<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv215NextOccultationiAnt_diPP4BODY8SETTINGSiiAnoccultors_iiAnoccultations_dAnoccultations_iAnoccultations_d" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the time(s) of the next occultation(s) of the body of index <code class="docutils literal"><span class="pre">occulted</span></code> by the body(ies) of index(ices) <code class="docutils literal"><span class="pre">occultors</span></code>.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">nt</span></code>: The size of the time array </li>
+<li><code class="docutils literal"><span class="pre">time</span></code>: The array of times at which to evaluate the orbits </li>
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="c_ppo_h.html#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers corresponding to all the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="c_ppo_h.html#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class containing all settings </li>
+<li><code class="docutils literal"><span class="pre">occulted</span></code>: The index of the body being occulted </li>
+<li><code class="docutils literal"><span class="pre">noccultors</span></code>: Size of occultor array </li>
+<li><code class="docutils literal"><span class="pre">occultors</span></code>: The indices of the occultors of <code class="docutils literal"><span class="pre">occulted</span></code> </li>
+<li><code class="docutils literal"><span class="pre">noccultations</span></code>: The number of occultations to look for </li>
+<li><code class="docutils literal"><span class="pre">occultation_times</span></code>: The times of each of the occultations, computed by this function </li>
+<li><code class="docutils literal"><span class="pre">occultation_inds</span></code>: The indices of the occultors corresponding to each of the occultations identified by this function </li>
+<li><code class="docutils literal"><span class="pre">occultation_durs</span></code>: The duration of each of the occultations identified by this function </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26OrbitsiAnt_diPP4BODY8SETTINGS">
+<span id="Orbits__i.doubleA.i.BODYPP.SETTINGS"></span><span class="target" id="ppo_8c_1ae78218e19fa663b4f7663e73d10f0815"></span>int <code class="descname">Orbits</code><span class="sig-paren">(</span>int <em>nt</em>, double <em>time</em>[nt], int <em>np</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26OrbitsiAnt_diPP4BODY8SETTINGS" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Evolves the orbital positions of all bodies forward in time with either a Keplerian or an N-body solver.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">nt</span></code>: The size of the time array </li>
+<li><code class="docutils literal"><span class="pre">time</span></code>: The array of times at which to evaluate the orbits </li>
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="c_ppo_h.html#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers corresponding to all the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="c_ppo_h.html#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class containing all settings </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv24FluxiAnt_diAnw_dAnt *nw_diPP4BODY8SETTINGS">
+<span id="Flux__i.doubleA.i.doubleA.doubleA.i.BODYPP.SETTINGS"></span><span class="target" id="ppo_8c_1ab564d417a7b04349be7743e8a02867b8"></span>int <code class="descname">Flux</code><span class="sig-paren">(</span>int <em>nt</em>, double <em>time</em>[nt], int <em>nw</em>, double <em>wavelength</em>[nw], double <em>continuum</em>[nt *nw], int <em>np</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="c_ppo_h.html#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv24FluxiAnt_diAnw_dAnt *nw_diPP4BODY8SETTINGS" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the full light curve for all bodies in the system.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">nt</span></code>: The size of the time array </li>
+<li><code class="docutils literal"><span class="pre">time</span></code>: The array of times at which to evaluate the orbits </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">wavelength</span></code>: The wavelength grid in microns </li>
+<li><code class="docutils literal"><span class="pre">continuum</span></code>: The continuum flux (i.e., the total flux without occultations) of the system on a time/wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="c_ppo_h.html#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers corresponding to all the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="c_ppo_h.html#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class containing all settings </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="c_ppo_h.html" class="btn btn-neutral float-right" title="ppo.h" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="c_orbit.html" class="btn btn-neutral" title="orbit.c" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

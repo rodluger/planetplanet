@@ -1,0 +1,1098 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ppo.h &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="detect" href="detect.html"/>
+        <link rel="prev" title="ppo.c" href="c_ppo.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="photo.html#python-interface">Python interface</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#c-engine">C engine</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="c_eyeball.html">eyeball.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_orbit.html">orbit.c</a></li>
+<li class="toctree-l4"><a class="reference internal" href="c_ppo.html">ppo.c</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ppo.h</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>ppo.h <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.h"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ppo-h-github">
+<h1>ppo.h <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/ppo.h"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#ppo-h-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div></div></blockquote>
+<p>Main header for the photodynamical routines. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Defines</p>
+<dl class="macro">
+<dt id="c.MDFAST">
+<span class="target" id="ppo_8h_1aa0b4968c8bdea207769ebb2f3c82a106"></span><code class="descname">MDFAST</code><a class="headerlink" href="#c.MDFAST" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the Murray &amp; Dermott fast Kepler solver </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.NEWTON">
+<span class="target" id="ppo_8h_1aa9a148bb1f78402352e437be06717155"></span><code class="descname">NEWTON</code><a class="headerlink" href="#c.NEWTON" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the standard Newton Kepler solver </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.QGSL">
+<span class="target" id="ppo_8h_1a8bfd5d17dfeb973c31af2683ee9418e6"></span><code class="descname">QGSL</code><a class="headerlink" href="#c.QGSL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the GSL complex polynomial solver </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MAP_NONE">
+<span class="target" id="ppo_8h_1a35e55ece47ee6583662328097413daf1"></span><code class="descname">MAP_NONE</code><a class="headerlink" href="#c.MAP_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>No map defined </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MAP_RADIAL_DEFAULT">
+<span class="target" id="ppo_8h_1affc7521ac42701a3ff5bee762da6c97b"></span><code class="descname">MAP_RADIAL_DEFAULT</code><a class="headerlink" href="#c.MAP_RADIAL_DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default radially-symmetric LimbDarkenedMap </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MAP_RADIAL_CUSTOM">
+<span class="target" id="ppo_8h_1a11a02bece98a39b2e22ac33a65808610"></span><code class="descname">MAP_RADIAL_CUSTOM</code><a class="headerlink" href="#c.MAP_RADIAL_CUSTOM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom compiled Python radially-symmetric map </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MAP_ELLIPTICAL_DEFAULT">
+<span class="target" id="ppo_8h_1a98c4b8cdbae7ea7a6a7fea5fd0098d14"></span><code class="descname">MAP_ELLIPTICAL_DEFAULT</code><a class="headerlink" href="#c.MAP_ELLIPTICAL_DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default elliptically-symmetric RadiativeEquilibriumMap </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MAP_ELLIPTICAL_CUSTOM">
+<span class="target" id="ppo_8h_1aa65ac1cf69c190644a4a4565b7a148ad"></span><code class="descname">MAP_ELLIPTICAL_CUSTOM</code><a class="headerlink" href="#c.MAP_ELLIPTICAL_CUSTOM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom compiled Python elliptically-symmetric map </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.ERR_NONE">
+<span class="target" id="ppo_8h_1aff0d3fb76f11f6e8ea4002d826bbd23c"></span><code class="descname">ERR_NONE</code><a class="headerlink" href="#c.ERR_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>No error occurred </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.ERR_NOT_IMPLEMENTED">
+<span class="target" id="ppo_8h_1a44cb083062a5cd4a4046c897cec2ddbe"></span><code class="descname">ERR_NOT_IMPLEMENTED</code><a class="headerlink" href="#c.ERR_NOT_IMPLEMENTED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function/option not yet implemented </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.ERR_KEPLER">
+<span class="target" id="ppo_8h_1afa6c2424d090b69b2b2b6bf3949ab9a3"></span><code class="descname">ERR_KEPLER</code><a class="headerlink" href="#c.ERR_KEPLER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Error in the Kepler solver; probably didn’t converge </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.ERR_INPUT">
+<span class="target" id="ppo_8h_1a617a89dc9ced4a63643f98263cde3e91"></span><code class="descname">ERR_INPUT</code><a class="headerlink" href="#c.ERR_INPUT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bad input value </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.ERR_TOO_FEW_OCCS">
+<span class="target" id="ppo_8h_1a8fcd08e766ea0d98cf3be6cd3eee0b88"></span><code class="descname">ERR_TOO_FEW_OCCS</code><a class="headerlink" href="#c.ERR_TOO_FEW_OCCS" title="Permalink to this definition">¶</a></dt>
+<dd><p>No or too few occultations detected over the specified time interval </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.ERR_OOB">
+<span class="target" id="ppo_8h_1a5c49427c123a511015b450a5e1a007a8"></span><code class="descname">ERR_OOB</code><a class="headerlink" href="#c.ERR_OOB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Warning: out of bounds </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.PI">
+<span class="target" id="ppo_8h_1a598a3330b3c21701223ee0ca14316eca"></span><code class="descname">PI</code><a class="headerlink" href="#c.PI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plain old pi </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BIGG">
+<span class="target" id="ppo_8h_1a32d5813b2eae1270bfca4ba9b4a1deed"></span><code class="descname">BIGG</code><a class="headerlink" href="#c.BIGG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gravitational constant (mks) </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.DAYSEC">
+<span class="target" id="ppo_8h_1a898a072398d102cb0a7f9696bca48c1b"></span><code class="descname">DAYSEC</code><a class="headerlink" href="#c.DAYSEC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of seconds in one day </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.KBOLTZ">
+<span class="target" id="ppo_8h_1a3310d88a53520e9ed91b871d83d13294"></span><code class="descname">KBOLTZ</code><a class="headerlink" href="#c.KBOLTZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boltzmann constant in W s / K </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.SBOLTZ">
+<span class="target" id="ppo_8h_1afb7039a2f3ed1b82f83a5b270c54f6dd"></span><code class="descname">SBOLTZ</code><a class="headerlink" href="#c.SBOLTZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stefan-Boltzmann constant in W / m^2 / K^4 </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.SEARTH">
+<span class="target" id="ppo_8h_1ac391ce01e5b0f28750d59f442a8e27b0"></span><code class="descname">SEARTH</code><a class="headerlink" href="#c.SEARTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solar constant in W / m^2 </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.HPLANCK">
+<span class="target" id="ppo_8h_1a32c64516e5ad4b3ec65b54deb3f27457"></span><code class="descname">HPLANCK</code><a class="headerlink" href="#c.HPLANCK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Planck constant in m^2 kg / s </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.CLIGHT">
+<span class="target" id="ppo_8h_1a579085cbd9e0993223cae68700a306cf"></span><code class="descname">CLIGHT</code><a class="headerlink" href="#c.CLIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Speed of light in m / s </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.REARTH">
+<span class="target" id="ppo_8h_1a2e63471c2b6c01d98c204c220a31fe8c"></span><code class="descname">REARTH</code><a class="headerlink" href="#c.REARTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Radius of the Earth in m </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MICRON">
+<span class="target" id="ppo_8h_1ab18d9e4e556018f75810fef49ea5ce8f"></span><code class="descname">MICRON</code><a class="headerlink" href="#c.MICRON" title="Permalink to this definition">¶</a></dt>
+<dd><p>Meters in 1 micron </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.PARSEC">
+<span class="target" id="ppo_8h_1ae57a4c58450b7b417b5e456171208170"></span><code class="descname">PARSEC</code><a class="headerlink" href="#c.PARSEC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Meters in 1 parsec </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MEARTH">
+<span class="target" id="ppo_8h_1a829c61a1a58ad57d481bba108e629660"></span><code class="descname">MEARTH</code><a class="headerlink" href="#c.MEARTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mass of Earth in kg </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.GEARTH">
+<span class="target" id="ppo_8h_1a1b4ed8e146f4ef5a3395266af15a3555"></span><code class="descname">GEARTH</code><a class="headerlink" href="#c.GEARTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Graviational constant in Earth units </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MAXIM">
+<span class="target" id="ppo_8h_1a8f9ba62c5a0ff0b20097e408deaa86d8"></span><code class="descname">MAXIM</code><a class="headerlink" href="#c.MAXIM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum magnitude of the imaginary component for root to be treated as real </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.SMALL">
+<span class="target" id="ppo_8h_1a09c78d2f8feb311dd9fc969a0bf84979"></span><code class="descname">SMALL</code><a class="headerlink" href="#c.SMALL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tolerance in the geometry routines </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.TINY">
+<span class="target" id="ppo_8h_1acf1c38f71f39386356edb151a131ad11"></span><code class="descname">TINY</code><a class="headerlink" href="#c.TINY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tolerance in the geometry routines </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.MINCRESCENT">
+<span class="target" id="ppo_8h_1a15295a6cd2ff1c95459eb1a9ab8db60e"></span><code class="descname">MINCRESCENT</code><a class="headerlink" href="#c.MINCRESCENT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Numerical issues pop up when the dayside crescent is too thin, so for phase angles smaller than this we use more zenith slices </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.CRESCENTNZ">
+<span class="target" id="ppo_8h_1a122f4944c2c783970a61281b1d7a68db"></span><code class="descname">CRESCENTNZ</code><a class="headerlink" href="#c.CRESCENTNZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of zenith slices in the tiny crescent limit </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Typedefs</p>
+<dl class="type">
+<dt id="_CPPv211RADIANCEMAP">
+<span id="RADIANCEMAP"></span><span class="target" id="ppo_8h_1a298dfdf3af9d120759887d374135c536"></span><em class="property">typedef </em>double (*<code class="descname">RADIANCEMAP</code>)<span class="sig-paren">(</span>double, double<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv211RADIANCEMAP" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A radiance map function of the wavelength and the zenith angle. </p>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv25CURVE">
+<span id="CURVE"></span><span class="target" id="ppo_8h_1a54710037eafac3916a394bfa4b7ba5b2"></span><em class="property">typedef </em>double (*<code class="descname">CURVE</code>)<span class="sig-paren">(</span>double, <a class="reference internal" href="#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv25CURVE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A generic ellipse function. </p>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv28INTEGRAL">
+<span id="INTEGRAL"></span><span class="target" id="ppo_8h_1a4b223d198d03d568a0f6e4a85dfe21ce"></span><em class="property">typedef </em>double (*<code class="descname">INTEGRAL</code>)<span class="sig-paren">(</span>double, double, <a class="reference internal" href="#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *, int *<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv28INTEGRAL" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A generic ellipse integral. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Functions</p>
+<dl class="function">
+<dt id="_CPPv29GetAnglesddddddddPdPd">
+<span id="GetAngles__double.double.double.double.double.double.double.double.doubleP.doubleP"></span><span class="target" id="ppo_8h_1af99449406858f5c3b4970d02733178e3"></span>void <code class="descname">GetAngles</code><span class="sig-paren">(</span>double <em>x</em>, double <em>y</em>, double <em>z</em>, double <em>vx</em>, double <em>vy</em>, double <em>vz</em>, double <em>Lambda</em>, double <em>Phi</em>, double *<em>theta</em>, double *<em>gamma</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv29GetAnglesddddddddPdPd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the phase angle <em>theta</em> and the rotation angle <em>gamma</em> at a given point in a planet’s orbit.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">x</span></code>: The x coordinate of the planet’s position on the sky </li>
+<li><code class="docutils literal"><span class="pre">y</span></code>: The y coordinate of the planet’s position on the sky </li>
+<li><code class="docutils literal"><span class="pre">z</span></code>: The z coordinate of the planet’s position on the sky </li>
+<li><code class="docutils literal"><span class="pre">vx</span></code>: The x coordinate of the planet’s velocity on the sky </li>
+<li><code class="docutils literal"><span class="pre">vy</span></code>: The y coordinate of the planet’s velocity on the sky </li>
+<li><code class="docutils literal"><span class="pre">vz</span></code>: The z coordinate of the planet’s velocity on the sky </li>
+<li><code class="docutils literal"><span class="pre">Lambda</span></code>: The latitudinal hotspot offset in radians (north positive) </li>
+<li><code class="docutils literal"><span class="pre">Phi</span></code>: The longitudinal hotspot offset in radians (east positive) </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The eyeball phase angle </li>
+<li><code class="docutils literal"><span class="pre">gamma</span></code>: The eyeball rotation angle </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv29Blackbodydd">
+<span id="Blackbody__double.double"></span><span class="target" id="ppo_8h_1a0ea5c59e86f8de13e496df7b2add7f2a"></span>double <code class="descname">Blackbody</code><span class="sig-paren">(</span>double <em>lambda</em>, double <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv29Blackbodydd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the blackbody intensity (W / m^2 / m / sr).</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The intensity given by Planck’s Law </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength in m </li>
+<li><code class="docutils literal"><span class="pre">T</span></code>: The effective temperature in K </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv215NextOccultationiAnt_diPP4BODY8SETTINGSiiAnoccultors_iiAnoccultations_dAnoccultations_iAnoccultations_d">
+<span id="NextOccultation__i.doubleA.i.BODYPP.SETTINGS.i.i.iA.i.doubleA.iA.doubleA"></span><span class="target" id="ppo_8h_1a04da6ed2b3f519e0be6a7f6f40181aaa"></span>int <code class="descname">NextOccultation</code><span class="sig-paren">(</span>int <em>nt</em>, double <em>time</em>[nt], int <em>np</em>, <a class="reference internal" href="#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em>, int <em>occulted</em>, int <em>noccultors</em>, int <em>occultors</em>[noccultors], int <em>noccultations</em>, double <em>occultation_times</em>[noccultations], int <em>occultation_inds</em>[noccultations], double <em>occultation_durs</em>[noccultations]<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv215NextOccultationiAnt_diPP4BODY8SETTINGSiiAnoccultors_iiAnoccultations_dAnoccultations_iAnoccultations_d" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the time(s) of the next occultation(s) of the body of index <code class="docutils literal"><span class="pre">occulted</span></code> by the body(ies) of index(ices) <code class="docutils literal"><span class="pre">occultors</span></code>.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">nt</span></code>: The size of the time array </li>
+<li><code class="docutils literal"><span class="pre">time</span></code>: The array of times at which to evaluate the orbits </li>
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers corresponding to all the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class containing all settings </li>
+<li><code class="docutils literal"><span class="pre">occulted</span></code>: The index of the body being occulted </li>
+<li><code class="docutils literal"><span class="pre">noccultors</span></code>: Size of occultor array </li>
+<li><code class="docutils literal"><span class="pre">occultors</span></code>: The indices of the occultors of <code class="docutils literal"><span class="pre">occulted</span></code> </li>
+<li><code class="docutils literal"><span class="pre">noccultations</span></code>: The number of occultations to look for </li>
+<li><code class="docutils literal"><span class="pre">occultation_times</span></code>: The times of each of the occultations, computed by this function </li>
+<li><code class="docutils literal"><span class="pre">occultation_inds</span></code>: The indices of the occultors corresponding to each of the occultations identified by this function </li>
+<li><code class="docutils literal"><span class="pre">occultation_durs</span></code>: The duration of each of the occultations identified by this function </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv25NBodyiPP4BODY8SETTINGSiiiAnoccultors_iiAnoccultations_dAnoccultations_iAnoccultations_d">
+<span id="NBody__i.BODYPP.SETTINGS.i.i.i.iA.i.doubleA.iA.doubleA"></span><span class="target" id="ppo_8h_1ae5edb3cca0105cae03db2dc6e30b76d9"></span>int <code class="descname">NBody</code><span class="sig-paren">(</span>int <em>np</em>, <a class="reference internal" href="#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em>, int <em>halt_on_occultation</em>, int <em>occulted</em>, int <em>noccultors</em>, int <em>occultors</em>[noccultors], int <em>noccultations</em>, double <em>occultation_times</em>[noccultations], int <em>occultation_inds</em>[noccultations], double <em>occultation_durs</em>[noccultations]<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv25NBodyiPP4BODY8SETTINGSiiiAnoccultors_iiAnoccultations_dAnoccultations_iAnoccultations_d" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compute the instantaneous x, y, and z positions of all planets using the REBOUND N-Body code.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers to each of the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class </li>
+<li><code class="docutils literal"><span class="pre">halt_on_occultation</span></code>: Halt when a certain number of occultations of a given body have occurred? </li>
+<li><code class="docutils literal"><span class="pre">occulted</span></code>: The index of the body being occulted (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+<li><code class="docutils literal"><span class="pre">noccultors</span></code>: Size of occultor array (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+<li><code class="docutils literal"><span class="pre">occultors</span></code>: The indices of the occultors of <code class="docutils literal"><span class="pre">occulted</span></code> (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+<li><code class="docutils literal"><span class="pre">noccultations</span></code>: The number of occultations to look for (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+<li><code class="docutils literal"><span class="pre">occultation_times</span></code>: The times of each of the occultations, computed by this function (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+<li><code class="docutils literal"><span class="pre">occultation_inds</span></code>: The indices of the occultors corresponding to each of the occultations identified by this function (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+<li><code class="docutils literal"><span class="pre">occultation_durs</span></code>: The duration of each of the occultations identified by this function (only used if <code class="docutils literal"><span class="pre">halt_on_occultation</span></code> = 1) </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26KepleriPP4BODY8SETTINGS">
+<span id="Kepler__i.BODYPP.SETTINGS"></span><span class="target" id="ppo_8h_1afbf01c336af916b24b5b36681f2f7de1"></span>int <code class="descname">Kepler</code><span class="sig-paren">(</span>int <em>np</em>, <a class="reference internal" href="#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26KepleriPP4BODY8SETTINGS" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compute the instantaneous x, y, and z positions of all planets with a simple multi-Keplerian solver.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers to each of the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv212OccultedFluxdiAno_dAno_dAno_ddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi">
+<span id="OccultedFlux__double.i.doubleA.doubleA.doubleA.double.double.double.double.double.i.i.i.i.i.i.i.i.i.doubleA.doubleA.doubleA.i.RADIANCEMAP.i.iP"></span><span class="target" id="ppo_8h_1af4b26107e6ae720f6b5affb07f9fb9da"></span>void <code class="descname">OccultedFlux</code><span class="sig-paren">(</span>double <em>r</em>, int <em>no</em>, double <em>x0</em>[no], double <em>y0</em>[no], double <em>ro</em>[no], double <em>theta</em>, double <em>tnight</em>, double <em>teff</em>, double <em>distance</em>, double <em>mintheta</em>, int <em>maxvertices</em>, int <em>maxfunctions</em>, int <em>adaptive</em>, int <em>circleopt</em>, int <em>batmanopt</em>, int <em>quarticsolver</em>, int <em>nu</em>, int <em>nz</em>, int <em>nw</em>, double <em>u</em>[nu *nw], double <em>lambda</em>[nw], double <em>flux</em>[nw], int <em>maptype</em>, <a class="reference internal" href="#_CPPv211RADIANCEMAP" title="RADIANCEMAP">RADIANCEMAP</a> <em>radiancemap</em>, int <em>quiet</em>, int *<em>iErr</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv212OccultedFluxdiAno_dAno_dAno_ddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the flux of an eyeball planet occulted by one or more bodies over a grid of wavelengths.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">no</span></code>: The number of occulting bodies </li>
+<li><code class="docutils literal"><span class="pre">x0</span></code>: The x coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">y0</span></code>: The y coordinate of the center of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">ro</span></code>: The radius of each occulting body </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The eyeball phase angle </li>
+<li><code class="docutils literal"><span class="pre">tnight</span></code>: The planet’s night side temperature in K (airless limit only) </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The planet’s effective temperature in K (blackbody limit only) </li>
+<li><code class="docutils literal"><span class="pre">distance</span></code>: The distance to the system in parsecs </li>
+<li><code class="docutils literal"><span class="pre">mintheta</span></code>: The minimum absolute value of the phase angle, below which it is assumed constant to prevent numerical errors </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">adaptive</span></code>: Adaptive zenith angle grid? Limb-darkened limit only </li>
+<li><code class="docutils literal"><span class="pre">circleopt</span></code>: Treat ellipses as circles for limb-darkened bodies? There’s no reason <em>not</em> to do this! Option left in mainly for testing purposes. </li>
+<li><code class="docutils literal"><span class="pre">batmanopt</span></code>: Use the BATMAN algorithm to speed up limb-darkened occultations? </li>
+<li><code class="docutils literal"><span class="pre">quarticsolver</span></code>: Which quartic solver to use? </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb darkening coefficients </li>
+<li><code class="docutils literal"><span class="pre">nz</span></code>: The number of zenith angle slices </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb darkening coefficient grid: <em>nu</em> coefficients at each wavelength </li>
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength grid in m </li>
+<li><code class="docutils literal"><span class="pre">flux</span></code>: The wavelength-dependent light curve computed by this function </li>
+<li><code class="docutils literal"><span class="pre">maptype</span></code>: The code for the radiance map </li>
+<li><code class="docutils literal"><span class="pre">radiancemap</span></code>: A pointer to the RADIANCEMAP function </li>
+<li><code class="docutils literal"><span class="pre">quiet</span></code>: Suppress output? </li>
+<li><code class="docutils literal"><span class="pre">iErr</span></code>: Flag set if an error occurs </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv214UnoccultedFluxddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi">
+<span id="UnoccultedFlux__double.double.double.double.double.double.i.i.i.i.i.i.i.i.i.doubleA.doubleA.doubleA.i.RADIANCEMAP.i.iP"></span><span class="target" id="ppo_8h_1a2f1816e12ec0776d1fc0363ff90f5e13"></span>void <code class="descname">UnoccultedFlux</code><span class="sig-paren">(</span>double <em>r</em>, double <em>theta</em>, double <em>tnight</em>, double <em>teff</em>, double <em>distance</em>, double <em>mintheta</em>, int <em>maxvertices</em>, int <em>maxfunctions</em>, int <em>adaptive</em>, int <em>circleopt</em>, int <em>batmanopt</em>, int <em>quarticsolver</em>, int <em>nu</em>, int <em>nz</em>, int <em>nw</em>, double <em>u</em>[nu *nw], double <em>lambda</em>[nw], double <em>flux</em>[nw], int <em>maptype</em>, <a class="reference internal" href="#_CPPv211RADIANCEMAP" title="RADIANCEMAP">RADIANCEMAP</a> <em>radiancemap</em>, int <em>quiet</em>, int *<em>iErr</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv214UnoccultedFluxddddddiiiiiiiiiAnu *nw_dAnw_dAnw_di11RADIANCEMAPiPi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the total flux of an eyeball over a grid of wavelengths. This routine (hackishly) calls <em>OccultedFlux</em> with an imaginary occultor covering the entire disk of the body.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">r</span></code>: The radius of the occulted planet </li>
+<li><code class="docutils literal"><span class="pre">theta</span></code>: The eyeball phase angle </li>
+<li><code class="docutils literal"><span class="pre">tnight</span></code>: The planet’s night side temperature in K (airless limit only) </li>
+<li><code class="docutils literal"><span class="pre">teff</span></code>: The planet’s effective temperature in K (blackbody limit only) </li>
+<li><code class="docutils literal"><span class="pre">distance</span></code>: The distance to the system in parsecs </li>
+<li><code class="docutils literal"><span class="pre">mintheta</span></code>: The minimum absolute value of the phase angle, below which it is assumed constant to prevent numerical errors </li>
+<li><code class="docutils literal"><span class="pre">maxvertices</span></code>: Maximum number of vertices in the problem </li>
+<li><code class="docutils literal"><span class="pre">maxfunctions</span></code>: Maximum number of functions in the problem </li>
+<li><code class="docutils literal"><span class="pre">adaptive</span></code>: Adaptive zenith angle grid? Limb-darkened limit only </li>
+<li><code class="docutils literal"><span class="pre">circleopt</span></code>: Treat ellipses as circles for limb-darkened bodies? There’s no reason <em>not</em> to do this! Option left in mainly for testing purposes. </li>
+<li><code class="docutils literal"><span class="pre">batmanopt</span></code>: Use the BATMAN algorithm to speed up limb-darkened occultations? </li>
+<li><code class="docutils literal"><span class="pre">quarticsolver</span></code>: Which quartic solver to use? </li>
+<li><code class="docutils literal"><span class="pre">nu</span></code>: The number of limb darkening coefficients </li>
+<li><code class="docutils literal"><span class="pre">nz</span></code>: The number of zenith angle slices </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">u</span></code>: The limb darkening coefficient grid: <em>nu</em> coefficients at each wavelength </li>
+<li><code class="docutils literal"><span class="pre">lambda</span></code>: The wavelength grid in m </li>
+<li><code class="docutils literal"><span class="pre">flux</span></code>: The wavelength-dependent light curve computed by this function </li>
+<li><code class="docutils literal"><span class="pre">maptype</span></code>: The code for the radiance map </li>
+<li><code class="docutils literal"><span class="pre">radiancemap</span></code>: A pointer to the RADIANCEMAP function </li>
+<li><code class="docutils literal"><span class="pre">quiet</span></code>: Suppress output? </li>
+<li><code class="docutils literal"><span class="pre">iErr</span></code>: Flag set if an error occurs </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv26OrbitsiAnt_diPP4BODY8SETTINGS">
+<span id="Orbits__i.doubleA.i.BODYPP.SETTINGS"></span><span class="target" id="ppo_8h_1ae78218e19fa663b4f7663e73d10f0815"></span>int <code class="descname">Orbits</code><span class="sig-paren">(</span>int <em>nt</em>, double <em>time</em>[nt], int <em>np</em>, <a class="reference internal" href="#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv26OrbitsiAnt_diPP4BODY8SETTINGS" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Evolves the orbital positions of all bodies forward in time with either a Keplerian or an N-body solver.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">nt</span></code>: The size of the time array </li>
+<li><code class="docutils literal"><span class="pre">time</span></code>: The array of times at which to evaluate the orbits </li>
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers corresponding to all the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class containing all settings </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv24FluxiAnt_diAnw_dAnt *nw_diPP4BODY8SETTINGS">
+<span id="Flux__i.doubleA.i.doubleA.doubleA.i.BODYPP.SETTINGS"></span><span class="target" id="ppo_8h_1ab564d417a7b04349be7743e8a02867b8"></span>int <code class="descname">Flux</code><span class="sig-paren">(</span>int <em>nt</em>, double <em>time</em>[nt], int <em>nw</em>, double <em>wavelength</em>[nw], double <em>continuum</em>[nt *nw], int <em>np</em>, <a class="reference internal" href="#_CPPv24BODY" title="BODY">BODY</a> **<em>body</em>, <a class="reference internal" href="#_CPPv28SETTINGS" title="SETTINGS">SETTINGS</a> <em>settings</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv24FluxiAnt_diAnw_dAnt *nw_diPP4BODY8SETTINGS" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Computes the full light curve for all bodies in the system.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The error code </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">nt</span></code>: The size of the time array </li>
+<li><code class="docutils literal"><span class="pre">time</span></code>: The array of times at which to evaluate the orbits </li>
+<li><code class="docutils literal"><span class="pre">nw</span></code>: The size of the wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">wavelength</span></code>: The wavelength grid in microns </li>
+<li><code class="docutils literal"><span class="pre">continuum</span></code>: The continuum flux (i.e., the total flux without occultations) of the system on a time/wavelength grid </li>
+<li><code class="docutils literal"><span class="pre">np</span></code>: The number of particles (bodies) in the system </li>
+<li><code class="docutils literal"><span class="pre">body</span></code>: An array of <a class="reference internal" href="#struct_b_o_d_y"><span class="std std-ref">BODY</span></a> pointers corresponding to all the bodies in the system </li>
+<li><code class="docutils literal"><span class="pre">settings</span></code>: An instance of the <a class="reference internal" href="#struct_s_e_t_t_i_n_g_s"><span class="std std-ref">SETTINGS</span></a> class containing all settings </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<dl class="class">
+<dt id="_CPPv24BODY">
+<span id="BODY"></span><span class="target" id="struct_b_o_d_y"></span><em class="property">struct </em><code class="descname">BODY</code><a class="headerlink" href="#_CPPv24BODY" title="Permalink to this definition">¶</a><br /></dt>
+<dd><em>#include &lt;ppo.h&gt;</em><p>Struct containing all the information pertaining to a body (star, planet, or moon) in the system. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4BODY1mE">
+<span id="BODY::m__double"></span><span class="target" id="struct_b_o_d_y_1abf4a6596e3202a276d001987b77f07be"></span>double <code class="descname">m</code><a class="headerlink" href="#_CPPv2N4BODY1mE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Body mass in Earth masses </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY3perE">
+<span id="BODY::per__double"></span><span class="target" id="struct_b_o_d_y_1a152c3a4a0fd6840a3f097d2b1abb1fc5"></span>double <code class="descname">per</code><a class="headerlink" href="#_CPPv2N4BODY3perE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Orbital period in days </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY3incE">
+<span id="BODY::inc__double"></span><span class="target" id="struct_b_o_d_y_1a4a0bcaca8a2af29fbab4773d78ad414f"></span>double <code class="descname">inc</code><a class="headerlink" href="#_CPPv2N4BODY3incE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Orbital inclination in radians </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY3eccE">
+<span id="BODY::ecc__double"></span><span class="target" id="struct_b_o_d_y_1ac8f0a5a920fe996c941c38249536d2f5"></span>double <code class="descname">ecc</code><a class="headerlink" href="#_CPPv2N4BODY3eccE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Orbital eccentricity </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1wE">
+<span id="BODY::w__double"></span><span class="target" id="struct_b_o_d_y_1a27d3352bffd6b6b294af67f66818245a"></span>double <code class="descname">w</code><a class="headerlink" href="#_CPPv2N4BODY1wE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Longitude of pericenter in radians </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY5OmegaE">
+<span id="BODY::Omega__double"></span><span class="target" id="struct_b_o_d_y_1a5f9a00baf92deedefee5a0fb779440a8"></span>double <code class="descname">Omega</code><a class="headerlink" href="#_CPPv2N4BODY5OmegaE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Longitude of ascending node in radians </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1aE">
+<span id="BODY::a__double"></span><span class="target" id="struct_b_o_d_y_1a9f5ca0e8de331227399153ea42f3218d"></span>double <code class="descname">a</code><a class="headerlink" href="#_CPPv2N4BODY1aE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Orbital semi-major axis in Earth radii </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY6tperi0E">
+<span id="BODY::tperi0__double"></span><span class="target" id="struct_b_o_d_y_1a86d73276d79b6209d3a3c0a61bce8b70"></span>double <code class="descname">tperi0</code><a class="headerlink" href="#_CPPv2N4BODY6tperi0E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Time of pericenter passage in days </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1rE">
+<span id="BODY::r__double"></span><span class="target" id="struct_b_o_d_y_1ad8194e10cac5cf75ee28d2a7af5dd4a5"></span>double <code class="descname">r</code><a class="headerlink" href="#_CPPv2N4BODY1rE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Body radius in Earth radii </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY6albedoE">
+<span id="BODY::albedo__double"></span><span class="target" id="struct_b_o_d_y_1ac5515fd90f1a173a3f1ae7b74ef5b45b"></span>double <code class="descname">albedo</code><a class="headerlink" href="#_CPPv2N4BODY6albedoE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Body albedo </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY4teffE">
+<span id="BODY::teff__double"></span><span class="target" id="struct_b_o_d_y_1a8a56633d176ff24af69a16ea900dc00a"></span>double <code class="descname">teff</code><a class="headerlink" href="#_CPPv2N4BODY4teffE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Effective temperature in K </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY6tnightE">
+<span id="BODY::tnight__double"></span><span class="target" id="struct_b_o_d_y_1af89f08c278f2eb19125139b06610688e"></span>double <code class="descname">tnight</code><a class="headerlink" href="#_CPPv2N4BODY6tnightE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Night side temperature in K </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY10phasecurveE">
+<span id="BODY::phasecurve__i"></span><span class="target" id="struct_b_o_d_y_1a0f6a8d28a35119f54fe5a8534dc2b2f0"></span>int <code class="descname">phasecurve</code><a class="headerlink" href="#_CPPv2N4BODY10phasecurveE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compute the phase curve for this body? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY6LambdaE">
+<span id="BODY::Lambda__double"></span><span class="target" id="struct_b_o_d_y_1a2f5a82534bd014ee91dcd1804186879d"></span>double <code class="descname">Lambda</code><a class="headerlink" href="#_CPPv2N4BODY6LambdaE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Longitudinal hotspot offset in radians </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY3PhiE">
+<span id="BODY::Phi__double"></span><span class="target" id="struct_b_o_d_y_1a3cd9c5042181c3a7c367fc2a02f66d5b"></span>double <code class="descname">Phi</code><a class="headerlink" href="#_CPPv2N4BODY3PhiE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Latitudinal hotspot offset in radians </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY4hostE">
+<span id="BODY::host__i"></span><span class="target" id="struct_b_o_d_y_1aabfeeb246076edaa6b74a1de47766d34"></span>int <code class="descname">host</code><a class="headerlink" href="#_CPPv2N4BODY4hostE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The index of this body’s host </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY9cartesianE">
+<span id="BODY::cartesian__i"></span><span class="target" id="struct_b_o_d_y_1a3f1d054f233c17707b2d27d46a77407e"></span>int <code class="descname">cartesian</code><a class="headerlink" href="#_CPPv2N4BODY9cartesianE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Initialize body based on its Cartesian coords? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2nuE">
+<span id="BODY::nu__i"></span><span class="target" id="struct_b_o_d_y_1a6ea7dcdc24b840729811fee5c41722db"></span>int <code class="descname">nu</code><a class="headerlink" href="#_CPPv2N4BODY2nuE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of limb darkening coefficients (per wavelength) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2nzE">
+<span id="BODY::nz__i"></span><span class="target" id="struct_b_o_d_y_1a90e1937bc68896d1ce510ea5c37e0573"></span>int <code class="descname">nz</code><a class="headerlink" href="#_CPPv2N4BODY2nzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of zenith angle slices </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2ntE">
+<span id="BODY::nt__i"></span><span class="target" id="struct_b_o_d_y_1a1ce1d9a62a4dce189ccd422a7725ba0c"></span>int <code class="descname">nt</code><a class="headerlink" href="#_CPPv2N4BODY2ntE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Size of time array </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2nwE">
+<span id="BODY::nw__i"></span><span class="target" id="struct_b_o_d_y_1aa7245ae53c60dd3929cd2865563e7d3b"></span>int <code class="descname">nw</code><a class="headerlink" href="#_CPPv2N4BODY2nwE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Size of wavelength array </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1uE">
+<span id="BODY::u__doubleP"></span><span class="target" id="struct_b_o_d_y_1a794320f495a0d453fcc170ff8c95ede3"></span>double *<code class="descname">u</code><a class="headerlink" href="#_CPPv2N4BODY1uE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Limb darkening coefficient grid </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY4timeE">
+<span id="BODY::time__doubleP"></span><span class="target" id="struct_b_o_d_y_1a2ff86bf49235c6a0785772a62c562672"></span>double *<code class="descname">time</code><a class="headerlink" href="#_CPPv2N4BODY4timeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Time array </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY10wavelengthE">
+<span id="BODY::wavelength__doubleP"></span><span class="target" id="struct_b_o_d_y_1a76422a696a59ac034eaf1cbf7a01619b"></span>double *<code class="descname">wavelength</code><a class="headerlink" href="#_CPPv2N4BODY10wavelengthE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Wavelength array </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1xE">
+<span id="BODY::x__doubleP"></span><span class="target" id="struct_b_o_d_y_1a5162523011b5a55926d80ba9c7239117"></span>double *<code class="descname">x</code><a class="headerlink" href="#_CPPv2N4BODY1xE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Cartesian x position on the sky (right positive) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1yE">
+<span id="BODY::y__doubleP"></span><span class="target" id="struct_b_o_d_y_1a777fddb8badd969f3cb2e4881b943fd1"></span>double *<code class="descname">y</code><a class="headerlink" href="#_CPPv2N4BODY1yE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Cartesian y position on the sky (up positive) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY1zE">
+<span id="BODY::z__doubleP"></span><span class="target" id="struct_b_o_d_y_1afd0f3ba8720920e9858a981c68867754"></span>double *<code class="descname">z</code><a class="headerlink" href="#_CPPv2N4BODY1zE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Cartesian z position on the sky (into sky positive) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2vxE">
+<span id="BODY::vx__doubleP"></span><span class="target" id="struct_b_o_d_y_1a721dbb2a661e4c4d262410d27e658d1a"></span>double *<code class="descname">vx</code><a class="headerlink" href="#_CPPv2N4BODY2vxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Cartesian x velocity on the sky (right positive) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2vyE">
+<span id="BODY::vy__doubleP"></span><span class="target" id="struct_b_o_d_y_1a53664135fd2f05dbf758df0ea073cbca"></span>double *<code class="descname">vy</code><a class="headerlink" href="#_CPPv2N4BODY2vyE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Cartesian y velocity on the sky (up positive) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY2vzE">
+<span id="BODY::vz__doubleP"></span><span class="target" id="struct_b_o_d_y_1a9499af0905b1e729aee48530508cc130"></span>double *<code class="descname">vz</code><a class="headerlink" href="#_CPPv2N4BODY2vzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Cartesian z velocity on the sky (into sky positive) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY8occultorE">
+<span id="BODY::occultor__iP"></span><span class="target" id="struct_b_o_d_y_1a147adf25c6c448d83f93499b23d82521"></span>int *<code class="descname">occultor</code><a class="headerlink" href="#_CPPv2N4BODY8occultorE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The array of occultor bit flags </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY4fluxE">
+<span id="BODY::flux__doubleP"></span><span class="target" id="struct_b_o_d_y_1af72f3eea23be8d632cb37df6f9d93079"></span>double *<code class="descname">flux</code><a class="headerlink" href="#_CPPv2N4BODY4fluxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The grid of observed flux from this body in time/wavelength </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY10total_fluxE">
+<span id="BODY::total_flux__doubleP"></span><span class="target" id="struct_b_o_d_y_1ab002049ade6b048a2d2dff156afb898c"></span>double *<code class="descname">total_flux</code><a class="headerlink" href="#_CPPv2N4BODY10total_fluxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The total unocculted flux of this body at full phase </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY7maptypeE">
+<span id="BODY::maptype__i"></span><span class="target" id="struct_b_o_d_y_1aac2e17d84055469bb32322d972dc12c8"></span>int <code class="descname">maptype</code><a class="headerlink" href="#_CPPv2N4BODY7maptypeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Which radiance map to use? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4BODY11radiancemapE">
+<span id="BODY::radiancemap__RADIANCEMAP"></span><span class="target" id="struct_b_o_d_y_1ad5e0bf1e2a28a60ae3f39963210faf31"></span><a class="reference internal" href="#_CPPv211RADIANCEMAP" title="RADIANCEMAP">RADIANCEMAP</a> <code class="descname">radiancemap</code><a class="headerlink" href="#_CPPv2N4BODY11radiancemapE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A function that returns a radiance map for the body’s surface </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv28SETTINGS">
+<span id="SETTINGS"></span><span class="target" id="struct_s_e_t_t_i_n_g_s"></span><em class="property">struct </em><code class="descname">SETTINGS</code><a class="headerlink" href="#_CPPv28SETTINGS" title="Permalink to this definition">¶</a><br /></dt>
+<dd><em>#include &lt;ppo.h&gt;</em><p>Struct containing all the settings for computing orbits and light curves for the system. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS5nbodyE">
+<span id="SETTINGS::nbody__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1abd8c5fe58b2d9ad298e2e438dc7b851e"></span>int <code class="descname">nbody</code><a class="headerlink" href="#_CPPv2N8SETTINGS5nbodyE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Use N-Body solver? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS10integratorE">
+<span id="SETTINGS::integrator__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a746ca7e1df6c76321b3c61c04afbb511"></span>int <code class="descname">integrator</code><a class="headerlink" href="#_CPPv2N8SETTINGS10integratorE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Which N-Body solver to use </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS6keptolE">
+<span id="SETTINGS::keptol__double"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a671f7aae371d84e56043069beae62a9a"></span>double <code class="descname">keptol</code><a class="headerlink" href="#_CPPv2N8SETTINGS6keptolE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Kepler solver tolerance </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS10maxkepiterE">
+<span id="SETTINGS::maxkepiter__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a53396d8b9a4b12b1d25360614153e289"></span>int <code class="descname">maxkepiter</code><a class="headerlink" href="#_CPPv2N8SETTINGS10maxkepiterE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Maximum iterations in Kepler solver </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS9kepsolverE">
+<span id="SETTINGS::kepsolver__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a0fbcbacfb30fac84910b53ae788c1f28"></span>int <code class="descname">kepsolver</code><a class="headerlink" href="#_CPPv2N8SETTINGS9kepsolverE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Which Kepler solver to use </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS8timestepE">
+<span id="SETTINGS::timestep__double"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1ac817cb39aa179151cd05e90912555070"></span>double <code class="descname">timestep</code><a class="headerlink" href="#_CPPv2N8SETTINGS8timestepE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>N-Body timestep in days </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS8adaptiveE">
+<span id="SETTINGS::adaptive__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a4a028dbfc23f54b1fd23eeda7d4667ff"></span>int <code class="descname">adaptive</code><a class="headerlink" href="#_CPPv2N8SETTINGS8adaptiveE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Adaptive zenith angle grid for limb-darkened bodies? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS9circleoptE">
+<span id="SETTINGS::circleopt__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a1b7606795e871f4ac61a9652cbf0389b"></span>int <code class="descname">circleopt</code><a class="headerlink" href="#_CPPv2N8SETTINGS9circleoptE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Treat zenith angle slices as circles in the limb-darkened limit? No reason to set this to 0 </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS9batmanoptE">
+<span id="SETTINGS::batmanopt__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1abf018171fd1d6dcfa175a8abccb05e4c"></span>int <code class="descname">batmanopt</code><a class="headerlink" href="#_CPPv2N8SETTINGS9batmanoptE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Use BATMAN algorithm to speed up limb-darkened occultation light curves? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS13quarticsolverE">
+<span id="SETTINGS::quarticsolver__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a1ab782360274bbeaa88998d731b5deb8"></span>int <code class="descname">quarticsolver</code><a class="headerlink" href="#_CPPv2N8SETTINGS13quarticsolverE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Which quartic solver to use? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS5quietE">
+<span id="SETTINGS::quiet__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1ab286f1e8c063b4d85e5cac32617f4af0"></span>int <code class="descname">quiet</code><a class="headerlink" href="#_CPPv2N8SETTINGS5quietE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Suppress output? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS8minthetaE">
+<span id="SETTINGS::mintheta__double"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1ab550a0a4fc34f6eed5cd04e7df1a614d"></span>double <code class="descname">mintheta</code><a class="headerlink" href="#_CPPv2N8SETTINGS8minthetaE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Minimum absolute value of the phase angle below which it is assumed to be constant to prevent numerical errors </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS11maxverticesE">
+<span id="SETTINGS::maxvertices__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a11c73f2ea3b5d5e50596a094b4578614"></span>int <code class="descname">maxvertices</code><a class="headerlink" href="#_CPPv2N8SETTINGS11maxverticesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Maximum number of vertices (for memory allocation) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS12maxfunctionsE">
+<span id="SETTINGS::maxfunctions__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a3acb77b7bea04b5267a01de773fcdec2"></span>int <code class="descname">maxfunctions</code><a class="headerlink" href="#_CPPv2N8SETTINGS12maxfunctionsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Maximum number of functions (for memory allocation) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS8distanceE">
+<span id="SETTINGS::distance__double"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1a3d60e878ee2b68bd15512e151fba44d0"></span>double <code class="descname">distance</code><a class="headerlink" href="#_CPPv2N8SETTINGS8distanceE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Distance to the system in parsecs </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8SETTINGS6nstarsE">
+<span id="SETTINGS::nstars__i"></span><span class="target" id="struct_s_e_t_t_i_n_g_s_1aac5fdddfe6fabcc64b235722a86763bb"></span>int <code class="descname">nstars</code><a class="headerlink" href="#_CPPv2N8SETTINGS6nstarsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of stars in the system </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv27ELLIPSE">
+<span id="ELLIPSE"></span><span class="target" id="struct_e_l_l_i_p_s_e"></span><em class="property">struct </em><code class="descname">ELLIPSE</code><a class="headerlink" href="#_CPPv27ELLIPSE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><em>#include &lt;ppo.h&gt;</em><p>A generic ellipse class. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE6circleE">
+<span id="ELLIPSE::circle__i"></span><span class="target" id="struct_e_l_l_i_p_s_e_1a10defe76e96fc1e3bf307f0d5faa2ef4"></span>int <code class="descname">circle</code><a class="headerlink" href="#_CPPv2N7ELLIPSE6circleE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Is this a circle? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE1rE">
+<span id="ELLIPSE::r__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1afe3e52ca908289da851188a5b656570f"></span>double <code class="descname">r</code><a class="headerlink" href="#_CPPv2N7ELLIPSE1rE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Radius (if it’s a circle) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE1aE">
+<span id="ELLIPSE::a__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1a62f523c659869186b700af2c226123ea"></span>double <code class="descname">a</code><a class="headerlink" href="#_CPPv2N7ELLIPSE1aE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Semi-major axis (if it’s an ellipse) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE1bE">
+<span id="ELLIPSE::b__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1aadb994dc7a5ba3c5d349ddac8f5ea1f4"></span>double <code class="descname">b</code><a class="headerlink" href="#_CPPv2N7ELLIPSE1bE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Semi-minor axis (if it’s an ellipse) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE2x0E">
+<span id="ELLIPSE::x0__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1a8a5d9ecf78ca274e0c146c24e806e926"></span>double <code class="descname">x0</code><a class="headerlink" href="#_CPPv2N7ELLIPSE2x0E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>x coordinate of the center of the ellipse </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE2y0E">
+<span id="ELLIPSE::y0__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1aeb8925e033ee06cd29f8dc8731cb9031"></span>double <code class="descname">y0</code><a class="headerlink" href="#_CPPv2N7ELLIPSE2y0E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>y coordinate of the center of the ellipse </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE4xminE">
+<span id="ELLIPSE::xmin__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1acecc9a50ae9bee0cb8c625d3d2fae657"></span>double <code class="descname">xmin</code><a class="headerlink" href="#_CPPv2N7ELLIPSE4xminE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Leftmost point of the ellipse </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N7ELLIPSE4xmaxE">
+<span id="ELLIPSE::xmax__double"></span><span class="target" id="struct_e_l_l_i_p_s_e_1a56cc6af0046aef8a452a9fc00122cacb"></span>double <code class="descname">xmax</code><a class="headerlink" href="#_CPPv2N7ELLIPSE4xmaxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Rightmost point of the ellipse </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv28FUNCTION">
+<span id="FUNCTION"></span><span class="target" id="struct_f_u_n_c_t_i_o_n"></span><em class="property">struct </em><code class="descname">FUNCTION</code><a class="headerlink" href="#_CPPv28FUNCTION" title="Permalink to this definition">¶</a><br /></dt>
+<dd><em>#include &lt;ppo.h&gt;</em><p>A container for the properties, functions, and integrals of an ellipse. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N8FUNCTION1yE">
+<span id="FUNCTION::y__double"></span><span class="target" id="struct_f_u_n_c_t_i_o_n_1a08ce48ce2c5557fcb640f8e96a3a9d57"></span>double <code class="descname">y</code><a class="headerlink" href="#_CPPv2N8FUNCTION1yE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The value of the function at a given point </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8FUNCTION7ellipseE">
+<span id="FUNCTION::ellipse__ELLIPSEP"></span><span class="target" id="struct_f_u_n_c_t_i_o_n_1a2b37336a90bb92c761174d34791b5114"></span><a class="reference internal" href="#_CPPv27ELLIPSE" title="ELLIPSE">ELLIPSE</a> *<code class="descname">ellipse</code><a class="headerlink" href="#_CPPv2N8FUNCTION7ellipseE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The ellipse class corresponding to this function </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8FUNCTION5curveE">
+<span id="FUNCTION::curve__CURVE"></span><span class="target" id="struct_f_u_n_c_t_i_o_n_1a430009daff003b9b51c279c04196dd45"></span><a class="reference internal" href="#_CPPv25CURVE" title="CURVE">CURVE</a> <code class="descname">curve</code><a class="headerlink" href="#_CPPv2N8FUNCTION5curveE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The curve function </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N8FUNCTION8integralE">
+<span id="FUNCTION::integral__INTEGRAL"></span><span class="target" id="struct_f_u_n_c_t_i_o_n_1a6faefabf9744a348f93e2d32f2083b8b"></span><a class="reference internal" href="#_CPPv28INTEGRAL" title="INTEGRAL">INTEGRAL</a> <code class="descname">integral</code><a class="headerlink" href="#_CPPv2N8FUNCTION8integralE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The integral function </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="detect.html" class="btn btn-neutral float-right" title="detect" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="c_ppo.html" class="btn btn-neutral" title="ppo.c" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

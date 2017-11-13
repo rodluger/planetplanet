@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>maps.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="ppo.py" href="ppo.html"/>
+        <link rel="prev" title="eyeball.py" href="eyeball.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#python-interface">Python interface</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="eyeball.html">eyeball.py</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">maps.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ppo.html">ppo.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="structs.html">structs.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="theta.html">theta.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trappist1.html">trappist1.py</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="photo.html#c-engine">C engine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>maps.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/maps.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-planetplanet.photo.maps"></span><div class="section" id="maps-py-github">
+<h1>maps.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/maps.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#maps-py-github" title="Permalink to this headline">¶</a></h1>
+<p>A library of surface radiance map functions. These are functions of two 
+parameters (wavelength in m and zenith angle in radians) and return a radiance. 
+All functions here are function generators that return radiance map functions 
+decorated with a <code class="xref py py-mod docutils literal"><span class="pre">numba</span></code> <code class="xref py py-func docutils literal"><span class="pre">cfunc()</span></code> statement so that they
+can be pre-compiled and passed to C as pointers. This ensures we get near-C 
+speed when calling them. Users are encouraged to define their own radiance maps 
+by following the syntax in the functions below.</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">planetplanet.constants</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">cfunc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">CustomMap</span><span class="p">(</span><span class="n">fwhm</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">temp</span> <span class="o">=</span> <span class="mi">500</span><span class="p">):</span>
+
+  <span class="c1"># The function :py:obj:`CustomMap` is a function generator that returns</span>
+  <span class="c1"># a surface map. It can have an arbitrary number of args/kwargs, but for</span>
+  <span class="c1"># simplicity we allow the user to tune two parameters: the FWHM of the</span>
+  <span class="c1"># hotspot in degrees, which for this map we&#39;ll assume is a Gaussian in </span>
+  <span class="c1"># zenith angle, and the temperature of the hotspot in K.</span>
+
+  <span class="c1"># Note that you can do all sorts of calculations within this function to</span>
+  <span class="c1"># define variables that can be accessed by the radiance map below. Let&#39;s</span>
+  <span class="c1"># compute the standard deviation (in radians) of the Gaussian from the </span>
+  <span class="c1"># FWHM:</span>
+
+  <span class="n">std</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span> <span class="o">*</span> <span class="n">fwhm</span> <span class="o">/</span> <span class="mf">2.35482</span>
+
+  <span class="c1"># Note that since :py:obj:`func` is a compiled C function, you&#39;ll get </span>
+  <span class="c1"># nasty errors if you try to access functions/classes/dictionaries or </span>
+  <span class="c1"># other fancy Python objects from inside it. Stick to floats and ints </span>
+  <span class="c1"># and (maybe) numpy arrays.</span>
+
+  <span class="nd">@cfunc</span><span class="p">(</span><span class="s2">&quot;float64(float64, float64)&quot;</span><span class="p">)</span>
+  <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">lam</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+
+    <span class="c1"># Let&#39;s compute the radiance of the hotspot from Planck&#39;s law.</span>
+    <span class="c1"># This will be the amplitude of our Gaussian.</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">HPLANCK</span> <span class="o">*</span> <span class="n">CLIGHT</span> <span class="o">*</span> <span class="n">CLIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">lam</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">HPLANCK</span> <span class="o">*</span> <span class="n">CLIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">lam</span> <span class="o">*</span> <span class="n">KBOLTZ</span> <span class="o">*</span> <span class="n">temp</span><span class="p">)</span>
+    <span class="n">amp</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span>
+
+    <span class="c1"># Evaluate the Gaussian and return the radiance at the requested</span>
+    <span class="c1"># zenith angle.</span>
+    <span class="k">return</span> <span class="n">amp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">z</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">std</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+  <span class="c1"># This line is important: we need to tell :py:obj:`planetplanet` what </span>
+  <span class="c1"># kind of radiance map this is. There are two choices: a radially </span>
+  <span class="c1"># symmetric map, whose axis of symmetry is always the center of the </span>
+  <span class="c1"># projected disk, and an elliptically symmetric (eyeball) map, whose axis </span>
+  <span class="c1"># of symmetry rotates as the planet orbits the star, always pointing </span>
+  <span class="c1"># towards the substellar point (or with an offset, if :py:obj:`Lambda` </span>
+  <span class="c1"># and :py:obj:`Phi` are set). Let&#39;s make this map elliptically symmetric:</span>
+
+  <span class="n">func</span><span class="o">.</span><span class="n">maptype</span> <span class="o">=</span> <span class="n">MAP_ELLIPTICAL_CUSTOM</span>
+
+  <span class="c1"># We return the actual radiance map when this function is called</span>
+  <span class="k">return</span> <span class="n">func</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>To see what this looks like, run</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">DrawEyeball</span><span class="p">(</span><span class="n">fig</span> <span class="o">=</span> <span class="n">fig</span><span class="p">,</span> <span class="n">radiancemap</span> <span class="o">=</span> <span class="n">CustomMap</span><span class="p">(),</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="mi">51</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure align-center">
+<img alt="../_images/maps-1.png" src="../_images/maps-1.png" />
+</div>
+</div></blockquote>
+<dl class="function">
+<dt id="planetplanet.photo.maps.LimbDarkenedMap">
+<code class="descclassname">planetplanet.photo.maps.</code><code class="descname">LimbDarkenedMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.maps.LimbDarkenedMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default limb-darkened map. This is really a dummy function, since 
+this is already hard-coded in the C engine.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.photo.maps.RadiativeEquilibriumMap">
+<code class="descclassname">planetplanet.photo.maps.</code><code class="descname">RadiativeEquilibriumMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.maps.RadiativeEquilibriumMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default eyeball map. This is really a dummy function, since this is
+already hard-coded in the C engine.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.photo.maps.BandedCloudsMap">
+<code class="descclassname">planetplanet.photo.maps.</code><code class="descname">BandedCloudsMap</code><span class="sig-paren">(</span><em>albedo=0.3</em>, <em>irrad=1361.0</em>, <em>bands=5</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.maps.BandedCloudsMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>A quirky periodic surface map that simulates banded clouds on a gas giant.
+Not terribly realistic, but showcases what the code can do.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>albedo</strong> (<em>float</em>) – The body’s albedo. Default <cite>0.3</cite></li>
+<li><strong>irrad</strong> (<em>float</em>) – The body’s irradiation. Default is the Solar            constant, <code class="xref py py-obj docutils literal"><span class="pre">SEARTH</span></code></li>
+<li><strong>bands</strong> (<em>int</em>) – The number of bands. Default <cite>5</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="planetplanet.photo.maps.UniformMap">
+<code class="descclassname">planetplanet.photo.maps.</code><code class="descname">UniformMap</code><span class="sig-paren">(</span><em>albedo=0.3</em>, <em>irrad=1361.0</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.maps.UniformMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>A uniform surface radiance map.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>albedo</strong> (<em>float</em>) – The body’s albedo. Default <cite>0.3</cite></li>
+<li><strong>irrad</strong> (<em>float</em>) – The body’s irradiation. Default is the Solar            constant, <code class="xref py py-obj docutils literal"><span class="pre">SEARTH</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ppo.html" class="btn btn-neutral float-right" title="ppo.py" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="eyeball.html" class="btn btn-neutral" title="eyeball.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

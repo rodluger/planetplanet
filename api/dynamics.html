@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>dynamics &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="API" href="../api.html"/>
+        <link rel="next" title="photo" href="photo.html"/>
+        <link rel="prev" title="constants.py" href="constants.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">dynamics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#offset-diagram2-jl">offset_diagram2.jl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timing-offset2-jl">timing_offset2.jl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monte-carlo-circular-jl">monte_carlo_circular.jl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plot-circular-jl">plot_circular.jl</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="photo.html">photo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+    
+      <li>dynamics <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/dynamics/"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="dynamics-github">
+<h1>dynamics <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/dynamics/"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#dynamics-github" title="Permalink to this headline">¶</a></h1>
+<p>The analytic dynamics module of <code class="xref py py-obj docutils literal"><span class="pre">planetplanet</span></code>. These are a collection of
+<code class="xref py py-obj docutils literal"><span class="pre">Julia</span></code> scripts and are separate from the rest of the code.</p>
+<div class="section" id="offset-diagram2-jl">
+<h2>offset_diagram2.jl<a class="headerlink" href="#offset-diagram2-jl" title="Permalink to this headline">¶</a></h2>
+<p><span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/dynamics/offset_diagram2.jl"><i class="fa fa-github" aria-hidden="true"></i></a></span> Creates a diagram showing the analytic means to compute a timing offset.
+Requires installation of the <a class="reference external" href="https://github.com/jlustigy/ExoJulia">ExoJulia package</a>
+for carrying out Kepler solver
+before calling. Also requires <code class="xref py py-obj docutils literal"><span class="pre">PyPlot</span></code>, which calls matplotlib, and <code class="xref py py-obj docutils literal"><span class="pre">CGS.jl</span></code>
+and <code class="xref py py-obj docutils literal"><span class="pre">regress.jl</span></code>.  For example, from Julia prompt:</p>
+<div class="highlight-julia"><div class="highlight"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span> <span class="n">include</span><span class="p">(</span><span class="s">&quot;/PathToExoJulia/exojulia.jl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <cite>PathToExoJulia</cite> indicates the path where it is installed.</p>
+<p>This is followed by:</p>
+<div class="highlight-julia"><div class="highlight"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span> <span class="n">include</span><span class="p">(</span><span class="s">&quot;offset_diagram2.jl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="timing-offset2-jl">
+<h2>timing_offset2.jl<a class="headerlink" href="#timing-offset2-jl" title="Permalink to this headline">¶</a></h2>
+<p><span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/dynamics/timing_offset2.jl"><i class="fa fa-github" aria-hidden="true"></i></a></span> Creates simulated timing offsets for planet-planet
+events, and then fits with analytic formulae to recover the eccentricities
+and make a plot for the paper.  Same dependencies as <code class="xref py py-obj docutils literal"><span class="pre">offset_diagram2.jl</span></code>.</p>
+</div>
+<div class="section" id="monte-carlo-circular-jl">
+<h2>monte_carlo_circular.jl<a class="headerlink" href="#monte-carlo-circular-jl" title="Permalink to this headline">¶</a></h2>
+<p><span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/dynamics/monte_carlo_circular.jl"><i class="fa fa-github" aria-hidden="true"></i></a></span> Computes the probability of density and
+coplanarity of TRAPPIST-1 based upon the measured transit periods and
+the observed durations plus uncertainties (as well as the measured
+planet-star radius ratios).  Uses <code class="xref py py-obj docutils literal"><span class="pre">CGS.jl</span></code> and
+<a class="reference external" href="https://github.com/JuliaIO/JLD.jl">JLD</a>, which saves variables in HDF files.</p>
+</div>
+<div class="section" id="plot-circular-jl">
+<h2>plot_circular.jl<a class="headerlink" href="#plot-circular-jl" title="Permalink to this headline">¶</a></h2>
+<p><span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/dynamics/plot_circular.jl"><i class="fa fa-github" aria-hidden="true"></i></a></span> Creates plots of the posterior distribution
+of density and coplanarity parameter for TRAPPIST-1.  Uses the
+<a class="reference external" href="https://github.com/JuliaNLSolvers/Optim.jl">Optim package</a> for optimizing a fit to
+the distribution, as well as <code class="xref py py-obj docutils literal"><span class="pre">PyPlot</span></code> and <code class="xref py py-obj docutils literal"><span class="pre">JLD</span></code>.  Requires first running
+<code class="xref py py-obj docutils literal"><span class="pre">monte_carlo_circular.jl</span></code> and then reading in the <code class="xref py py-obj docutils literal"><span class="pre">jld</span></code> file (the name
+of the <code class="xref py py-obj docutils literal"><span class="pre">jld</span></code> file contains the number of simulations carried out;  this
+needs to be modified in <code class="xref py py-obj docutils literal"><span class="pre">plot_circular.jld</span></code>).</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="photo.html" class="btn btn-neutral float-right" title="photo" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="constants.html" class="btn btn-neutral" title="constants.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

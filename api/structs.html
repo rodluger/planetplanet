@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>structs.py &mdash; planetplanet 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="planetplanet 1.0.0 documentation" href="../index.html"/>
+        <link rel="up" title="photo" href="photo.html"/>
+        <link rel="next" title="theta.py" href="theta.html"/>
+        <link rel="prev" title="ppo.py" href="ppo.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> planetplanet
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="constants.html">constants.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamics.html">dynamics</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="photo.html">photo</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="photo.html#python-interface">Python interface</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="eyeball.html">eyeball.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="maps.html">maps.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ppo.html">ppo.py</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">structs.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="theta.html">theta.py</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trappist1.html">trappist1.py</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="photo.html#c-engine">C engine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="detect.html">detect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet">Github</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/rodluger/planetplanet/issues">Submit an issue</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://rodluger.github.io/planetplanet/PPOs.pdf">Read the paper</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">planetplanet</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">pp</a> &raquo;</li>
+      
+        <li><a href="../api.html">API</a>&raquo;</li>
+      
+        <li><a href="photo.html">photo</a>&raquo;</li>
+      
+    
+      <li>structs.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/structs.py"><i class="fa fa-github" aria-hidden="true"></i></a></span></li>
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-planetplanet.photo.structs"></span><div class="section" id="structs-py-github">
+<h1>structs.py <span class="raw-html"><a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/photo/structs.py"><i class="fa fa-github" aria-hidden="true"></i></a></span><a class="headerlink" href="#structs-py-github" title="Permalink to this headline">¶</a></h1>
+<p>Contains the <a class="reference internal" href="#planetplanet.photo.structs.BODY" title="planetplanet.photo.structs.BODY"><code class="xref py py-obj docutils literal"><span class="pre">BODY</span></code></a> and <a class="reference internal" href="#planetplanet.photo.structs.SETTINGS" title="planetplanet.photo.structs.SETTINGS"><code class="xref py py-obj docutils literal"><span class="pre">SETTINGS</span></code></a> classes that are passed to C
+as structs, which are for internal use only. All bodies should be instantiated
+via the <a class="reference internal" href="#planetplanet.photo.structs.Planet" title="planetplanet.photo.structs.Planet"><code class="xref py py-class docutils literal"><span class="pre">Planet</span></code></a>, <a class="reference internal" href="#planetplanet.photo.structs.Moon" title="planetplanet.photo.structs.Moon"><code class="xref py py-class docutils literal"><span class="pre">Moon</span></code></a>, and <a class="reference internal" href="#planetplanet.photo.structs.Star" title="planetplanet.photo.structs.Star"><code class="xref py py-class docutils literal"><span class="pre">Star</span></code></a> subclasses.
+Settings should be passed directly to the <code class="xref py py-class docutils literal"><span class="pre">planetplanet.photo.System</span></code>
+class.</p>
+<blockquote>
+<div></div></blockquote>
+<dl class="class">
+<dt id="planetplanet.photo.structs.BODY">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.structs.</code><code class="descname">BODY</code><span class="sig-paren">(</span><em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.BODY" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class containing all the input planet/star parameters. This is a
+<code class="xref py py-mod docutils literal"><span class="pre">ctypes</span></code> interface to the C <a class="reference internal" href="#planetplanet.photo.structs.BODY" title="planetplanet.photo.structs.BODY"><code class="xref py py-obj docutils literal"><span class="pre">BODY</span></code></a> struct. Users should
+instantiate these via the <a class="reference internal" href="#planetplanet.photo.structs.Star" title="planetplanet.photo.structs.Star"><code class="xref py py-class docutils literal"><span class="pre">Star</span></code></a>, <a class="reference internal" href="#planetplanet.photo.structs.Planet" title="planetplanet.photo.structs.Planet"><code class="xref py py-class docutils literal"><span class="pre">Planet</span></code></a>, and
+<a class="reference internal" href="#planetplanet.photo.structs.Moon" title="planetplanet.photo.structs.Moon"><code class="xref py py-class docutils literal"><span class="pre">Moon</span></code></a> classes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) – The name of the body.</li>
+<li><strong>kwargs</strong> – Any body-specific <code class="xref py py-obj docutils literal"><span class="pre">kwargs</span></code>. See <a class="reference internal" href="#planetplanet.photo.structs.Star" title="planetplanet.photo.structs.Star"><code class="xref py py-func docutils literal"><span class="pre">Star()</span></code></a>,     <a class="reference internal" href="#planetplanet.photo.structs.Planet" title="planetplanet.photo.structs.Planet"><code class="xref py py-func docutils literal"><span class="pre">Planet()</span></code></a>, and <a class="reference internal" href="#planetplanet.photo.structs.Moon" title="planetplanet.photo.structs.Moon"><code class="xref py py-func docutils literal"><span class="pre">Moon()</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="planetplanet.photo.structs.BODY.M">
+<code class="descname">M</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.BODY.M" title="Permalink to this definition">¶</a></dt>
+<dd><p>The mean anomaly at a time <cite>t</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="planetplanet.photo.structs.SETTINGS">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.structs.</code><code class="descname">SETTINGS</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.SETTINGS" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class that contains the model settings. This class is used internally;
+settings should be specified as <code class="xref py py-obj docutils literal"><span class="pre">kwargs</span></code> to <code class="xref py py-class docutils literal"><span class="pre">System</span></code> or
+by assignment once a <code class="xref py py-class docutils literal"><span class="pre">System</span></code> object has been instantiated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nbody</strong> (<em>bool</em>) – Uses the <code class="xref py py-obj docutils literal"><span class="pre">REBOUND</span></code> N-body code to compute            orbits. Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>keptol</strong> (<em>float</em>) – Kepler solver tolerance. Default <cite>1.e-15</cite></li>
+<li><strong>maxkepiter</strong> (<em>int</em>) – Maximum number of Kepler solver iterations.            Default <cite>100</cite></li>
+<li><strong>kepsolver</strong> (<em>str</em>) – Kepler solver (<cite>newton</cite> | <cite>mdfast</cite>). Default <cite>newton</cite></li>
+<li><strong>timestep</strong> (<em>float</em>) – Timestep in days for the N-body solver.            Default <cite>0.01</cite></li>
+<li><strong>adaptive</strong> (<em>bool</em>) – Adaptive grid for limb-darkened bodies? Default            <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>quiet</strong> (<em>bool</em>) – Suppress output? Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>mintheta</strong> (<em>float</em>) – Absolute value of the minimum phase angle in            degrees. Below this angle, elliptical boundaries of constant            surface brightness on the planet surface are treated as vertical            lines. Default <cite>0.01</cite></li>
+<li><strong>maxvertices</strong> (<em>int</em>) – Maximum number of vertices allowed in the area            computation. Default <cite>999</cite></li>
+<li><strong>maxfunctions</strong> (<em>int</em>) – Maximum number of functions allowed in the area            computation. Default <cite>999</cite></li>
+<li><strong>oversample</strong> (<em>int</em>) – Oversampling factor for each exposure. Default <cite>1</cite></li>
+<li><strong>distance</strong> (<em>float</em>) – Distance to the system in parsecs. Default <cite>10.</cite></li>
+<li><strong>circleopt</strong> (<em>bool</em>) – Solve the simpler quadratic problem for            circle-ellipse intersections when the axes of the ellipse are            equal to within <span class="math">\(10^{-10}\)</span>? Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>batmanopt</strong> (<em>bool</em>) – Use the <code class="xref py py-mod docutils literal"><span class="pre">batman</span></code> algorithm to compute            light curves of radially symmetric bodies? This can significantly            speed up the code. Default <code class="xref py py-obj docutils literal"><span class="pre">True</span></code></li>
+<li><strong>integrator</strong> (<em>str</em>) – The N-body integrator            (<code class="xref py py-obj docutils literal"><span class="pre">whfast</span></code> | <code class="xref py py-obj docutils literal"><span class="pre">ias15</span></code>) to use.            Default <code class="xref py py-obj docutils literal"><span class="pre">ias15</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="planetplanet.photo.structs.CM">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.structs.</code><code class="descname">CM</code><span class="sig-paren">(</span><em>*bodies</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.CM" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class corresponding to a dummy center of mass particle.
+Used internally.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="planetplanet.photo.structs.Star">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.structs.</code><code class="descname">Star</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.Star" title="Permalink to this definition">¶</a></dt>
+<dd><p>A star <a class="reference internal" href="#planetplanet.photo.structs.BODY" title="planetplanet.photo.structs.BODY"><code class="xref py py-class docutils literal"><span class="pre">BODY</span></code></a> class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) – A unique identifier for this star</li>
+<li><strong>host</strong> (<em>str</em>) – The name of the body’s host. Default            <code class="xref py py-obj docutils literal"><span class="pre">None</span></code> (host is the center of mass of all bodies that come            earlier in the arguments list passed to            <code class="xref py py-class docutils literal"><span class="pre">planetplanet.ppo.System</span></code>).</li>
+<li><strong>m</strong> (<em>float</em>) – Mass in solar masses. Default <cite>1.</cite></li>
+<li><strong>r</strong> (<em>float</em>) – Radius in solar radii. Default <cite>1.</cite></li>
+<li><strong>per</strong> (<em>float</em>) – Orbital period in days. Default <cite>0.</cite></li>
+<li><strong>inc</strong> (<em>float</em>) – Orbital inclination in degrees. Default <cite>90.</cite></li>
+<li><strong>ecc</strong> (<em>float</em>) – Orbital eccentricity. Default <cite>0.</cite></li>
+<li><strong>w</strong> (<em>float</em>) – Longitude of pericenter in degrees. <cite>0.</cite></li>
+<li><strong>Omega</strong> (<em>float</em>) – Longitude of ascending node in degrees. <cite>0.</cite></li>
+<li><strong>t0</strong> (<em>float</em>) – Time of primary eclipse in days. Default <cite>0.</cite></li>
+<li><strong>teff</strong> (<em>float</em>) – The effective temperature of the star in Kelvin.            Default <cite>5577.</cite></li>
+<li><strong>limbdark</strong> (<em>array_like</em>) – The limb darkening coefficients (thick            atmosphere limit). These are the coefficients            in the Taylor expansion of <cite>(1 - mu)</cite>, starting with the first            order (linear) coefficient, where <cite>mu = cos(theta)</cite> is the radial            coordinate on the surface of the star. Each coefficient may either            be a scalar, in which case limb darkening is assumed to be grey            (the same at all wavelengths), or a callable whose single argument            is the wavelength in microns. Default is <cite>[1.0]</cite>, a grey linear            limb darkening law.</li>
+<li><strong>radiancemap</strong> – A surface radiance map function. This function must            be decorated with a <code class="xref py py-mod docutils literal"><span class="pre">numba</span></code> <code class="xref py py-func docutils literal"><span class="pre">cfunc()</span></code> statement.            See <a class="reference internal" href="maps.html#module-planetplanet.photo.maps" title="planetplanet.photo.maps"><code class="xref py py-class docutils literal"><span class="pre">planetplanet.photo.maps</span></code></a> for more info. Default            <a class="reference internal" href="maps.html#planetplanet.photo.maps.RadiativeEquilibriumMap" title="planetplanet.photo.maps.RadiativeEquilibriumMap"><code class="xref py py-func docutils literal"><span class="pre">planetplanet.photo.maps.RadiativeEquilibriumMap()</span></code></a></li>
+<li><strong>nz</strong> (<em>int</em>) – Number of zenith angle slices. Default <cite>31</cite></li>
+<li><strong>color</strong> (<em>str</em>) – Object color (for plotting). Default <cite>k</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="planetplanet.photo.structs.Planet">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.structs.</code><code class="descname">Planet</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.Planet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A planet <a class="reference internal" href="#planetplanet.photo.structs.BODY" title="planetplanet.photo.structs.BODY"><code class="xref py py-class docutils literal"><span class="pre">BODY</span></code></a> class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) – A unique identifier for this body</li>
+<li><strong>host</strong> (<em>str</em>) – The name of the body’s host. Default            <code class="xref py py-obj docutils literal"><span class="pre">0</span></code> (host is the central star).</li>
+<li><strong>m</strong> (<em>float</em>) – Mass in Earth masses. Default <cite>1.</cite></li>
+<li><strong>r</strong> (<em>float</em>) – Radius in Earth radii. Default <cite>1.</cite></li>
+<li><strong>per</strong> (<em>float</em>) – Orbital period in days. Default <cite>3.</cite></li>
+<li><strong>inc</strong> (<em>float</em>) – Orbital inclination in degrees. Default <cite>90.</cite></li>
+<li><strong>ecc</strong> (<em>float</em>) – Orbital eccentricity. Default <cite>0.</cite></li>
+<li><strong>w</strong> (<em>float</em>) – Longitude of pericenter in degrees. <cite>0.</cite></li>
+<li><strong>Omega</strong> (<em>float</em>) – Longitude of ascending node in degrees. <cite>0.</cite></li>
+<li><strong>t0</strong> (<em>float</em>) – Time of transit in days. Default <cite>0.</cite></li>
+<li><strong>phasecurve</strong> (<em>bool</em>) – Compute the phasecurve for this body?            Default <code class="xref py py-obj docutils literal"><span class="pre">False</span></code></li>
+<li><strong>albedo</strong> (<em>float</em>) – Body’s albedo (airless limit). Default <cite>0.3</cite></li>
+<li><strong>tnight</strong> (<em>float</em>) – Nightside temperature in Kelvin (airless limit).            Default <cite>40</cite></li>
+<li><strong>limbdark</strong> (<em>array_like</em>) – The limb darkening coefficients (thick            atmosphere limit). These are the coefficients            in the Taylor expansion of <cite>(1 - mu)</cite>, starting with the first            order (linear) coefficient, where <cite>mu = cos(theta)</cite> is the radial            coordinate on the surface of the star. Each coefficient may either            be a scalar, in which case limb darkening is assumed to be grey            (the same at all wavelengths), or a callable whose single argument            is the wavelength in microns. Default is <cite>[]</cite>, corresponding to no            limb darkening.</li>
+<li><strong>Lambda</strong> (<em>float</em>) – Longitudinal hotspot offset in degrees, with            positive values corresponding to a northward shift. Airless            bodies only. Default <cite>0.</cite></li>
+<li><strong>Phi</strong> (<em>float</em>) – Latitudinal hotspot offset in degrees, with positive            values corresponding to an eastward shift. Airless bodies only.            Default <cite>0.</cite></li>
+<li><strong>radiancemap</strong> (<code class="xref py py-obj docutils literal"><span class="pre">function</span></code>) – A surface radiance map function. This function must            be decorated with a <code class="xref py py-mod docutils literal"><span class="pre">numba</span></code> <code class="xref py py-func docutils literal"><span class="pre">cfunc()</span></code> statement.            See <a class="reference internal" href="maps.html#module-planetplanet.photo.maps" title="planetplanet.photo.maps"><code class="xref py py-class docutils literal"><span class="pre">planetplanet.photo.maps</span></code></a> for more info. Default            <a class="reference internal" href="maps.html#planetplanet.photo.maps.RadiativeEquilibriumMap" title="planetplanet.photo.maps.RadiativeEquilibriumMap"><code class="xref py py-func docutils literal"><span class="pre">planetplanet.photo.maps.RadiativeEquilibriumMap()</span></code></a></li>
+<li><strong>nz</strong> (<em>int</em>) – Number of zenith angle slices. Default <cite>11</cite></li>
+<li><strong>color</strong> (<em>str</em>) – Object color (for plotting). Default <cite>r</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="planetplanet.photo.structs.Planet.draw_orbit">
+<code class="descname">draw_orbit</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.Planet.draw_orbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws the orbit of the body on the sky. Accepts the keyword
+arguments taken by <a class="reference internal" href="eyeball.html#planetplanet.photo.eyeball.DrawOrbit" title="planetplanet.photo.eyeball.DrawOrbit"><code class="xref py py-func docutils literal"><span class="pre">planetplanet.photo.eyeball.DrawOrbit()</span></code></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="planetplanet.photo.structs.Moon">
+<em class="property">class </em><code class="descclassname">planetplanet.photo.structs.</code><code class="descname">Moon</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#planetplanet.photo.structs.Moon" title="Permalink to this definition">¶</a></dt>
+<dd><p>A moon <a class="reference internal" href="#planetplanet.photo.structs.BODY" title="planetplanet.photo.structs.BODY"><code class="xref py py-class docutils literal"><span class="pre">BODY</span></code></a> class. This is just an alias of the
+<a class="reference internal" href="#planetplanet.photo.structs.Planet" title="planetplanet.photo.structs.Planet"><code class="xref py py-class docutils literal"><span class="pre">Planet</span></code></a> class.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="theta.html" class="btn btn-neutral float-right" title="theta.py" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ppo.html" class="btn btn-neutral" title="ppo.py" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Rodrigo Luger.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
