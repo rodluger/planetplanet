@@ -44,37 +44,39 @@ def plot():
     '''
 
     # Instantiate the primary
-    A = Star('A', m = 0.1, r = 0.1, nz = 31, color = 'r',
+    A = Star('A', m = 0.1, r = 0.12, nz = 31, color = 'r',
+             teff = 2500,
              limbdark = [0.4, 0.26],
              x0 = 22.5, y0 = 0, z0 = 10,
              vx0 = 0, vy0 = -100, vz0 = 2500,
              cartesian = True)
 
     # Instantiate the secondary
-    B = Star('B', m = 0.1, r = 0.08, nz = 31,
-             color = 'g', limbdark = [0.4, 0.26],
+    B = Star('B', m = 0.1, r = 0.08, nz = 31, teff = 3500,
+             color = 'g', limbdark = [0.9, 0.26],
              x0 = -22.5, y0 = 20, z0 = -10,
              vx0 = 0, vy0 = 100, vz0 = -2500,
              cartesian = True)
 
     # Instantiate a planet (a hot Jupiter orbiting the binary)
-    b = Planet('b', m = 300, r = 2, nz = 1, host = None,
-              color = 'b', radiancemap = UniformMap(),
-              x0 = -20, y0 = 5, z0 = -500,
-              vx0 = 1000, vy0 = 0, vz0 = 300,
-              cartesian = True)
+    planet = Planet('planet', m = 300, r = 2, nz = 1, host = None,
+                    color = 'b', radiancemap = UniformMap(),
+                    x0 = -20, y0 = 5, z0 = -500,
+                    vx0 = 1000, vy0 = 0, vz0 = 300,
+                    cartesian = True)
 
     # Instantiate its moon (a puffy Mars-sized thing)
-    bI = Moon('bI', host = 'b', m = 0.1, r = 1, nz = 1, t0 = 0.05,
-              Omega = 0, w = 0, ecc = 0, inc = 85,
-              per = 0.1, color = 'dodgerblue', radiancemap = UniformMap())
+    moon = Moon('moon', host = 'planet', m = 0.1, r = 1, nz = 1, t0 = 0.04,
+                Omega = 0, w = 0, ecc = 0, inc = 85,
+                per = 0.1, color = 'dodgerblue', radiancemap = UniformMap())
 
     # Compute the light curve
-    system = System(A, B, b, bI, nbody = True, integrator = 'ias15',
+    system = System(A, B, planet, moon, nbody = True, integrator = 'ias15',
                     timestep = MINUTE)
     time = np.arange(-0.02, 0.03, 0.1 * MINUTE)
-    system.compute(time)
-    system.plot_occultation('A', 0)
+    system.compute(time, lambda1 = 0.5, lambda2 = 0.9)
+    system.plot_occultation('A', time = 0., wavelength = 0.75,
+                            full_lightcurve = True)
     pl.show()
 
 if __name__ == '__main__':

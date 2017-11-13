@@ -10,27 +10,64 @@
 </p>
 </div>
 
-Generates planet-planet occultation (PPO) light curves in Python. During a PPO, a planet
+# Overview
+`planetplanet` is a general photodynamical code for modeling exoplanet transits, secondary eclipses, phase curves, and exomoons, as well as eclipsing binaries, circumbinary planets, and more. The code was originally developed to model planet-planet occultation (PPO) light curves for the TRAPPIST-1 system. During a PPO, a planet
 occults (transits) the disk of another planet in the same planetary system, blocking its thermal
 (and reflected) light, which can be measured photometrically by a distant observer.
-We developed this package with the [TRAPPIST-1](http://www.trappist.one) planetary system in mind, but `planetplanet`
-is generally applicable to any exoplanet system. The `planetplanet` package also computes transit light curves, secondary eclipse light curves, and planetary phase curves, as well as occultations of planets by moons and mutual transits of planets
-across the face of their host star.
 
-To install from source:
+`planetplanet` is coded in C and wrapped in a user-friendly Python interface. Once installed, generating light curves is as easy as
+
+```python
+import planetplanet as pp
+import numpy as np
+import matplotlib.pyplot as pl
+
+star = pp.Star('A', m = 0.1, r = 0.1, limbdark = [0.4, 0.26])
+planet = pp.Planet('b', m = 1, r = 1, t0 = 0., per = 3.)
+system = pp.System(star, planet)
+time = np.arange(-1., 1., 0.0001)
+system.compute(time)
+system.plot_occultation('A', time = 0)
+pl.show()
+```
+
+<div align="center">
+<img src="https://rodluger.github.io/misc/transit.gif" alt="Exoplanet transit light curve" width="500px">
+</div>
+
+Please check out the [documentation](https://rodluger.github.io/planetplanet/index.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
+
+# Installation
+The `planetplanet` code is now `pip`-installable:
+
+```
+pip install planetplanet
+```
+
+Alternatively, to install from source:
 
 ```
 git clone git@github.com:rodluger/planetplanet.git
 cd planetplanet
-git submodule init
-git submodule update
+git submodule init && git submodule update
 python setup.py develop
 ```
 
-You may need to install the [GNU Scientific Library](https://www.gnu.org/software/gsl/). On a Mac, it's as simple as
+Note that you may need to install the [GNU Scientific Library](https://www.gnu.org/software/gsl/). On a Mac, it's as simple as
 
 ```
 brew install gsl
 ```
 
-Please check out the [documentation](https://rodluger.github.io/planetplanet/index.html) or read the [paper](https://rodluger.github.io/planetplanet/PPOs.pdf) for more information.
+# Just for fun
+Here's a an example of a planet-planet occultation [**[code]**](https://github.com/rodluger/planetplanet/blob/master/scripts/occultation.py):
+
+<div align="center">
+<img src="https://rodluger.github.io/misc/ppo.gif" alt="Planet-planet occultation" width="500px">
+</div>
+
+And here's a wacky example of a transit of a circumbinary exomoon [**[code]**](https://github.com/rodluger/planetplanet/blob/master/scripts/circumbinary_exomoon.py):
+
+<div align="center">
+<img src="https://rodluger.github.io/misc/cbexomoon.gif" alt="Circumbinary exomoon" width="500px">
+</div>
