@@ -9,7 +9,7 @@ occultations in TRAPPIST-1.
 
   .. role:: raw-html(raw)
      :format: html
-  
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/jwst_example.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -23,20 +23,20 @@ import numpy as np
 
 def _test():
     '''
-    
+
     '''
-    
+
     Triple_bc()
     pl.show()
-    
+
 def Triple_bc():
     '''
     Simulate an observation of a triple occultation of TRAPPIST-1 `c` by `b`
     with JWST MIRI at 15 microns.
-    
+
     .. plot::
          :align: center
-         
+
          from scripts import jwst_example
          import matplotlib.pyplot as pl
          jwst_example.Triple_bc()
@@ -55,7 +55,7 @@ def Triple_bc():
     RpRs = np.sqrt(0.7266 / 100)
     r = RpRs * rstar * RSUN / REARTH
     b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-                         Omega = 0, w = 0, ecc = 0, color = 'firebrick', 
+                         Omega = 0, w = 0, ecc = 0, color = 'firebrick',
                          tnight = 40., albedo = 0.,
                          phasecurve = True)
 
@@ -63,7 +63,7 @@ def Triple_bc():
     RpRs = np.sqrt(0.687 / 100)
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-                         Omega = 0, w = 0, ecc = 0, color = 'coral', 
+                         Omega = 0, w = 0, ecc = 0, color = 'coral',
                          tnight = 40., albedo = 0.,
                          phasecurve = True)
 
@@ -75,11 +75,11 @@ def Triple_bc():
 
     # Compute the light curve
     system.compute(time, lambda1 = 1, lambda2 = 35)
-    
+
     # Let's re-center the time array for a prettier x axis
     system.A.time_hr -= time[0]
     system.A.time -= time[0]
-    
+
     # Observe it (one exposure)
     np.random.seed(1234567)
     fig, ax = system.observe(stack = 1, filter = 'f1500w', alpha_err = 0.5)
@@ -90,13 +90,13 @@ def Triple_bc():
 
     # Plot the orbits of all bodies
     colors = ['k', 'firebrick', 'coral']
-    for rect, index in zip([[0.11, 0.75, 0.15, 0.15], 
-                            [0.315, 0.75, 0.15, 0.15], 
-                            [0.405, 0.75, 0.15, 0.15], 
-                            [0.71, 0.75, 0.15, 0.15]], 
-                            [np.argmax(system.A.time_hr > 0.06), 
-                             np.argmax(system.A.time_hr > 0.26), 
-                             np.argmax(system.A.time_hr > 0.32), 
+    for rect, index in zip([[0.11, 0.75, 0.15, 0.15],
+                            [0.315, 0.75, 0.15, 0.15],
+                            [0.405, 0.75, 0.15, 0.15],
+                            [0.71, 0.75, 0.15, 0.15]],
+                            [np.argmax(system.A.time_hr > 0.06),
+                             np.argmax(system.A.time_hr > 0.26),
+                             np.argmax(system.A.time_hr > 0.32),
                              np.argmax(system.A.time_hr > 0.632)]):
         axxz = fig.add_axes(rect)
         f = np.linspace(0, 2 * np.pi, 1000)
@@ -106,25 +106,25 @@ def Triple_bc():
                   * np.cos(b._inc) * np.sin(b._Omega)
             z = r * np.sin(b._w + f) * np.sin(b._inc)
             axxz.plot(x, z, color = 'gray', lw = 1)
-            axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j], 
-                      alpha = 1, markeredgecolor = 'k', zorder = 99, 
+            axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j],
+                      alpha = 1, markeredgecolor = 'k', zorder = 99,
                       clip_on = False)
             for i in range(index, index - 100, -1):
-                axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j], 
-                          alpha = 0.01, markeredgecolor = colors[j], 
+                axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j],
+                          alpha = 0.01, markeredgecolor = colors[j],
                           zorder = 99)
         axxz.axis('off')
         axxz.set_aspect(1)
         # Label the first image
         if rect[0] == 0.11:
-            axxz.annotate("b", xy = (system.b.x_hr[index], 
-                                     system.b.z_hr[index]), 
-                          va = "center", ha = "center", xytext = (12, 4), 
+            axxz.annotate("b", xy = (system.b.x_hr[index],
+                                     system.b.z_hr[index]),
+                          va = "center", ha = "center", xytext = (12, 4),
                           textcoords = "offset points", color = "firebrick",
                           fontweight = 'bold', fontsize = 8)
-            axxz.annotate("c", xy = (system.c.x_hr[index], 
-                                     system.c.z_hr[index]), 
-                          va = "center", ha = "center", xytext = (12, 4), 
+            axxz.annotate("c", xy = (system.c.x_hr[index],
+                                     system.c.z_hr[index]),
+                          va = "center", ha = "center", xytext = (12, 4),
                           textcoords = "offset points", color = "coral",
                           fontweight = 'bold', fontsize = 8)
 
@@ -132,12 +132,12 @@ def Triple_bc():
 
 def Stacked_bc(N = 4):
     '''
-    Simulate `N` stacked exposures of `b` occulting `c` in the 
+    Simulate `N` stacked exposures of `b` occulting `c` in the
     MIRI F1500W filter.
 
     .. plot::
          :align: center
-         
+
          from scripts import jwst_example
          import matplotlib.pyplot as pl
          jwst_example.Stacked_bc()
@@ -148,7 +148,7 @@ def Stacked_bc(N = 4):
     # Instantiate the star
     mstar = 0.0802
     rstar = 0.121
-    teff = (0.000524 * LSUN / 
+    teff = (0.000524 * LSUN /
            (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
     star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
 
@@ -156,7 +156,7 @@ def Stacked_bc(N = 4):
     RpRs = np.sqrt(0.7266 / 100)
     r = RpRs * rstar * RSUN / REARTH
     b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-                         Omega = 0, w = 0, ecc = 0, color = 'firebrick', 
+                         Omega = 0, w = 0, ecc = 0, color = 'firebrick',
                          tnight = 40., albedo = 0.,
                          phasecurve = False)
 
@@ -164,7 +164,7 @@ def Stacked_bc(N = 4):
     RpRs = np.sqrt(0.687 / 100)
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-                         Omega = 0, w = 0, ecc = 0, color = 'coral', 
+                         Omega = 0, w = 0, ecc = 0, color = 'coral',
                          tnight = 40., albedo = 0.,
                          phasecurve = False)
 
@@ -227,19 +227,19 @@ def Stacked_bc(N = 4):
               * np.cos(b._inc) * np.sin(b._Omega)
         z = r * np.sin(b._w + f) * np.sin(b._inc)
         axxz.plot(x, z, color = 'gray', lw = 1)
-        axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j], 
+        axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j],
                   alpha = 1, markeredgecolor = 'k', zorder = 99, clip_on=False)
         for i in range(index, index - 100, -1):
-            axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j], 
+            axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j],
                       alpha = 0.01, markeredgecolor = colors[j], zorder = 99)
     axxz.axis('off')
     axxz.set_aspect(1)
-    axxz.annotate("b", xy = (system.b.x_hr[index], system.b.z_hr[index]), 
-                  va = "center", ha = "center", xytext = (18, 3), 
+    axxz.annotate("b", xy = (system.b.x_hr[index], system.b.z_hr[index]),
+                  va = "center", ha = "center", xytext = (18, 3),
                   textcoords = "offset points", color = "firebrick",
                   fontweight = 'bold', fontsize = 8)
-    axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]), 
-                  va = "center", ha = "center", xytext = (18, 3), 
+    axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]),
+                  va = "center", ha = "center", xytext = (18, 3),
                   textcoords = "offset points", color = "coral",
                   fontweight = 'bold', fontsize = 8)
 
@@ -247,12 +247,12 @@ def Stacked_bc(N = 4):
 
 def Stacked_bc_all_filters(N = 4):
      '''
-     Simulate N stacked exposures of `b` occulting `c` 
+     Simulate N stacked exposures of `b` occulting `c`
      observed in all MIRI filters.
 
      .. plot::
          :align: center
-         
+
          from scripts import jwst_example
          import matplotlib.pyplot as pl
          figs = jwst_example.Stacked_bc_all_filters()
@@ -265,7 +265,7 @@ def Stacked_bc_all_filters(N = 4):
      # Instantiate the star
      mstar = 0.0802
      rstar = 0.121
-     teff = (0.000524 * LSUN / 
+     teff = (0.000524 * LSUN /
             (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
      star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
 
@@ -273,14 +273,14 @@ def Stacked_bc_all_filters(N = 4):
      RpRs = np.sqrt(0.7266 / 100)
      r = RpRs * rstar * RSUN / REARTH
      b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-                Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., 
+                Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40.,
                 albedo = 0., phasecurve = False)
 
      # Instantiate `c`
      RpRs = np.sqrt(0.687 / 100)
      r = RpRs * rstar * RSUN / REARTH
      c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-                Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., 
+                Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40.,
                 albedo = 0., phasecurve = False)
 
      # Instantiate the system
@@ -334,31 +334,31 @@ def Stacked_bc_all_filters(N = 4):
              axi.set_xlabel("Time [days]", fontweight = 'bold', fontsize = 10)
              SNRs[i] = system.filter.lightcurve.event_SNRs[0]
              wls[i] = system.filter.eff_wl
-             print("SNR: %.3f" %SNRs[i])
+             print("S/N: %.3f" %SNRs[i])
 
      figs[-1], ax = pl.subplots(figsize=(12,10))
      ax.plot(wls, SNRs, "-o", color="k")
      ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold', fontsize = 25)
-     ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 25)
+     ax.set_ylabel("S/N", fontweight = 'bold', fontsize = 25)
 
      wl_filt, dwl_filt, tputs, names = jwst.readin_miri_filters()
-     jwst.plot_miri_filters(ax, wl_filt, tputs, names, 
+     jwst.plot_miri_filters(ax, wl_filt, tputs, names,
                             ylim=[0.0,1.0], leg=True)
      ax2 = figs[-1].get_axes()[1]
      ax2.set_ylabel("Throughput", fontweight = 'bold', fontsize = 25)
      ax.tick_params(labelsize=20)
      ax2.tick_params(labelsize=20)
-     
+
      return figs
 
 if __name__ == '__main__':
 
     fig, _, _ = Triple_bc()
     fig.savefig("triple_bc.pdf", bbox_inches = 'tight')
-    
+
     fig, _, _ = Stacked_bc(N=4)
     fig.savefig("stacked_bc.pdf", bbox_inches = 'tight')
-    
+
     figs = Stacked_bc_all_filters()
     for i, fig in enumerate(figs[:-1]):
         fig.savefig("stacked_bc_%02d.pdf" % i, bbox_inches = 'tight')

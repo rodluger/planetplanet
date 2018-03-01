@@ -9,7 +9,7 @@ occultations in TRAPPIST-1.
 
   .. role:: raw-html(raw)
      :format: html
-  
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/scripts/ost_example.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -23,9 +23,9 @@ import numpy as np
 
 def _test():
     '''
-    
+
     '''
-    
+
     Triple_bc()
     pl.show()
 
@@ -33,21 +33,21 @@ def Triple_bc():
     '''
     Simulate an observation of a triple occultation of TRAPPIST-1 `c` by `b`
     with OST.
-    
+
         .. plot::
          :align: center
-         
+
          from scripts import ost_example
          import matplotlib.pyplot as pl
          ost_example.Triple_bc()
          pl.show()
-    
+
     '''
 
     # Instantiate the star
     mstar = 0.0802
     rstar = 0.121
-    teff = (0.000524 * 
+    teff = (0.000524 *
             LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
     star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
 
@@ -55,14 +55,14 @@ def Triple_bc():
     RpRs = np.sqrt(0.7266 / 100)
     r = RpRs * rstar * RSUN / REARTH
     b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-               Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., 
+               Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40.,
                albedo = 0., phasecurve = True)
 
     # Instantiate `c`
     RpRs = np.sqrt(0.687 / 100)
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-               Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., 
+               Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40.,
                albedo = 0., phasecurve = True)
 
     # Instantiate the system
@@ -79,7 +79,7 @@ def Triple_bc():
     system.A.time -= time[0]
 
     # Create custom filter
-    f50 = create_tophat_filter(10., 30., dlam = 0.1, Tput = 0.3, 
+    f50 = create_tophat_filter(10., 30., dlam = 0.1, Tput = 0.3,
                                name = r"OST 10-30 $\mu$m")
 
     # Observe it (one exposure)
@@ -92,13 +92,13 @@ def Triple_bc():
 
     # Plot the orbits of all bodies
     colors = ['k', 'firebrick', 'coral']
-    for rect, index in zip([[0.11, 0.75, 0.15, 0.15], 
-                            [0.315, 0.75, 0.15, 0.15], 
-                            [0.405, 0.75, 0.15, 0.15], 
-                            [0.71, 0.75, 0.15, 0.15]], 
-                            [np.argmax(system.A.time_hr > 0.06), 
-                             np.argmax(system.A.time_hr > 0.26), 
-                             np.argmax(system.A.time_hr > 0.32), 
+    for rect, index in zip([[0.11, 0.75, 0.15, 0.15],
+                            [0.315, 0.75, 0.15, 0.15],
+                            [0.405, 0.75, 0.15, 0.15],
+                            [0.71, 0.75, 0.15, 0.15]],
+                            [np.argmax(system.A.time_hr > 0.06),
+                             np.argmax(system.A.time_hr > 0.26),
+                             np.argmax(system.A.time_hr > 0.32),
                              np.argmax(system.A.time_hr > 0.632)]):
         axxz = fig.add_axes(rect)
         f = np.linspace(0, 2 * np.pi, 1000)
@@ -108,28 +108,28 @@ def Triple_bc():
                   * np.cos(b._inc) * np.sin(b._Omega)
             z = r * np.sin(b._w + f) * np.sin(b._inc)
             axxz.plot(x, z, color = 'gray', lw = 1)
-            axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j], 
-                      alpha = 1, markeredgecolor = 'k', zorder = 99, 
+            axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j],
+                      alpha = 1, markeredgecolor = 'k', zorder = 99,
                       clip_on = False)
             for i in range(index, index - 100, -1):
-                axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j], 
-                          alpha = 0.01, markeredgecolor = colors[j], 
+                axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j],
+                          alpha = 0.01, markeredgecolor = colors[j],
                           zorder = 99)
         axxz.axis('off')
         axxz.set_aspect(1)
         # Label the first image
         if rect[0] == 0.11:
-            axxz.annotate("b", 
-                          xy = (system.b.x_hr[index], system.b.z_hr[index]), 
-                          va = "center", ha = "center", xytext = (12, 4), 
+            axxz.annotate("b",
+                          xy = (system.b.x_hr[index], system.b.z_hr[index]),
+                          va = "center", ha = "center", xytext = (12, 4),
                           textcoords = "offset points", color = "firebrick",
                           fontweight = 'bold', fontsize = 8)
-            axxz.annotate("c", 
-                          xy = (system.c.x_hr[index], system.c.z_hr[index]), 
-                          va = "center", ha = "center", xytext = (12, 4), 
+            axxz.annotate("c",
+                          xy = (system.c.x_hr[index], system.c.z_hr[index]),
+                          va = "center", ha = "center", xytext = (12, 4),
                           textcoords = "offset points", color = "coral",
                           fontweight = 'bold', fontsize = 8)
-    
+
     return fig, ax, axxz
 
 def Stacked_bc(N = 10):
@@ -138,7 +138,7 @@ def Stacked_bc(N = 10):
 
         .. plot::
          :align: center
-         
+
          from scripts import ost_example
          import matplotlib.pyplot as pl
          ost_example.Stacked_bc()
@@ -149,7 +149,7 @@ def Stacked_bc(N = 10):
     # Instantiate the star
     mstar = 0.0802
     rstar = 0.121
-    teff = (0.000524 * 
+    teff = (0.000524 *
             LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
     star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
 
@@ -157,14 +157,14 @@ def Stacked_bc(N = 10):
     RpRs = np.sqrt(0.7266 / 100)
     r = RpRs * rstar * RSUN / REARTH
     b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-               Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., 
+               Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40.,
                albedo = 0., phasecurve = False)
 
     # Instantiate `c`
     RpRs = np.sqrt(0.687 / 100)
     r = RpRs * rstar * RSUN / REARTH
     c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-               Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., 
+               Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40.,
                albedo = 0., phasecurve = False)
 
     # Instantiate the system
@@ -204,7 +204,7 @@ def Stacked_bc(N = 10):
     system.A.time_hr -= 253.013
 
     # Create custom filter
-    f50 = create_tophat_filter(10., 30., dlam = 0.1, Tput = 0.3, 
+    f50 = create_tophat_filter(10., 30., dlam = 0.1, Tput = 0.3,
                                name = r"OST 10-30 $\mu$m")
 
     # Observe it (ten exposures)
@@ -230,20 +230,20 @@ def Stacked_bc(N = 10):
               * np.cos(b._inc) * np.sin(b._Omega)
         z = r * np.sin(b._w + f) * np.sin(b._inc)
         axxz.plot(x, z, color = 'gray', lw = 1)
-        axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j], 
-                  alpha = 1, markeredgecolor = 'k', zorder = 99, 
+        axxz.plot(b.x_hr[index], b.z_hr[index], 'o', color = colors[j],
+                  alpha = 1, markeredgecolor = 'k', zorder = 99,
                   clip_on = False)
         for i in range(index, index - 100, -1):
-            axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j], 
+            axxz.plot(b.x_hr[i], b.z_hr[i], 'o', color = colors[j],
                       alpha = 0.01, markeredgecolor = colors[j], zorder = 99)
     axxz.axis('off')
     axxz.set_aspect(1)
-    axxz.annotate("b", xy = (system.b.x_hr[index], system.b.z_hr[index]), 
-                  va = "center", ha = "center", xytext = (18, 3), 
+    axxz.annotate("b", xy = (system.b.x_hr[index], system.b.z_hr[index]),
+                  va = "center", ha = "center", xytext = (18, 3),
                   textcoords = "offset points", color = "firebrick",
                   fontweight = 'bold', fontsize = 8)
-    axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]), 
-                  va = "center", ha = "center", xytext = (18, 3), 
+    axxz.annotate("c", xy = (system.c.x_hr[index], system.c.z_hr[index]),
+                  va = "center", ha = "center", xytext = (18, 3),
                   textcoords = "offset points", color = "coral",
                   fontweight = 'bold', fontsize = 8)
 
@@ -251,24 +251,24 @@ def Stacked_bc(N = 10):
 
 def SNR_v_wavelength():
         '''
-        Signal-to-noise ratio of an occultation of TRAPPIST-1c by TRAPPIST-1b 
+        Signal-to-noise ratio of an occultation of TRAPPIST-1c by TRAPPIST-1b
         as a function of wavelength for OST, assuming 5 micron-wide
         filters.
-        
+
         .. plot::
              :align: center
-         
+
              from scripts import ost_example
              import matplotlib.pyplot as pl
              ost_example.SNR_v_wavelength()
              pl.show()
-        
+
         '''
-        
+
         # Instantiate the star
         mstar = 0.0802
         rstar = 0.121
-        teff = (0.000524 * 
+        teff = (0.000524 *
                 LSUN / (4 * np.pi * (rstar * RSUN) ** 2 * SBOLTZ)) ** 0.25
         star = Star('A', m = mstar, r = rstar, teff = teff, color = 'k')
 
@@ -276,14 +276,14 @@ def SNR_v_wavelength():
         RpRs = np.sqrt(0.7266 / 100)
         r = RpRs * rstar * RSUN / REARTH
         b = Planet('b', m = 0.85, per = 1.51087081, inc = 89.65, r = r, t0 = 0,
-                   Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40., 
+                   Omega = 0, w = 0, ecc = 0, color = 'firebrick', tnight = 40.,
                    albedo = 0., phasecurve = True)
 
         # Instantiate `c`
         RpRs = np.sqrt(0.687 / 100)
         r = RpRs * rstar * RSUN / REARTH
         c = Planet('c', m = 1.38, per = 2.4218233, inc = 89.67, r = r, t0 = 0,
-                   Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40., 
+                   Omega = 0, w = 0, ecc = 0, color = 'coral', tnight = 40.,
                    albedo = 0., phasecurve = True)
 
         # Instantiate the system
@@ -307,9 +307,9 @@ def SNR_v_wavelength():
         for i in range(len(lams)):
 
                 # Create custom filter
-                f = create_tophat_filter(lams[i]-0.5*dlam, lams[i]+0.5*dlam, 
-                                         dlam = 0.1, Tput = Tput, 
-                                         name = "$%.1f \pm %.1f \mu$m" 
+                f = create_tophat_filter(lams[i]-0.5*dlam, lams[i]+0.5*dlam,
+                                         dlam = 0.1, Tput = Tput,
+                                         name = "$%.1f \pm %.1f \mu$m"
                                                 % (lams[i], 0.5 * dlam))
 
                 # Observe it (one exposure)
@@ -329,15 +329,15 @@ def SNR_v_wavelength():
                 pl.close()
 
         fig, ax = pl.subplots(figsize=(6,5))
-        ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold', 
+        ax.set_xlabel(r"Wavelength [$\mu$m]", fontweight = 'bold',
                       fontsize = 10)
-        ax.set_ylabel("SNR", fontweight = 'bold', fontsize = 10)
+        ax.set_ylabel("S/N", fontweight = 'bold', fontsize = 10)
         ax.plot(lams, SNRs, ls="-", color="k")
 
         #""" Plot the noise and signal amplitude as a function of wavelength
         ax2 = ax.twinx()
         #ax2.semilogy()
-        ax2.set_ylabel("Signal [ppm]", fontweight = 'bold', fontsize = 10, 
+        ax2.set_ylabel("Signal [ppm]", fontweight = 'bold', fontsize = 10,
                        rotation = 270, labelpad = 15)
         ax2.plot(lams, signal, ls="--", color="C0", label="signal")
         ax2.plot(lams, noise, ls="--", color="C3", label="noise")
@@ -351,7 +351,7 @@ if __name__ == '__main__':
 
     fig, _, _ = Triple_bc()
     fig.savefig("triple_bc_ost.pdf", bbox_inches = 'tight')
-    
+
     fig, _, _ = Stacked_bc(N=10)
     fig.savefig("stacked_bc_ost.pdf", bbox_inches = 'tight')
 
