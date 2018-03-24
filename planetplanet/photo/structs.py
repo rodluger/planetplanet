@@ -68,7 +68,8 @@ class BODY(ctypes.Structure):
                 ("_w", ctypes.c_double),
                 ("_Omega", ctypes.c_double),
                 ("a", ctypes.c_double),
-                ("tperi0", ctypes.c_double),
+                ("_lambda0", ctypes.c_double),
+                ("_time0", ctypes.c_double),
                 ("_r", ctypes.c_double),
                 ("albedo", ctypes.c_double),
                 ("_teff", ctypes.c_double),
@@ -108,14 +109,14 @@ class BODY(ctypes.Structure):
         self.nt = 0
         self.nw = 0
         self.nu = 0
-        self.tperi0 = 0.
-        self.a = 0.
+        self.a = kwargs.pop('a', 0.)
 
         # Universal params
         self.name = name
         self.m = kwargs.pop('m', 1.)
         self.r = kwargs.pop('r', 1.)
-        self.t0 = kwargs.pop('t0', 0.)
+        self.lambda0 = kwargs.pop('lambda0', 0.)
+        self.time0 = kwargs.pop('time0', 0.)
         self.ecc = kwargs.pop('ecc', 0.)
         self.w = kwargs.pop('w', 0.)
         self.Omega = kwargs.pop('Omega', 0.)
@@ -190,8 +191,6 @@ class BODY(ctypes.Structure):
     @w.setter
     def w(self, val):
         self._w = val * np.pi / 180.
-        # Force an update to the time of pericenter passage
-        self.ecc = self._ecc
 
     @property
     def Omega(self):
@@ -226,14 +225,20 @@ class BODY(ctypes.Structure):
         self._teff = val
 
     @property
-    def t0(self):
-        return self._t0
+    def lambda0(self):
+        return self._lambda0 * 180 / np.pi
 
-    @t0.setter
-    def t0(self, val):
-        self._t0 = val
-        # Force an update to the time of pericenter passage
-        self.ecc = self._ecc
+    @lambda0.setter
+    def lambda0(self, val):
+        self._lambda0 = val * np.pi / 180.
+
+    @property
+    def time0(self):
+        return self._time0
+
+    @time0.setter
+    def time0(self, val):
+        self._time0 = val
 
     @property
     def per(self):
@@ -242,8 +247,6 @@ class BODY(ctypes.Structure):
     @per.setter
     def per(self, val):
         self._per = val
-        # Force an update to the time of pericenter passage
-        self.ecc = self._ecc
 
     @property
     def ecc(self):
@@ -251,29 +254,7 @@ class BODY(ctypes.Structure):
 
     @ecc.setter
     def ecc(self, val):
-        '''
-        We need to update the time of pericenter passage whenever the
-        eccentricty, longitude of pericenter, period, or time of transit
-        changes. See the appendix in Shields et al. (2016).
-
-        '''
-
         self._ecc = val
-        fi = (3 * np.pi / 2.) - self._w
-        self.tperi0 = self.t0 + (self.per * np.sqrt(1. - self.ecc * self.ecc) /
-                     (2. * np.pi) * (self.ecc * np.sin(fi) /
-                     (1. + self.ecc * np.cos(fi)) - 2.
-                     / np.sqrt(1. - self.ecc * self.ecc)
-                     * np.arctan2(np.sqrt(1. - self.ecc * self.ecc)
-                     * np.tan(fi/2.), 1. + self.ecc)))
-
-    def M(self, t):
-        '''
-        The mean anomaly at a time `t`.
-
-        '''
-
-        return 2. * np.pi / self.per * ((t - self.tperi0) % self.per)
 
     @property
     def body_type(self):
@@ -293,7 +274,7 @@ class Planet(BODY):
     :param float ecc: Orbital eccentricity. Default `0.`
     :param float w: Longitude of pericenter in degrees. `0.`
     :param float Omega: Longitude of ascending node in degrees. `0.`
-    :param float t0: Time of transit in days. Default `0.`
+    :param float lambda0: Mean longitude in degrees. Default `0.`
     :param bool phasecurve: Compute the phasecurve for this body? \
            Default :py:obj:`False`
     :param float albedo: Body's albedo (airless limit). Default `0.3`
@@ -396,7 +377,7 @@ class Star(BODY):
     :param float ecc: Orbital eccentricity. Default `0.`
     :param float w: Longitude of pericenter in degrees. `0.`
     :param float Omega: Longitude of ascending node in degrees. `0.`
-    :param float t0: Time of primary eclipse in days. Default `0.`
+    :param float lambda0: Mean longitude in degrees. Default `0.`
     :param float teff: The effective temperature of the star in Kelvin. \
            Default `5577.`
     :param array_like limbdark: The limb darkening coefficients (thick \

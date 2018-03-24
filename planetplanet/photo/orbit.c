@@ -179,7 +179,8 @@ int Kepler(int np, BODY **body, SETTINGS settings){
     for (p = 1; p < np; p++) {
 
       // Mean anomaly
-      M = 2. * PI / body[p]->per * modulus(body[p]->time[t] - body[p]->tperi0, body[p]->per);
+      M = body[p]->lambda0 - body[p]->Omega - body[p]->w + 2. * PI / body[p]->per * modulus(body[p]->time[t] - body[p]->time0, body[p]->per);
+      M = modulus(M, 2 * PI);
 
       // Eccentric anomaly
       if (settings.kepsolver == MDFAST)
@@ -302,7 +303,9 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
 
         // We're doing orbital elements.
         // Get the true anomaly at the first timestep
-        M = 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->tperi0, body[p]->per);
+        M = body[p]->lambda0 - body[p]->Omega - body[p]->w + 2. * PI / body[p]->per * modulus(body[p]->time[0] - body[p]->time0, body[p]->per);
+        M = modulus(M, 2 * PI);
+
         if (settings.kepsolver == MDFAST)
           E = EccentricAnomalyFast(M, body[p]->ecc, settings.keptol, settings.maxkepiter);
         else
@@ -312,8 +315,11 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
 
         // Instantiate it w/ respect to either the center of mass or its host body
         struct reb_particle refbody;
-        if (body[p]->host == -1) refbody = reb_get_com(r);
-        else refbody = r->particles[body[p]->host];
+        if (body[p]->host == -1) {
+            refbody = reb_get_com(r);
+        } else {
+            refbody = r->particles[body[p]->host];
+        }
         struct reb_particle particle = reb_tools_orbit_to_particle(r->G, refbody, body[p]->m,
                                        body[p]->a, body[p]->ecc, body[p]->inc,
                                        body[p]->Omega, body[p]->w, f);
@@ -540,7 +546,7 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
       body[p]->inc = orbit.inc;
       body[p]->w = orbit.omega;
       body[p]->Omega = orbit.Omega;
-      body[p]->tperi0 = body[p]->time[body[p]->nt - 1] - body[p]->per * orbit.M / (2 * PI);
+      body[p]->lambda0 = body[p]->Omega + body[p]->w + orbit.M;
       body[p]->per = orbit.P;
     } else {
       struct reb_orbit orbit = reb_tools_particle_to_orbit(r->G, r->particles[p], r->particles[body[p]->host]);
@@ -549,7 +555,7 @@ int NBody(int np, BODY **body, SETTINGS settings, int halt_on_occultation, int o
       body[p]->inc = orbit.inc;
       body[p]->w = orbit.omega;
       body[p]->Omega = orbit.Omega;
-      body[p]->tperi0 = body[p]->time[body[p]->nt - 1] - body[p]->per * orbit.M / (2 * PI);
+      body[p]->lambda0 = body[p]->Omega + body[p]->w + orbit.M;
       body[p]->per = orbit.P;
     }
   }

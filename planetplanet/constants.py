@@ -8,7 +8,7 @@ Constants used throughout the code. All values are in MKS units unless otherwise
 
   .. role:: raw-html(raw)
      :format: html
-     
+
   .. |github| replace:: :raw-html:`<a href = "https://github.com/rodluger/planetplanet/blob/master/planetplanet/constants.py"><i class="fa fa-github" aria-hidden="true"></i></a>`
 
 '''
@@ -31,7 +31,7 @@ LSUN = 3.846e26
 #: Solar radius
 RSUN = 6.957e8
 #: Astronomical Unit
-AUM = 1.49598e11
+AUM = 149597870700.
 #: Parsec
 PARSEC = 3.086e16
 #: Earth mass

@@ -65,7 +65,8 @@ typedef struct {
   double w;                                                                           /**< Longitude of pericenter in radians */
   double Omega;                                                                       /**< Longitude of ascending node in radians */
   double a;                                                                           /**< Orbital semi-major axis in Earth radii */
-  double tperi0;                                                                      /**< Time of pericenter passage in days */
+  double lambda0;                                                                     /**< Mean longitude in radians at reference time */
+  double time0;                                                                       /**< Reference time in days */
   double r;                                                                           /**< Body radius in Earth radii */
   double albedo;                                                                      /**< Body albedo */
   double teff;                                                                        /**< Effective temperature in K */
